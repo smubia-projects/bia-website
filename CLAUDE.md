@@ -36,9 +36,28 @@ app/
 │   ├── footer.tsx      # Footer bar (appears on all pages)
 │   ├── socialmedia.tsx # Social dots sidebar
 │   ├── loadingscreen.tsx
+│   ├── ProjectCard.tsx # Project card for showcase grid
 │   ├── Timelines/      # Timeline components with mobile/desktop variants
 │   ├── EventCard.tsx   # Event card component
 │   └── [other components with .module.css for styling]
+├── lib/
+│   ├── auth.ts         # HMAC cookie auth (ADMIN_PASSWORD env var)
+│   └── projects.ts     # Read/write projects JSON from Vercel Blob
+├── admin/              # Password-protected admin panel
+│   ├── page.tsx        # Server component — checks auth, loads data
+│   ├── AdminClient.tsx # Client component — CRUD dashboard
+│   ├── LoginForm.tsx   # Login form component
+│   ├── actions.ts      # Server Actions (login, add, edit, delete)
+│   └── Admin.module.css
+├── Projects/
+│   ├── data/types.ts   # Project & TeamMember interfaces
+│   ├── page.tsx        # Server Component — fetches from Blob (ISR 1h)
+│   ├── ProjectsContent.tsx  # Client component — filter/grid
+│   ├── Projects.module.css
+│   └── [slug]/
+│       ├── page.tsx              # Server Component — fetches from Blob
+│       ├── ProjectDetailContent.tsx  # Client component — carousel/content
+│       └── ProjectDetail.module.css
 ├── layout.tsx          # Root layout with global structure
 ├── page.tsx            # Home page
 ├── ContactUs/page.tsx
@@ -47,6 +66,9 @@ app/
 ├── Merchandise/page.tsx
 ├── globals.css         # Global Tailwind and base styles
 └── fonts/              # Custom fonts (Inter, Roboto Mono)
+
+scripts/
+├── seed-projects.mjs   # One-time seed of existing projects to Blob
 
 public/
 ├── images/             # Static images (local)
@@ -112,6 +134,38 @@ The home page (`app/page.tsx`) demonstrates a custom `ScrollReveal` component us
 - **Remote images:** stored on Vercel Blob or AWS S3
 - Image domains configured in `next.config.mjs` - add new domains there if adding remote image sources
 - Use Next.js `Image` component with `width={0} height={0} sizes="100vw"` for responsive remote images
+
+## Project Data & Admin Panel
+
+### How Project Data Works
+- Project data lives in Vercel Blob as `data/projects.json` (not in the repo)
+- The `/Projects` page fetches from Blob at render time with ISR (revalidates every 1 hour)
+- When projects are added/edited/deleted via the admin panel, `revalidatePath()` busts the cache immediately
+- The `Project` and `TeamMember` interfaces are defined in `app/Projects/data/types.ts`
+
+### Admin Panel (`/admin`)
+- Password-protected route — password stored as `ADMIN_PASSWORD` Vercel env var
+- Auth uses HMAC-signed httpOnly cookies (24h expiry), no database required
+- Supports: add, edit, delete projects + direct image upload to Vercel Blob
+- Server Actions in `app/admin/actions.ts` handle all mutations
+
+### Environment Variables Required
+| Variable | Purpose |
+|---|---|
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob access (auto-set when you link a Blob store in Vercel) |
+| `ADMIN_PASSWORD` | Password for the `/admin` route |
+
+### Seeding Initial Data
+Run once after setting up the Blob store:
+```powershell
+$env:BLOB_READ_WRITE_TOKEN = "vercel_blob_..."
+node scripts/seed-projects.mjs
+```
+
+### Adding a Project (via Admin)
+1. Go to `/admin` and log in
+2. Click "Add Project" and fill in the form
+3. Submit — project is saved to Blob and the showcase page updates immediately
 
 ## Common Development Tasks
 
