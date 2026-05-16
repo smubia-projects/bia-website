@@ -2,13 +2,49 @@
  * Seed script — uploads existing project data to Vercel Blob.
  *
  * Usage:
- *   BLOB_READ_WRITE_TOKEN=vercel_blob_... node scripts/seed-projects.mjs
+ *   node scripts/seed-projects.mjs
  *
+ * Reads BLOB_READ_WRITE_TOKEN from .env.local automatically.
  * Run once after setting up the Blob store to populate it with the
  * initial project data. Safe to re-run — overwrites the existing file.
  */
 
+import { readFileSync } from "fs";
+import { resolve } from "path";
 import { put, list, del } from "@vercel/blob";
+
+// Load .env.local so the script works without manually exporting vars
+const envPath = resolve(process.cwd(), ".env.local");
+try {
+  const envFile = readFileSync(envPath, "utf-8");
+  for (const line of envFile.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eqIdx = trimmed.indexOf("=");
+    if (eqIdx === -1) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    let value = trimmed.slice(eqIdx + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (!process.env[key]) {
+      process.env[key] = value;
+    }
+  }
+} catch {
+  // No .env.local — rely on environment variables being set externally
+}
+
+if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  console.error(
+    "Error: BLOB_READ_WRITE_TOKEN not found.\n" +
+      "Set it in .env.local or pass it as an environment variable."
+  );
+  process.exit(1);
+}
 
 const PROJECTS_KEY = "data/projects.json";
 

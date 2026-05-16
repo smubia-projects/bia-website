@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { login } from "./actions";
 import styles from "./Admin.module.css";
 
 export default function LoginForm() {
@@ -16,12 +15,17 @@ export default function LoginForm() {
     setError("");
 
     const formData = new FormData(e.currentTarget);
-    const result = await login(formData);
+    const res = await fetch("/admin/api/login", {
+      method: "POST",
+      body: JSON.stringify({ password: formData.get("password") }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const data = await res.json();
 
-    if (result.success) {
+    if (data.success) {
       router.refresh();
     } else {
-      setError(result.error || "Login failed");
+      setError(data.error || "Login failed");
       setLoading(false);
     }
   }
@@ -39,7 +43,7 @@ export default function LoginForm() {
             Enter the admin password to manage projects.
           </p>
 
-          <form onSubmit={handleSubmit} className={styles.loginForm}>
+          <form onSubmit={handleSubmit} method="post" className={styles.loginForm}>
             <input
               type="password"
               name="password"

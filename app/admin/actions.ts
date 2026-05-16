@@ -1,33 +1,41 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import {
-  isAuthenticated,
-  setSessionCookie,
-  clearSessionCookie,
-} from "@/app/lib/auth";
+import { cookies } from "next/headers";
+import { createHmac, timingSafeEqual } from "crypto";
 import { getProjects, saveProjects, uploadImage } from "@/app/lib/projects";
 import { Project } from "@/app/Projects/data/types";
 
-export async function login(
-  formData: FormData
-): Promise<{ success: boolean; error?: string }> {
-  const password = formData.get("password") as string;
-  if (!password) return { success: false, error: "Password is required" };
+const COOKIE_NAME = "admin_session";
+const SESSION_MAX_AGE = 24 * 60 * 60 * 1000;
 
-  const expected = process.env.ADMIN_PASSWORD;
-  if (!expected) return { success: false, error: "Server configuration error" };
+function checkAuth(): boolean {
+  try {
+    const cookieStore = cookies();
+    const token = cookieStore.get(COOKIE_NAME)?.value;
+    if (!token) return false;
 
-  if (password !== expected) {
-    return { success: false, error: "Invalid password" };
+    const [timestamp, hmac] = token.split(".");
+    if (!timestamp || !hmac) return false;
+
+    const secret = process.env.ADMIN_PASSWORD;
+    if (!secret) return false;
+
+    const age = Date.now() - parseInt(timestamp, 10);
+    if (age > SESSION_MAX_AGE || age < 0) return false;
+
+    const expected = createHmac("sha256", secret)
+      .update(timestamp)
+      .digest("hex");
+    return timingSafeEqual(Buffer.from(hmac), Buffer.from(expected));
+  } catch {
+    return false;
   }
-
-  setSessionCookie();
-  return { success: true };
 }
 
-export async function logout(): Promise<void> {
-  clearSessionCookie();
+export async function logout(): Promise<{ done: boolean }> {
+  cookies().delete(COOKIE_NAME);
+  return { done: true };
 }
 
 function slugify(text: string): string {
@@ -96,7 +104,7 @@ function parseTechStack(formData: FormData): string[] {
 export async function addProject(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  if (!isAuthenticated()) {
+  if (!checkAuth()) {
     return { success: false, error: "Not authenticated" };
   }
 
@@ -107,7 +115,10 @@ export async function addProject(
 
     const projects = await getProjects();
     if (projects.some((p) => p.slug === slug)) {
-      return { success: false, error: "A project with this title already exists" };
+      return {
+        success: false,
+        error: "A project with this title already exists",
+      };
     }
 
     const { coverImage, images } = await processImages(formData);
@@ -149,7 +160,7 @@ export async function addProject(
 export async function updateProject(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  if (!isAuthenticated()) {
+  if (!checkAuth()) {
     return { success: false, error: "Not authenticated" };
   }
 
@@ -206,7 +217,7 @@ export async function updateProject(
 export async function deleteProject(
   slug: string
 ): Promise<{ success: boolean; error?: string }> {
-  if (!isAuthenticated()) {
+  if (!checkAuth()) {
     return { success: false, error: "Not authenticated" };
   }
 
@@ -226,6 +237,6 @@ export async function deleteProject(
 }
 
 export async function fetchProjects(): Promise<Project[]> {
-  if (!isAuthenticated()) return [];
+  if (!checkAuth()) return [];
   return getProjects();
 }

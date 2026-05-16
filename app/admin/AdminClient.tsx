@@ -58,7 +58,9 @@ export default function AdminClient({ initialProjects }: Props) {
 
   function showMessage(type: "success" | "error", text: string) {
     setMessage({ type, text });
-    setTimeout(() => setMessage(null), 4000);
+    if (type === "success") {
+      setTimeout(() => setMessage(null), 4000);
+    }
   }
 
   async function refreshProjects() {
