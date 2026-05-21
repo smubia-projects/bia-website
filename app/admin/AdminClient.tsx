@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -11,6 +11,7 @@ import {
   fetchProjects,
 } from "./actions";
 import { Project } from "@/app/Projects/data/types";
+import ImageCropper from "./ImageCropper";
 import styles from "./Admin.module.css";
 
 interface Props {
@@ -24,6 +25,23 @@ interface TeamMember {
   role: string;
   avatar: string;
 }
+
+interface CroppedImage {
+  blob: Blob;
+  preview: string;
+}
+
+interface CropperState {
+  imageSrc: string;
+  aspectRatio: number;
+  aspectLabel: string;
+  type: "cover" | "carousel";
+  pendingFiles: File[];
+  currentIndex: number;
+}
+
+const COVER_ASPECT = 16 / 10;
+const CAROUSEL_ASPECT = 16 / 9;
 
 const EMPTY_FORM = {
   title: "",
@@ -49,12 +67,25 @@ export default function AdminClient({ initialProjects }: Props) {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [existingCover, setExistingCover] = useState("");
+  const [croppedCover, setCroppedCover] = useState<CroppedImage | null>(null);
+  const [croppedImages, setCroppedImages] = useState<CroppedImage[]>([]);
+  const [cropperState, setCropperState] = useState<CropperState | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const imagesInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (croppedCover) URL.revokeObjectURL(croppedCover.preview);
+      croppedImages.forEach((img) => URL.revokeObjectURL(img.preview));
+    };
+  }, [croppedCover, croppedImages]);
 
   function showMessage(type: "success" | "error", text: string) {
     setMessage({ type, text });
@@ -73,6 +104,8 @@ export default function AdminClient({ initialProjects }: Props) {
     setTeam([{ name: "", role: "", avatar: "" }]);
     setExistingImages([]);
     setExistingCover("");
+    setCroppedCover(null);
+    setCroppedImages([]);
     setView("add");
   }
 
@@ -98,6 +131,8 @@ export default function AdminClient({ initialProjects }: Props) {
     );
     setExistingImages(project.images);
     setExistingCover(project.coverImage);
+    setCroppedCover(null);
+    setCroppedImages([]);
     setEditSlug(project.slug);
     setView("edit");
   }
@@ -111,7 +146,11 @@ export default function AdminClient({ initialProjects }: Props) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function updateTeamMember(idx: number, field: keyof TeamMember, value: string) {
+  function updateTeamMember(
+    idx: number,
+    field: keyof TeamMember,
+    value: string
+  ) {
     setTeam((prev) => {
       const copy = [...prev];
       copy[idx] = { ...copy[idx], [field]: value };
@@ -131,6 +170,111 @@ export default function AdminClient({ initialProjects }: Props) {
     setExistingImages((prev) => prev.filter((_, i) => i !== idx));
   }
 
+  function removeCroppedImage(idx: number) {
+    setCroppedImages((prev) => {
+      const removed = prev[idx];
+      URL.revokeObjectURL(removed.preview);
+      return prev.filter((_, i) => i !== idx);
+    });
+  }
+
+  function removeCover() {
+    if (croppedCover) {
+      URL.revokeObjectURL(croppedCover.preview);
+      setCroppedCover(null);
+    } else {
+      setExistingCover("");
+    }
+  }
+
+  // --- Cropper flow ---
+
+  function handleCoverSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    const src = URL.createObjectURL(file);
+    setCropperState({
+      imageSrc: src,
+      aspectRatio: COVER_ASPECT,
+      aspectLabel: "16 : 10 (Card Cover)",
+      type: "cover",
+      pendingFiles: [],
+      currentIndex: 0,
+    });
+  }
+
+  function handleCarouselSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    e.target.value = "";
+    const src = URL.createObjectURL(files[0]);
+    setCropperState({
+      imageSrc: src,
+      aspectRatio: CAROUSEL_ASPECT,
+      aspectLabel: "16 : 9 (Carousel)",
+      type: "carousel",
+      pendingFiles: files,
+      currentIndex: 0,
+    });
+  }
+
+  const handleCropComplete = useCallback(
+    (blob: Blob) => {
+      if (!cropperState) return;
+      const preview = URL.createObjectURL(blob);
+
+      if (cropperState.type === "cover") {
+        if (croppedCover) URL.revokeObjectURL(croppedCover.preview);
+        setCroppedCover({ blob, preview });
+        setExistingCover("");
+        URL.revokeObjectURL(cropperState.imageSrc);
+        setCropperState(null);
+      } else {
+        setCroppedImages((prev) => [...prev, { blob, preview }]);
+        URL.revokeObjectURL(cropperState.imageSrc);
+
+        const nextIndex = cropperState.currentIndex + 1;
+        if (nextIndex < cropperState.pendingFiles.length) {
+          const nextSrc = URL.createObjectURL(
+            cropperState.pendingFiles[nextIndex]
+          );
+          setCropperState({
+            ...cropperState,
+            imageSrc: nextSrc,
+            currentIndex: nextIndex,
+          });
+        } else {
+          setCropperState(null);
+        }
+      }
+    },
+    [cropperState, croppedCover]
+  );
+
+  function handleCropCancel() {
+    if (!cropperState) return;
+    URL.revokeObjectURL(cropperState.imageSrc);
+
+    if (cropperState.type === "carousel") {
+      const nextIndex = cropperState.currentIndex + 1;
+      if (nextIndex < cropperState.pendingFiles.length) {
+        const nextSrc = URL.createObjectURL(
+          cropperState.pendingFiles[nextIndex]
+        );
+        setCropperState({
+          ...cropperState,
+          imageSrc: nextSrc,
+          currentIndex: nextIndex,
+        });
+        return;
+      }
+    }
+    setCropperState(null);
+  }
+
+  // --- Submit ---
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -139,6 +283,25 @@ export default function AdminClient({ initialProjects }: Props) {
     fd.set("team", JSON.stringify(team.filter((t) => t.name.trim())));
     fd.set("existingImages", JSON.stringify(existingImages));
     fd.set("existingCoverImage", existingCover);
+
+    fd.delete("coverImage");
+    fd.delete("images");
+
+    if (croppedCover) {
+      fd.set(
+        "coverImage",
+        new File([croppedCover.blob], "cover.jpg", { type: "image/jpeg" })
+      );
+    }
+
+    croppedImages.forEach((img) => {
+      fd.append(
+        "images",
+        new File([img.blob], `carousel-${Date.now()}.jpg`, {
+          type: "image/jpeg",
+        })
+      );
+    });
 
     let result;
     if (view === "edit") {
@@ -149,7 +312,10 @@ export default function AdminClient({ initialProjects }: Props) {
     }
 
     if (result.success) {
-      showMessage("success", view === "edit" ? "Project updated" : "Project added");
+      showMessage(
+        "success",
+        view === "edit" ? "Project updated" : "Project added"
+      );
       await refreshProjects();
       setView("list");
     } else {
@@ -175,6 +341,20 @@ export default function AdminClient({ initialProjects }: Props) {
     await logout();
     router.refresh();
   }
+
+  const hasCover = !!(croppedCover || existingCover);
+  const allCarouselPreviews = [
+    ...existingImages.map((url, i) => ({
+      type: "existing" as const,
+      src: url,
+      index: i,
+    })),
+    ...croppedImages.map((img, i) => ({
+      type: "new" as const,
+      src: img.preview,
+      index: i,
+    })),
+  ];
 
   return (
     <main className={styles.page}>
@@ -337,7 +517,9 @@ export default function AdminClient({ initialProjects }: Props) {
                   <textarea
                     name="description"
                     value={form.description}
-                    onChange={(e) => updateField("description", e.target.value)}
+                    onChange={(e) =>
+                      updateField("description", e.target.value)
+                    }
                     className={styles.textarea}
                     rows={2}
                     required
@@ -387,59 +569,144 @@ export default function AdminClient({ initialProjects }: Props) {
             {/* Images */}
             <fieldset className={styles.fieldset}>
               <legend className={styles.legend}>Images</legend>
-              <label className={styles.label}>
-                Cover Image
-                <input
-                  type="file"
-                  name="coverImage"
-                  accept="image/*"
-                  className={styles.fileInput}
-                />
-              </label>
-              {existingCover && (
-                <div className={styles.existingImagePreview}>
-                  <Image
-                    src={existingCover}
-                    alt="Current cover"
-                    width={120}
-                    height={68}
-                    className={styles.thumbImg}
-                  />
-                  <span className={styles.existingLabel}>Current cover</span>
+
+              {/* Cover Image */}
+              <div className={styles.imageSection}>
+                <div className={styles.imageSectionHeader}>
+                  <span className={styles.imageSectionTitle}>Cover Image</span>
+                  <span className={styles.imageSectionHint}>
+                    16:10 ratio — used on the project card
+                  </span>
                 </div>
-              )}
-              <label className={styles.label}>
-                Additional Images (carousel)
-                <input
-                  type="file"
-                  name="images"
-                  accept="image/*"
-                  multiple
-                  className={styles.fileInput}
-                />
-              </label>
-              {existingImages.length > 0 && (
-                <div className={styles.existingImagesRow}>
-                  {existingImages.map((url, i) => (
-                    <div key={i} className={styles.existingImageThumb}>
-                      <Image
-                        src={url}
-                        alt={`Image ${i + 1}`}
-                        width={80}
-                        height={45}
-                        className={styles.thumbImg}
-                      />
+                {hasCover ? (
+                  <div className={styles.coverPreview}>
+                    <div className={styles.coverPreviewImage}>
+                      {croppedCover ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={croppedCover.preview}
+                          alt="Cropped cover"
+                          className={styles.coverImg}
+                        />
+                      ) : (
+                        <Image
+                          src={existingCover}
+                          alt="Current cover"
+                          fill
+                          className={styles.coverImg}
+                          sizes="400px"
+                        />
+                      )}
+                    </div>
+                    <div className={styles.coverPreviewActions}>
                       <button
                         type="button"
-                        onClick={() => removeExistingImage(i)}
-                        className={styles.removeThumbBtn}
+                        onClick={() => coverInputRef.current?.click()}
+                        className={styles.editBtn}
                       >
-                        ×
+                        Replace
+                      </button>
+                      <button
+                        type="button"
+                        onClick={removeCover}
+                        className={styles.deleteBtn}
+                      >
+                        Remove
                       </button>
                     </div>
-                  ))}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => coverInputRef.current?.click()}
+                    className={styles.uploadZone}
+                  >
+                    <span className={styles.uploadIcon}>+</span>
+                    <span className={styles.uploadText}>
+                      Click to upload cover image
+                    </span>
+                  </button>
+                )}
+                <input
+                  ref={coverInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverSelect}
+                  className={styles.hiddenInput}
+                />
+              </div>
+
+              {/* Carousel Images */}
+              <div className={styles.imageSection}>
+                <div className={styles.imageSectionHeader}>
+                  <span className={styles.imageSectionTitle}>
+                    Carousel Images
+                  </span>
+                  <span className={styles.imageSectionHint}>
+                    16:9 ratio — shown on the project detail page
+                  </span>
                 </div>
-              )}
+                {allCarouselPreviews.length > 0 && (
+                  <div className={styles.carouselGrid}>
+                    {allCarouselPreviews.map((item, i) => (
+                      <div key={i} className={styles.carouselThumb}>
+                        <div className={styles.carouselThumbInner}>
+                          {item.type === "existing" ? (
+                            <Image
+                              src={item.src}
+                              alt={`Image ${i + 1}`}
+                              fill
+                              className={styles.carouselThumbImg}
+                              sizes="200px"
+                            />
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.src}
+                              alt={`New image ${i + 1}`}
+                              className={styles.carouselThumbImg}
+                            />
+                          )}
+                          {item.type === "new" && (
+                            <span className={styles.newBadge}>New</span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            item.type === "existing"
+                              ? removeExistingImage(item.index)
+                              : removeCroppedImage(item.index)
+                          }
+                          className={styles.removeThumbBtn}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => imagesInputRef.current?.click()}
+                  className={styles.uploadZone}
+                >
+                  <span className={styles.uploadIcon}>+</span>
+                  <span className={styles.uploadText}>
+                    {allCarouselPreviews.length > 0
+                      ? "Add more images"
+                      : "Click to upload carousel images"}
+                  </span>
+                </button>
+                <input
+                  ref={imagesInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleCarouselSelect}
+                  className={styles.hiddenInput}
+                />
+              </div>
             </fieldset>
 
             {/* Details */}
@@ -475,7 +742,9 @@ export default function AdminClient({ initialProjects }: Props) {
                 <textarea
                   name="satisfaction"
                   value={form.satisfaction}
-                  onChange={(e) => updateField("satisfaction", e.target.value)}
+                  onChange={(e) =>
+                    updateField("satisfaction", e.target.value)
+                  }
                   className={styles.textarea}
                   rows={3}
                 />
@@ -607,6 +876,22 @@ export default function AdminClient({ initialProjects }: Props) {
           </form>
         )}
       </div>
+
+      {/* Cropper Modal */}
+      {cropperState && (
+        <ImageCropper
+          imageSrc={cropperState.imageSrc}
+          aspectRatio={cropperState.aspectRatio}
+          aspectLabel={
+            cropperState.type === "carousel" &&
+            cropperState.pendingFiles.length > 1
+              ? `${cropperState.aspectLabel} — Image ${cropperState.currentIndex + 1} of ${cropperState.pendingFiles.length}`
+              : cropperState.aspectLabel
+          }
+          onComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </main>
   );
 }
