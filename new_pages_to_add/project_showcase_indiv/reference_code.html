@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Project Detail | SMUBIA</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;family=Inter:wght@400;500;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script
+        id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface-tint": "#7dd7c2", "error-dim": "#c54d4a", "on-error-container": "#ffdad6", surface: "#131313", "primary-fixed": "#99f3de", secondary: "#7bd1fa", "on-tertiary-fixed-variant": "#544600", "on-primary-fixed": "#00201a", "surface-container-lowest": "#0e0e0e", "on-primary-container": "#003028", "surface-container-high": "#2a2a2a", "on-error": "#690005", "secondary-dim": "#a4beb6", "primary-fixed-dim": "#7dd7c2", "on-secondary-container": "#e9f6ff", "on-primary-fixed-variant": "#005144", "on-surface": "#e2e2e2", "on-secondary-fixed": "#001e2b", "surface-container-low": "#1b1b1b", "tertiary-dim": "#a8ddee", "primary-container": "#44a08d", "tertiary-fixed-dim": "#e9c400", "on-secondary": "#003547", "tertiary-container": "#c9a900", "on-secondary-fixed-variant": "#004d66", "outline-variant": "#3e4946", "on-background": "#e2e2e2", primary: "#7dd7c2", "primary-dim": "#6fc9b5", outline: "#88938f", "surface-bright": "#393939", tertiary: "#e9c400", "on-tertiary-container": "#4c3f00", background: "#131313", "surface-container-highest": "#353535", "surface-variant": "#353535", "on-primary": "#00382f", "on-surface-variant": "#bdc9c4", "secondary-fixed-dim": "#7bd1fa", "tertiary-fixed": "#ffe16d", "on-tertiary": "#3a3000", "secondary-fixed": "#c0e8ff", "on-tertiary-fixed": "#221b00", "inverse-surface": "#e2e2e2", "inverse-primary": "#006b5b", "surface-dim": "#131313", "error-container": "#93000a", "secondary-container": "#00799e", error: "#ffb4ab", "inverse-on-surface": "#303030", "surface-container": "#1f1f1f" }, fontFamily: { headline: ["Space Grotesk"], body: ["Inter"], label: ["Space Grotesk"], display: "Space Grotesk" }, borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" } } } };</script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0e0e0e;
+            color: #e7e5e4;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .opacity-fade {
+            transition: opacity 200ms ease-out;
+        }
+
+        .tonal-shift-bg-surface-container-low {
+            background-color: #131313;
+        }
+
+        /* Editorial spacing */
+        .section-spacing {
+            padding-top: 5rem;
+            padding-bottom: 5rem;
+        }
+
+        .carousel-container {
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .carousel-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .carousel-item {
+            scroll-snap-align: start;
+            flex: 0 0 100%;
+        }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-primary/30">
+    <!-- TopNavBar -->
+    <nav class="fixed top-0 w-full z-50 bg-[#0e0e0e]/60 backdrop-blur-md">
+        <div class="flex justify-between items-center max-w-7xl mx-auto px-8 h-20">
+            <div class="text-2xl font-bold tracking-tighter text-[#7dd7c2]">SMUBIA</div>
+            <div
+                class="hidden md:flex items-center gap-8 font-['Inter'] antialiased tracking-tight text-base font-medium">
+                <a class="text-[#acabaa] hover:text-[#f5f5f5] transition-colors duration-200" href="#">Who we are</a>
+                <a class="text-[#7dd7c2] border-b-2 border-[#7dd7c2] pb-1" href="#">What we do</a>
+                <a class="text-[#acabaa] hover:text-[#f5f5f5] transition-colors duration-200" href="#">Datathon</a>
+                <a class="text-[#acabaa] hover:text-[#f5f5f5] transition-colors duration-200" href="#">Merch</a>
+                <a class="text-[#acabaa] hover:text-[#f5f5f5] transition-colors duration-200" href="#">Contact</a>
+            </div>
+            <button
+                class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-6 py-2.5 rounded-lg font-bold hover:opacity-90 transition-all">Apply
+                for DAP/AI Lodge</button>
+        </div>
+    </nav>
+    <main class="pt-32 pb-20 px-6 max-w-7xl mx-auto">
+        <!-- Project Header -->
+        <header class="mb-12">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div class="space-y-2">
+                    <nav class="flex items-center gap-2 text-on-surface-variant text-sm mb-4">
+                        <span>Projects</span>
+                        <span class="material-symbols-outlined text-xs">chevron_right</span>
+                        <span class="text-primary">Financial Sentiment Analysis</span>
+                    </nav>
+                    <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface">Neural-Linguistics
+                        for FinTech</h1>
+                    <p class="text-on-surface-variant max-w-2xl text-lg leading-relaxed">
+                        A real-time Natural Language Processing dashboard designed to identify market signals from
+                        unstructured financial news streams.
+                    </p>
+                </div>
+                <div class="flex gap-4">
+                    <button
+                        class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-surface-container-high border border-outline-variant/20 hover:bg-surface-container-highest transition-all text-on-surface">
+                        <span class="material-symbols-outlined text-sm">open_in_new</span>
+                        <span class="text-sm font-medium">Open Demo</span>
+                    </button>
+                    <button
+                        class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-surface-container-high border border-outline-variant/20 hover:bg-surface-container-highest transition-all text-on-surface">
+                        <svg class="w-4 h-4 fill-current" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12">
+                            </path>
+                        </svg>
+                        <span class="text-sm font-medium">Source Code</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+        <!-- Project Visualization Shell -->
+        <section class="mb-16">
+            <div
+                class="relative w-full aspect-video rounded-xl overflow-hidden bg-surface-container-low shadow-2xl group">
+                <!-- Carousel Structure -->
+                <div class="carousel-container flex h-full w-full overflow-x-auto" id="project-carousel">
+                    <!-- Slide 1 -->
+                    <div class="carousel-item relative w-full h-full">
+                        <img alt="Financial Sentiment Analysis Dashboard showing market signals and news feed"
+                            class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida/ADBb0uikkQm8rMOXj-6ufFflOtubLGPGQ7K4sdKWulheLCQ2kg3oucj3f0SSFO2n1Yx0g4RH8MXiM6vu8qX-8KS4J2xW19WeKTzpww8z6Ab9SfRm8DyNxVnSD6c4sVojgGhgItXd-MbuCBz3PW1eronDjpdoo9O4OX1GaMOU6cLkKPyO7CMHl3F8MbM9yzG0QOrJgOUo7yTwa-GVQOOiVcAW9GZ9C41NdUd2d-pnhdM6S_Ys-LG2q_qC_FECfaZyte6PliM8oZMeyWA4" />
+                    </div>
+                    <!-- Slide 2 -->
+                    <div class="carousel-item relative w-full h-full">
+                        <img alt="Financial Sentiment Analysis Dashboard showing market signals and news feed"
+                            class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida/ADBb0uikkQm8rMOXj-6ufFflOtubLGPGQ7K4sdKWulheLCQ2kg3oucj3f0SSFO2n1Yx0g4RH8MXiM6vu8qX-8KS4J2xW19WeKTzpww8z6Ab9SfRm8DyNxVnSD6c4sVojgGhgItXd-MbuCBz3PW1eronDjpdoo9O4OX1GaMOU6cLkKPyO7CMHl3F8MbM9yzG0QOrJgOUo7yTwa-GVQOOiVcAW9GZ9C41NdUd2d-pnhdM6S_Ys-LG2q_qC_FECfaZyte6PliM8oZMeyWA4" />
+                    </div>
+                    <!-- Slide 3 -->
+                    <div class="carousel-item relative w-full h-full">
+                        <img alt="Financial Sentiment Analysis Dashboard showing market signals and news feed"
+                            class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida/ADBb0uikkQm8rMOXj-6ufFflOtubLGPGQ7K4sdKWulheLCQ2kg3oucj3f0SSFO2n1Yx0g4RH8MXiM6vu8qX-8KS4J2xW19WeKTzpww8z6Ab9SfRm8DyNxVnSD6c4sVojgGhgItXd-MbuCBz3PW1eronDjpdoo9O4OX1GaMOU6cLkKPyO7CMHl3F8MbM9yzG0QOrJgOUo7yTwa-GVQOOiVcAW9GZ9C41NdUd2d-pnhdM6S_Ys-LG2q_qC_FECfaZyte6PliM8oZMeyWA4" />
+                    </div>
+                </div>
+                <!-- Navigation Arrows -->
+                <button
+                    class="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-surface-container/80 border border-outline-variant/30 flex items-center justify-center hover:bg-surface-container-highest transition-colors group/nav"
+                    onclick="document.getElementById('project-carousel').scrollBy({left: -document.getElementById('project-carousel').offsetWidth, behavior: 'smooth'})">
+                    <span
+                        class="material-symbols-outlined text-on-surface group-hover/nav:text-primary">chevron_left</span>
+                </button>
+                <button
+                    class="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-surface-container/80 border border-outline-variant/30 flex items-center justify-center hover:bg-surface-container-highest transition-colors group/nav"
+                    onclick="document.getElementById('project-carousel').scrollBy({left: document.getElementById('project-carousel').offsetWidth, behavior: 'smooth'})">
+                    <span
+                        class="material-symbols-outlined text-on-surface group-hover/nav:text-primary">chevron_right</span>
+                </button>
+                <!-- Overlay UI -->
+            </div>
+        </section>
+        <!-- Information Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <!-- Left: Overview & Reflection -->
+            <div class="lg:col-span-8 space-y-16">
+                <!-- Project Overview & Rationale -->
+                <section>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="h-px flex-1 bg-outline-variant/20"></div>
+                        <h2 class="text-sm font-bold tracking-widest uppercase text-primary shrink-0">Project Overview
+                        </h2>
+                        <div class="h-px w-12 bg-outline-variant/20"></div>
+                    </div>
+                    <div class="space-y-6">
+                        <h3 class="text-2xl font-bold">Our Rationale</h3>
+                        <p class="text-on-surface-variant leading-relaxed text-lg">
+                            Financial markets are increasingly driven by sentiment found in alternative data sources.
+                            However, traditional tools often fail to capture the nuance of industry-specific jargon.
+                            This project was initiated to bridge the gap between raw web-scraped financial news and
+                            actionable quantitative data.
+                        </p>
+                        <p class="text-on-surface-variant leading-relaxed text-lg">
+                            By leveraging fine-tuned BERT models specifically trained on financial corpora, we achieved
+                            a 14% improvement in entity recognition accuracy compared to off-the-shelf models. The
+                            architecture utilizes a serverless pipeline to process over 500 news articles per minute,
+                            feeding into the custom visualization layer seen above.
+                        </p>
+                    </div>
+                </section>
+                <!-- Project Reflection -->
+                <section class="bg-surface-container-low rounded-xl p-8 border border-outline-variant/10">
+                    <div class="flex items-center gap-4 mb-8">
+                        <h2 class="text-xl font-bold">Lessons Learned</h2>
+                        <div class="h-px flex-1 bg-outline-variant/20"></div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-10">
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-3 text-primary">
+                                <span class="material-symbols-outlined">verified</span>
+                                <h4 class="font-bold">Project Satisfaction</h4>
+                            </div>
+                            <p class="text-on-surface-variant text-sm leading-relaxed">Team Satisfaction: 4.5/5. We are
+                                highly satisfied with the technical architecture and the accuracy of the model, though
+                                we feel there is room for further optimization in the real-time processing latency.</p>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-3 text-secondary">
+                                <span class="material-symbols-outlined">lightbulb</span>
+                                <h4 class="font-bold">Key Takeaway</h4>
+                            </div>
+                            <p class="text-on-surface-variant text-sm leading-relaxed">
+                                Moving forward, we identified that the latency in real-time streaming could be further
+                                optimized by shifting from REST to WebSockets for the final visualization layer. This
+                                would provide a more fluid user experience during peak market volatility hours.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <!-- Right: Team & Metadata -->
+            <aside class="lg:col-span-4 space-y-12">
+                <!-- About the Team -->
+                <section class="sticky top-32">
+                    <div class="p-8 rounded-xl bg-surface-container border border-outline-variant/20">
+                        <h2 class="text-sm font-bold tracking-widest uppercase text-primary mb-8">About the Team</h2>
+                        <ul class="space-y-6">
+                            <li class="flex items-center gap-4 group">
+                                <div
+                                    class="w-12 h-12 rounded-full overflow-hidden bg-surface-container-highest ring-1 ring-outline-variant/30 group-hover:ring-primary transition-all">
+                                    <img alt="Team Member 1" class="w-full h-full object-cover"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwow4esugPK8WIYXYwRgR9LPO3XTrG2KlTwB1ELElxHlWLvIT6eteC-afPxJj8SpJFIAjmG-rSR_cHP0qV-2m2Us3aRJRGRXryLngY3pCwyIbXWOCeQZVPrwVYoINLoxg7uNR6i799lgOWZgDd3Yw2LVJMFyGWGTOURrQa3tYoos0ObaN9B4feL4DU3I90bdZoEnLdt7A_gkMoNsv7YVaX7K3k7L-8kYZXav3sgAOrQ_XFdt_dNb5jED3v03KqUuh9Tz-d4c4UY_Q" />
+                                </div>
+                                <div>
+                                    <p class="font-bold text-on-surface">Alex Thompson</p>
+                                    <p class="text-xs text-on-surface-variant">Lead Data Scientist</p>
+                                </div>
+                            </li>
+                            <li class="flex items-center gap-4 group">
+                                <div
+                                    class="w-12 h-12 rounded-full overflow-hidden bg-surface-container-highest ring-1 ring-outline-variant/30 group-hover:ring-primary transition-all">
+                                    <img alt="Team Member 2" class="w-full h-full object-cover"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBF7OQOwizTjhNd6vbovpCfvBtDQc4Upx9vfAv_QIpOB7cMoKRQQKBmTfmTMFoFLa2OjSbxtU8THhN5PkJneJydF3FTeliLyugdBj5OM-lZhROLEjTwVg4m2M3Hhce9x1-YkvnDFUj-k-dgN4M1KD_Zwy2v8upiE6Qmao4Wd5Izq6O5g0Pq60sOWC4dfdZugxdN3VRhBprbadmn7QOYlFITysCdq4VbXZI2SS8e1wJRiX_MdtfKMZf8Q7REUEI076e4-5QcgSZxiFQ" />
+                                </div>
+                                <div>
+                                    <p class="font-bold text-on-surface">Sarah Chen</p>
+                                    <p class="text-xs text-on-surface-variant">ML Engineer</p>
+                                </div>
+                            </li>
+                            <li class="flex items-center gap-4 group">
+                                <div
+                                    class="w-12 h-12 rounded-full overflow-hidden bg-surface-container-highest ring-1 ring-outline-variant/30 group-hover:ring-primary transition-all">
+                                    <img alt="Team Member 3" class="w-full h-full object-cover"
+                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDG3vf7owmxYfLvwpZIGtCWz_eUqFErnO2sU6_KFr5F3nYkPY26bl-2KyJi9WQ2kaMHBE8rHR6FvegUXBJyCFSkh7vcJv6xaGc8GnUXwX-MOXs00WxKKbYpjg_nm9VAB1OV1ef4yZO5Vz-w9798MdwGtwFkNJQokRwcQN8n9NFsOHI2gt5aXuqM8FrmCXzE-lVAry61tRBC7il0HxjKRGEC36YR-F0_-CcBKhThVwgYdj1NfmfLiCV1OMelLFgFBeownV22aM6N-_0" />
+                                </div>
+                                <div>
+                                    <p class="font-bold text-on-surface">Marcus Rodriguez</p>
+                                    <p class="text-xs text-on-surface-variant">Frontend Architect</p>
+                                </div>
+                            </li>
+                        </ul>
+                        <div class="mt-10 pt-8 border-t border-outline-variant/10 space-y-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-on-surface-variant">Programme</span>
+                                <span class="text-on-surface font-medium">DAP</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-on-surface-variant">Status</span>
+                                <span
+                                    class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-widest uppercase border border-primary/20">Completed</span>
+                            </div>
+                            <div class="flex flex-wrap gap-2 mt-4">
+                                <span
+                                    class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs">Python</span>
+                                <span
+                                    class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs">PyTorch</span>
+                                <span
+                                    class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs">Tailwind</span>
+                                <span
+                                    class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs">D3.js</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </main>
+    <!-- Footer -->
+    <footer class="w-full py-12 border-t border-[#484848]/20 bg-[#0e0e0e]">
+        <div class="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-xl font-bold text-[#7dd7c2]">SMUBIA</div>
+            <div class="flex gap-8 font-['Inter'] text-sm leading-relaxed text-[#acabaa]">
+                <a class="hover:text-[#7dd7c2] transition-colors" href="#">Privacy Policy</a>
+                <a class="hover:text-[#7dd7c2] transition-colors" href="#">Terms of Service</a>
+                <a class="hover:text-[#7dd7c2] transition-colors" href="#">LinkedIn</a>
+                <a class="hover:text-[#7dd7c2] transition-colors" href="#">Instagram</a>
+                <a class="hover:text-[#7dd7c2] transition-colors" href="#">GitHub</a>
+            </div>
+            <p class="text-[#acabaa] text-sm">© 2024 SMUBIA. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+
+</html>

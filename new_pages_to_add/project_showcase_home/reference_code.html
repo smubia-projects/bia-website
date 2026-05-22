@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>SMUBIA | Projects Showcase</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;family=Inter:wght@400;500;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script
+        id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface-tint": "#7dd7c2", "error-dim": "#c54d4a", "on-error-container": "#ffdad6", surface: "#131313", "primary-fixed": "#99f3de", secondary: "#7bd1fa", "on-tertiary-fixed-variant": "#544600", "on-primary-fixed": "#00201a", "surface-container-lowest": "#0e0e0e", "on-primary-container": "#003028", "surface-container-high": "#2a2a2a", "on-error": "#690005", "secondary-dim": "#a4beb6", "primary-fixed-dim": "#7dd7c2", "on-secondary-container": "#e9f6ff", "on-primary-fixed-variant": "#005144", "on-surface": "#e2e2e2", "on-secondary-fixed": "#001e2b", "surface-container-low": "#1b1b1b", "tertiary-dim": "#a8ddee", "primary-container": "#44a08d", "tertiary-fixed-dim": "#e9c400", "on-secondary": "#003547", "tertiary-container": "#c9a900", "on-secondary-fixed-variant": "#004d66", "outline-variant": "#3e4946", "on-background": "#e2e2e2", primary: "#7dd7c2", "primary-dim": "#6fc9b5", outline: "#88938f", "surface-bright": "#393939", tertiary: "#e9c400", "on-tertiary-container": "#4c3f00", background: "#131313", "surface-container-highest": "#353535", "surface-variant": "#353535", "on-primary": "#00382f", "on-surface-variant": "#bdc9c4", "secondary-fixed-dim": "#7bd1fa", "tertiary-fixed": "#ffe16d", "on-tertiary": "#3a3000", "secondary-fixed": "#c0e8ff", "on-tertiary-fixed": "#221b00", "inverse-surface": "#e2e2e2", "inverse-primary": "#006b5b", "surface-dim": "#131313", "error-container": "#93000a", "secondary-container": "#00799e", error: "#ffb4ab", "inverse-on-surface": "#303030", "surface-container": "#1f1f1f" }, fontFamily: { headline: ["Space Grotesk"], body: ["Inter"], label: ["Space Grotesk"], display: "Space Grotesk" }, borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" } } } };</script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .glass-header {
+            background: rgba(14, 14, 14, 0.6);
+            backdrop-filter: blur(20px);
+        }
+
+        .primary-gradient-btn {
+            background: linear-gradient(135deg, #7dd7c2 0%, #027665 100%);
+        }
+    </style>
+</head>
+
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+    <!-- TopNavBar -->
+    <nav class="fixed top-0 w-full z-50 bg-[#0e0e0e]/60 backdrop-blur-md border-b border-outline-variant/10">
+        <div class="flex justify-between items-center max-w-7xl mx-auto px-8 h-20">
+            <div class="text-2xl font-bold tracking-tighter text-[#7dd7c2]" style="">SMUBIA</div>
+            <div class="hidden md:flex items-center gap-8">
+                <a class="font-['Inter'] antialiased tracking-tight text-base font-medium text-[#acabaa] hover:text-[#f5f5f5] transition-colors duration-200"
+                    href="#" style="">Who we are</a>
+                <a class="font-['Inter'] antialiased tracking-tight text-base font-medium text-[#7dd7c2] border-b-2 border-[#7dd7c2] pb-1"
+                    href="#" style="">What we do</a>
+                <a class="font-['Inter'] antialiased tracking-tight text-base font-medium text-[#acabaa] hover:text-[#f5f5f5] transition-colors duration-200"
+                    href="#" style="">Datathon</a>
+                <a class="font-['Inter'] antialiased tracking-tight text-base font-medium text-[#acabaa] hover:text-[#f5f5f5] transition-colors duration-200"
+                    href="#" style="">Merch</a>
+                <a class="font-['Inter'] antialiased tracking-tight text-base font-medium text-[#acabaa] hover:text-[#f5f5f5] transition-colors duration-200"
+                    href="#" style="">Contact</a>
+            </div>
+            <button
+                class="primary-gradient-btn text-on-primary px-6 py-2.5 rounded-lg font-bold text-sm tracking-tight transition-all hover:opacity-90 active:scale-95"
+                style="">
+                Apply for DAP/AI Lodge</button>
+        </div>
+    </nav>
+    <main class="pt-32 pb-16 px-8 max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <header class="mb-16 max-w-3xl">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="w-8 h-[1px] bg-primary"></span>
+                <span class="text-primary font-bold tracking-widest text-xs uppercase" style="">Portfolio
+                    Showcase</span>
+            </div>
+            <h1 class="text-5xl font-extrabold tracking-tighter text-on-surface mb-6 leading-tight" style="">Project
+                Showcase</h1>
+            <p class="text-on-surface-variant text-lg leading-relaxed font-normal" style="">A collection of past
+                projects from previous batches of Data Associates / AI Lodgers</p>
+        </header>
+        <!-- Standardized Projects Grid (2x2) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-24">
+            <!-- Project 1: DAP -->
+            <div
+                class="group flex flex-col rounded-xl bg-surface-container overflow-hidden transition-all duration-300 hover:ring-1 hover:ring-primary/30">
+                <div class="aspect-[16/10] w-full overflow-hidden">
+                    <img alt="Predictive Financial Synthesis"
+                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-80 group-hover:opacity-100"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjRWHAIq4u4282EcfUBksha0tKV9A1bV8hi4UYOHfRv_eLuhIOP6Gc-cLjixid2HohTmekh4jvk8IUOLhY2VuZBVoCd2HbR3fk7i9XU_DJw1pedyAUmUnIh1JnyAbWG3EI9qnorPoZdiAbAz3yI0hZccKdnA5N780jo-FiuMF2mgqL0npu-FoIrXdROv97ceEvbjXuNDibX0uQPqRHYFlDZyd02GclbXRKvMFoGuJuoK7cqHbMge0Ag5T1yxQl0SEtag8lv73r-OI"
+                        style="" />
+                </div>
+                <div class="p-8 flex-1 flex flex-col">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span
+                            class="bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase"
+                            style="">DAP</span>
+                        <span class="text-on-surface-variant text-xs font-medium" style="">Technical ML</span>
+                    </div>
+                    <h3 class="text-2xl font-bold tracking-tight text-on-surface mb-3 group-hover:text-primary transition-colors"
+                        style="">Predictive Financial Synthesis</h3>
+                    <p class="text-on-surface-variant leading-relaxed text-sm mb-8" style="">
+                        An advanced neural network framework designed to synthesize multi-modal financial data into
+                        actionable market sentiment indices with high historical accuracy.
+                    </p>
+                    <div class="mt-auto flex items-center text-primary font-bold text-sm gap-2">
+                        <span class="" style="">View Case Study</span>
+                        <span class="material-symbols-outlined text-sm" style="">open_in_new</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Project 2: DAP -->
+            <div
+                class="group flex flex-col rounded-xl bg-surface-container overflow-hidden transition-all duration-300 hover:ring-1 hover:ring-primary/30">
+                <div class="aspect-[16/10] w-full overflow-hidden">
+                    <img alt="Graph-Based Supply Chain Optimization"
+                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-80 group-hover:opacity-100"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXUz8AppQGyGj-SwPiD0zAm61wIo7vqYavtTHBDRVy3-0NTn61SnUgKEnUPy7a5bSiff2jCDPw5YAKaSYubSJm6F5s_iHnJv1_bdDR_DpHnLfIDFCh2R5C68B4hi2ZkmJkIy91CL2hs1kWfSYp2ztSGdokDBsy5n8O5cXmWop0_DrWGKwCWRq2djxt7cLaLj7nPEVMTbLhvcUM1fh5QTugK3EJkYYqK14Y-ipF6mZ9Yl6XeKXe93iZ96_KwM_m__g-5So7oqOV5HU"
+                        style="" />
+                </div>
+                <div class="p-8 flex-1 flex flex-col">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span
+                            class="bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase"
+                            style="">DAP</span>
+                        <span class="text-on-surface-variant text-xs font-medium" style="">Operations Research</span>
+                    </div>
+                    <h3 class="text-2xl font-bold tracking-tight text-on-surface mb-3 group-hover:text-primary transition-colors"
+                        style="">Graph-Based Supply Chain Optimization</h3>
+                    <p class="text-on-surface-variant leading-relaxed text-sm mb-8" style="">
+                        Leveraging graph database technologies and heuristic algorithms to identify and mitigate
+                        bottleneck risks in global logistics networks in real-time.
+                    </p>
+                    <div class="mt-auto flex items-center text-primary font-bold text-sm gap-2">
+                        <span class="" style="">View Case Study</span>
+                        <span class="material-symbols-outlined text-sm" style="">open_in_new</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Project 3: AI Lodge -->
+            <div
+                class="group flex flex-col rounded-xl bg-surface-container overflow-hidden transition-all duration-300 hover:ring-1 hover:ring-primary/30">
+                <div class="aspect-[16/10] w-full overflow-hidden">
+                    <img alt="Smart Concierge Telegram Bot"
+                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-80 group-hover:opacity-100"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwcCJEQu8rvXu99wZgXCjO6Fu-vfiwRU9DkMt8-Oa_WEHKXK1YMqxcsqT2NKyMsCYBpS8yKy0ieKa821nL0CNgkdSst-xMWyVD7n840NCcPru_m_9P-NKoQGQGfhgOc3sgaQNnRo6rvgcdJBiqfk330Bno9jGE_pZPNaT6F102DOBPhzYCMujgGzSPP9rr1bz4-0PsbtGxAQBHvpBP-7WuDZPw0EtBYD_IssD2gSVHj6-vfnMectuqYh8vDu3HzbpWKUcuP5Erxpk"
+                        style="" />
+                </div>
+                <div class="p-8 flex-1 flex flex-col">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span
+                            class="bg-tertiary-container/30 text-tertiary border border-tertiary/20 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase"
+                            style="">AI Lodge</span>
+                        <span class="text-on-surface-variant text-xs font-medium" style="">Conversational AI</span>
+                    </div>
+                    <h3 class="text-2xl font-bold tracking-tight text-on-surface mb-3 group-hover:text-primary transition-colors"
+                        style="">Smart Concierge Telegram Bot</h3>
+                    <p class="text-on-surface-variant leading-relaxed text-sm mb-8" style="">
+                        An automated concierge service integrating LLMs with local API endpoints to provide personalized
+                        recommendations and seamless booking experiences.
+                    </p>
+                    <div class="mt-auto flex items-center text-primary font-bold text-sm gap-2">
+                        <span class="" style="">View Case Study</span>
+                        <span class="material-symbols-outlined text-sm" style="">open_in_new</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Project 4: AI Lodge -->
+            <div
+                class="group flex flex-col rounded-xl bg-surface-container overflow-hidden transition-all duration-300 hover:ring-1 hover:ring-primary/30">
+                <div class="aspect-[16/10] w-full overflow-hidden">
+                    <img alt="GPT-Powered Study Assistant"
+                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-80 group-hover:opacity-100"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIh9i3FwlcGUXSld3ZFHGADOJSGZqsosjdVaR9M-n_GS6XrgLDFOmwmH-V2AVsHNLal033pXuvnxWXkHFaG4cyCEah7fMLTay2w2KPTqGM3WsvAjpeywyYyFL8Q12maxV5s0h0M1NOsTyWgVpl-SYtEPXez3fQCYk8e30Wpm9GbKd3OcnTsTieulqUYOMX1eSO6fV2VovmpE38fRFFyF9qOaLeJTt7_tbUrcbtw5Cg8ffUQm5jgo5fHXfc8zY1zHN5LgOxSQZy2KI"
+                        style="" />
+                </div>
+                <div class="p-8 flex-1 flex flex-col">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span
+                            class="bg-tertiary-container/30 text-tertiary border border-tertiary/20 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase"
+                            style="">AI Lodge</span>
+                        <span class="text-on-surface-variant text-xs font-medium" style="">EdTech</span>
+                    </div>
+                    <h3 class="text-2xl font-bold tracking-tight text-on-surface mb-3 group-hover:text-primary transition-colors"
+                        style="">GPT-Powered Study Assistant</h3>
+                    <p class="text-on-surface-variant leading-relaxed text-sm mb-8" style="">
+                        A RAG-based educational tool that processes lecture materials and textbooks to provide
+                        contextual tutoring and automatic flashcard generation.
+                    </p>
+                    <div class="mt-auto flex items-center text-primary font-bold text-sm gap-2">
+                        <span class="" style="">View Case Study</span>
+                        <span class="material-symbols-outlined text-sm" style="">open_in_new</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Final CTA Section -->
+        <section class="border-t border-outline-variant/20 pt-16 pb-8">
+            <div class="bg-surface-container-low rounded-2xl p-12 text-center">
+                <h2 class="text-2xl md:text-3xl font-bold mb-4" style="">Have a project in mind?</h2>
+                <p class="text-on-surface-variant text-lg mb-8 max-w-2xl mx-auto" style="">Join our next DAP / AI Lodge
+                    intake and turn your ideas into reality!</p>
+                <button
+                    class="primary-gradient-btn text-on-primary px-8 py-4 rounded-lg font-bold text-base tracking-tight transition-all hover:opacity-90 active:scale-95 inline-flex items-center gap-2"
+                    style="">
+                    Apply Now
+                    <span class="material-symbols-outlined" style="">rocket_launch</span>
+                </button>
+            </div>
+        </section>
+    </main>
+    <!-- Footer -->
+    <footer class="bg-[#0e0e0e] w-full py-12 border-t border-[#484848]/20">
+        <div class="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-xl font-bold text-[#7dd7c2]" style="">SMUBIA</div>
+            <div class="flex flex-wrap justify-center gap-8">
+                <a class="font-['Inter'] text-sm leading-relaxed text-[#acabaa] hover:text-[#7dd7c2] transition-colors"
+                    href="#" style="">Privacy Policy</a>
+                <a class="font-['Inter'] text-sm leading-relaxed text-[#acabaa] hover:text-[#7dd7c2] transition-colors"
+                    href="#" style="">Terms of Service</a>
+                <a class="font-['Inter'] text-sm leading-relaxed text-[#acabaa] hover:text-[#7dd7c2] transition-colors"
+                    href="#" style="">LinkedIn</a>
+                <a class="font-['Inter'] text-sm leading-relaxed text-[#acabaa] hover:text-[#7dd7c2] transition-colors"
+                    href="#" style="">Instagram</a>
+                <a class="font-['Inter'] text-sm leading-relaxed text-[#acabaa] hover:text-[#7dd7c2] transition-colors"
+                    href="#" style="">GitHub</a>
+            </div>
+            <div class="font-['Inter'] text-sm leading-relaxed text-[#acabaa]" style="">
+                © 2024 SMUBIA. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

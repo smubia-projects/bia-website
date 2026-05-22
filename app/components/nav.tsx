@@ -56,12 +56,8 @@ const Navbar = () => {
                   <Link href="/WhatWeDo" className={styles.NavLink}>
                     What we do
                   </Link>
-                  <Link
-                    href="https://datathon.smubia.com"
-                    target="_blank"
-                    className={styles.DataLink}
-                  >
-                    Datathon
+                  <Link href="/Projects" className={styles.NavLink}>
+                    Our Work
                   </Link>
                   <Link href="/Merchandise" className={styles.NavLink}>
                     Merch
@@ -93,12 +89,8 @@ const Navbar = () => {
                       </Link>
                     </DropdownItem>
                     <DropdownItem>
-                      <Link
-                        href="https://datathon.smubia.com"
-                        target="_blank"
-                        className={styles.NavLink}
-                      >
-                        Datathon
+                      <Link href="/Projects" className={styles.NavLink}>
+                        Our Work
                       </Link>
                     </DropdownItem>
                     <DropdownItem>
