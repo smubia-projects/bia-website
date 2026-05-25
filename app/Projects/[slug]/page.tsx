@@ -1,9 +1,15 @@
 import { notFound } from "next/navigation";
 import styles from "./ProjectDetail.module.css";
-import { getProject } from "@/app/lib/projects";
+import { getProject, getProjects } from "@/app/lib/projects";
 import ProjectDetailContent from "./ProjectDetailContent";
 
 export const revalidate = 3600;
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  const projects = await getProjects();
+  return projects.map((p) => ({ slug: p.slug }));
+}
 
 interface Props {
   params: { slug: string };
