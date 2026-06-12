@@ -1,122 +1,125 @@
-"use client";
 import React from "react";
 import styles from "./footer.module.css";
 import Image from "next/image";
 import Link from "next/link";
+import { FaLinkedin, FaInstagram, FaTelegram, FaEnvelope } from "react-icons/fa";
+import { LINKS } from "@/app/lib/links";
+
+const EXPLORE_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/WhatWeDo", label: "What We Do" },
+  { href: "/DAP", label: "Data Associate Programme" },
+  { href: "/Projects", label: "Projects" },
+  { href: "/WorkWithUs", label: "Work with Us" },
+  { href: "/ContactUs", label: "Contact" },
+];
 
 function FooterBar() {
   return (
-    <div className={styles.footer}>
-      <div className="row flex-nowrap">
-        {/* SMUBIA - Join Now Section */}
-        <div className={`col-6 col-md-3`}>
+    <footer className={styles.footer}>
+      <div className={styles.inner}>
+        <div className={styles.grid}>
+          <div className={styles.brandColumn}>
+            <Image
+              src="/images/logo.png"
+              alt="SMUBIA"
+              width={140}
+              height={37}
+              className={styles.logo}
+            />
+            <p className={styles.blurb}>
+              SMU&apos;s home for data analytics, AI and machine learning —
+              open to all backgrounds since 2015.
+            </p>
+          </div>
+
           <div className={styles.column}>
-            <div className={styles.namecontainer}>
-              <Image
-                src="/images/logo.png"
-                alt="logo"
-                width={0}
-                height={0}
-                sizes="100vw"
-                style={{
-                  width: "35%",
-                  height: "auto",
-                  minWidth: "100px",
-                  margin: "auto",
-                }}
-              />
+            <h3 className={styles.columnTitle}>Explore</h3>
+            <ul className={styles.linkList}>
+              {EXPLORE_LINKS.map(({ href, label }) => (
+                <li key={href}>
+                  <Link href={href} className={styles.footerLink}>
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className={styles.column}>
+            <h3 className={styles.columnTitle}>Find us</h3>
+            <p className={styles.address}>
+              Singapore Management University
+              <br />
+              Level 5, SMU Connexion
+              <br />
+              40 Stamford Road
+              <br />
+              Singapore 178908
+            </p>
+            <a href={LINKS.email} className={styles.footerLink}>
+              bia@sa.smu.edu.sg
+            </a>
+          </div>
+
+          <div className={styles.column}>
+            <h3 className={styles.columnTitle}>Connect</h3>
+            <div className={styles.socialRow}>
+              <a
+                href={LINKS.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn"
+                className={styles.socialIcon}
+              >
+                <FaLinkedin />
+              </a>
+              <a
+                href={LINKS.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className={styles.socialIcon}
+              >
+                <FaInstagram />
+              </a>
+              <a
+                href={LINKS.telegram}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Telegram"
+                className={styles.socialIcon}
+              >
+                <FaTelegram />
+              </a>
+              <a
+                href={LINKS.email}
+                aria-label="Email"
+                className={styles.socialIcon}
+              >
+                <FaEnvelope />
+              </a>
             </div>
+            <a
+              href={LINKS.prospectus}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.prospectusLink}
+            >
+              Download our prospectus →
+            </a>
           </div>
         </div>
-        {/* Centered Content Section */}
-        <div className={`row ${styles.tagcontainer}`}>
-          <div className="col-md-6 d-none d-md-flex justify-content-end">
-            <div className="row">
-              <div className="col-6">
-                <div className={styles.column}>
-                  <h3>
-                    <Link href="./">Home Page</Link>
-                  </h3>
-                  <p>
-                    <Link
-                      href="/#mission"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        const element = document.getElementById("mission");
-                        console.log(element);
-                        if (element) {
-                          element.scrollIntoView({ behavior: "smooth" });
-                        }
-                      }}
-                    >
-                      Mission
-                    </Link>
-                  </p>
-                  <p>
-                    {" "}
-                    <Link
-                      href="/#vision"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        const element = document.getElementById("vision");
-                        console.log(element);
-                        if (element) {
-                          element.scrollIntoView({ behavior: "smooth" });
-                        }
-                      }}
-                    >
-                      Vision
-                    </Link>
-                  </p>
-                  <p>
-                    {" "}
-                    <Link
-                      href="/#alumni"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        const element = document.getElementById("alumni");
-                        console.log(element);
-                        if (element) {
-                          element.scrollIntoView({ behavior: "smooth" });
-                        }
-                      }}
-                    >
-                      Alumni
-                    </Link>
-                  </p>
-                </div>
-              </div>
-              <div className="col-6">
-                <div className={styles.column}>
-                  <h3>
-                    <Link href="/WhatWeDo">What We Do</Link>
-                  </h3>
-                  <p>
-                    <Link href="/WhatWeDo#workshop">Workshops</Link>
-                  </p>
-                  <p>
-                    <Link href="/WhatWeDo#dap">Data Associate Program</Link>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Contact Section */}
-          <div className="col-6 col-md-3">
-            <div className={styles.column}>
-              <h3>Contact</h3>
-              <p>
-                Institute of Innovation & Entrepreneurship <br />
-                Singapore Management University <br />
-                Level 5, SMU Connexion <br />
-                40 Stamford Road <br />
-                Singapore 178908
-              </p>
-            </div>
-          </div>
+
+        <div className={styles.bottomBar}>
+          <span>
+            © {new Date().getFullYear()} SMU Business Intelligence &amp;
+            Analytics Club
+          </span>
+          <span className={styles.est}>est. 2015</span>
         </div>
       </div>
-    </div>
+    </footer>
   );
 }
 

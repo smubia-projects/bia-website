@@ -1,5 +1,5 @@
 .divider {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid var(--border);
   width: 50%;
 }
 
@@ -7,5 +7,5 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: clamp(3rem, 6vw + 2rem, 13rem) 0;
+  margin: clamp(2rem, 3vw + 1rem, 5rem) 0;
 }
