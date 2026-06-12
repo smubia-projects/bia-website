@@ -3,21 +3,68 @@
 @tailwind utilities;
 
 :root {
-  --background: black;
-  --foreground: white;
+  /* Light base */
+  --bg: #f6faf8;
+  --surface: #ffffff;
+  --surface-muted: #edf5f1;
+  --border: #dce7e2;
+
+  /* Ink (text on light) */
+  --ink: #12352c;
+  --ink-soft: #3d5a50;
+  --ink-faint: #6b847b;
+
+  /* Dark pine anchors */
+  --pine-deep: #0c211c;
+  --pine-surface: #16302a;
+  --pine-border: #24433b;
+  --pine-text: #e8f4ef;
+  --pine-text-soft: #9dbbb1;
+
+  /* Accents */
+  --mint: #7dd7c2; /* brand colour — dark backgrounds only */
+  --mint-soft: rgba(125, 215, 194, 0.12);
+  --emerald: #0e7c5b; /* accessible accent on light */
+  --emerald-strong: #0a5f46;
+  --sky: #7bd1fa;
+  --gold: #e9c400;
+  --gold-deep: #8a7400;
+
+  /* Shadows (green-tinted, layered) */
+  --shadow-xs: 0 1px 2px rgba(18, 53, 44, 0.06);
+  --shadow-sm: 0 1px 2px rgba(18, 53, 44, 0.05), 0 2px 8px rgba(18, 53, 44, 0.06);
+  --shadow-md: 0 2px 4px rgba(18, 53, 44, 0.05), 0 8px 24px rgba(18, 53, 44, 0.09);
+  --shadow-lg: 0 4px 8px rgba(18, 53, 44, 0.06), 0 16px 48px rgba(18, 53, 44, 0.12);
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* Back-compat aliases */
+  --background: var(--bg);
+  --foreground: var(--ink);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--ink-soft);
+  font-family: var(--font-inter), system-ui, sans-serif;
 }
 
 @layer utilities {
@@ -30,20 +77,37 @@ body {
   font-family: var(--font-inter);
 }
 
-html {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
+/* Mono eyebrow label — emerald on light, mint on dark via .eyebrowOnDark */
+.eyebrow {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--emerald);
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
+.eyebrowOnDark {
+  color: var(--mint);
+}
+
+/* Radial halo behind headlines on dark pine sections */
+.glow-mint {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(125, 215, 194, 0.18),
+    transparent 65%
+  );
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
 }
 
 .indexup {
@@ -60,5 +124,11 @@ body {
   }
   to {
     opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }
