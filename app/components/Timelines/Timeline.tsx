@@ -19,18 +19,13 @@ const Timeline = ({ events }: { events: Event[] }) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
-<div className="relative w-full min-h-screen flex flex-col items-center px-4 md:px-8">
-  {/* Content Container */}
-  <div className="relative w-full max-w-[2400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 flex flex-col items-center">
-    <h1 className="text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold text-white mt-8 mb-4">
-      Timeline
-    </h1>
-
+    <div className="relative w-full flex flex-col items-center px-4 md:px-8">
+      <div className="relative w-full max-w-[2400px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 flex flex-col items-center">
         {/* Main Content Wrapper */}
-        <div className="w-full flex flex-col items-center gap-8 py-8">
-          {/* Image Section with Larger Sizing */}
+        <div className="w-full flex flex-col items-center gap-4 py-4">
+          {/* Image Section */}
           <div className="w-full relative">
-            <div className="w-full max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[80%] xl:max-w-[70%] mx-auto aspect-[16/9]">
+            <div className="w-full max-w-[95%] sm:max-w-[85%] md:max-w-[75%] lg:max-w-[60%] xl:max-w-[55%] mx-auto aspect-[16/9]">
               <Swiper
                 effect="cards"
                 grabCursor={true}
@@ -47,7 +42,7 @@ const Timeline = ({ events }: { events: Event[] }) => {
                 onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
               >
                 {events.map((event, index) => (
-                  <SwiperSlide key={index} className="rounded-xl overflow-hidden">
+                  <SwiperSlide key={index} className="rounded-xl overflow-hidden border border-[var(--border)]">
                     <div className="relative w-full h-full">
                       <img
                         src={event.imageUrl}
@@ -56,7 +51,7 @@ const Timeline = ({ events }: { events: Event[] }) => {
                       />
                       <div
                         className={`absolute inset-0 ${
-                          index !== activeIndex ? 'bg-black/30' : ''
+                          index !== activeIndex ? 'bg-[#0C211C]/30' : ''
                         }`}
                       />
                     </div>
@@ -65,25 +60,27 @@ const Timeline = ({ events }: { events: Event[] }) => {
               </Swiper>
             </div>
 
-            {/* Navigation Buttons - Original Style */}
-            <div className="flex justify-center gap-6 mt-8">
+            {/* Navigation Buttons */}
+            <div className="flex justify-center gap-4 mt-6">
               <button
                 onClick={() => imageSwiper?.slidePrev()}
-                className="bg-transparent text-white rounded-full p-3 hover:bg-white hover:text-black transition-colors"
+                aria-label="Previous event"
+                className="bg-white text-[var(--ink)] border border-[var(--border)] rounded-full p-3 hover:border-[var(--emerald)] hover:text-[var(--emerald)] transition-colors shadow-sm"
               >
-                <ChevronLeft className="w-8 h-8" />
+                <ChevronLeft className="w-6 h-6" />
               </button>
               <button
                 onClick={() => imageSwiper?.slideNext()}
-                className="bg-transparent text-white rounded-full p-3 hover:bg-white hover:text-black transition-colors"
+                aria-label="Next event"
+                className="bg-white text-[var(--ink)] border border-[var(--border)] rounded-full p-3 hover:border-[var(--emerald)] hover:text-[var(--emerald)] transition-colors shadow-sm"
               >
-                <ChevronRight className="w-8 h-8" />
+                <ChevronRight className="w-6 h-6" />
               </button>
             </div>
           </div>
 
-          {/* Content Section with Larger Text */}
-          <div className="w-full max-w-[95%] sm:max-w-[90%] md:max-w-[85%] lg:max-w-[80%] xl:max-w-[70%] mx-auto">
+          {/* Content Section */}
+          <div className="w-full max-w-[95%] sm:max-w-[85%] md:max-w-[75%] lg:max-w-[65%] mx-auto">
             <Swiper
               modules={[Controller]}
               onSwiper={setContentSwiper}
@@ -93,20 +90,19 @@ const Timeline = ({ events }: { events: Event[] }) => {
             >
               {events.map((event, index) => (
                 <SwiperSlide key={index}>
-                  <div className="text-center p-8">
-                    <h2 className="text-3xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-6">
+                  <div className="text-center p-6">
+                    <h3 className="font-[family-name:var(--font-display)] text-2xl md:text-3xl font-bold text-[var(--ink)] mb-4">
                       {event.title}
-                    </h2>
-                    <p className="text-md md:text-xl lg:text-2xl xl:text-3xl text-white/80 mb-8 max-w-[90%] mx-auto">
+                    </h3>
+                    <p className="text-base md:text-lg text-[var(--ink-soft)] mb-6 max-w-[90%] mx-auto leading-relaxed">
                       {event.description}
                     </p>
                     {event.futureEvent && (
-                      <button className="bg-transparent text-white font-semibold 
-                                     px-8 py-3 rounded-full border-2 border-white
-                                     hover:bg-white hover:text-black transition-colors
-                                     text-lg md:text-xl lg:text-2xl
-                                     uppercase tracking-wider">
-                        SIGN UP
+                      <button className="bg-[var(--emerald)] text-white font-semibold
+                                     px-8 py-3 rounded-full
+                                     hover:bg-[var(--emerald-strong)] transition-colors
+                                     text-base uppercase tracking-wider">
+                        Sign up
                       </button>
                     )}
                   </div>
