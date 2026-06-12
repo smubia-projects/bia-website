@@ -1,0 +1,465 @@
+.page {
+  padding-top: 4rem; /* clear the fixed nav */
+}
+
+/* ============ Hero ============ */
+
+.hero {
+  padding: 5.5rem 1.25rem 4rem;
+}
+
+.heroInner {
+  max-width: 76rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.heroCtas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.875rem;
+}
+
+/* ============ Section shells ============ */
+
+.section {
+  padding: 4.5rem 1.25rem;
+}
+
+.sectionMuted {
+  padding: 4.5rem 1.25rem;
+  background: var(--surface-muted);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.sectionInner {
+  max-width: 76rem;
+  margin: 0 auto;
+}
+
+/* ============ Why partner ============ */
+
+.whyGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+@media (min-width: 768px) {
+  .whyGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.whyCard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.whyCard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.whyNumber {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
+  color: var(--emerald);
+}
+
+.whyTitle {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 1.375rem;
+  color: var(--ink);
+  margin: 0;
+}
+
+.whyBody {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.whyList {
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.whyList li {
+  position: relative;
+  padding-left: 1.375rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.whyList li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--emerald);
+  font-weight: 600;
+}
+
+/* ============ Events ============ */
+
+.eventGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  margin-top: 3rem;
+}
+
+@media (min-width: 640px) {
+  .eventGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .eventGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.eventCard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.75rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.eventCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.eventCardHighlight {
+  border-color: rgba(14, 124, 91, 0.4);
+  box-shadow: var(--shadow-sm);
+}
+
+.eventTag {
+  align-self: flex-start;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--mint-soft);
+  color: var(--emerald);
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.eventName {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--ink);
+  margin: 0;
+}
+
+.eventTiming {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0;
+}
+
+.eventReach {
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 0.25rem 0 0;
+}
+
+.eventItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0.75rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+.eventItems span {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* ============ Tier table (desktop) ============ */
+
+.tierTableWrap {
+  display: none;
+  margin-top: 3rem;
+}
+
+@media (min-width: 768px) {
+  .tierTableWrap {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+.tierTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.tierTable th,
+.tierTable td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.tierTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.benefitHeader {
+  text-align: left;
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-faint);
+  background: var(--surface);
+}
+
+.tierHeader {
+  text-align: center;
+  background: var(--surface);
+  min-width: 7rem;
+}
+
+.tierHeaderTop {
+  background: var(--mint-soft);
+  border-top: 3px solid var(--emerald);
+}
+
+.tierName {
+  display: block;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 1.0625rem;
+  color: var(--ink);
+}
+
+.tierRange {
+  display: block;
+  margin-top: 0.2rem;
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+.benefitCell {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+.checkCell {
+  text-align: center;
+}
+
+.checkCellTop {
+  background: var(--mint-soft);
+}
+
+.check {
+  color: var(--emerald);
+  font-weight: 700;
+  font-size: 1.0625rem;
+}
+
+.dash {
+  color: var(--border);
+}
+
+/* ============ Tier cards (mobile) ============ */
+
+.tierCards {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 3rem;
+}
+
+@media (min-width: 768px) {
+  .tierCards {
+    display: none;
+  }
+}
+
+.tierCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.tierCardTop {
+  border-color: rgba(14, 124, 91, 0.4);
+  border-top: 3px solid var(--emerald);
+}
+
+.tierCardHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.tierCardList {
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.tierCardList li {
+  position: relative;
+  padding-left: 1.375rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.tierCardList li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--emerald);
+  font-weight: 600;
+}
+
+.tierFootnote {
+  margin: 1.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--ink-faint);
+}
+
+/* ============ Partners strip ============ */
+
+.partnerStrip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 3rem;
+  margin-top: 3rem;
+}
+
+.partnerLogo {
+  width: auto;
+  height: 3rem;
+  object-fit: contain;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.partnerLogo:hover {
+  opacity: 1;
+}
+
+/* ============ Contact CTA (dark) ============ */
+
+.contactBand {
+  position: relative;
+  background: var(--pine-deep);
+  padding: 5.5rem 1.25rem;
+  overflow: hidden;
+  text-align: center;
+}
+
+.contactGlow {
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 100%;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(125, 215, 194, 0.15),
+    transparent 65%
+  );
+}
+
+.contactInner {
+  position: relative;
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.contactTitle {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.75rem, 1.3rem + 2.2vw, 2.75rem);
+  letter-spacing: -0.01em;
+  color: var(--pine-text);
+  margin: 0 0 1rem;
+}
+
+.contactText {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--pine-text-soft);
+  margin: 0 0 2rem;
+}
+
+.contactCtas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.875rem;
+}
