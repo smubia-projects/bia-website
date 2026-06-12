@@ -26,7 +26,7 @@ SMUBIA (Singapore Management University Business Intelligence & Analytics Club) 
 - **Hosting:** Vercel (www.smubia.com)
 - **Analytics:** Vercel Analytics and Speed Insights
 
-**Design system ("light base, dark pine anchors"):**
+**Design system ("light base, dark pine anchors")** — full reference in [DESIGN.md](DESIGN.md), read it before any styling work:
 - Light sections: `--bg #F6FAF8`, white cards, ink text `--ink #12352C`
 - Dark anchor sections (home hero, DAP bands, footer): `--pine-deep #0C211C` — never pure black
 - Brand mint `--mint #7DD7C2` is used on dark backgrounds only (fails contrast on white); on light backgrounds use `--emerald #0E7C5B`
@@ -152,6 +152,7 @@ The home page (`app/page.tsx`) demonstrates a custom `ScrollReveal` component us
 - Password-protected route — password stored as `ADMIN_PASSWORD` Vercel env var
 - Auth uses HMAC-signed httpOnly cookies (24h expiry), no database required
 - Supports: add, edit, delete projects + direct image upload to Vercel Blob
+- Per-project show/hide toggle controls whether a project appears on the public `/Projects` listing (`hidden` flag on the Project type); **new projects are created hidden** and must be toggled visible
 - Server Actions in `app/admin/actions.ts` handle all mutations
 
 ### Environment Variables Required
@@ -171,7 +172,8 @@ node scripts/seed-projects.mjs
 ### Adding a Project (via Admin)
 1. Go to `/admin` and log in
 2. Click "Add Project" and fill in the form
-3. Submit — project is saved to Redis (images uploaded to Blob) and the showcase page updates immediately
+3. Submit — project is saved to Redis (images uploaded to Blob) as **hidden**
+4. Flip the project's visibility toggle in the list when it's ready to go live; the showcase page updates immediately
 
 ## Common Development Tasks
 
