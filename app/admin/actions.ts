@@ -151,6 +151,8 @@ export async function addProject(
       techStack: parseTechStack(formData),
       demoUrl: (formData.get("demoUrl") as string) || undefined,
       sourceUrl: (formData.get("sourceUrl") as string) || undefined,
+      // New projects start hidden; an admin flips them visible when ready
+      hidden: true,
     };
 
     await saveProject(project);
@@ -210,6 +212,27 @@ export async function updateProject(
     };
 
     await saveProject(updated);
+    revalidatePath("/Projects");
+    revalidatePath("/Projects/" + slug);
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: String(e) };
+  }
+}
+
+export async function toggleProjectVisibility(
+  slug: string,
+  hidden: boolean
+): Promise<{ success: boolean; error?: string }> {
+  if (!checkAuth()) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  try {
+    const existing = await getProject(slug);
+    if (!existing) return { success: false, error: "Project not found" };
+
+    await saveProject({ ...existing, hidden });
     revalidatePath("/Projects");
     revalidatePath("/Projects/" + slug);
     return { success: true };

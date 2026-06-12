@@ -8,6 +8,7 @@ import {
   addProject,
   updateProject,
   deleteProject,
+  toggleProjectVisibility,
   fetchProjects,
 } from "./actions";
 import { Project } from "@/app/Projects/data/types";
@@ -314,7 +315,9 @@ export default function AdminClient({ initialProjects }: Props) {
     if (result.success) {
       showMessage(
         "success",
-        view === "edit" ? "Project updated" : "Project added"
+        view === "edit"
+          ? "Project updated"
+          : "Project added — hidden by default, toggle it visible when ready"
       );
       await refreshProjects();
       setView("list");
@@ -335,6 +338,21 @@ export default function AdminClient({ initialProjects }: Props) {
     }
     setDeleteConfirm(null);
     setLoading(false);
+  }
+
+  async function handleToggleVisibility(p: Project) {
+    const newHidden = !p.hidden;
+    // optimistic flip; revert on failure
+    setProjects((prev) =>
+      prev.map((x) => (x.slug === p.slug ? { ...x, hidden: newHidden } : x))
+    );
+    const result = await toggleProjectVisibility(p.slug, newHidden);
+    if (!result.success) {
+      setProjects((prev) =>
+        prev.map((x) => (x.slug === p.slug ? { ...x, hidden: !newHidden } : x))
+      );
+      showMessage("error", result.error || "Failed to update visibility");
+    }
   }
 
   async function handleLogout() {
@@ -398,7 +416,12 @@ export default function AdminClient({ initialProjects }: Props) {
 
             <div className={styles.projectList}>
               {projects.map((p) => (
-                <div key={p.slug} className={styles.projectRow}>
+                <div
+                  key={p.slug}
+                  className={`${styles.projectRow} ${
+                    p.hidden ? styles.projectRowHidden : ""
+                  }`}
+                >
                   <div className={styles.projectRowImage}>
                     {p.coverImage ? (
                       <Image
@@ -435,6 +458,26 @@ export default function AdminClient({ initialProjects }: Props) {
                     </div>
                   </div>
                   <div className={styles.projectRowActions}>
+                    <div className={styles.visControl}>
+                      <button
+                        role="switch"
+                        aria-checked={!p.hidden}
+                        aria-label={
+                          p.hidden
+                            ? `Show ${p.title} on the Projects page`
+                            : `Hide ${p.title} from the Projects page`
+                        }
+                        onClick={() => handleToggleVisibility(p)}
+                        className={`${styles.visToggle} ${
+                          !p.hidden ? styles.visToggleOn : ""
+                        }`}
+                      >
+                        <span className={styles.visKnob} />
+                      </button>
+                      <span className={styles.visLabel}>
+                        {p.hidden ? "Hidden" : "Visible"}
+                      </span>
+                    </div>
                     <button
                       onClick={() => startEdit(p)}
                       className={styles.editBtn}

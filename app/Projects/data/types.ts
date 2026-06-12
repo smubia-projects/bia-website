@@ -24,4 +24,6 @@ export interface Project {
   techStack: string[];
   demoUrl?: string;
   sourceUrl?: string;
+  /** When true, the project is excluded from the public /Projects listing */
+  hidden?: boolean;
 }

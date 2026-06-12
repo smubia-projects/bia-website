@@ -6,7 +6,7 @@ import ProjectsContent from "./ProjectsContent";
 export const revalidate = 3600;
 
 export default async function ProjectsPage() {
-  const projects = await getProjects();
+  const projects = (await getProjects()).filter((p) => !p.hidden);
 
   return (
     <main className={styles.page}>
