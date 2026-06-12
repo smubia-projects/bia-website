@@ -111,7 +111,7 @@ export default function ImageCropper({
             showGrid
             style={{
               containerStyle: {
-                background: "#0d0d0d",
+                background: "#0C211C",
               },
             }}
           />
