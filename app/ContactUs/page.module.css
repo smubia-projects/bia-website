@@ -1,43 +1,135 @@
-/* components/ContactUs.module.css */
+.page {
+  padding-top: 4rem; /* clear the fixed nav */
+  min-height: 100vh;
+}
 
-.container {
-  max-width: 600px;
-  margin: 15vw auto;
-  padding: 20px;
+.inner {
+  max-width: 76rem;
+  margin: 0 auto;
+}
+
+.headerSection {
+  padding: 5rem 1.25rem 2.5rem;
+}
+
+/* ============ Join card ============ */
+
+.joinSection {
+  padding: 1rem 1.25rem 3rem;
+  scroll-margin-top: 5rem;
+}
+
+.joinCard {
+  padding: clamp(2rem, 5vw, 3.5rem);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
   text-align: center;
-  font-family: var(--font-inter);
 }
 
-.header {
-  font-size: 2.5rem;
-  margin-bottom: 10px;
-  color: white;
+.joinTitle {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  color: var(--ink);
+  margin: 0 0 0.875rem;
 }
 
-.description {
-  font-size: 1rem;
-  margin-bottom: 20px;
-  color: whitesmoke;
+.joinText {
+  max-width: 34rem;
+  margin: 0 auto 2rem;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--ink-soft);
 }
 
-.links {
+.joinCtas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.875rem;
+}
+
+/* ============ Channels ============ */
+
+.channelsSection {
+  padding: 1rem 1.25rem 5rem;
+}
+
+.channelGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .channelGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.channelCard {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 0.625rem;
+  padding: 1.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
-.link {
-  display: inline-block;
-  font-size: 1.2rem;
-  color: white;
-  background-color: #008080; /* Teal color */
+.channelCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.channelTitle {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--ink);
+  margin: 0;
+}
+
+.channelText {
+  flex: 1;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.channelLink {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--emerald);
   text-decoration: none;
-  font-weight: bold;
-  padding: 10px 20px;
-  border-radius: 5px;
-  transition: background-color 0.3s ease;
 }
 
-.link:hover {
+.channelLink:hover {
   text-decoration: underline;
+  color: var(--emerald-strong);
+}
+
+.addressBlock {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: center;
+  align-items: center;
+}
+
+.address {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+  margin: 0;
 }

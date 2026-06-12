@@ -1,6 +1,6 @@
 .page {
   min-height: 100vh;
-  background-color: #131313;
+  background-color: var(--bg);
   padding-top: 8rem;
   padding-bottom: 4rem;
 }
@@ -28,30 +28,31 @@
   display: block;
   width: 2rem;
   height: 1px;
-  background-color: #7dd7c2;
+  background-color: var(--emerald);
+  opacity: 0.5;
 }
 
 .eyebrowText {
-  color: #7dd7c2;
+  color: var(--emerald);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-family: var(--font-inter);
+  font-family: var(--font-roboto-mono);
 }
 
 .heading {
   font-size: clamp(2.5rem, 5vw, 3.5rem);
   font-weight: 800;
-  color: #e2e2e2;
+  color: var(--ink);
   line-height: 1.1;
   letter-spacing: -0.02em;
   margin-bottom: 1.25rem;
-  font-family: var(--font-inter);
+  font-family: var(--font-display);
 }
 
 .subheading {
-  color: #bdc9c4;
+  color: var(--ink-soft);
   font-size: 1.125rem;
   line-height: 1.6;
   font-family: var(--font-inter);
@@ -69,9 +70,9 @@
 .filterBtn {
   padding: 0.4rem 1.25rem;
   border-radius: 9999px;
-  border: 1px solid rgba(62, 73, 70, 0.6);
-  background: transparent;
-  color: #bdc9c4;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-soft);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -80,14 +81,14 @@
 }
 
 .filterBtn:hover {
-  border-color: #7dd7c2;
-  color: #7dd7c2;
+  border-color: var(--emerald);
+  color: var(--emerald);
 }
 
 .filterBtnActive {
-  background-color: rgba(125, 215, 194, 0.12);
-  border-color: #7dd7c2;
-  color: #7dd7c2;
+  background-color: var(--mint-soft);
+  border-color: var(--emerald);
+  color: var(--emerald);
 }
 
 /* Grid */
@@ -105,7 +106,7 @@
 }
 
 .empty {
-  color: #bdc9c4;
+  color: var(--ink-faint);
   text-align: center;
   padding: 4rem 0;
   font-family: var(--font-inter);
@@ -118,8 +119,10 @@
 }
 
 .ctaBox {
-  background-color: #1b1b1b;
-  border-radius: 1rem;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   padding: clamp(2rem, 5vw, 3.5rem);
   text-align: center;
 }
@@ -127,13 +130,13 @@
 .ctaHeading {
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 700;
-  color: #e2e2e2;
+  color: var(--ink);
   margin-bottom: 1rem;
-  font-family: var(--font-inter);
+  font-family: var(--font-display);
 }
 
 .ctaText {
-  color: #bdc9c4;
+  color: var(--ink-soft);
   font-size: 1.0625rem;
   margin-bottom: 2rem;
   max-width: 36rem;
@@ -147,19 +150,23 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, #7dd7c2 0%, #027665 100%);
-  color: #00382f;
-  font-weight: 700;
+  background: var(--emerald);
+  color: #ffffff;
+  font-weight: 600;
   font-size: 0.9375rem;
   padding: 0.875rem 2rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-pill);
   text-decoration: none;
-  transition: opacity 0.2s ease, transform 0.15s ease;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   font-family: var(--font-inter);
 }
 
 .ctaButton:hover {
-  opacity: 0.9;
-  transform: scale(0.98);
-  color: #00382f;
+  background: var(--emerald-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  color: #ffffff;
 }

@@ -20,10 +20,18 @@ SMUBIA (Singapore Management University Business Intelligence & Analytics Club) 
 **Key Technologies:**
 - **Framework:** Next.js 14 with App Router
 - **Language:** TypeScript
-- **Styling:** Tailwind CSS + CSS Modules
-- **UI Components:** React Bootstrap, NextUI, React Icons, Lucide Icons, Swiper
+- **Styling:** Tailwind CSS + CSS Modules, design tokens as CSS variables in `app/globals.css`
+- **Fonts:** Bricolage Grotesque (display, `--font-display`), Inter (body, `--font-inter`), Roboto Mono (eyebrows/stats, `--font-roboto-mono`) via `next/font/google`
+- **UI Components:** NextUI (CustomModal only), React Icons, Lucide Icons, Swiper
 - **Hosting:** Vercel (www.smubia.com)
 - **Analytics:** Vercel Analytics and Speed Insights
+
+**Design system ("light base, dark pine anchors"):**
+- Light sections: `--bg #F6FAF8`, white cards, ink text `--ink #12352C`
+- Dark anchor sections (home hero, DAP bands, footer): `--pine-deep #0C211C` — never pure black
+- Brand mint `--mint #7DD7C2` is used on dark backgrounds only (fails contrast on white); on light backgrounds use `--emerald #0E7C5B`
+- Shadows/radius scales are tokens (`--shadow-*`, `--radius-*`); all mapped into Tailwind via `tailwind.config.ts`
+- All club URLs (Telegram, sign-up form, Instagram, prospectus, etc.) live in `app/lib/links.ts` — TODO placeholders must be filled before launch
 
 ## Project Architecture
 
@@ -32,46 +40,40 @@ SMUBIA (Singapore Management University Business Intelligence & Analytics Club) 
 ```
 app/
 ├── components/          # Reusable React components
-│   ├── nav.tsx         # Navigation bar (appears on all pages)
-│   ├── footer.tsx      # Footer bar (appears on all pages)
-│   ├── socialmedia.tsx # Social dots sidebar
+│   ├── ui/             # Shared primitives: Button, SectionHeading, ScrollReveal, CountUp, RotatingWord
+│   ├── nav.tsx         # Fixed glassy navbar (custom mobile menu, active links)
+│   ├── footer.tsx      # Dark pine footer (links, contact, socials)
 │   ├── loadingscreen.tsx
 │   ├── ProjectCard.tsx # Project card for showcase grid
-│   ├── Timelines/      # Timeline components with mobile/desktop variants
-│   ├── EventCard.tsx   # Event card component
-│   └── [other components with .module.css for styling]
+│   ├── carousel.tsx    # Alumni testimonial cards (home page)
+│   ├── Wordcard.tsx + CustomModal.tsx  # Image card with modal details (workshops)
+│   └── Timelines/      # TimelineMain (event data) + Timeline (Swiper cards)
 ├── lib/
 │   ├── auth.ts         # HMAC cookie auth (ADMIN_PASSWORD env var)
+│   ├── links.ts        # Single source of truth for all club URLs/CTAs
 │   └── projects.ts     # Read/write project data via Upstash Redis + image upload to Vercel Blob
-├── admin/              # Password-protected admin panel
-│   ├── page.tsx        # Server component — checks auth, loads data
-│   ├── AdminClient.tsx # Client component — CRUD dashboard
-│   ├── LoginForm.tsx   # Login form component
-│   ├── actions.ts      # Server Actions (login, add, edit, delete)
-│   └── Admin.module.css
+├── admin/              # Password-protected admin panel (stays dark-themed, style-isolated)
 ├── Projects/
 │   ├── data/types.ts   # Project & TeamMember interfaces
-│   ├── page.tsx        # Server Component — fetches from Redis (ISR 1h)
-│   ├── ProjectsContent.tsx  # Client component — filter/grid
-│   ├── Projects.module.css
-│   └── [slug]/
-│       ├── page.tsx              # Server Component — fetches single project from Redis
-│       ├── ProjectDetailContent.tsx  # Client component — carousel/content
-│       └── ProjectDetail.module.css
-├── layout.tsx          # Root layout with global structure
-├── page.tsx            # Home page
-├── ContactUs/page.tsx
-├── WhatWeDo/page.tsx
-├── Datathon/page.tsx
-├── Merchandise/page.tsx
-├── globals.css         # Global Tailwind and base styles
-└── fonts/              # Custom fonts (Inter, Roboto Mono)
+│   ├── page.tsx        # Server Component — fetches from Redis (ISR 1h), Suspense for search params
+│   ├── ProjectsContent.tsx  # Client component — filter/grid; supports /Projects?badge=DAP deep links
+│   └── [slug]/         # Project detail page (Redis fetch + carousel)
+├── DAP/                # Flagship Data Associate Programme page (content in data.ts)
+├── WorkWithUs/         # Sponsorship page (tiers/benefits/events in data.ts, from prospectus)
+├── WhatWeDo/           # Offerings: workshops curriculum, events timeline, datathon section
+│   └── datathonData.ts # Datathon stats/copy
+├── Datathon/page.tsx   # Redirects to /WhatWeDo#datathon (route kept for old links)
+├── ContactUs/page.tsx  # Join CTAs (#join anchor), channels, address
+├── Merchandise/page.tsx # Placeholder (not in nav)
+├── layout.tsx          # Root layout: fonts, metadata, Navbar/Footer/LoadingScreen
+├── page.tsx            # Home: dark hero, offerings, stats, DAP band, testimonials, join CTA
+└── globals.css         # Tailwind + design tokens (CSS variables)
 
 scripts/
 ├── seed-projects.mjs   # One-time seed of existing projects to Upstash Redis
 
 public/
-├── images/             # Static images (local)
+├── images/             # Static images (logo is white-on-transparent; nav tints it via CSS filter)
 
 next.config.mjs         # Config for remote image domains
 ```
@@ -79,10 +81,9 @@ next.config.mjs         # Config for remote image domains
 ### Page Structure
 
 **Root Layout** (`app/layout.tsx`):
-- Loads fonts (Inter, Roboto Mono)
-- Wraps all pages with Navbar, Footer, SocialDots
+- Loads fonts (Bricolage Grotesque, Inter, Roboto Mono) via `next/font/google`
+- Wraps all pages with Navbar and Footer (pages must clear the fixed 4rem nav themselves, e.g. `padding-top`)
 - Includes Vercel Analytics and Speed Insights
-- Bootstrap CSS imported globally
 
 **Pages** (Next.js App Router):
 - Each page directory has a `page.tsx` file
@@ -99,11 +100,11 @@ next.config.mjs         # Config for remote image domains
 2. **Tailwind CSS** (for utility classes):
    - Tailwind config located in `tailwind.config.ts`
    - Content paths configured for `./app/**/*.{js,ts,jsx,tsx,mdx}`
-   - Custom colors use CSS variables: `var(--background)`, `var(--foreground)`
+   - Theme colors map to the CSS-variable tokens (`bg`, `surface`, `ink`, `pine`, `mint`, `emerald`, …)
 
 3. **Global Styles**:
-   - `app/globals.css` - imported in root layout
-   - Bootstrap CSS also imported globally
+   - `app/globals.css` - imported in root layout; defines all design tokens, `.eyebrow`, `.glow-mint`, `float` keyframes
+   - Bootstrap has been fully removed — do not reintroduce it
 
 ## Component Patterns
 
@@ -208,7 +209,7 @@ The `Timelines/` folder contains multiple timeline variants:
 ## Notes for Future Development
 
 - The project uses both CSS Modules and Tailwind CSS - maintain this duality for consistency
-- Bootstrap is imported globally but NextUI is the preferred component library for new UI
+- Build new UI with the shared primitives in `app/components/ui/` and the design tokens; NextUI remains only for `CustomModal`
 - Remote image hosting (Vercel Blob/S3) allows for dynamic content without rebuilds
 - All pages use the root layout structure (Navbar, Footer, SocialDots) - keep this consistent
 - Path alias `@/*` maps to repository root, enabling cleaner imports

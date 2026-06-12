@@ -1,20 +1,7 @@
-import React from 'react';
+import { redirect } from "next/navigation";
 
-const Datathon = () => {
-  return (
-    <div style={{ width: '100%', height: '100vh', overflow: 'hidden' }}>
-      <iframe
-        src="https://hackathon-two-rho.vercel.app/"
-        width="100%"
-        height="100%"
-        style={{
-          border: 'none',
-          overflow: 'auto', // Ensure the iframe is scrollable
-        }}
-        title="Datathon Project"
-      />
-    </div>
-  );
-};
-
-export default Datathon;
+// The Datathon now lives as a section on the What We Do page;
+// this route is kept so old links keep working.
+export default function DatathonPage() {
+  redirect("/WhatWeDo#datathon");
+}

@@ -26,7 +26,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
       placement="center"
       scrollBehavior="inside"
       classNames={{
-        base: "bg-[#353535]",
+        base: "bg-white",
         wrapper: styles['modal-wrapper'],
         body: `${styles['modal-body']} ${styles['scrollable']}`,
         header: styles['modal-header'],

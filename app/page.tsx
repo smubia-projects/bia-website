@@ -1,223 +1,252 @@
-"use client";
 import Image from "next/image";
-import styles from "./page.module.css";
-import Divider from "./components/divider";
-import TextChanger from "./components/changingtext";
-import AlumniTestimonials from "./components/carousel";
-// import Sponsor from "./components/sponsor";
-import LinkedInSection from "./components/linkedin";
 import Link from "next/link";
-import React, { useState, useEffect, ReactNode } from "react";
+import styles from "./page.module.css";
+import ScrollReveal from "./components/ui/ScrollReveal";
+import RotatingWord from "./components/ui/RotatingWord";
+import CountUp from "./components/ui/CountUp";
+import Button from "./components/ui/Button";
+import SectionHeading from "./components/ui/SectionHeading";
+import AlumniTestimonials from "./components/carousel";
+import { LINKS } from "./lib/links";
 
+const OFFERINGS = [
+  {
+    number: "01",
+    title: "Workshops",
+    tag: null,
+    body: "Hands-on technical workshops every semester — SQL, Excel, Pandas, data visualisation and data science fundamentals. No prior experience needed.",
+    href: "/WhatWeDo#workshops",
+  },
+  {
+    number: "02",
+    title: "Data Associate Programme",
+    tag: "Flagship",
+    body: "Our selective AI/ML programme. Small teams, weekly theory sessions, and a self-initiated machine learning project mentored from idea to demo day.",
+    href: "/DAP",
+  },
+  {
+    number: "03",
+    title: "BIA Datathon",
+    tag: null,
+    body: "Our annual case-study datathon every January — teams across all faculties compete to turn a real dataset into insight, in front of industry judges.",
+    href: "/WhatWeDo#datathon",
+  },
+];
 
-interface ScrollRevealProps {
-  children: ReactNode;
-  threshold?: number;
-}
-
-const ScrollReveal = ({ children, threshold = 0.1 }: ScrollRevealProps) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [ref, setRef] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    if (!ref) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold }
-    );
-
-    observer.observe(ref);
-
-    return () => observer.disconnect();
-  }, [ref, threshold]);
-
-  return (
-    <div
-      ref={setRef}
-      className={`transition-all duration-700 ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-      }`}
-    >
-      {children}
-    </div>
-  );
-};
+const REACH_STATS = [
+  { value: 2000, suffix: "+", label: "Members & alumni" },
+  { value: 400, suffix: "+", label: "New members yearly" },
+  { value: 2000, suffix: "+", label: "Telegram subscribers" },
+  { value: 1000, suffix: "+", label: "Instagram followers" },
+];
 
 export default function Home() {
-  const [showVideo, setShowVideo] = useState(true);
   return (
     <main>
-      <div className={styles.backgroundGifContainer}>
-        {showVideo && (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            style={{
-              objectFit: "cover",
-              width: "100%",
-              height: "100%",
-              position: "absolute",
-            }}
-            onError={() => setShowVideo(false)}
-          >
-            <source
-              src="https://thisisformygif2.s3.ap-southeast-1.amazonaws.com/test1.mp4"
-              type="video/mp4"
-            />
-          </video>
-        )}
-      </div>
-
-
-      <div className={styles.whowearecontainer}>
-        <div className={styles.contentContainer}>
-          <div className={styles.taglinecontainer}>
-            <span className={styles.tagline}>
-              Business Intelligence
-              <br /> & Analytics Club
-            </span>
-            <span className={styles.taglinetext}>
-              {/* <nbsp></nbsp> est.2015 <br /> Replaced this w below */}{" "}
-              est.2015 <br />
-              <div className={styles.responsivewidth}>
-                <span className={styles.text}>
-                  We are the premier club for business intelligence & analytics
-                  at Singapore Management University{" "}
-                </span>
-              </div>
-            </span>
-          </div>
-          <div id="mission"></div>
-          <Divider />
-          <ScrollReveal>
-            <div className={styles.cardcontainer}>
-              <span className={styles.maintext}>Our Mission</span>
+      {/* Hero */}
+      <section className={styles.hero}>
+        <div className={styles.heroGlow} aria-hidden="true" />
+        <div className={styles.heroInner}>
+          <div className={styles.heroText}>
+            <div className={styles.heroEyebrow}>
+              <span className={styles.heroEyebrowLine} />
+              <span className="eyebrow eyebrowOnDark">
+                SMU Business Intelligence &amp; Analytics Club
+              </span>
+            </div>
+            <h1 className={styles.heroTitle}>
+              Where SMU does
               <br />
-              <p className={styles.missiontext}>
-                To cultivate a people-centric community that nurtures passion
-                for analytics through opportunities, projects, regardless of
-                prior expertise or background.
-              </p>
+              <RotatingWord />
+            </h1>
+            <p className={styles.heroSub}>
+              From your first SQL query to a deployed machine learning model —
+              workshops, our flagship Data Associate Programme and the annual
+              BIA Datathon, open to every faculty and every background.
+            </p>
+            <div className={styles.heroCtas}>
+              <Button href="/ContactUs#join" variant="onDark">
+                Join the club →
+              </Button>
+              <Button href="/WorkWithUs" variant="outlineOnDark">
+                Partner with us
+              </Button>
             </div>
-          </ScrollReveal>
-          <div id="vision"></div>
-          <Divider />
+          </div>
+          <div className={styles.heroMascot}>
+            <Image
+              src="/images/biaMascot.png"
+              alt="BIA astronaut cat mascot"
+              width={400}
+              height={400}
+              className={styles.mascotImage}
+              priority
+            />
+          </div>
+        </div>
+        <div className={styles.heroStats}>
+          <span className={styles.heroStat}>
+            <strong>2,000+</strong> members
+          </span>
+          <span className={styles.heroStat}>
+            <strong>5</strong> faculties
+          </span>
+          <span className={styles.heroStat}>
+            est. <strong>2015</strong>
+          </span>
+        </div>
+      </section>
 
+      {/* What we offer */}
+      <section className={styles.section}>
+        <div className={styles.sectionInner}>
           <ScrollReveal>
-            <div className="relative flex p-2">
-              <div className="text-container w-2/3 relative z-10">
-                <span className={styles.maintext}>
-                  Our Vision for the future
-                </span>
-                <TextChanger />
-                <div className="d-flex flex-nowrap">
-                  <button className={styles.button} type="button">
-                    <Link href="/WhatWeDo" className={styles.NavLink}>
-                      Find Out More
-                    </Link>
-                  </button>
-                  <button className={styles.button} type="button">
-                    <a
-                      href="https://ssvs8thfuktvqsqk.public.blob.vercel-storage.com/prospectus-BwK6FPjMxf1o8v5YOjvux80rSJSqDy.pdf" // Ensure this file is placed in the public/files folder
-                      download
-                      className={styles.link}
-                    >
-                      Prospectus
-                    </a>
-                  </button>
-                </div>
-              </div>
-              <div className="image-container w-1/3 flex justify-end">
-                <Image
-                  className={styles.image1}
-                  src="https://ssvs8thfuktvqsqk.public.blob.vercel-storage.com/biapic7-1YgafDPNrOX7PUKej3bd44TjJT5v4L.jpg"
-                  alt="Photo 2"
-                  width={0}
-                  height={0}
-                  sizes="100vw"
-                  // style={{ width: "50%", height: "auto" }}
-                  priority
-                />
-              </div>
-            </div>
+            <SectionHeading
+              eyebrow="What we do"
+              title="Practical data skills, from day one"
+              lede="Our mission is a people-centric community that nurtures a passion for analytics — through opportunities and projects, regardless of prior expertise or background."
+            />
           </ScrollReveal>
+          <div className={styles.offerGrid}>
+            {OFFERINGS.map((offer, i) => (
+              <ScrollReveal key={offer.number} delay={i * 100}>
+                <Link href={offer.href} className={styles.offerCard}>
+                  <span className={styles.offerNumber}>{offer.number}</span>
+                  <h3 className={styles.offerTitle}>
+                    {offer.title}
+                    {offer.tag && (
+                      <span className={styles.offerTag}>{offer.tag}</span>
+                    )}
+                  </h3>
+                  <p className={styles.offerBody}>{offer.body}</p>
+                  <span className={styles.offerLink}>Explore →</span>
+                </Link>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          <Divider />
-
+      {/* Reach */}
+      <section className={styles.sectionMuted}>
+        <div className={styles.sectionInner}>
           <ScrollReveal>
-            <div className="relative flex p-2">
-              <div className="text-container w-1/2 relative z-10">
-                <span className={styles.maintext}>Our Reach</span>
-                <p className={styles.reachtext}>
-                  We have grown to over 2000++ members
-                </p>
-                <div className={styles.reachContainer}>
-                  <span className={styles.hoverText}>See Our Reach</span>
-                  <div className={styles.expandedText}>
-                    <p>Our growth is at 400 members every year</p>
-                    <p>Instagram: &gt;1000 followers</p>
-                    <p>Telegram: &gt;2000 followers</p>
-                    <p>LinkedIn: &gt;700 followers</p>
-                    <p>Connect with our network today.</p>
+            <SectionHeading
+              eyebrow="Our reach"
+              title="A community that keeps growing"
+              lede="Since 2015 we've grown from a few enthusiasts into one of SMU's largest student communities, spanning all five faculties."
+            />
+          </ScrollReveal>
+          <div className={styles.reachLayout}>
+            <ScrollReveal>
+              <div className={styles.statGrid}>
+                {REACH_STATS.map((stat) => (
+                  <div key={stat.label}>
+                    <div className={styles.statValue}>
+                      <CountUp value={stat.value} />
+                      <span>{stat.suffix}</span>
+                    </div>
+                    <div className={styles.statLabel}>{stat.label}</div>
                   </div>
-                </div>
+                ))}
               </div>
-              <div className="image-container w-1/2 flex justify-end">
-                <Image
-                  className={styles.image1}
-                  src="https://ssvs8thfuktvqsqk.public.blob.vercel-storage.com/biapic2-CKSujqIfzxfHoHCdrWlUtHD3XftCgu.jpg"
-                  alt="Photo 1"
-                  width={0}
-                  height={0}
-                  sizes="100vw"
-                  // style={{ width: "50%", height: "auto" }}
-                  priority
-                />
-              </div>
+            </ScrollReveal>
+            <ScrollReveal delay={150}>
+              <Image
+                src="https://ssvs8thfuktvqsqk.public.blob.vercel-storage.com/biapic2-CKSujqIfzxfHoHCdrWlUtHD3XftCgu.jpg"
+                alt="SMUBIA members at a club event"
+                width={0}
+                height={0}
+                sizes="(min-width: 1024px) 40vw, 90vw"
+                className={styles.reachImage}
+              />
+            </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* DAP spotlight */}
+      <section className={styles.dapBand}>
+        <div className={styles.dapGlow} aria-hidden="true" />
+        <div className={styles.dapInner}>
+          <ScrollReveal>
+            <SectionHeading
+              tone="dark"
+              eyebrow="Flagship Programme"
+              title="The Data Associate Programme"
+              lede="A selective, project-driven AI/ML programme. Each cohort of around 50 associates works in small mentored teams — from theory sessions to a working model they present at our showcase."
+            />
+          </ScrollReveal>
+          <ScrollReveal delay={100}>
+            <div className={styles.dapMeta}>
+              <span className={styles.dapMetaItem}>
+                <strong>~50</strong> per cohort
+              </span>
+              <span className={styles.dapMetaItem}>
+                <strong>9+</strong> batches &amp; counting
+              </span>
+              <span className={styles.dapMetaItem}>
+                application-based
+              </span>
             </div>
           </ScrollReveal>
-          <div id="alumni"></div>
-          <Divider />
+          <ScrollReveal delay={200}>
+            <div>
+              <Button href="/DAP" variant="onDark">
+                Discover DAP →
+              </Button>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
 
+      {/* Alumni testimonials */}
+      <section className={styles.section}>
+        <div className={styles.sectionInner}>
           <ScrollReveal>
             <AlumniTestimonials />
           </ScrollReveal>
+        </div>
+      </section>
 
-          <Divider />
-          {/* <Sponsor /> */}
-          {/* <Divider /> */}
-
+      {/* Join CTA */}
+      <section className={styles.sectionMuted}>
+        <div className={styles.sectionInner} style={{ textAlign: "center" }}>
           <ScrollReveal>
-            <div className="relative flex flex-col md:flex-row p-2">
-              <div className="text-container w-full mb-11 md:mb-0 md:w-1/2 relative z-10 md:pe-5 text-justify md:text-left">
-                <span className={styles.longtext}>
-                  SMUBIA was established in 2015 by just a few enthusiasts.
-                  Today, we have evolved into a large and thriving community.
-                </span>
-              </div>
-              <div className="image-container w-full md:w-1/2 grid place-items-center text-center md:mb-0 mb-3">
-                <Link href="/ContactUs">
-                  <span className={styles.joinustext}>Join Us Today.</span>
-                </Link>
-              </div>
+            <h2 className={styles.joinHeading}>
+              Ready to get your hands dirty with data?
+            </h2>
+            <p className={styles.joinText}>
+              SMUBIA was started in 2015 by a few enthusiasts. Today we&apos;re
+              a thriving community — and there&apos;s a seat for you,
+              whatever your background.
+            </p>
+            <div className={styles.joinCtas}>
+              <Button href={LINKS.telegram} variant="primary" external>
+                Join our Telegram
+              </Button>
+              <Button href={LINKS.joinForm} variant="outline" external>
+                Sign-up form
+              </Button>
+              <Button href={LINKS.instagram} variant="outline" external>
+                Instagram
+              </Button>
             </div>
-          </ScrollReveal>
-
-          <Divider />
-
-          <ScrollReveal>
-            <LinkedInSection />
+            <p className={styles.joinFootnote}>
+              Companies and recruiters — see how to{" "}
+              <Link href="/WorkWithUs">work with us</Link> or follow us on{" "}
+              <a
+                href={LINKS.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                LinkedIn
+              </a>
+              .
+            </p>
           </ScrollReveal>
         </div>
-      </div>
+      </section>
     </main>
   );
 }

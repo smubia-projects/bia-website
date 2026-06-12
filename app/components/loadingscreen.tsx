@@ -22,8 +22,8 @@ const LoadingScreen = () => {
   if (!isLoading) return null;
 
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
-      <Loader2 className="h-12 w-12 animate-spin text-white" />
+    <div className="fixed inset-0 bg-[#0C211C] flex items-center justify-center z-50">
+      <Loader2 className="h-12 w-12 animate-spin text-[#7DD7C2]" />
     </div>
   );
 };

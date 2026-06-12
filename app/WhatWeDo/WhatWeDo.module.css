@@ -1,140 +1,225 @@
-.page-container {
-  width: 100%;
-  margin: 0 auto;
-  font-family: var(--font-inter);
+.page {
+  padding-top: 4rem; /* clear the fixed nav */
 }
 
-/* Section 1: Cat image and Text */
-.section1 {
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding-top: 80px; /* Add space below the navbar */
-  z-index: 1; /* Keep it above background */
-  font-family: var(--font-inter);
-}
+/* ============ Page header ============ */
 
-/* Responsive styling for the header text */
 .header {
-  font-family: var(--font-inter);
-  font-size: clamp(1.5rem, 4vw, 3rem); /* Responsive font size */
-  margin-bottom: 20px;
+  padding: 5rem 1.25rem 2rem;
 }
 
-/* Text container for description */
-.para-text {
-  font-size: clamp(0.875rem, 3vw, 1.25rem); /* Responsive font size */
-  max-width: 400px;
-  line-height: 1.6;
+.headerInner {
+  max-width: 76rem;
   margin: 0 auto;
-}
-
-/* Section 1: Cat image */
-.catimg-container {
-  position: relative;
-  z-index: 1;
-  width: 66vw; /* 2/3 of the viewport width */
-  height: auto;
-}
-
-.catimg {
-  width: 100%;
-  height: auto;
-}
-
-/* Text on the right side of the cat image */
-.text-container {
-  position: relative;
-  flex: 1;
-  padding-top: 20%;
-  max-width: 400px;
-  margin-left: 20px;
-  font-family: var(--font-inter);
-}
-
-/* Section 1 Cards */
-.section1-cards {
-  position: relative;
   display: flex;
-  justify-content: center;
-  gap: 10px; /* Small gap between the cards */
-  padding: 20px;
-  z-index: 2; /* Keep above the cat image */
-  margin-top: 100px; /* Add vertical distance */
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
 }
 
-/* Wordcard Styles */
-.wordcard {
+.headerText {
   flex: 1;
-  max-width: 30%;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  transition: transform 0.3s ease;
 }
 
-.wordcard:hover {
-  transform: scale(1.05);
-}
-
-/* Timeline Section */
-.timeline-section {
-  padding: 100px 0; /* Add vertical distance */
-}
-
-/* DAP Section */
-.dap-section {
-  padding: 100px 0; /* Add vertical distance */
+.mascot {
+  display: none;
+  width: clamp(8rem, 6rem + 8vw, 13rem);
+  height: auto;
+  animation: float 6s ease-in-out infinite;
+  filter: drop-shadow(0 16px 32px rgba(18, 53, 44, 0.18));
 }
 
 @media (min-width: 768px) {
-  .para-text {
-    font-size: clamp(0.7rem, 3.5vw, 1.1rem); /* Responsive font size */
-    max-width: 450px;
+  .mascot {
+    display: block;
   }
-  .header {
-    font-size: clamp(2rem, 4.5vw, 3.5rem); /* Responsive font size */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot {
+    animation: none;
   }
-  .page-container {
-    padding: 2rem;
+}
+
+/* ============ Section shells ============ */
+
+.section {
+  padding: 4.5rem 1.25rem;
+}
+
+.sectionMuted {
+  padding: 4.5rem 1.25rem;
+  background: var(--surface-muted);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.sectionInner {
+  max-width: 76rem;
+  margin: 0 auto;
+}
+
+/* ============ Workshops curriculum ============ */
+
+.curriculumGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+@media (min-width: 768px) {
+  .curriculumGrid {
+    grid-template-columns: repeat(3, 1fr);
   }
-  .section1-cards {
-    margin-top: 120px; /* Increase margin for medium screens */
+}
+
+.curriculumCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+}
+
+.curriculumMeta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.curriculumNumber {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--emerald);
+}
+
+.curriculumTrack {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.curriculumImage {
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.curriculumImage:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.curriculumSummary {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.modalText ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 0;
+}
+
+.modalText li {
+  margin-bottom: 0.5rem;
+}
+
+/* ============ Datathon ============ */
+
+.datathonStats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+@media (min-width: 768px) {
+  .datathonStats {
+    grid-template-columns: repeat(4, 1fr);
   }
+}
+
+.datathonStat {
+  padding: 1.75rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+.datathonValue {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem);
+  line-height: 1;
+  color: var(--emerald);
+}
+
+.datathonLabel {
+  margin-top: 0.625rem;
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.datathonCtas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.875rem;
+  margin-top: 2.5rem;
+}
+
+/* ============ DAP pointer (dark) ============ */
+
+.dapPointer {
+  background: var(--pine-deep);
+  padding: 4.5rem 1.25rem;
+}
+
+.dapPointerInner {
+  max-width: 76rem;
+  margin: 0 auto;
+}
+
+.dapPointerContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2rem;
 }
 
 @media (min-width: 1024px) {
-  .para-text {
-    font-size: clamp(0.8rem, 4vw, 1.2rem); /* Responsive font size */
-    max-width: 500px;
-  }
-  .header {
-    font-size: clamp(2.5rem, 5vw, 4rem); /* Responsive font size */
-  }
-  .page-container {
-    padding: 3rem;
-  }
-  .section1-cards {
-    margin-top: 140px; /* Increase margin for large screens */
+  .dapPointerContent {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 }
 
-@media (max-width: 767px) {
-  .para-text {
-    font-size: clamp(0.75rem, 3vw, 1rem); /* Responsive font size */
-  }
-  .text-container{
-    padding-top: 10%;
-  }
-  .section1-cards{
-    margin-top: 50px; /* Reduce margin for small screens */
-  }
+.dapPointerTitle {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+  color: var(--pine-text);
+  margin: 0.875rem 0 0.75rem;
 }
-@media (max-width: 576px) {
-  .para-text {
-    font-size: clamp(0.3rem, 3vw, 0.75rem); /* Responsive font size */
-  }
-  .text-container{
-    padding-top: 5%;
-  }
+
+.dapPointerText {
+  max-width: 36rem;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--pine-text-soft);
+  margin: 0;
 }

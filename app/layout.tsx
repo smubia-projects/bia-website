@@ -1,39 +1,34 @@
 import type { Metadata } from "next";
-// import localFont from "next/font/local";
-import { Inter } from "next/font/google";
-import { Roboto_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Inter, Roboto_Mono } from "next/font/google";
 import Navbar from "./components/nav";
 import FooterBar from "./components/footer";
-import SocialDots from "./components/socialmedia";
-// import Image from "next/image";
-// import LoadingScreen from "./components/LoadingScreen";
 import LoadingScreen from "./components/loadingscreen";
-import "bootstrap/dist/css/bootstrap.min.css";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-// const geistSans = localFont({
-//   src: "./fonts/Inter.ttf",
-//   variable: "--font-inter",
-//   weight: "100 900",
-// });
-
-const Inter_init = Inter({
+const display = Bricolage_Grotesque({
   subsets: ["latin"],
-  weight: ["300"],
+  weight: ["600", "700", "800"],
+  variable: "--font-display",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
   variable: "--font-inter",
 });
 
-const Roboto_Mono_init = Roboto_Mono({
+const mono = Roboto_Mono({
   subsets: ["latin"],
-  weight: ["300"],
+  weight: ["400", "500"],
   variable: "--font-roboto-mono",
 });
 
 export const metadata: Metadata = {
-  title: "SMUBIA",
-  description: "Created by BIA",
+  title: "SMUBIA — SMU Business Intelligence & Analytics Club",
+  description:
+    "SMU's home for data analytics, AI and machine learning. Workshops, the Data Associate Programme, and the annual BIA Datathon — open to all backgrounds since 2015.",
 };
 
 export default function RootLayout({
@@ -43,7 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${Inter_init.variable} ${Roboto_Mono_init.variable}`}>
+      <body className={`${display.variable} ${inter.variable} ${mono.variable}`}>
         <LoadingScreen />
         <Navbar />
         {children}
@@ -51,9 +46,6 @@ export default function RootLayout({
         <SpeedInsights />
         <div id="portal"></div>
         <FooterBar />
-        <div className="indexup">
-          <SocialDots />
-        </div>
       </body>
     </html>
   );
