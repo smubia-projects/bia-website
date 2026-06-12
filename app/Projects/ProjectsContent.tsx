@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import styles from "./Projects.module.css";
 import ProjectCard from "@/app/components/ProjectCard";
 import Divider from "@/app/components/divider";
@@ -13,12 +14,18 @@ interface Props {
 }
 
 export default function ProjectsContent({ projects }: Props) {
-  const [activeFilter, setActiveFilter] = useState<string>(ALL);
+  const searchParams = useSearchParams();
 
   const filters = useMemo(() => {
     const badges = Array.from(new Set(projects.map((p) => p.badge)));
     return [ALL, ...badges];
   }, [projects]);
+
+  // Allow deep links like /Projects?badge=DAP; ignore unknown badges
+  const requestedBadge = searchParams.get("badge");
+  const initialFilter =
+    requestedBadge && filters.includes(requestedBadge) ? requestedBadge : ALL;
+  const [activeFilter, setActiveFilter] = useState<string>(initialFilter);
 
   const filtered = useMemo(() => {
     if (activeFilter === ALL) return projects;
