@@ -195,3 +195,26 @@ Breakpoints: 640 / 768 / 1024px (nav switches to hamburger below 1024).
 - Reintroduce Bootstrap, hardcode hexes that exist as tokens, or add new fonts
 - Use gold for anything except AI Lodge badges
 - Add motion beyond §7 — corporate sponsors browse this site
+
+## 10. Refinement rules (July 2026 cohesion pass)
+
+Locked in during the site-wide touch-up; hold these in all future work:
+
+- **Shadow ladder is complete and closed**: `--shadow-xs → xl`. Resting cards sit at
+  `sm` (with a hairline border); `md` is earned on hover, `lg` on floating/featured,
+  `xl` on hero moments. On dark/dusk sections shadows may be page-local and warmer.
+- **Type floor**: no text below 0.75rem (12px), including mono badges and kickers.
+  Micro-labels are one family: mono, uppercase, 0.75rem, wide tracking.
+- **Eyebrows**: mono, uppercase, `letter-spacing: 0.15em` (global `.eyebrow`).
+- **One icon family**: `lucide-react` only, stroke 1.75, sized via the `size` prop
+  (18 inline / 22 controls / 24 default). FontAwesome and react-icons were removed.
+- **Focus**: global `:focus-visible` ring — 2px `--teal-mid`, 2px offset. Never remove.
+- **Motion**: §7 rules, plus a global `prefers-reduced-motion` kill-switch in
+  `globals.css`. Marquees/reels exist (Projects hero, AI Lodge highlights) as
+  deliberate exceptions — they must keep their static fallbacks.
+- **Programme colours are jobs, not decoration**: mint/emerald = DAP + brand,
+  sand/amber = AI Lodge, teal = Events. Where programmes appear side by side
+  (home pillars, Projects CTA), they get equal visual weight in their own colour.
+- **Footer** carries the oversized `SMUBIA` watermark texture (mint at 5% alpha) —
+  a designed statement, keep it barely-there.
+- **Z-index**: no arbitrary values; nothing above the modal layer.
