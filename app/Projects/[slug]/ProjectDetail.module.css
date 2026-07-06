@@ -31,7 +31,7 @@
   border: 1px solid rgba(14, 124, 91, 0.25);
   padding: 0.2rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -43,7 +43,7 @@
   border: 1px solid rgba(138, 116, 0, 0.25);
   padding: 0.2rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -569,7 +569,7 @@
   border-radius: 9999px;
   background-color: var(--mint-soft);
   color: var(--emerald);
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;

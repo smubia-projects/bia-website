@@ -281,7 +281,7 @@
 
 .visLabel {
   min-width: 2.75rem;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -303,7 +303,7 @@
   border: 1px solid rgba(14, 124, 91, 0.25);
   padding: 0.125rem 0.5rem;
   border-radius: 9999px;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -315,7 +315,7 @@
   border: 1px solid rgba(138, 116, 0, 0.25);
   padding: 0.125rem 0.5rem;
   border-radius: 9999px;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -427,7 +427,7 @@
   background-color: rgba(220, 38, 38, 0.1);
   border: 1px solid rgba(220, 38, 38, 0.4);
   color: #b91c1c;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
   font-family: var(--font-inter);
@@ -443,7 +443,7 @@
   background-color: var(--surface);
   border: 1px solid var(--border);
   color: var(--ink-soft);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
   font-family: var(--font-inter);
@@ -628,7 +628,7 @@
 
 .imageSectionHint {
   color: var(--ink-faint);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-family: var(--font-inter);
 }
 
@@ -736,7 +736,7 @@
   border-radius: 0.25rem;
   background-color: var(--emerald);
   color: #ffffff;
-  font-size: 0.5625rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;

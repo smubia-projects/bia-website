@@ -34,7 +34,7 @@
 
 .quote {
   margin: 0;
-  font-size: 0.9875rem;
+  font-size: 1rem;
   line-height: 1.7;
   color: var(--ink-soft);
 }
