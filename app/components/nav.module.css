@@ -25,25 +25,15 @@
 .logoLink {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   flex-shrink: 0;
-  text-decoration: none;
 }
 
-.mascot {
+.logo {
   width: auto;
-  height: 2rem;
+  height: 1.75rem;
   /* white source PNG tinted toward deep pine */
   filter: brightness(0) invert(17%) sepia(19%) saturate(1100%)
     hue-rotate(125deg);
-}
-
-.wordmark {
-  font-family: var(--font-display), sans-serif;
-  font-size: 1.125rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: var(--ink);
 }
 
 .desktopLinks {

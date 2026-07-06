@@ -21,22 +21,13 @@ function FooterBar() {
       <div className={styles.inner}>
         <div className={styles.grid}>
           <div className={styles.brandColumn}>
-            <div className={styles.brandLockup}>
-              <Image
-                src="/images/mascot.png"
-                alt=""
-                width={44}
-                height={44}
-                className={styles.brandMascot}
-              />
-              <Image
-                src="/images/logo.png"
-                alt="SMUBIA"
-                width={140}
-                height={37}
-                className={styles.logo}
-              />
-            </div>
+            <Image
+              src="/images/logo.png"
+              alt="SMUBIA"
+              width={140}
+              height={37}
+              className={styles.logo}
+            />
             <p className={styles.blurb}>
               SMU&apos;s home for data analytics, AI and machine learning —
               open to all backgrounds since 2015.

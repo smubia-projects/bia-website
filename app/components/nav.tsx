@@ -32,16 +32,15 @@ const Navbar = () => {
   return (
     <header className={styles.navbar}>
       <div className={styles.inner}>
-        <Link href="/" className={styles.logoLink} aria-label="SMU BIA home">
+        <Link href="/" className={styles.logoLink} aria-label="SMUBIA home">
           <Image
-            src="/images/mascot.png"
-            alt=""
-            width={40}
-            height={40}
-            className={styles.mascot}
+            src="/images/logo.png"
+            alt="SMUBIA"
+            width={120}
+            height={32}
+            className={styles.logo}
             priority
           />
-          <span className={styles.wordmark}>SMU BIA</span>
         </Link>
 
         <nav className={styles.desktopLinks} aria-label="Main navigation">
