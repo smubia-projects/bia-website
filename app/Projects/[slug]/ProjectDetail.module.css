@@ -11,7 +11,114 @@
   padding: 0 1.5rem;
 }
 
-/* Header */
+/* Showcase header (below the carousel) */
+.showcaseHeader {
+  margin-bottom: 3.5rem;
+  max-width: 52rem;
+}
+
+.showcaseMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.badgeDAP {
+  background-color: var(--mint-soft);
+  color: var(--emerald);
+  border: 1px solid rgba(14, 124, 91, 0.25);
+  padding: 0.2rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.badgeAI {
+  background-color: rgba(233, 196, 0, 0.14);
+  color: var(--gold-deep);
+  border: 1px solid rgba(138, 116, 0, 0.25);
+  padding: 0.2rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.category {
+  color: var(--ink-faint);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: var(--font-inter);
+}
+
+.builder {
+  color: var(--ink-soft);
+  font-size: 1rem;
+  margin: 1.25rem 0 0;
+  font-family: var(--font-inter);
+}
+
+.builderName {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.actionBtnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--emerald);
+  border: 1px solid var(--emerald);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  font-family: var(--font-inter);
+}
+
+.actionBtnPrimary:hover {
+  background-color: var(--emerald-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  color: #ffffff;
+}
+
+/* Story (long-form article) */
+.storySection {
+  max-width: 44rem;
+  margin: 0 auto 2rem;
+}
+
+.storyBody {
+  margin-top: 0.5rem;
+}
+
+.teamCredit {
+  max-width: 44rem;
+  margin: 3.5rem auto 0;
+}
+
+.creditList {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 2.5rem;
+}
+
+/* Legacy header (kept for reference) */
 .header {
   margin-bottom: 3rem;
 }
@@ -86,6 +193,7 @@
   gap: 1rem;
   flex-shrink: 0;
   flex-wrap: wrap;
+  margin-top: 1.75rem;
 }
 
 .actionBtn {
