@@ -51,7 +51,7 @@ const Timeline = ({ events }: { events: Event[] }) => {
                       />
                       <div
                         className={`absolute inset-0 ${
-                          index !== activeIndex ? 'bg-[#0C211C]/30' : ''
+                          index !== activeIndex ? 'bg-[var(--pine-deep)]/30' : ''
                         }`}
                       />
                     </div>
