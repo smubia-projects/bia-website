@@ -7,43 +7,56 @@ import CountUp from "./components/ui/CountUp";
 import Button from "./components/ui/Button";
 import SectionHeading from "./components/ui/SectionHeading";
 import AlumniTestimonials from "./components/carousel";
-import { LINKS } from "./lib/links";
 
-const OFFERINGS = [
+/** Three entry points into the club. One line of copy each. */
+const PILLARS = [
   {
-    number: "01",
-    title: "Workshops",
-    tag: null,
-    body: "Hands-on technical workshops every semester — SQL, Excel, Pandas, data visualisation and data science fundamentals. No prior experience needed.",
-    href: "/WhatWeDo#workshops",
-  },
-  {
-    number: "02",
+    kicker: "Flagship",
     title: "Data Associate Programme",
-    tag: "Flagship",
-    body: "Our selective AI/ML programme. Small teams, weekly theory sessions, and a self-initiated machine learning project mentored from idea to demo day.",
+    body: "A selective AI/ML cohort — from theory sessions to a demo-day project.",
     href: "/DAP",
+    accent: "dap",
   },
   {
-    number: "03",
-    title: "BIA Datathon",
-    tag: null,
-    body: "Our annual case-study datathon every January — teams across all faculties compete to turn a real dataset into insight, in front of industry judges.",
-    href: "/WhatWeDo#datathon",
+    kicker: "New",
+    title: "AI Lodge",
+    body: "An eight-week build community where teams ship real AI projects.",
+    href: "/AILodge",
+    accent: "lodge",
   },
-];
+  {
+    kicker: "Open to all",
+    title: "Events & Workshops",
+    body: "Hands-on sessions in SQL, Python and data science every semester.",
+    href: "/Events",
+    accent: "events",
+  },
+] as const;
 
-const REACH_STATS = [
-  { value: 2000, suffix: "+", label: "Members & alumni" },
-  { value: 400, suffix: "+", label: "New members yearly" },
-  { value: 2000, suffix: "+", label: "Telegram subscribers" },
-  { value: 1000, suffix: "+", label: "Instagram followers" },
+/**
+ * Static teaser strip — decoupled from the Redis showcase on purpose (Wave 5
+ * owns the real /Projects listing). Titles all point to /Projects until
+ * per-project slugs are wired up.
+ */
+const FEATURED_PROJECTS = [
+  {
+    title: "CaloTracko",
+    blurb: "Snap a meal, track your calories with AI.",
+  },
+  {
+    title: "Storie",
+    blurb: "Turn everyday photos into shareable stories.",
+  },
+  {
+    title: "Enhance AI",
+    blurb: "Sharpen and upscale images in a single click.",
+  },
 ];
 
 export default function Home() {
   return (
     <main>
-      {/* Hero */}
+      {/* Hero — dark pine anchor with candid photo cluster */}
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.heroInner}>
@@ -60,33 +73,63 @@ export default function Home() {
               <RotatingWord />
             </h1>
             <p className={styles.heroSub}>
-              From your first SQL query to a deployed machine learning model —
-              workshops, our flagship Data Associate Programme and the annual
-              BIA Datathon, open to every faculty and every background.
+              Workshops, a flagship AI programme and a builder community — open
+              to every faculty, no experience needed.
             </p>
             <div className={styles.heroCtas}>
               <Button href="/ContactUs#join" variant="onDark">
-                Join the club →
+                Join us →
               </Button>
-              <Button href="/WorkWithUs" variant="outlineOnDark">
-                Partner with us
+              <Button href="/Projects" variant="outlineOnDark">
+                See our projects
               </Button>
             </div>
           </div>
-          <div className={styles.heroMascot}>
+
+          {/* Candid photo cluster — slightly-tilted collage */}
+          <div className={styles.heroCluster}>
+            <figure className={`${styles.clusterPhoto} ${styles.clusterA}`}>
+              <Image
+                src="/images/home/hero-cohort.webp"
+                alt="SMUBIA Data Associate Programme cohort"
+                fill
+                sizes="(min-width: 1024px) 30vw, 60vw"
+                className={styles.clusterImg}
+                priority
+              />
+            </figure>
+            <figure className={`${styles.clusterPhoto} ${styles.clusterB}`}>
+              <Image
+                src="/images/home/hero-demoday.webp"
+                alt="Members presenting at an AI Lodge demo day"
+                fill
+                sizes="(min-width: 1024px) 22vw, 45vw"
+                className={styles.clusterImg}
+              />
+            </figure>
+            <figure className={`${styles.clusterPhoto} ${styles.clusterC}`}>
+              <Image
+                src="/images/home/hero-ailodge.webp"
+                alt="An AI Lodge team hanging out"
+                fill
+                sizes="(min-width: 1024px) 28vw, 55vw"
+                className={styles.clusterImg}
+              />
+            </figure>
+            {/* Playful astro-cat kept as a small floating accent on the cluster */}
             <Image
               src="/images/biaMascot.png"
-              alt="BIA astronaut cat mascot"
-              width={400}
-              height={400}
-              className={styles.mascotImage}
-              priority
+              alt=""
+              aria-hidden="true"
+              width={160}
+              height={160}
+              className={styles.clusterMascot}
             />
           </div>
         </div>
         <div className={styles.heroStats}>
           <span className={styles.heroStat}>
-            <strong>2,000+</strong> members
+            <strong>2,000+</strong> members {/* TBC — confirm with club */}
           </span>
           <span className={styles.heroStat}>
             <strong>5</strong> faculties
@@ -97,29 +140,28 @@ export default function Home() {
         </div>
       </section>
 
-      {/* What we offer */}
+      {/* Three pillars */}
       <section className={styles.section}>
         <div className={styles.sectionInner}>
           <ScrollReveal>
             <SectionHeading
               eyebrow="What we do"
-              title="Practical data skills, from day one"
-              lede="Our mission is a people-centric community that nurtures a passion for analytics — through opportunities and projects, regardless of prior expertise or background."
+              title="Three ways in"
+              lede="Pick your entry point — from your first workshop to a deployed model."
             />
           </ScrollReveal>
-          <div className={styles.offerGrid}>
-            {OFFERINGS.map((offer, i) => (
-              <ScrollReveal key={offer.number} delay={i * 100}>
-                <Link href={offer.href} className={styles.offerCard}>
-                  <span className={styles.offerNumber}>{offer.number}</span>
-                  <h3 className={styles.offerTitle}>
-                    {offer.title}
-                    {offer.tag && (
-                      <span className={styles.offerTag}>{offer.tag}</span>
-                    )}
-                  </h3>
-                  <p className={styles.offerBody}>{offer.body}</p>
-                  <span className={styles.offerLink}>Explore →</span>
+          <div className={styles.pillarGrid}>
+            {PILLARS.map((pillar, i) => (
+              <ScrollReveal key={pillar.title} delay={i * 100}>
+                <Link
+                  href={pillar.href}
+                  className={`${styles.pillarCard} ${styles[pillar.accent]}`}
+                >
+                  <span className={styles.pillarBar} aria-hidden="true" />
+                  <span className={styles.pillarKicker}>{pillar.kicker}</span>
+                  <h3 className={styles.pillarTitle}>{pillar.title}</h3>
+                  <p className={styles.pillarBody}>{pillar.body}</p>
+                  <span className={styles.pillarLink}>Explore →</span>
                 </Link>
               </ScrollReveal>
             ))}
@@ -127,81 +169,80 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Reach */}
+      {/* Stat spotlight — one focal number, minors beneath */}
       <section className={styles.sectionMuted}>
         <div className={styles.sectionInner}>
           <ScrollReveal>
-            <SectionHeading
-              eyebrow="Our reach"
-              title="A community that keeps growing"
-              lede="Since 2015 we've grown from a few enthusiasts into one of SMU's largest student communities, spanning all five faculties."
-            />
-          </ScrollReveal>
-          <div className={styles.reachLayout}>
-            <ScrollReveal>
-              <div className={styles.statGrid}>
-                {REACH_STATS.map((stat) => (
-                  <div key={stat.label}>
-                    <div className={styles.statValue}>
-                      <CountUp value={stat.value} />
-                      <span>{stat.suffix}</span>
-                    </div>
-                    <div className={styles.statLabel}>{stat.label}</div>
-                  </div>
-                ))}
+            <div className={styles.spotlight}>
+              <div className={styles.spotlightFocal}>
+                <div className={styles.spotlightNumber}>
+                  {/* TBC — confirm with club */}
+                  <CountUp value={2000} suffix="+" />
+                </div>
+                <p className={styles.spotlightLabel}>
+                  members &amp; alumni across SMU
+                </p>
               </div>
-            </ScrollReveal>
-            <ScrollReveal delay={150}>
-              <Image
-                src="https://ssvs8thfuktvqsqk.public.blob.vercel-storage.com/biapic2-CKSujqIfzxfHoHCdrWlUtHD3XftCgu.jpg"
-                alt="SMUBIA members at a club event"
-                width={0}
-                height={0}
-                sizes="(min-width: 1024px) 40vw, 90vw"
-                className={styles.reachImage}
+              <div className={styles.spotlightMinors}>
+                <div className={styles.spotlightMinor}>
+                  <div className={styles.minorNumber}>
+                    {/* TBC — confirm with club */}
+                    <CountUp value={400} suffix="+" />
+                  </div>
+                  <div className={styles.minorLabel}>new members / year</div>
+                </div>
+                <div className={styles.spotlightMinor}>
+                  <div className={styles.minorNumber}>
+                    {/* TBC — confirm with club */}
+                    <CountUp value={9} />
+                  </div>
+                  <div className={styles.minorLabel}>DAP cohorts</div>
+                </div>
+                <div className={styles.spotlightMinor}>
+                  <div className={styles.minorNumber}>
+                    {/* TBC — confirm with club */}
+                    <CountUp value={5} />
+                  </div>
+                  <div className={styles.minorLabel}>faculties</div>
+                </div>
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* Featured projects strip — static teaser, links to /Projects */}
+      <section className={styles.section}>
+        <div className={styles.sectionInner}>
+          <ScrollReveal>
+            <div className={styles.projectsHead}>
+              <SectionHeading
+                eyebrow="From our builders"
+                title="Projects that shipped"
+                lede="A taste of what members build across DAP and AI Lodge."
               />
-            </ScrollReveal>
+              <Link href="/Projects" className={styles.seeAll}>
+                See all projects →
+              </Link>
+            </div>
+          </ScrollReveal>
+          <div className={styles.projectGrid}>
+            {FEATURED_PROJECTS.map((project, i) => (
+              <ScrollReveal key={project.title} delay={i * 100}>
+                {/* Links to the showcase listing until per-project slugs are wired */}
+                <Link href="/Projects" className={styles.projectCard}>
+                  <h3 className={styles.projectTitle}>{project.title}</h3>
+                  <p className={styles.projectBlurb}>{project.blurb}</p>
+                  <span className={styles.projectLink}>View →</span>
+                </Link>
+              </ScrollReveal>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* DAP spotlight */}
-      <section className={styles.dapBand}>
-        <div className={styles.dapGlow} aria-hidden="true" />
-        <div className={styles.dapInner}>
-          <ScrollReveal>
-            <SectionHeading
-              tone="dark"
-              eyebrow="Flagship Programme"
-              title="The Data Associate Programme"
-              lede="A selective, project-driven AI/ML programme. Each cohort of around 50 associates works in small mentored teams — from theory sessions to a working model they present at our showcase."
-            />
-          </ScrollReveal>
-          <ScrollReveal delay={100}>
-            <div className={styles.dapMeta}>
-              <span className={styles.dapMetaItem}>
-                <strong>~50</strong> per cohort
-              </span>
-              <span className={styles.dapMetaItem}>
-                <strong>9+</strong> batches &amp; counting
-              </span>
-              <span className={styles.dapMetaItem}>
-                application-based
-              </span>
-            </div>
-          </ScrollReveal>
-          <ScrollReveal delay={200}>
-            <div>
-              <Button href="/DAP" variant="onDark">
-                Discover DAP →
-              </Button>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
       {/* Alumni testimonials */}
-      <section className={styles.section}>
+      <section className={styles.sectionMuted}>
         <div className={styles.sectionInner}>
           <ScrollReveal>
             <AlumniTestimonials />
@@ -209,41 +250,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Join CTA */}
-      <section className={styles.sectionMuted}>
-        <div className={styles.sectionInner} style={{ textAlign: "center" }}>
+      {/* Join CTA — closing dark pine band */}
+      <section className={styles.joinBand}>
+        <div className={styles.joinGlow} aria-hidden="true" />
+        <div className={styles.joinInner}>
           <ScrollReveal>
             <h2 className={styles.joinHeading}>
-              Ready to get your hands dirty with data?
+              Ready to get your hands on data?
             </h2>
             <p className={styles.joinText}>
-              SMUBIA was started in 2015 by a few enthusiasts. Today we&apos;re
-              a thriving community — and there&apos;s a seat for you,
-              whatever your background.
+              There&apos;s a seat for you, whatever your background.
             </p>
             <div className={styles.joinCtas}>
-              <Button href={LINKS.telegram} variant="primary" external>
-                Join our Telegram
-              </Button>
-              <Button href={LINKS.joinForm} variant="outline" external>
-                Sign-up form
-              </Button>
-              <Button href={LINKS.instagram} variant="outline" external>
-                Instagram
+              <Button href="/ContactUs#join" variant="onDark">
+                Join us →
               </Button>
             </div>
-            <p className={styles.joinFootnote}>
-              Companies and recruiters — see how to{" "}
-              <Link href="/WorkWithUs">work with us</Link> or follow us on{" "}
-              <a
-                href={LINKS.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                LinkedIn
-              </a>
-              .
-            </p>
           </ScrollReveal>
         </div>
       </section>
