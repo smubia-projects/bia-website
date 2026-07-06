@@ -1,0 +1,75 @@
+.page {
+  background: var(--dusk);
+  color: var(--dusk-text);
+}
+
+.hero {
+  position: relative;
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* clear the fixed 4rem nav */
+  padding: 10rem 1.25rem 6rem;
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      var(--dusk-surface),
+      transparent 60%
+    ),
+    var(--dusk);
+}
+
+.glow {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  width: min(46rem, 90vw);
+  height: min(46rem, 90vw);
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse at center,
+    var(--amber-soft),
+    transparent 65%
+  );
+  pointer-events: none;
+}
+
+.heroInner {
+  position: relative;
+  max-width: 40rem;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.eyebrow {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.title {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(2.75rem, 8vw, 4.75rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0;
+  color: var(--dusk-text);
+}
+
+.lede {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--dusk-text-soft);
+  margin: 0;
+  max-width: 34rem;
+}
