@@ -7,7 +7,7 @@ import { LINKS } from "@/app/lib/links";
 
 const EXPLORE_LINKS = [
   { href: "/", label: "Home" },
-  { href: "/WhatWeDo", label: "Events" },
+  { href: "/Events", label: "Events" },
   { href: "/DAP", label: "Data Associate Programme" },
   { href: "/AILodge", label: "AI Lodge" },
   { href: "/Projects", label: "Projects" },

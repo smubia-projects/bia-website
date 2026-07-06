@@ -9,8 +9,7 @@ import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
-  // "Events" points at the existing /WhatWeDo route (Wave 3 renames the route)
-  { href: "/WhatWeDo", label: "Events" },
+  { href: "/Events", label: "Events" },
   { href: "/DAP", label: "DAP" },
   { href: "/AILodge", label: "AI Lodge" },
   { href: "/Projects", label: "Projects" },
