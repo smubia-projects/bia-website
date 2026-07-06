@@ -43,7 +43,10 @@ Visuals over words. **All numbers marked TBC** until user confirms (member count
 
 ### Brand assets
 - New cat mascot (USB-cable tail) + full wordmark: `_intake/brand-assets-updated/*.svg`,
-  white-on-transparent → existing nav CSS-tint trick still works. Mascot becomes nav brand mark.
+  extracted to `public/images/mascot.png` + `logo-wordmark.png` (white-on-transparent).
+- **Mascot in nav/footer VETOED 2026-07-07** ("no funky cat silhouette") — the original spinner
+  logo stays as the brand mark everywhere. Mascot assets kept on disk; may appear only in small
+  fun corners (404, empty states) if ever, and only where it reads as art, not a silhouette blob.
 - Campfire SVGs (tree/fire/log) in `_intake/ailodge-indiv-page/` — **backup only**; achieve
   fireside via colour/glow, not literal scenery.
 
