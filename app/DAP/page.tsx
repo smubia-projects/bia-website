@@ -1,224 +1,200 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import styles from "./DAP.module.css";
 import ScrollReveal from "../components/ui/ScrollReveal";
-import SectionHeading from "../components/ui/SectionHeading";
 import Button from "../components/ui/Button";
 import { LINKS } from "../lib/links";
 import {
-  PILLARS,
-  CURRICULUM_TOPICS,
-  FEATURED_PROJECTS,
-  DAP_SLIDES_URL,
+  PROGRAMME_META,
+  STATS,
+  CURRICULUM,
+  COHORT_PHOTO,
+  STRUCTURE,
 } from "./data";
 
 export const metadata = {
   title: "Data Associate Programme — SMUBIA",
   description:
-    "SMUBIA's flagship, application-based AI/ML programme. Around 50 associates per cohort learn machine learning through mentored, self-initiated projects.",
+    "SMUBIA's flagship programme. A selective cohort spends a semester learning the machine learning core and shipping a real project, mentored throughout.",
 };
 
 export default function DAPPage() {
   return (
-    <main>
-      {/* Hero (dark pine) */}
+    <main className={styles.page}>
+      {/* ── Hero — typographic, deep pine ───────────────────────── */}
       <section className={styles.hero}>
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.heroInner}>
-          <div className={styles.heroEyebrow}>
-            <span className={styles.heroEyebrowLine} />
-            <span className="eyebrow eyebrowOnDark">
-              Flagship Programme · Application-based
-            </span>
-          </div>
-          <h1 className={styles.heroTitle}>Data Associate Programme</h1>
-          <p className={styles.heroSub}>
-            Our most sought-after programme. Each cohort, around 50 students
-            are selected to spend a semester building a real machine learning
-            project — in a team of four, with mentors beside you from first
-            idea to final showcase.
+          <p className={styles.eyebrow}>Data Associate Programme</p>
+          <h1 className={styles.heroTitle}>
+            Machine learning,
+            <br />
+            built — not memorised.
+          </h1>
+          <p className={styles.heroLede}>
+            SMUBIA&apos;s flagship programme. A selective cohort spends a
+            semester learning the machine learning core and shipping a real
+            project — mentored from first idea to final showcase.
           </p>
-          <div className={styles.heroCtas}>
+          <div className={styles.heroActions}>
             <Button href={LINKS.joinForm} variant="onDark" external>
-              Apply for the next cohort →
+              Apply to the programme →
             </Button>
-            <Button href={DAP_SLIDES_URL} variant="outlineOnDark" external>
-              View the slide deck
-            </Button>
+            <a href="#curriculum" className={styles.heroScrollLink}>
+              See the curriculum ↓
+            </a>
           </div>
-          <div className={styles.heroMeta}>
-            <span className={styles.heroMetaItem}>
-              <strong>~50</strong> associates per cohort
-            </span>
-            <span className={styles.heroMetaItem}>
-              teams of <strong>4</strong>
-            </span>
-            <span className={styles.heroMetaItem}>
-              <strong>weekly</strong> theory sessions
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* What it is */}
-      <section className={styles.section}>
-        <div className={styles.sectionInner}>
-          <ScrollReveal>
-            <SectionHeading
-              eyebrow="The programme"
-              title="Learn machine learning by shipping it"
-              lede="DAP is a project-oriented learning programme: mentees learn through self-initiated projects in small groups, with weekly theory sessions in tandem. Through mentoring, we equip associates with real data science skills inside a co-learning community."
-            />
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* Three pillars */}
-      <section className={styles.sectionMuted}>
-        <div className={styles.sectionInner}>
-          <ScrollReveal>
-            <SectionHeading
-              eyebrow="How it works"
-              title="Three pillars"
-            />
-          </ScrollReveal>
-          <div className={styles.pillarGrid}>
-            {PILLARS.map((pillar, i) => (
-              <ScrollReveal key={pillar.title} delay={i * 100}>
-                <article className={styles.pillarCard}>
-                  <div className={styles.pillarImageWrap}>
-                    <Image
-                      src={pillar.imageSrc}
-                      alt={pillar.title}
-                      fill
-                      sizes="(min-width: 768px) 30vw, 90vw"
-                      className={styles.pillarImage}
-                    />
-                  </div>
-                  <h3 className={styles.pillarTitle}>{pillar.title}</h3>
-                  <ul className={styles.pillarList}>
-                    {pillar.points.map((point) => (
-                      <li key={point.lead}>
-                        <strong>{point.lead}.</strong> {point.text}
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-              </ScrollReveal>
+          <ul className={styles.heroMeta}>
+            {PROGRAMME_META.map((item) => (
+              <li key={item} className={styles.heroMetaItem}>
+                {item}
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
-      {/* Curriculum */}
+      {/* ── The programme + stat strip ──────────────────────────── */}
       <section className={styles.section}>
         <div className={styles.sectionInner}>
           <ScrollReveal>
-            <SectionHeading
-              eyebrow="Curriculum"
-              title="What you'll cover"
-              lede="Each team takes a topic deep and teaches it back to the cohort — by the end of the semester you've covered the full machine learning core."
-            />
+            <div className={styles.intro}>
+              <p className={styles.eyebrow}>The programme</p>
+              <p className={styles.introText}>
+                DAP is application-based. Rather than sit through lectures,
+                associates learn the way the field is practised — in small
+                teams, teaching the theory to one another and building a
+                project of their own alongside it, mentors beside them the
+                whole way.
+              </p>
+            </div>
           </ScrollReveal>
+
           <ScrollReveal delay={100}>
-            <div className={styles.topicGrid}>
-              {CURRICULUM_TOPICS.map((topic, i) => (
-                <div key={topic} className={styles.topicChip}>
-                  <span className={styles.topicNumber}>
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className={styles.topicName}>{topic}</span>
+            <dl className={styles.statStrip}>
+              {STATS.map((stat) => (
+                <div key={stat.label} className={styles.stat}>
+                  <dt className={styles.statValue}>{stat.value}</dt>
+                  <dd className={styles.statLabel}>{stat.label}</dd>
                 </div>
               ))}
-            </div>
+            </dl>
           </ScrollReveal>
         </div>
       </section>
 
-      {/* Featured projects */}
-      <section className={styles.sectionMuted}>
+      {/* ── Curriculum — the centrepiece ────────────────────────── */}
+      <section id="curriculum" className={styles.section}>
         <div className={styles.sectionInner}>
           <ScrollReveal>
-            <SectionHeading
-              eyebrow="Highlights"
-              title="Built by Data Associates"
-              lede="A few of the projects past cohorts have taken from proposal to working demo."
-            />
+            <div className={styles.curriculumHead}>
+              <p className={styles.eyebrow}>AY 26/27 curriculum</p>
+              <h2 className={styles.sectionTitle}>The machine learning core</h2>
+              <p className={styles.sectionLede}>
+                Nine topics across one semester — each taken deep by a team and
+                taught back to the cohort. Together they map the essentials of
+                modern machine learning.
+              </p>
+            </div>
           </ScrollReveal>
-          <div className={styles.projectList}>
-            {FEATURED_PROJECTS.map((project, i) => (
-              <ScrollReveal key={project.title}>
-                <article
-                  className={`${styles.projectRow} ${
-                    i % 2 === 1 ? styles.projectRowReverse : ""
-                  }`}
-                >
-                  <div className={styles.projectMedia}>
-                    {project.media.type === "image" ? (
-                      <Image
-                        src={project.media.src}
-                        alt={project.title}
-                        fill
-                        sizes="(min-width: 1024px) 45vw, 90vw"
-                        className={styles.projectImage}
-                      />
-                    ) : (
-                      <video
-                        src={project.media.src}
-                        className={styles.projectVideo}
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                      />
-                    )}
+
+          <ol className={styles.curriculum}>
+            {CURRICULUM.map((topic, i) => (
+              <ScrollReveal key={topic.title} delay={Math.min(i, 4) * 40}>
+                <li className={styles.curriculumRow}>
+                  <span className={styles.curriculumNum}>
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className={styles.curriculumTitle}>{topic.title}</h3>
+                  <p className={styles.curriculumBlurb}>{topic.blurb}</p>
+                </li>
+              </ScrollReveal>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ── Cohort photo — the wide moment ──────────────────────── */}
+      <section className={styles.cohortSection}>
+        <div className={styles.cohortInner}>
+          <ScrollReveal>
+            <figure className={styles.cohortFigure}>
+              <div className={styles.cohortFrame}>
+                <Image
+                  src={COHORT_PHOTO.src}
+                  alt={COHORT_PHOTO.caption}
+                  fill
+                  sizes="(min-width: 1024px) 72rem, 100vw"
+                  className={styles.cohortImage}
+                />
+              </div>
+              <figcaption className={styles.cohortCaption}>
+                {COHORT_PHOTO.caption}
+              </figcaption>
+            </figure>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ── Programme structure — two movements ─────────────────── */}
+      <section className={styles.section}>
+        <div className={styles.sectionInner}>
+          <ScrollReveal>
+            <div className={styles.curriculumHead}>
+              <p className={styles.eyebrow}>How it runs</p>
+              <h2 className={styles.sectionTitle}>
+                Two things happen every week
+              </h2>
+            </div>
+          </ScrollReveal>
+
+          <div className={styles.movements}>
+            {STRUCTURE.map((movement) => (
+              <ScrollReveal key={movement.label}>
+                <article className={styles.movement}>
+                  <div className={styles.movementText}>
+                    <p className={styles.movementLabel}>{movement.label}</p>
+                    <h3 className={styles.movementTitle}>{movement.title}</h3>
+                    <p className={styles.movementBlurb}>{movement.blurb}</p>
                   </div>
-                  <div className={styles.projectBody}>
-                    <h3 className={styles.projectTitle}>{project.title}</h3>
-                    <p className={styles.projectMeta}>
-                      <span>Team — {project.team}</span>
-                      <span>
-                        Mentor{project.mentors.includes(",") ? "s" : ""} —{" "}
-                        {project.mentors}
-                      </span>
-                    </p>
-                    <p className={styles.projectText}>{project.text}</p>
+                  <div className={styles.movementPhotos}>
+                    {movement.photos.map((photo) => (
+                      <div key={photo.src} className={styles.exhibit}>
+                        <Image
+                          src={photo.src}
+                          alt={photo.alt}
+                          fill
+                          sizes="(min-width: 1024px) 24rem, 45vw"
+                          className={styles.exhibitImage}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </article>
               </ScrollReveal>
             ))}
           </div>
-          <ScrollReveal>
-            <div className={styles.projectsCta}>
-              <Button href="/Projects?badge=DAP" variant="outline">
-                Browse all DAP projects →
-              </Button>
-            </div>
-          </ScrollReveal>
         </div>
       </section>
 
-      {/* Application CTA (dark) */}
-      <section className={styles.applyBand}>
-        <div className={styles.applyGlow} aria-hidden="true" />
-        <div className={styles.applyInner}>
+      {/* ── Closing — quiet CTA band ────────────────────────────── */}
+      <section className={styles.closing}>
+        <div className={styles.closingGlow} aria-hidden="true" />
+        <div className={styles.closingInner}>
           <ScrollReveal>
-            <h2 className={styles.applyTitle}>
-              Applications open each semester.
-            </h2>
-            <p className={styles.applyText}>
-              Places are limited and demand keeps growing — if you&apos;re
-              curious about machine learning, put your name in early. No prior
-              ML experience required, just commitment.
+            <h2 className={styles.closingTitle}>Applications open each semester.</h2>
+            <p className={styles.closingText}>
+              No prior machine learning experience needed — only commitment.
             </p>
-            <div className={styles.applyCtas}>
+            <div className={styles.closingActions}>
               <Button href={LINKS.joinForm} variant="onDark" external>
-                Apply now →
-              </Button>
-              <Button href={LINKS.email} variant="outlineOnDark">
-                Ask us a question
+                Apply to the programme →
               </Button>
             </div>
+            <Link href="/Projects?badge=DAP" className={styles.closingLink}>
+              See what associates built →
+            </Link>
           </ScrollReveal>
         </div>
       </section>
