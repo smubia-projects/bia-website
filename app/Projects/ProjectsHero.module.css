@@ -1,28 +1,96 @@
 .hero {
   position: relative;
   width: 100%;
+  min-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(2.5rem, 5vw, 4rem);
+  /* Top padding clears the fixed 4rem navbar; hero bleeds up under it. */
+  padding: clamp(6rem, 9vw, 8rem) 0 clamp(3.5rem, 6vw, 5rem);
   overflow: hidden;
-  padding: 1rem 0 2.5rem;
-  /* Soft mint wash that fades into the page background for a cohesive
-     transition from hero into the grid below. */
-  background: linear-gradient(
-    180deg,
-    var(--mint-soft) 0%,
-    rgba(125, 215, 194, 0.08) 55%,
-    var(--bg) 100%
-  );
+  isolation: isolate;
+  /* Big, dimensional wash that resolves into the page background so the grid
+     below feels like a continuation of the hero rather than a new block. */
+  background:
+    radial-gradient(
+      80% 90% at 12% 0%,
+      rgba(125, 215, 194, 0.3) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      70% 80% at 100% 15%,
+      rgba(255, 201, 120, 0.18) 0%,
+      transparent 55%
+    ),
+    linear-gradient(180deg, var(--mint-soft) 0%, var(--bg) 100%);
 }
 
-.marquee {
+/* Intro / heading block */
+.intro {
+  max-width: 1200px;
   width: 100%;
-  overflow: hidden;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.eyebrowLine {
+  display: block;
+  width: 2.5rem;
+  height: 2px;
+  background-color: var(--emerald);
+  opacity: 0.6;
+}
+
+.eyebrowText {
+  color: var(--emerald);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-family: var(--font-roboto-mono);
+}
+
+.heading {
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  font-family: var(--font-display);
+  margin-bottom: 1.5rem;
+}
+
+.headingAccent {
+  color: var(--emerald);
+}
+
+.lede {
+  max-width: 40rem;
+  color: var(--ink-soft);
+  font-size: clamp(1.0625rem, 1.6vw, 1.3125rem);
+  line-height: 1.6;
+  font-family: var(--font-inter);
+}
+
+/* Flowing marquee (full-bleed, edge to edge) */
+.marquee {
+  position: relative;
+  width: 100%;
 }
 
 .track {
   display: flex;
-  gap: 1.25rem;
+  gap: 1.75rem;
   width: max-content;
-  padding: 0 1.25rem;
+  padding: 1.75rem 2rem;
   animation: scroll 60s linear infinite;
 }
 
@@ -54,105 +122,136 @@
   }
 }
 
-.card {
+/* Editorial poster slide — film-festival title card, not a grid card clone */
+.slide {
   position: relative;
   flex: 0 0 auto;
-  width: 18rem;
-  height: 11rem;
-  border-radius: var(--radius-lg);
+  width: clamp(20rem, 30vw, 26rem);
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   text-decoration: none;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
   transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s ease;
 }
 
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+.slide:hover {
+  transform: translateY(-10px) scale(1.015);
+  box-shadow: var(--shadow-xl);
 }
 
-.cardImage {
-  position: relative;
-  width: 100%;
-  height: 100%;
+.slideMedia {
+  position: absolute;
+  inset: 0;
   background-color: var(--surface-muted);
 }
 
-.cardImg {
+.slideImg {
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition: transform 0.7s ease;
 }
 
-.card:hover .cardImg {
+.slide:hover .slideImg {
   transform: scale(1.06);
 }
 
-.cardOverlay {
+.slideScrim {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(12, 33, 28, 0) 40%,
-    rgba(12, 33, 28, 0.82) 100%
+    rgba(12, 33, 28, 0.05) 0%,
+    rgba(12, 33, 28, 0.35) 42%,
+    rgba(12, 33, 28, 0.92) 100%
   );
 }
 
-.cardPlaceholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: 3rem;
-  font-weight: 800;
-  color: #ffffff;
+.slidePlaceholder {
+  position: absolute;
+  inset: 0;
 }
 
 .placeholderDAP {
-  background: linear-gradient(135deg, var(--pine-surface), var(--pine-deep));
+  background: linear-gradient(150deg, var(--pine-surface), var(--pine-deep));
 }
 
 .placeholderAI {
-  background: linear-gradient(135deg, var(--dusk-surface), var(--dusk-deep));
+  background: linear-gradient(150deg, var(--dusk-surface), var(--dusk-deep));
 }
 
-.cardBadge {
+.badge {
   position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  padding: 0.2rem 0.6rem;
+  top: 1.1rem;
+  left: 1.1rem;
+  z-index: 2;
+  padding: 0.3rem 0.8rem;
   border-radius: 9999px;
-  font-size: 0.5625rem;
+  font-size: 0.625rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  font-family: var(--font-roboto-mono);
 }
 
 .badgeDAP {
-  background-color: rgba(125, 215, 194, 0.9);
+  background-color: rgba(125, 215, 194, 0.94);
   color: var(--pine-deep);
 }
 
 .badgeAI {
-  background-color: rgba(255, 201, 120, 0.92);
+  background-color: rgba(255, 201, 120, 0.95);
   color: var(--dusk);
 }
 
-.cardTitle {
+.slideBody {
   position: absolute;
-  left: 1rem;
-  right: 1rem;
-  bottom: 0.9rem;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.75rem 1.6rem 1.6rem;
+}
+
+.credit {
+  font-family: var(--font-roboto-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mint);
+}
+
+.slideTitle {
   color: #ffffff;
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.0625rem;
-  line-height: 1.25;
-  z-index: 1;
+  font-weight: 800;
+  font-size: clamp(1.75rem, 2.6vw, 2.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.hook {
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-inter);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  font-style: italic;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tech {
+  margin-top: 0.35rem;
+  font-family: var(--font-roboto-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.62);
 }
 
 .fadeLeft,
@@ -160,9 +259,9 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 6rem;
+  width: clamp(3rem, 8vw, 9rem);
   pointer-events: none;
-  z-index: 2;
+  z-index: 3;
 }
 
 .fadeLeft {

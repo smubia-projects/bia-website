@@ -33,30 +33,20 @@ export default function ProjectsContent({ projects }: Props) {
 
   return (
     <>
-      {/* Header */}
-      <header className={styles.header}>
-        <div className={styles.eyebrow}>
-          <span className={styles.eyebrowLine} />
-          <span className={styles.eyebrowText}>Projects</span>
+      {/* Section label + filter bar (the hero above owns the page H1) */}
+      <div className={styles.gridIntro}>
+        <h2 className={styles.gridLabel}>All projects</h2>
+        <div className={styles.filterBar}>
+          {filters.map((f) => (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={`${styles.filterBtn} ${activeFilter === f ? styles.filterBtnActive : ""}`}
+            >
+              {f}
+            </button>
+          ))}
         </div>
-        <h1 className={styles.heading}>Built at SMUBIA</h1>
-        <p className={styles.subheading}>
-          What our Data Associates and AI Lodgers shipped — from calorie bots to
-          storybook generators.
-        </p>
-      </header>
-
-      {/* Filter Bar */}
-      <div className={styles.filterBar}>
-        {filters.map((f) => (
-          <button
-            key={f}
-            onClick={() => setActiveFilter(f)}
-            className={`${styles.filterBtn} ${activeFilter === f ? styles.filterBtnActive : ""}`}
-          >
-            {f}
-          </button>
-        ))}
       </div>
 
       {/* Grid */}
