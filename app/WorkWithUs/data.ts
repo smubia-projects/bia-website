@@ -1,137 +1,76 @@
 /**
- * Work with Us page content — sourced from the SMUBIA Partnership Prospectus.
- * Edit this file to update tiers, benefits, events or partners; page.tsx
- * renders whatever is here.
+ * Work with Us page content.
+ *
+ * Wave 3 restructure (2026-07): the Bronze→Platinum sponsorship tier matrix was
+ * removed in favour of TWO involvement types (partner on events / sponsor a
+ * programme). The stat spotlight replaces the old three-reason "why partner"
+ * grid. Every headline number below is UNCONFIRMED — see the `// TBC` markers.
  */
 
-export interface Tier {
-  id: string;
-  name: string;
-  range: string;
-}
+/* ============ Stat spotlight ============ */
 
-export const TIERS: Tier[] = [
-  { id: "bronze", name: "Bronze", range: "$300–599" },
-  { id: "silver", name: "Silver", range: "$600–899" },
-  { id: "gold", name: "Gold", range: "$900–1,199" },
-  { id: "platinum", name: "Platinum", range: "$1,200+" },
-];
-
-export interface Benefit {
+export interface Stat {
+  /** Numeric value fed to the CountUp primitive. */
+  value: number;
+  /** Rendered after the number, e.g. "+". */
+  suffix: string;
   label: string;
-  /** Index into TIERS — the lowest tier that receives this benefit (cumulative). */
-  minTier: number;
 }
 
-// TODO: confirm exact tier↔benefit mapping with the PR team
-// (prospectus p.11 matrix). Cumulative model assumed.
-export const BENEFITS: Benefit[] = [
-  { label: "Company logo on promotional EDM footer", minTier: 0 },
-  { label: "Bundled “Thank You” carousel post on Instagram", minTier: 0 },
-  { label: "Flyers / merch in Networking Night goodie bag", minTier: 1 },
-  { label: "Company information distributed via Telegram", minTier: 1 },
-  { label: "Feature on Instagram Stories", minTier: 2 },
-  { label: "Feature on the BIA website", minTier: 2 },
-  { label: "Booth at Networking Night (for hiring companies)", minTier: 3 },
-  { label: "Personalised “Thank You” post on LinkedIn", minTier: 3 },
+// TBC — confirm with club: the focal reach number for the spotlight.
+export const STAT_FOCAL: Stat = {
+  value: 2000, // TBC — confirm with club
+  suffix: "+",
+  label: "Members and counting",
+};
+
+// TBC — confirm every figure below with the club before launch.
+export const STAT_MINOR: Stat[] = [
+  { value: 400, suffix: "+", label: "New members / year" }, // TBC — confirm with club
+  { value: 1000, suffix: "+", label: "Instagram" }, // TBC — confirm with club
+  { value: 2000, suffix: "+", label: "Telegram" }, // TBC — confirm with club
+  { value: 700, suffix: "+", label: "LinkedIn" }, // TBC — confirm with club
 ];
 
-export interface SponsorableEvent {
-  name: string;
-  timing: string;
-  reach: string;
-  items: string;
-  highlight?: boolean;
-}
+/* ============ Involvement types ============ */
 
-export const EVENTS: SponsorableEvent[] = [
-  {
-    name: "BIA Datathon",
-    timing: "January",
-    reach: "100+ student sign-ups",
-    items: "Cash, food, door gifts",
-    highlight: true,
-  },
-  {
-    name: "BIA Networking Night",
-    timing: "February",
-    reach: "200+ students · 10–15 company booths · panel discussion",
-    items: "Cash, food, door gifts",
-    highlight: true,
-  },
-  {
-    name: "Welfare Drive",
-    timing: "November & April",
-    reach: "150 welfare packs for finals season",
-    items: "Corporate gifts, vouchers, snacks",
-  },
-  {
-    name: "Data Associate Programme",
-    timing: "Year-round",
-    reach: "~50 associates per cohort — our flagship AI/ML programme",
-    items: "Buffet/refreshments, door gifts",
-  },
-  {
-    name: "Technical Workshops",
-    timing: "August–October",
-    reach: "~50 students per workshop",
-    items: "Buffet/refreshments",
-  },
-  {
-    name: "BIA Tea Session",
-    timing: "August",
-    reach: "~50 new members",
-    items: "Buffet/refreshments",
-  },
-  {
-    name: "BIA Indoor Picnic",
-    timing: "August",
-    reach: "~50 members",
-    items: "Buffet/refreshments",
-  },
-  {
-    name: "Alumni Networking",
-    timing: "Date TBC",
-    reach: "~50 alumni & members",
-    items: "Buffet/refreshments",
-  },
-];
-
-export interface WhyPartnerCard {
+export interface Involvement {
+  /** Small mono label above the title. */
+  kicker: string;
   title: string;
+  /** 2–3 short benefit-led lines. */
   body: string;
+  /** A few concise benefit bullets. */
   points: string[];
+  cta: string;
 }
 
-export const WHY_PARTNER: WhyPartnerCard[] = [
+export const INVOLVEMENT: Involvement[] = [
   {
-    title: "Brand awareness",
-    body: "Reach more than 1,500 data enthusiasts across SMU and beyond.",
+    kicker: "Option 01",
+    title: "Partner on events",
+    body: "Run a workshop or a corporate event with our community — from a hands-on skills session to a hiring showcase in front of SMU's largest analytics crowd.",
     points: [
-      "2,000+ Telegram subscribers",
-      "1,000+ Instagram followers",
-      "700+ LinkedIn connections",
+      "Co-run workshops or talks",
+      "Networking Night booths & hiring",
+      "Brand reach across our channels",
     ],
+    cta: "Get in touch",
   },
   {
-    title: "CSR impact",
-    body: "Make a visible difference in student education.",
+    kicker: "Option 02",
+    title: "Sponsor or partner on our programmes",
+    body: "Back a flagship programme with a real problem statement. Set a challenge for the Data Associate Programme or the AI Lodge Hackathon and see students build against it.",
     points: [
-      "Conduct workshops for educational outreach",
-      "Provide mentorships to empower students",
-      "Initiate sustainable practices in school",
+      "Sponsor a problem challenge",
+      "Mentor DAP or AI Lodge teams",
+      "First look at emerging builders",
     ],
-  },
-  {
-    title: "Talent recruitment",
-    body: "A continuous stream of interns and full-time applicants who have proven themselves.",
-    points: [
-      "1st place — NUS RightShip Challenge",
-      "Winner — TikTok Hackathon",
-      "1st place — Dell LifeSavers' Innovation Challenge 2023",
-    ],
+    cta: "Get in touch",
   },
 ];
+
+/* ============ Past partners (scaffolding — retained, unused) ============ */
 
 /** Flip to true once partner logos are added below. */
 export const SHOW_PARTNERS = false;
