@@ -89,7 +89,7 @@ const ContactUs = () => {
                   Companies &amp; sponsors
                 </h3>
                 <p className={styles.channelText}>
-                  Sponsorship tiers, event opportunities and our prospectus.
+                  Sponsorship tiers and event opportunities.
                 </p>
                 <Link href="/WorkWithUs" className={styles.channelLink}>
                   Work with us →
@@ -105,14 +105,6 @@ const ContactUs = () => {
                 Singapore Management University · Level 5, SMU Connexion ·
                 40 Stamford Road · Singapore 178908
               </p>
-              <a
-                href={LINKS.prospectus}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.channelLink}
-              >
-                Download our prospectus (PDF) →
-              </a>
             </div>
           </ScrollReveal>
         </div>

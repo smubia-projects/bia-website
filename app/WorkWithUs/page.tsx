@@ -35,9 +35,6 @@ export default function WorkWithUsPage() {
             <Button href={LINKS.email} variant="primary">
               Talk to our partnerships team
             </Button>
-            <Button href={LINKS.prospectus} variant="outline" external>
-              Download the prospectus
-            </Button>
           </div>
         </div>
       </section>
@@ -245,9 +242,6 @@ export default function WorkWithUsPage() {
             <div className={styles.contactCtas}>
               <Button href={LINKS.email} variant="onDark">
                 Email bia@sa.smu.edu.sg →
-              </Button>
-              <Button href={LINKS.prospectus} variant="outlineOnDark" external>
-                Partnership prospectus (PDF)
               </Button>
             </div>
           </ScrollReveal>
