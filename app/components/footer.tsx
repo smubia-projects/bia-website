@@ -104,6 +104,10 @@ function FooterBar() {
           </div>
         </div>
 
+        <div className={styles.watermark} aria-hidden="true">
+          SMUBIA
+        </div>
+
         <div className={styles.bottomBar}>
           <span>
             © {new Date().getFullYear()} SMU Business Intelligence &amp;
