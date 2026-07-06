@@ -1,0 +1,176 @@
+.hero {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 1rem 0 2.5rem;
+  /* Soft mint wash that fades into the page background for a cohesive
+     transition from hero into the grid below. */
+  background: linear-gradient(
+    180deg,
+    var(--mint-soft) 0%,
+    rgba(125, 215, 194, 0.08) 55%,
+    var(--bg) 100%
+  );
+}
+
+.marquee {
+  width: 100%;
+  overflow: hidden;
+}
+
+.track {
+  display: flex;
+  gap: 1.25rem;
+  width: max-content;
+  padding: 0 1.25rem;
+  animation: scroll 60s linear infinite;
+}
+
+.track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    /* -50% because the track holds two identical halves */
+    transform: translateX(-50%);
+  }
+}
+
+/* Motion off: no marquee, fall back to a manually scrollable strip. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .marquee::-webkit-scrollbar {
+    display: none;
+  }
+  .track {
+    animation: none;
+  }
+}
+
+.card {
+  position: relative;
+  flex: 0 0 auto;
+  width: 18rem;
+  height: 11rem;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.cardImage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: var(--surface-muted);
+}
+
+.cardImg {
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.card:hover .cardImg {
+  transform: scale(1.06);
+}
+
+.cardOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(12, 33, 28, 0) 40%,
+    rgba(12, 33, 28, 0.82) 100%
+  );
+}
+
+.cardPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.placeholderDAP {
+  background: linear-gradient(135deg, var(--pine-surface), var(--pine-deep));
+}
+
+.placeholderAI {
+  background: linear-gradient(135deg, var(--dusk-surface), var(--dusk-deep));
+}
+
+.cardBadge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.badgeDAP {
+  background-color: rgba(125, 215, 194, 0.9);
+  color: var(--pine-deep);
+}
+
+.badgeAI {
+  background-color: rgba(255, 201, 120, 0.92);
+  color: var(--dusk);
+}
+
+.cardTitle {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 0.9rem;
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.0625rem;
+  line-height: 1.25;
+  z-index: 1;
+}
+
+.fadeLeft,
+.fadeRight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6rem;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.fadeLeft {
+  left: 0;
+  background: linear-gradient(90deg, var(--mint-soft), transparent);
+}
+
+.fadeRight {
+  right: 0;
+  background: linear-gradient(270deg, var(--bg), transparent);
+}

@@ -1,8 +1,8 @@
 .page {
   min-height: 100vh;
   background-color: var(--bg);
-  padding-top: 8rem;
-  padding-bottom: 4rem;
+  padding-top: 6rem;
+  padding-bottom: 0;
 }
 
 .container {
@@ -112,61 +112,87 @@
   font-family: var(--font-inter);
 }
 
-/* CTA */
-.cta {
-  padding-top: 2rem;
-  padding-bottom: 2rem;
-}
-
-.ctaBox {
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: clamp(2rem, 5vw, 3.5rem);
+/* CTA band (full-bleed, dark pine) */
+.ctaBand {
+  margin-top: 5rem;
+  padding: clamp(3.5rem, 7vw, 6rem) 1.5rem;
+  background:
+    radial-gradient(
+      120% 120% at 50% 0%,
+      rgba(125, 215, 194, 0.14) 0%,
+      transparent 55%
+    ),
+    var(--pine-deep);
   text-align: center;
 }
 
-.ctaHeading {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 700;
-  color: var(--ink);
+.ctaBandInner {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.ctaBandHeading {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--pine-text);
   margin-bottom: 1rem;
   font-family: var(--font-display);
 }
 
-.ctaText {
-  color: var(--ink-soft);
+.ctaBandText {
+  color: var(--pine-text-soft);
   font-size: 1.0625rem;
-  margin-bottom: 2rem;
-  max-width: 36rem;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: 1.6;
+  line-height: 1.65;
+  max-width: 34rem;
+  margin: 0 auto 2.25rem;
   font-family: var(--font-inter);
 }
 
-.ctaButton {
+.ctaBandActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.ctaBtnPrimary,
+.ctaBtnSecondary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  background: var(--emerald);
-  color: #ffffff;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.9375rem;
   padding: 0.875rem 2rem;
   border-radius: var(--radius-pill);
   text-decoration: none;
   transition:
-    background-color 0.2s ease,
     transform 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
   font-family: var(--font-inter);
 }
 
-.ctaButton:hover {
-  background: var(--emerald-strong);
+.ctaBtnPrimary {
+  background: var(--mint);
+  color: var(--pine-deep);
+}
+
+.ctaBtnPrimary:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  color: #ffffff;
+  box-shadow: 0 12px 30px -10px rgba(125, 215, 194, 0.5);
+  color: var(--pine-deep);
+}
+
+.ctaBtnSecondary {
+  background: transparent;
+  color: var(--pine-text);
+  border: 1px solid rgba(255, 201, 120, 0.55);
+}
+
+.ctaBtnSecondary:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 201, 120, 0.12);
+  color: var(--amber);
 }
