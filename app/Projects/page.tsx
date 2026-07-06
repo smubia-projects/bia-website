@@ -31,10 +31,10 @@ export default async function ProjectsPage() {
             showcase it right here.
           </p>
           <div className={styles.ctaBandActions}>
-            <Link href="/DAP" className={styles.ctaBtnPrimary}>
+            <Link href="/DAP" className={styles.ctaBtnDap}>
               Join DAP
             </Link>
-            <Link href="/AILodge" className={styles.ctaBtnSecondary}>
+            <Link href="/AILodge" className={styles.ctaBtnLodge}>
               Join AI Lodge
             </Link>
           </div>

@@ -173,8 +173,10 @@
   justify-content: center;
 }
 
-.ctaBtnPrimary,
-.ctaBtnSecondary {
+/* Two programmes, two equal doors — same anatomy, each in its programme colour
+   (mint = DAP, sand = AI Lodge). Neither outranks the other. */
+.ctaBtnDap,
+.ctaBtnLodge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -184,6 +186,7 @@
   padding: 0.875rem 2rem;
   border-radius: var(--radius-pill);
   text-decoration: none;
+  color: var(--pine-deep);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease,
@@ -191,25 +194,22 @@
   font-family: var(--font-inter);
 }
 
-.ctaBtnPrimary {
+.ctaBtnDap {
   background: var(--mint);
-  color: var(--pine-deep);
 }
 
-.ctaBtnPrimary:hover {
+.ctaBtnDap:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 30px -10px rgba(125, 215, 194, 0.5);
   color: var(--pine-deep);
 }
 
-.ctaBtnSecondary {
-  background: transparent;
-  color: var(--pine-text);
-  border: 1px solid rgba(255, 201, 120, 0.55);
+.ctaBtnLodge {
+  background: var(--sand);
 }
 
-.ctaBtnSecondary:hover {
+.ctaBtnLodge:hover {
   transform: translateY(-2px);
-  background: rgba(255, 201, 120, 0.12);
-  color: var(--amber);
+  box-shadow: 0 12px 30px -10px rgba(255, 211, 146, 0.5);
+  color: var(--pine-deep);
 }
