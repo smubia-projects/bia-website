@@ -105,7 +105,10 @@ Events & workshops page: public workshops, events timeline, community activities
 DAP/AI Lodge get only brief mentions/links. Datathon section removed w/ placeholder comment.
 
 ### Projects
-- Listing: **horizontal flowing carousel hero** on top → grid (keep, with filters) below →
+- Listing: **horizontal flowing carousel hero** on top — a TRUE hero: tall (~60-70vh desktop),
+  full-bleed edge-to-edge (NOT boxed in a rounded rectangle), bold display type, generous
+  shadows, cinematic card sizes ("be bold, make it grand and showcase-worthy" — user, 2026-07-07).
+  This grandeur standard applies to hero sections generally. → grid (keep, with filters) below →
   cohesive transition → vibrant CTA band at bottom: one headline ("Want your project up here?"),
   **two labeled buttons** (Join DAP / Join AI Lodge). More projects coming — build layout first.
 - Detail pages: **showcase-first, story below.** Top = screenshot carousel, "Try it live"
