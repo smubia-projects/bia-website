@@ -108,7 +108,10 @@ DAP/AI Lodge get only brief mentions/links. Datathon section removed w/ placehol
 - Listing: **horizontal flowing carousel hero** on top — a TRUE hero: tall (~60-70vh desktop),
   full-bleed edge-to-edge (NOT boxed in a rounded rectangle), bold display type, generous
   shadows, cinematic card sizes ("be bold, make it grand and showcase-worthy" — user, 2026-07-07).
-  This grandeur standard applies to hero sections generally. → grid (keep, with filters) below →
+  This grandeur standard applies to hero sections generally. The hero must NOT duplicate the
+  grid card format — it's an editorial showcase (extracted hooks/pull-quotes from project text,
+  oversized titles, builder in small type), while the grid below stays the reference catalog.
+  → grid (keep, with filters) below →
   cohesive transition → vibrant CTA band at bottom: one headline ("Want your project up here?"),
   **two labeled buttons** (Join DAP / Join AI Lodge). More projects coming — build layout first.
 - Detail pages: **showcase-first, story below.** Top = screenshot carousel, "Try it live"
