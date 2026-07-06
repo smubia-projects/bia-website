@@ -2,7 +2,7 @@ import React from "react";
 import styles from "./footer.module.css";
 import Image from "next/image";
 import Link from "next/link";
-import { FaLinkedin, FaInstagram, FaTelegram, FaEnvelope } from "react-icons/fa";
+import { Linkedin, Instagram, Send, Mail } from "lucide-react";
 import { LINKS } from "@/app/lib/links";
 
 const EXPLORE_LINKS = [
@@ -73,7 +73,7 @@ function FooterBar() {
                 aria-label="LinkedIn"
                 className={styles.socialIcon}
               >
-                <FaLinkedin />
+                <Linkedin size={18} strokeWidth={1.75} />
               </a>
               <a
                 href={LINKS.instagram}
@@ -82,7 +82,7 @@ function FooterBar() {
                 aria-label="Instagram"
                 className={styles.socialIcon}
               >
-                <FaInstagram />
+                <Instagram size={18} strokeWidth={1.75} />
               </a>
               <a
                 href={LINKS.telegram}
@@ -91,14 +91,14 @@ function FooterBar() {
                 aria-label="Telegram"
                 className={styles.socialIcon}
               >
-                <FaTelegram />
+                <Send size={18} strokeWidth={1.75} />
               </a>
               <a
                 href={LINKS.email}
                 aria-label="Email"
                 className={styles.socialIcon}
               >
-                <FaEnvelope />
+                <Mail size={18} strokeWidth={1.75} />
               </a>
             </div>
           </div>

@@ -4,8 +4,7 @@ import styles from "./nav.module.css";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { Menu, X } from "lucide-react";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -65,7 +64,11 @@ const Navbar = () => {
           aria-expanded={menuOpen}
           aria-label={menuOpen ? "Close menu" : "Open menu"}
         >
-          <FontAwesomeIcon icon={menuOpen ? faXmark : faBars} />
+          {menuOpen ? (
+            <X size={22} strokeWidth={1.75} />
+          ) : (
+            <Menu size={22} strokeWidth={1.75} />
+          )}
         </button>
       </div>
 
