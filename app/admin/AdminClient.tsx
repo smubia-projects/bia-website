@@ -57,6 +57,8 @@ const EMPTY_FORM = {
   techStack: "",
   demoUrl: "",
   sourceUrl: "",
+  liveUrl: "",
+  article: "",
 };
 
 export default function AdminClient({ initialProjects }: Props) {
@@ -124,6 +126,8 @@ export default function AdminClient({ initialProjects }: Props) {
       techStack: project.techStack.join(", "),
       demoUrl: project.demoUrl || "",
       sourceUrl: project.sourceUrl || "",
+      liveUrl: project.liveUrl || "",
+      article: project.article || "",
     });
     setTeam(
       project.team.length > 0
@@ -777,6 +781,22 @@ export default function AdminClient({ initialProjects }: Props) {
               </label>
             </fieldset>
 
+            {/* Story (long-form) */}
+            <fieldset className={styles.fieldset}>
+              <legend className={styles.legend}>Story</legend>
+              <label className={styles.label}>
+                Story (markdown, optional)
+                <textarea
+                  name="article"
+                  value={form.article}
+                  onChange={(e) => updateField("article", e.target.value)}
+                  className={styles.textarea}
+                  rows={16}
+                  placeholder="Long-form write-up. Supports **bold**, `code`, [links](https://…), and - bullet lists. When filled, this renders as 'The story' on the detail page and replaces the short overview/lessons layout."
+                />
+              </label>
+            </fieldset>
+
             {/* Lessons */}
             <fieldset className={styles.fieldset}>
               <legend className={styles.legend}>Lessons Learned</legend>
@@ -872,14 +892,14 @@ export default function AdminClient({ initialProjects }: Props) {
               </label>
               <div className={styles.fieldRow}>
                 <label className={styles.label}>
-                  Demo URL
+                  Live URL (deployed demo)
                   <input
                     type="url"
-                    name="demoUrl"
-                    value={form.demoUrl}
-                    onChange={(e) => updateField("demoUrl", e.target.value)}
+                    name="liveUrl"
+                    value={form.liveUrl}
+                    onChange={(e) => updateField("liveUrl", e.target.value)}
                     className={styles.input}
-                    placeholder="https://..."
+                    placeholder="https://... (shows 'Try it live')"
                   />
                 </label>
                 <label className={styles.label}>
@@ -891,6 +911,17 @@ export default function AdminClient({ initialProjects }: Props) {
                     onChange={(e) => updateField("sourceUrl", e.target.value)}
                     className={styles.input}
                     placeholder="https://github.com/..."
+                  />
+                </label>
+                <label className={styles.label}>
+                  Demo URL (legacy)
+                  <input
+                    type="url"
+                    name="demoUrl"
+                    value={form.demoUrl}
+                    onChange={(e) => updateField("demoUrl", e.target.value)}
+                    className={styles.input}
+                    placeholder="https://..."
                   />
                 </label>
               </div>

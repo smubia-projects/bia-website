@@ -151,6 +151,8 @@ export async function addProject(
       techStack: parseTechStack(formData),
       demoUrl: (formData.get("demoUrl") as string) || undefined,
       sourceUrl: (formData.get("sourceUrl") as string) || undefined,
+      liveUrl: (formData.get("liveUrl") as string) || undefined,
+      article: (formData.get("article") as string) || undefined,
       // New projects start hidden; an admin flips them visible when ready
       hidden: true,
     };
@@ -209,6 +211,8 @@ export async function updateProject(
       techStack: parseTechStack(formData),
       demoUrl: (formData.get("demoUrl") as string) || undefined,
       sourceUrl: (formData.get("sourceUrl") as string) || undefined,
+      liveUrl: (formData.get("liveUrl") as string) || undefined,
+      article: (formData.get("article") as string) || undefined,
     };
 
     await saveProject(updated);

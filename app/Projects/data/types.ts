@@ -24,6 +24,10 @@ export interface Project {
   techStack: string[];
   demoUrl?: string;
   sourceUrl?: string;
+  /** Deployed / live demo URL, surfaced as the "Try it live" button on the detail page */
+  liveUrl?: string;
+  /** Long-form story (markdown). When present, the detail page renders it under "The story" */
+  article?: string;
   /** When true, the project is excluded from the public /Projects listing */
   hidden?: boolean;
 }
