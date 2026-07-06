@@ -25,15 +25,32 @@ const config: Config = {
           text: "var(--pine-text)",
           soft: "var(--pine-text-soft)",
         },
-        mint: "#7DD7C2",
+        mint: "var(--mint)",
         emerald: {
-          DEFAULT: "#0E7C5B",
-          strong: "#0A5F46",
+          DEFAULT: "var(--emerald)",
+          strong: "var(--emerald-strong)",
         },
-        sky: "#7BD1FA",
+        teal: {
+          DEFAULT: "var(--teal)",
+          mid: "var(--teal-mid)",
+          deep: "var(--teal-deep)",
+        },
+        sand: "var(--sand)",
+        dusk: {
+          DEFAULT: "var(--dusk)",
+          deep: "var(--dusk-deep)",
+          surface: "var(--dusk-surface)",
+          border: "var(--dusk-border)",
+          text: "var(--dusk-text)",
+          soft: "var(--dusk-text-soft)",
+        },
+        amber: {
+          DEFAULT: "var(--amber)",
+        },
+        sky: "var(--sky)",
         gold: {
-          DEFAULT: "#E9C400",
-          deep: "#8A7400",
+          DEFAULT: "var(--gold)",
+          deep: "var(--gold-deep)",
         },
       },
       fontFamily: {

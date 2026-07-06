@@ -24,8 +24,27 @@
   /* Accents */
   --mint: #7dd7c2; /* brand colour — dark backgrounds only */
   --mint-soft: rgba(125, 215, 194, 0.12);
-  --emerald: #0e7c5b; /* accessible accent on light */
+  --emerald: #0e7c5b; /* the accent on light: links, buttons, eyebrows (5.6:1 on white) */
   --emerald-strong: #0a5f46;
+
+  /* Brand teals — OPTIONAL accents (general palette direction, used sparingly) */
+  --teal: #3cbeb4; /* bright brand teal — fills / dark-bg accents (fails text contrast on light) */
+  --teal-mid: #289d94; /* brand teal — fills only (3.3:1 on light, never text on light) */
+  --teal-deep: #1e7a70; /* darkened brand teal — safe as text on light (4.9:1 on --bg) */
+
+  /* Warm highlight — sparing (most generous on AI Lodge) */
+  --sand: #ffd392;
+
+  /* Fireside — AI Lodge page only (later wave); warm dusk, opposite temperature to pine */
+  --dusk: #241a12; /* warm dusk anchor background — forest at dusk, never black */
+  --dusk-deep: #160f0a; /* deeper dusk for gradients / hover */
+  --dusk-surface: #33261b; /* cards on dusk */
+  --dusk-border: #4a3826; /* hairlines on dusk */
+  --dusk-text: #f5e9dc; /* warm off-white headings on dusk */
+  --dusk-text-soft: #c9b4a0; /* warm muted body on dusk */
+  --amber: #ffc978; /* amber glow accent (derived from sand) for dusk sections */
+  --amber-soft: rgba(255, 201, 120, 0.16); /* amber halo / tint fill */
+
   --sky: #7bd1fa;
   --gold: #e9c400;
   --gold-deep: #8a7400;
@@ -96,6 +115,15 @@ body {
   background: radial-gradient(
     ellipse at center,
     rgba(125, 215, 194, 0.18),
+    transparent 65%
+  );
+}
+
+/* Amber halo behind headlines on warm dusk sections (AI Lodge, later wave) */
+.glow-amber {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 201, 120, 0.2),
     transparent 65%
   );
 }
