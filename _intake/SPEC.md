@@ -7,18 +7,22 @@ Copy drill-down comes after the edit pass. Numbers/links marked TBC/TODO through
 
 ## 1. Design system (updated — supersedes pine-era decisions)
 
-### Palette — "Hybrid" retheme
-| Role | Old | New |
-|---|---|---|
-| Dark anchor sections | pine `#0C211C` | **navy `#182860`** |
-| Accent on dark | mint `#7DD7C2` | mint stays (verify contrast on navy) |
-| Warm highlight | — | **sand `#ffd392`, sparingly** (most generous on AI Lodge) |
-| Accent on light | emerald `#0E7C5B` | keep or shift toward brand teal `#289d94` (darken if contrast fails) |
-| Light base | `#F6FAF8` | stays |
-| Brand teals | — | `#3cbeb4` / `#289d94` available as accents |
+### Palette — REVISED 2026-07-07 (navy anchor VETOED by user in live review)
+**Brand hex codes are general palette direction only — NOT literal values ("we don't need to
+stick to the brand colours 100%, just the general palette").**
 
-**AI Lodge exception:** its anchor sections are *warm dusk* (deep warm forest/brown-green + amber
-glow), NOT navy. Two darks across the site: DAP = cool navy (premium), AI Lodge = warm dusk (fireside).
+| Role | Value |
+|---|---|
+| Dark anchor sections | **deep pine `#0C211C` stays** (navy `#182860` rejected as anchor — "ugly") |
+| Accent on dark | mint `#7DD7C2` family stays |
+| Warm highlight | **sand `#ffd392`, sparingly** (most generous on AI Lodge) — token added Wave 1 |
+| Accent on light | emerald `#0E7C5B` (kept; brand teal fails contrast raw — darkened `--teal-deep #1E7A70` passes, use sparingly) |
+| Light base | `#F6FAF8` stays |
+| Brand teals | `--teal #3cbeb4` / `--teal-mid #289d94` / `--teal-deep #1E7A70` optional accents (raw teals are fills-only on light) |
+
+**AI Lodge exception:** its anchor sections are *warm dusk* + amber glow — tokens added Wave 1:
+`--dusk #241A12`, `--dusk-deep`, `--dusk-surface`, `--dusk-border`, `--dusk-text`, `--amber #FFC978`,
+`.glow-amber`. Two darks: DAP = cool deep pine (premium), AI Lodge = warm dusk (fireside).
 
 ### Fonts
 Unchanged: Bricolage Grotesque (display), Inter (body), Roboto Mono (eyebrows/stats).
@@ -74,7 +78,7 @@ Cluster hero (playful) → three pillars (DAP / AI Lodge / Events) → one big s
 → join CTA. General feedback applies: fewer words, more visuals.
 
 ### DAP — "premium, not cringey"
-- **Dark navy immersive**: page leans dark, spacious, hairline rules, quiet mint, understated motion.
+- **Dark immersive** (deep pine — navy vetoed): page leans dark, spacious, hairline rules, quiet mint, understated motion.
 - AY26/27 curriculum (from `_intake/dap-indiv-page/upcoming-ay2627-curriculum.md`), numbered 01–09:
   regression, classification, ensemble learning, neural networks, recommender systems, CV, NLP1, NLP2, RL.
 - Photos: cohort pic, co-learning group shots (covers 4 of 9 topics — reuse OK), presentation shots.
