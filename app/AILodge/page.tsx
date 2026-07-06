@@ -88,7 +88,7 @@ export default function AILodgePage() {
           <div className={styles.heroCopy}>
             <span className={styles.eyebrow}>AI Lodge</span>
             <h1 className={styles.title}>
-              Build your own AI,
+              Build your own&nbsp;AI,
               <br />
               <span className={styles.titleAccent}>by the fire.</span>
             </h1>

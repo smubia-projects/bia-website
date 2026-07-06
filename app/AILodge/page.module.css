@@ -187,6 +187,7 @@
   line-height: 1.05;
   margin: 1rem 0 0;
   color: var(--dusk-text);
+  text-wrap: balance;
 }
 .titleAccent {
   color: var(--amber);
