@@ -19,6 +19,20 @@ never gimmicky. The astro-cat mascot (`public/images/biaMascot.png`) supplies
 personality; use it sparingly — hero moments only, with the gentle `float`
 animation.
 
+**Two darks, opposite temperatures.** The site carries two distinct dark
+treatments. Everywhere except AI Lodge, the dark anchor is **cool deep pine
+`#0C211C`** (home hero, DAP bands, footer, CTA bands) — this is the premium,
+restrained register, DAP especially. The **AI Lodge page alone** uses a **warm
+dusk** anchor (a deep ember-lit forest-brown) with an amber glow — friendly and
+fireside. Never mix them: pine is cool, dusk is warm, and their tokens are
+separate.
+
+**On brand colours:** the club's brand teals (`#3cbeb4`, `#289d94`) and the warm
+sand (`#ffd392`) inform the accent direction but are treated as *general palette,
+not literal fills* — pine stays the anchor and emerald stays the working accent
+on light. Reach for the teals/sand only as sparing highlights, and only where
+contrast holds (see below).
+
 ## 2. Color Palette
 
 ### Light base (most sections)
@@ -46,15 +60,44 @@ animation.
 |---|---|---|
 | `--mint` | `#7DD7C2` | **The bia colour.** Headline accents, buttons and glows on DARK backgrounds only |
 | `--mint-soft` | `rgba(125,215,194,0.12)` | Tinted chip/badge/hover fill on light |
-| `--emerald` | `#0E7C5B` | The accent on LIGHT backgrounds: links, buttons, eyebrows (5.6:1 on white) |
+| `--emerald` | `#0E7C5B` | **The working accent on LIGHT backgrounds:** links, buttons, eyebrows (5.6:1 on white) |
 | `--emerald-strong` | `#0A5F46` | Emerald hover state |
+| `--teal` | `#3cbeb4` | Brand teal — OPTIONAL, sparing. Fills / dark-bg accents only (fails text contrast on light) |
+| `--teal-mid` | `#289d94` | Brand teal — OPTIONAL. Fills only (3.3:1 on light → never text on light) |
+| `--teal-deep` | `#1E7A70` | Darkened brand teal — the one teal safe as text on light (4.9:1 on `--bg`). Use sparingly beside emerald |
+| `--sand` | `#ffd392` | Warm highlight — sparing; most generous on AI Lodge. Tints/underlines/glows, not body text on light |
 | `--sky` | `#7BD1FA` | Secondary, sparing (tech tags at ~22% opacity fills) |
 | `--gold` / `--gold-deep` | `#E9C400` / `#8A7400` | AI Lodge badges: gold tint fill + gold-deep text on light |
 | Destructive | `#B91C1C` text, `rgba(220,38,38,…)` fills | Delete/error states (admin) |
 
 **The cardinal rule: mint `#7DD7C2` is never used as text or icon color on light
 backgrounds — it fails contrast. On light, the accent is emerald.** Mint appears on
-light only as `--mint-soft` background fills behind emerald text.
+light only as `--mint-soft` background fills behind emerald text. The bright brand
+teals (`#3cbeb4`, `#289d94`) follow the same rule — they fail 4.5:1 on light and are
+fills-only; only `--teal-deep #1E7A70` clears text contrast (4.9:1), and even then
+it stays a sparing companion to emerald, not a replacement. Mint on the deep pine
+anchor passes comfortably (~10:1).
+
+### Fireside — AI Lodge page only (later wave)
+
+A second, **warm** dark system reserved for AI Lodge. Do not use these on pine
+sections; they are the opposite temperature. Achieve "fireside" through colour and
+glow, not literal campfire scenery.
+
+| Token | Hex | Role |
+|---|---|---|
+| `--dusk` | `#241A12` | Warm dusk anchor background — forest at dusk, **never black** |
+| `--dusk-deep` | `#160F0A` | Deeper dusk for gradients / hover |
+| `--dusk-surface` | `#33261B` | Cards on dusk |
+| `--dusk-border` | `#4A3826` | Hairlines on dusk |
+| `--dusk-text` | `#F5E9DC` | Warm off-white headings on dusk |
+| `--dusk-text-soft` | `#C9B4A0` | Warm muted body on dusk |
+| `--amber` | `#FFC978` | Amber glow accent (derived from sand) — the mint-equivalent on dusk |
+| `--amber-soft` | `rgba(255,201,120,0.16)` | Amber halo / tint fill |
+
+The `.glow-amber` utility is the dusk counterpart to `.glow-mint`. So: **DAP = cool
+deep pine (premium), AI Lodge = warm dusk (fireside) — two darks, opposite
+temperatures.**
 
 ## 3. Typography
 
