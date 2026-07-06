@@ -20,6 +20,9 @@
 .DS_Store
 *.pem
 
+# session note file — never commit
+/DO-NOT-COMMIT-ME-BUT-MUST-READ-BEFORE-MORE-CHANGES.md
+
 # debug
 npm-debug.log*
 yarn-debug.log*
