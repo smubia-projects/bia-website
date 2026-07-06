@@ -69,9 +69,6 @@ app/
 ├── page.tsx            # Home: dark hero, offerings, stats, DAP band, testimonials, join CTA
 └── globals.css         # Tailwind + design tokens (CSS variables)
 
-scripts/
-├── seed-projects.mjs   # One-time seed of existing projects to Upstash Redis
-
 public/
 ├── images/             # Static images (logo is white-on-transparent; nav tints it via CSS filter)
 
@@ -163,11 +160,9 @@ The home page (`app/page.tsx`) demonstrates a custom `ScrollReveal` component us
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST API URL |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST API token |
 
-### Seeding Initial Data
-Run once after setting up the Redis store:
-```powershell
-node scripts/seed-projects.mjs
-```
+### Project Data Is Live
+Redis is the single live source of project data — all changes go through the `/admin`
+panel. Do not add seed scripts; the seeding era ended July 2026.
 
 ### Adding a Project (via Admin)
 1. Go to `/admin` and log in
