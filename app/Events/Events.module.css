@@ -2,43 +2,46 @@
   padding-top: 4rem; /* clear the fixed nav */
 }
 
-/* ============ Page header ============ */
+/* ============ Split hero ============ */
 
-.header {
-  padding: 5rem 1.25rem 2rem;
+.hero {
+  padding: 4.5rem 1.25rem 4rem;
 }
 
-.headerInner {
+.heroInner {
   max-width: 76rem;
   margin: 0 auto;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
   align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
 }
 
-.headerText {
-  flex: 1;
-}
-
-.mascot {
-  display: none;
-  width: clamp(8rem, 6rem + 8vw, 13rem);
-  height: auto;
-  animation: float 6s ease-in-out infinite;
-  filter: drop-shadow(0 16px 32px rgba(18, 53, 44, 0.18));
-}
-
-@media (min-width: 768px) {
-  .mascot {
-    display: block;
+@media (min-width: 900px) {
+  .heroInner {
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 3.5rem;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .mascot {
-    animation: none;
-  }
+.heroCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.heroImageWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.heroImage {
+  object-fit: cover;
 }
 
 /* ============ Section shells ============ */
@@ -134,51 +137,63 @@
   margin-bottom: 0.5rem;
 }
 
-/* ============ Datathon ============ */
+/* ============ Flagship programme links ============ */
 
-.datathonStats {
+.programmeGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 1.5rem;
   margin-top: 3rem;
 }
 
-@media (min-width: 768px) {
-  .datathonStats {
-    grid-template-columns: repeat(4, 1fr);
+@media (min-width: 720px) {
+  .programmeGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-.datathonStat {
-  padding: 1.75rem 1.5rem;
+.programmeCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 2rem 2.25rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xs);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
-.datathonValue {
+.programmeCard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.programmeTitle {
   font-family: var(--font-display), sans-serif;
-  font-weight: 800;
-  font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem);
-  line-height: 1;
-  color: var(--emerald);
+  font-weight: 700;
+  font-size: 1.375rem;
+  color: var(--ink);
+  margin: 0;
 }
 
-.datathonLabel {
-  margin-top: 0.625rem;
+.programmeBlurb {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.programmeArrow {
+  margin-top: 0.25rem;
   font-family: var(--font-roboto-mono), monospace;
-  font-size: 0.6875rem;
-  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.datathonCtas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.875rem;
-  margin-top: 2.5rem;
+  color: var(--emerald);
 }
 
 /* ============ DAP pointer (dark) ============ */

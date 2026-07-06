@@ -1,14 +1,21 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import Wordcard from "../components/Wordcard";
 import styles from "./Events.module.css";
 import TimelineMain from "../components/Timelines/TimelineMain";
 import ScrollReveal from "../components/ui/ScrollReveal";
 import SectionHeading from "../components/ui/SectionHeading";
-import CountUp from "../components/ui/CountUp";
 import Button from "../components/ui/Button";
-import { LINKS } from "../lib/links";
-import { DATATHON } from "./datathonData";
+
+export const metadata = {
+  title: "Events — SMUBIA",
+  description:
+    "Public workshops, semester events and community activities at SMU's Business Intelligence & Analytics Club. No prerequisites, every faculty welcome.",
+};
+
+// Existing site image, reused for the split hero (per Wave 3 spec).
+const HERO_IMAGE = "/images/biapic1.jpg";
 
 const WORKSHOPS = [
   {
@@ -80,27 +87,43 @@ const WORKSHOPS = [
   },
 ];
 
+// Compact links to the two flagship programmes — no deep content here.
+const PROGRAMMES = [
+  {
+    href: "/DAP",
+    label: "Data Associate Programme",
+    blurb: "Our selective ML programme — one full project, mentors beside you.",
+  },
+  {
+    href: "/AILodge",
+    label: "AI Lodge",
+    blurb: "An 8-week build community where teams ship real AI projects.",
+  },
+];
+
 const Page: React.FC = () => {
   return (
     <main className={styles.page}>
-      {/* Page header */}
-      <section className={styles.header}>
-        <div className={styles.headerInner}>
-          <div className={styles.headerText}>
+      {/* Split hero: copy left, photo right */}
+      <section className={styles.hero}>
+        <div className={styles.heroInner}>
+          <div className={styles.heroCopy}>
             <SectionHeading
-              eyebrow="What we do"
-              title="A full year of data, from first query to final model"
-              lede="Workshops open to everyone, semester events to plug into the community, and our annual Datathon — no prerequisites, every faculty welcome."
+              eyebrow="Events & workshops"
+              title="A full year of data"
+              lede="Open workshops, semester events and community activities — no prerequisites, every faculty welcome."
             />
           </div>
-          <Image
-            src="/images/biaMascot.png"
-            alt="BIA mascot"
-            width={220}
-            height={220}
-            className={styles.mascot}
-            priority
-          />
+          <div className={styles.heroImageWrap}>
+            <Image
+              src={HERO_IMAGE}
+              alt="The SMUBIA community"
+              fill
+              sizes="(min-width: 900px) 40vw, 100vw"
+              className={styles.heroImage}
+              priority
+            />
+          </div>
         </div>
       </section>
 
@@ -111,7 +134,7 @@ const Page: React.FC = () => {
             <SectionHeading
               eyebrow="Workshops"
               title="The curriculum"
-              lede="Three workshop tracks each academic year, in order — each one builds on the last. Tap a card for the full syllabus."
+              lede="Three tracks each year, in order — each builds on the last. Tap a card for the syllabus."
             />
           </ScrollReveal>
           <div className={styles.curriculumGrid}>
@@ -146,9 +169,9 @@ const Page: React.FC = () => {
         <div className={styles.sectionInner}>
           <ScrollReveal>
             <SectionHeading
-              eyebrow="Events"
+              eyebrow="Community"
               title="A semester with SMUBIA"
-              lede="Beyond the classroom — tea sessions, networking nights, welfare drives and picnics. Swipe through a typical semester."
+              lede="Tea sessions, networking nights, welfare drives and picnics. Swipe through a typical semester."
               align="center"
             />
           </ScrollReveal>
@@ -158,61 +181,51 @@ const Page: React.FC = () => {
         </div>
       </section>
 
-      {/* Datathon */}
-      <section id="datathon" className={styles.section}>
+      {/*
+        DATATHON — removed 2026-07. Restore from git history + datathonData.ts
+        (retained on disk in this folder) when the event returns.
+      */}
+
+      {/* Flagship programmes — compact links only, no deep content */}
+      <section className={styles.section}>
         <div className={styles.sectionInner}>
           <ScrollReveal>
             <SectionHeading
-              eyebrow={DATATHON.eyebrow}
-              title={DATATHON.title}
-              lede={DATATHON.description}
+              eyebrow="Go deeper"
+              title="Our flagship programmes"
             />
           </ScrollReveal>
-          <ScrollReveal delay={100}>
-            <div className={styles.datathonStats}>
-              {DATATHON.stats.map((stat) => (
-                <div key={stat.label} className={styles.datathonStat}>
-                  <div className={styles.datathonValue}>
-                    <CountUp value={stat.value} suffix={stat.suffix} />
-                  </div>
-                  <div className={styles.datathonLabel}>{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </ScrollReveal>
-          <ScrollReveal delay={200}>
-            <div className={styles.datathonCtas}>
-              <Button href={LINKS.datathonSite} variant="primary" external>
-                Visit the Datathon site →
-              </Button>
-              <Button href="/ContactUs#join" variant="outline">
-                Get notified about the next one
-              </Button>
-            </div>
-          </ScrollReveal>
+          <div className={styles.programmeGrid}>
+            {PROGRAMMES.map((prog, i) => (
+              <ScrollReveal key={prog.href} delay={i * 100}>
+                <Link href={prog.href} className={styles.programmeCard}>
+                  <h3 className={styles.programmeTitle}>{prog.label}</h3>
+                  <p className={styles.programmeBlurb}>{prog.blurb}</p>
+                  <span className={styles.programmeArrow}>Explore →</span>
+                </Link>
+              </ScrollReveal>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* DAP pointer */}
+      {/* Join CTA (dark pine) */}
       <section className={styles.dapPointer}>
         <div className={styles.dapPointerInner}>
           <ScrollReveal>
             <div className={styles.dapPointerContent}>
               <div>
-                <span className="eyebrow eyebrowOnDark">
-                  Flagship Programme
-                </span>
+                <span className="eyebrow eyebrowOnDark">Get involved</span>
                 <h2 className={styles.dapPointerTitle}>
-                  Ready to go deeper? Apply for DAP.
+                  Come to the next one.
                 </h2>
                 <p className={styles.dapPointerText}>
-                  Our selective Data Associate Programme takes ~50 students a
-                  cohort through a full machine learning project, with mentors
-                  beside you the whole way.
+                  Workshops and events are open to every faculty — no experience
+                  needed. Join the community and we&apos;ll keep you posted.
                 </p>
               </div>
-              <Button href="/DAP" variant="onDark">
-                Discover DAP →
+              <Button href="/ContactUs#join" variant="onDark">
+                Join SMUBIA →
               </Button>
             </div>
           </ScrollReveal>
