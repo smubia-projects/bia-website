@@ -9,11 +9,12 @@ import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
-  { href: "/WhatWeDo", label: "What We Do" },
+  // "Events" points at the existing /WhatWeDo route (Wave 3 renames the route)
+  { href: "/WhatWeDo", label: "Events" },
   { href: "/DAP", label: "DAP" },
+  { href: "/AILodge", label: "AI Lodge" },
   { href: "/Projects", label: "Projects" },
-  { href: "/WorkWithUs", label: "Work with Us" },
-  { href: "/ContactUs", label: "Contact" },
+  { href: "/WorkWithUs", label: "Work With Us" },
 ];
 
 const Navbar = () => {
@@ -31,15 +32,16 @@ const Navbar = () => {
   return (
     <header className={styles.navbar}>
       <div className={styles.inner}>
-        <Link href="/" className={styles.logoLink} aria-label="SMUBIA home">
+        <Link href="/" className={styles.logoLink} aria-label="SMU BIA home">
           <Image
-            src="/images/logo.png"
-            alt="SMUBIA"
-            width={120}
-            height={32}
-            className={styles.logo}
+            src="/images/mascot.png"
+            alt=""
+            width={40}
+            height={40}
+            className={styles.mascot}
             priority
           />
+          <span className={styles.wordmark}>SMU BIA</span>
         </Link>
 
         <nav className={styles.desktopLinks} aria-label="Main navigation">
@@ -55,7 +57,7 @@ const Navbar = () => {
             </Link>
           ))}
           <Link href="/ContactUs#join" className={styles.joinButton}>
-            Join us
+            Join Us
           </Link>
         </nav>
 
@@ -88,7 +90,7 @@ const Navbar = () => {
             className={styles.mobileJoinButton}
             onClick={() => setMenuOpen(false)}
           >
-            Join us
+            Join Us
           </Link>
         </nav>
       )}

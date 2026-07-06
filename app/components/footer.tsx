@@ -7,10 +7,11 @@ import { LINKS } from "@/app/lib/links";
 
 const EXPLORE_LINKS = [
   { href: "/", label: "Home" },
-  { href: "/WhatWeDo", label: "What We Do" },
+  { href: "/WhatWeDo", label: "Events" },
   { href: "/DAP", label: "Data Associate Programme" },
+  { href: "/AILodge", label: "AI Lodge" },
   { href: "/Projects", label: "Projects" },
-  { href: "/WorkWithUs", label: "Work with Us" },
+  { href: "/WorkWithUs", label: "Work With Us" },
   { href: "/ContactUs", label: "Contact" },
 ];
 
@@ -20,13 +21,22 @@ function FooterBar() {
       <div className={styles.inner}>
         <div className={styles.grid}>
           <div className={styles.brandColumn}>
-            <Image
-              src="/images/logo.png"
-              alt="SMUBIA"
-              width={140}
-              height={37}
-              className={styles.logo}
-            />
+            <div className={styles.brandLockup}>
+              <Image
+                src="/images/mascot.png"
+                alt=""
+                width={44}
+                height={44}
+                className={styles.brandMascot}
+              />
+              <Image
+                src="/images/logo.png"
+                alt="SMUBIA"
+                width={140}
+                height={37}
+                className={styles.logo}
+              />
+            </div>
             <p className={styles.blurb}>
               SMU&apos;s home for data analytics, AI and machine learning —
               open to all backgrounds since 2015.
@@ -100,14 +110,6 @@ function FooterBar() {
                 <FaEnvelope />
               </a>
             </div>
-            <a
-              href={LINKS.prospectus}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.prospectusLink}
-            >
-              Download our prospectus →
-            </a>
           </div>
         </div>
 
