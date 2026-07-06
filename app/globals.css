@@ -49,11 +49,13 @@
   --gold: #e9c400;
   --gold-deep: #8a7400;
 
-  /* Shadows (green-tinted, layered) */
+  /* Shadows (green-tinted, layered). Resting cards sit at sm with a hairline
+     border; md is earned on hover, lg on featured/floating, xl on hero moments. */
   --shadow-xs: 0 1px 2px rgba(18, 53, 44, 0.06);
   --shadow-sm: 0 1px 2px rgba(18, 53, 44, 0.05), 0 2px 8px rgba(18, 53, 44, 0.06);
   --shadow-md: 0 2px 4px rgba(18, 53, 44, 0.05), 0 8px 24px rgba(18, 53, 44, 0.09);
   --shadow-lg: 0 4px 8px rgba(18, 53, 44, 0.06), 0 16px 48px rgba(18, 53, 44, 0.12);
+  --shadow-xl: 0 8px 16px rgba(18, 53, 44, 0.07), 0 24px 64px rgba(18, 53, 44, 0.16);
 
   /* Radius */
   --radius-sm: 8px;
@@ -79,6 +81,7 @@ body {
   padding: 0;
   overflow-x: hidden;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -96,12 +99,19 @@ body {
   font-family: var(--font-inter);
 }
 
+/* Visible keyboard focus everywhere — teal-mid clears 3:1 on both the light
+   base and the dark pine/dusk anchors, so one ring works site-wide. */
+:focus-visible {
+  outline: 2px solid var(--teal-mid);
+  outline-offset: 2px;
+}
+
 /* Mono eyebrow label — emerald on light, mint on dark via .eyebrowOnDark */
 .eyebrow {
   font-family: var(--font-roboto-mono), monospace;
   font-size: 0.75rem;
   font-weight: 500;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--emerald);
 }
@@ -138,10 +148,6 @@ body {
   }
 }
 
-.indexup {
-  z-index: 99999;
-}
-
 .fade-in {
   animation: fadeIn 0.5s ease-in;
 }
@@ -158,5 +164,13 @@ body {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
