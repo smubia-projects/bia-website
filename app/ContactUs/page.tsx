@@ -33,18 +33,19 @@ const ContactUs = () => {
               <h2 className={styles.joinTitle}>Join SMUBIA</h2>
               <p className={styles.joinText}>
                 No prerequisites, no interviews to be a member — every faculty
-                and every skill level is welcome. Pick whichever channel suits
-                you:
+                and every skill level is welcome. Three ways in:
               </p>
+              {/* TODO: add "Join our Telegram" + membership form buttons when
+                  the real links land in app/lib/links.ts */}
               <div className={styles.joinCtas}>
-                <Button href={LINKS.telegram} variant="primary" external>
-                  Join our Telegram
-                </Button>
-                <Button href={LINKS.joinForm} variant="outline" external>
-                  Membership sign-up form
-                </Button>
-                <Button href={LINKS.instagram} variant="outline" external>
+                <Button href={LINKS.instagram} variant="primary" external>
                   DM us on Instagram
+                </Button>
+                <Button href="/DAP" variant="outline">
+                  Apply to DAP
+                </Button>
+                <Button href="/AILodge" variant="outline">
+                  Join AI Lodge
                 </Button>
               </div>
             </div>
@@ -89,7 +90,7 @@ const ContactUs = () => {
                   Companies &amp; sponsors
                 </h3>
                 <p className={styles.channelText}>
-                  Sponsorship tiers and event opportunities.
+                  Partner on events or back a programme challenge.
                 </p>
                 <Link href="/WorkWithUs" className={styles.channelLink}>
                   Work with us →

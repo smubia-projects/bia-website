@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import ScrollReveal from "@/app/components/ui/ScrollReveal";
 import CountUp from "@/app/components/ui/CountUp";
+import { LINKS } from "@/app/lib/links";
 import styles from "./page.module.css";
 
 export const metadata = {
@@ -98,10 +99,10 @@ export default function AILodgePage() {
               alike, all gathered around the same fire.
             </p>
             <div className={styles.heroActions}>
-              {/* TODO: AI Lodge infosite link — user will supply */}
-              <a href="#" className={styles.ctaPrimary}>
+              {/* TODO: swap for the real AI Lodge infosite link when it arrives */}
+              <Link href={LINKS.aiLodgeInfosite} className={styles.ctaPrimary}>
                 Join AI Lodge
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -383,10 +384,10 @@ export default function AILodgePage() {
                 each intake — grab a seat by the fire.
               </p>
               <div className={styles.closingActions}>
-                {/* TODO: AI Lodge infosite link — user will supply */}
-                <a href="#" className={styles.ctaPrimary}>
+                {/* TODO: swap for the real AI Lodge infosite link when it arrives */}
+                <Link href={LINKS.aiLodgeInfosite} className={styles.ctaPrimary}>
                   Join AI Lodge
-                </a>
+                </Link>
                 <Link
                   href="/Projects?badge=AI%20Lodge"
                   className={styles.ctaGhost}

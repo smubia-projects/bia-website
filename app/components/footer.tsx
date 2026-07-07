@@ -84,10 +84,9 @@ function FooterBar() {
               >
                 <Instagram size={18} strokeWidth={1.75} />
               </a>
+              {/* TODO: restore target="_blank" when LINKS.telegram is the real invite */}
               <a
                 href={LINKS.telegram}
-                target="_blank"
-                rel="noopener noreferrer"
                 aria-label="Telegram"
                 className={styles.socialIcon}
               >

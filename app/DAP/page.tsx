@@ -38,7 +38,9 @@ export default function DAPPage() {
             project — mentored from first idea to final showcase.
           </p>
           <div className={styles.heroActions}>
-            <Button href={LINKS.joinForm} variant="onDark" external>
+            {/* joinForm routes to /ContactUs#join until the real form lands —
+                restore `external` with the Google Form URL */}
+            <Button href={LINKS.joinForm} variant="onDark">
               Apply to the programme →
             </Button>
             <a href="#curriculum" className={styles.heroScrollLink}>
@@ -188,7 +190,7 @@ export default function DAPPage() {
               No prior machine learning experience needed — only commitment.
             </p>
             <div className={styles.closingActions}>
-              <Button href={LINKS.joinForm} variant="onDark" external>
+              <Button href={LINKS.joinForm} variant="onDark">
                 Apply to the programme →
               </Button>
             </div>
