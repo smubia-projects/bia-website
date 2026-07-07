@@ -91,14 +91,14 @@ const Timeline = ({ events }: { events: Event[] }) => {
               {events.map((event, index) => (
                 <SwiperSlide key={index}>
                   <div className="text-center p-6">
-                    <h3 className="font-[family-name:var(--font-display)] text-2xl md:text-3xl font-bold text-[var(--ink)] mb-4">
+                    <h3 className="font-[family-name:var(--font-display)] text-2xl md:text-3xl font-bold text-[var(--ink)] mb-3">
                       {event.title}
                     </h3>
-                    <p className="text-base md:text-lg text-[var(--ink-soft)] mb-6 max-w-[90%] mx-auto leading-relaxed">
+                    <p className="text-base text-[var(--ink-soft)] max-w-[36rem] mx-auto leading-relaxed">
                       {event.description}
                     </p>
                     {event.futureEvent && (
-                      <button className="bg-[var(--emerald)] text-white font-semibold
+                      <button className="mt-6 bg-[var(--emerald)] text-white font-semibold
                                      px-8 py-3 rounded-full
                                      hover:bg-[var(--emerald-strong)] transition-colors
                                      text-base uppercase tracking-wider">
