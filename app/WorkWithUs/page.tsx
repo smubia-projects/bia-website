@@ -31,6 +31,7 @@ export default function WorkWithUsPage() {
         <div className={styles.heroInner}>
           <div className={styles.heroCopy}>
             <SectionHeading
+              size="hero"
               eyebrow="Partnerships"
               title="Work with us"
               lede="Reach 2,000+ analytics-minded students at SMU."

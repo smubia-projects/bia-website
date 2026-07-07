@@ -35,7 +35,10 @@ export default function ProjectsContent({ projects }: Props) {
     <>
       {/* Section label + filter bar (the hero above owns the page H1) */}
       <div className={styles.gridIntro}>
-        <h2 className={styles.gridLabel}>All projects</h2>
+        <div>
+          <span className="eyebrow">The catalog</span>
+          <h2 className={styles.gridLabel}>All projects</h2>
+        </div>
         <div className={styles.filterBar}>
           {filters.map((f) => (
             <button

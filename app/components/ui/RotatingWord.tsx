@@ -10,7 +10,7 @@ interface RotatingWordProps {
 }
 
 export default function RotatingWord({
-  words = ["data analytics", "AI", "machine learning", "datathons"],
+  words = ["data analytics", "AI", "machine learning", "hackathons"],
 }: RotatingWordProps) {
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);

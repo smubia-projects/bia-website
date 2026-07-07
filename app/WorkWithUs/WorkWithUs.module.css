@@ -79,7 +79,8 @@
   display: block;
   font-family: var(--font-display), sans-serif;
   font-weight: 800;
-  font-size: clamp(4rem, 2.2rem + 10vw, 8.5rem);
+  /* Matches the Home focal stat exactly — one pattern, one size. */
+  font-size: clamp(4rem, 2.5rem + 8vw, 8rem);
   line-height: 0.95;
   letter-spacing: -0.03em;
   color: var(--emerald);
@@ -176,7 +177,8 @@
   align-self: flex-start;
   padding: 0.25rem 0.7rem;
   border-radius: var(--radius-pill);
-  background: var(--sand);
+  /* Brand job, not AI Lodge's sand — colours are jobs (DESIGN.md §10). */
+  background: var(--mint-soft);
   color: var(--emerald-strong);
   font-family: var(--font-roboto-mono), monospace;
   font-size: 0.75rem;

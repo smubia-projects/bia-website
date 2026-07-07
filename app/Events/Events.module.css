@@ -188,11 +188,11 @@
 }
 
 .programmeArrow {
+  /* Inter sentence-case on light surfaces (mono-caps links are reserved for
+     dark/premium pages) — one link family per ground. */
   margin-top: 0.25rem;
-  font-family: var(--font-roboto-mono), monospace;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.9375rem;
+  font-weight: 600;
   color: var(--emerald);
 }
 

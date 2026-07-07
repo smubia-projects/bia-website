@@ -44,6 +44,17 @@
   color: var(--pine-text);
 }
 
+/* Hero scale — a page's opening heading must outrank its section h2s. */
+.hero .title {
+  font-size: clamp(2.75rem, 1.8rem + 4.2vw, 4.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.hero {
+  max-width: 48rem;
+}
+
 .lede {
   font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
   line-height: 1.65;

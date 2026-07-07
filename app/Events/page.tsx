@@ -109,6 +109,7 @@ const Page: React.FC = () => {
         <div className={styles.heroInner}>
           <div className={styles.heroCopy}>
             <SectionHeading
+              size="hero"
               eyebrow="Events & workshops"
               title="A full year of data"
               lede="Open workshops, semester events and community activities — no prerequisites, every faculty welcome."

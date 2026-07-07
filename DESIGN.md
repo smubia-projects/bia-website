@@ -218,3 +218,18 @@ Locked in during the site-wide touch-up; hold these in all future work:
 - **Footer** carries the oversized `SMUBIA` watermark texture (mint at 5% alpha) —
   a designed statement, keep it barely-there.
 - **Z-index**: no arbitrary values; nothing above the modal layer.
+
+## 11. Post-audit clarifications (July 2026)
+
+- **AI Lodge cream base**: Lodge light sections intentionally sit on a warm cream
+  (`#FAF5EC`, sand band `#F4EAD7`) instead of the sitewide `--bg` — cool mint-white
+  would fight the fireside. Page-local by design; do not "fix" back to `--bg`.
+- **Dusk-meets-pine footer**: the Lodge closing CTA (dusk) abutting the global pine
+  footer is the accepted exception to "never mix the two darks" — the footer is
+  global chrome, not part of the page's temperature arc.
+- **Badge anatomy rule**: solid fill = programme (gold family = AI Lodge, mint-soft =
+  DAP/brand), outline = status, plain text = category. Never improvise a fourth style.
+- **Link families**: Inter sentence-case links on light surfaces; mono-caps links
+  reserved for dark/premium pages (DAP). One family per ground.
+- **Hero H1s**: every page opens with a true h1 that outranks its section h2s —
+  split heroes use `SectionHeading size="hero"`.

@@ -7,6 +7,8 @@ interface SectionHeadingProps {
   lede?: React.ReactNode;
   tone?: "light" | "dark";
   align?: "left" | "center";
+  /** "hero" renders an h1 at page-hero scale; "section" (default) an h2. */
+  size?: "section" | "hero";
 }
 
 export default function SectionHeading({
@@ -15,12 +17,14 @@ export default function SectionHeading({
   lede,
   tone = "light",
   align = "left",
+  size = "section",
 }: SectionHeadingProps) {
+  const Heading = size === "hero" ? "h1" : "h2";
   return (
     <div
       className={`${styles.wrap} ${tone === "dark" ? styles.dark : ""} ${
         align === "center" ? styles.center : ""
-      }`}
+      } ${size === "hero" ? styles.hero : ""}`}
     >
       {eyebrow && (
         <div className={styles.eyebrowRow}>
@@ -30,7 +34,7 @@ export default function SectionHeading({
           </span>
         </div>
       )}
-      <h2 className={styles.title}>{title}</h2>
+      <Heading className={styles.title}>{title}</Heading>
       {lede && <p className={styles.lede}>{lede}</p>}
     </div>
   );

@@ -18,6 +18,7 @@ const ContactUs = () => {
       <section className={styles.headerSection}>
         <div className={styles.inner}>
           <SectionHeading
+            size="hero"
             eyebrow="Contact"
             title="Say hello"
             lede="Whether you want to join the club, sponsor an event or just ask a question — we're easy to reach."

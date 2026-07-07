@@ -16,9 +16,14 @@
   content: "";
   position: absolute;
   inset: auto 0 0 0;
-  height: 55%;
+  height: 65%;
   border-radius: 0 0 15px 15px;
-  background: linear-gradient(to top, rgba(12, 33, 28, 0.75), transparent);
+  background: linear-gradient(
+    to top,
+    rgba(12, 33, 28, 0.88),
+    rgba(12, 33, 28, 0.35) 60%,
+    transparent
+  );
   pointer-events: none;
 }
 
