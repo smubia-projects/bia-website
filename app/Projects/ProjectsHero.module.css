@@ -122,6 +122,16 @@
   }
 }
 
+/* Static strip — used while there are too few projects for a marquee to loop
+   without repeating a slide in-viewport. Same slides, no motion, centered. */
+.staticStrip {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0 clamp(1.5rem, 5vw, 4rem);
+}
+
 /* Editorial poster slide — film-festival title card, not a grid card clone */
 .slide {
   position: relative;

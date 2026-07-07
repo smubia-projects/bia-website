@@ -35,7 +35,10 @@ function extractHook(project: Project): string {
   const clean = stripInline(firstLine);
   const sentence = clean.match(/^.*?[.?!](?=\s|$)/);
   let hook = (sentence ? sentence[0] : clean).trim();
-  if (hook.length > 128) hook = hook.slice(0, 125).trimEnd() + "…";
+  if (hook.length > 128) {
+    // Cut at a word boundary — never mid-word.
+    hook = hook.slice(0, 125).replace(/\s+\S*$/, "") + "…";
+  }
   return hook;
 }
 
@@ -92,17 +95,14 @@ function HeroSlide({ project }: { project: Project }) {
 }
 
 export default function ProjectsHero({ projects }: Props) {
-  // Repeat the base list so the strip is wide enough to scroll continuously
-  // even with a couple of projects, then duplicate the whole track once more so
-  // the CSS marquee loops seamlessly at -50%.
-  let track: Project[] = [];
-  if (projects.length > 0) {
-    let base = projects;
-    while (base.length < 5) {
-      base = [...base, ...projects];
-    }
-    track = [...base, ...base];
-  }
+  // A marquee only earns its motion when there are enough distinct projects
+  // that no slide repeats within a viewport. Below that, show each project
+  // once in a static, centered strip — a duplicate on screen reads as a bug.
+  const useMarquee = projects.length >= 4;
+
+  // For the marquee: duplicate the whole track once so the CSS loop is
+  // seamless at -50%.
+  const track = useMarquee ? [...projects, ...projects] : projects;
 
   return (
     <section className={styles.hero} aria-label="Projects showcase">
@@ -120,17 +120,24 @@ export default function ProjectsHero({ projects }: Props) {
         </p>
       </div>
 
-      {track.length > 0 && (
-        <div className={styles.marquee}>
-          <div className={styles.track}>
-            {track.map((project, i) => (
-              <HeroSlide key={`${project.slug}-${i}`} project={project} />
+      {track.length > 0 &&
+        (useMarquee ? (
+          <div className={styles.marquee}>
+            <div className={styles.track}>
+              {track.map((project, i) => (
+                <HeroSlide key={`${project.slug}-${i}`} project={project} />
+              ))}
+            </div>
+            <div className={styles.fadeLeft} aria-hidden="true" />
+            <div className={styles.fadeRight} aria-hidden="true" />
+          </div>
+        ) : (
+          <div className={styles.staticStrip}>
+            {track.map((project) => (
+              <HeroSlide key={project.slug} project={project} />
             ))}
           </div>
-          <div className={styles.fadeLeft} aria-hidden="true" />
-          <div className={styles.fadeRight} aria-hidden="true" />
-        </div>
-      )}
+        ))}
     </section>
   );
 }
