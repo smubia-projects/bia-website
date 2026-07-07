@@ -36,8 +36,8 @@ function extractHook(project: Project): string {
   const sentence = clean.match(/^.*?[.?!](?=\s|$)/);
   let hook = (sentence ? sentence[0] : clean).trim();
   if (hook.length > 128) {
-    // Cut at a word boundary — never mid-word.
-    hook = hook.slice(0, 125).replace(/\s+\S*$/, "") + "…";
+    // Cut at a word boundary — never mid-word — and shed trailing punctuation.
+    hook = hook.slice(0, 125).replace(/\s+\S*$/, "").replace(/[\s—–,;:-]+$/, "") + "…";
   }
   return hook;
 }
