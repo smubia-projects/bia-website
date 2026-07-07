@@ -153,21 +153,25 @@ export default function ProjectDetailContent({ project }: Props) {
         )}
       </header>
 
-      {hasArticle ? (
-        /* Long-form story */
-        <section className={styles.storySection}>
-          <div className={styles.sectionDivider}>
-            <div className={styles.dividerLine} />
-            <h2 className={styles.sectionLabel}>The story</h2>
-            <div className={styles.dividerLineShort} />
-          </div>
-          <Markdown content={project.article!} className={styles.storyBody} />
-        </section>
-      ) : (
-        /* Fallback: the original short overview + lessons + team layout */
-        <div className={styles.contentGrid}>
-          <div className={styles.mainContent}>
-            {(project.overview || project.rationale) && (
+      {/* One template for both modes: main column (story OR overview+lessons)
+          beside the team/meta sidebar — article pages are not second-class. */}
+      <div className={styles.contentGrid}>
+        <div className={styles.mainContent}>
+          {hasArticle ? (
+            <section className={styles.storySection}>
+              <div className={styles.sectionDivider}>
+                <div className={styles.dividerLine} />
+                <h2 className={styles.sectionLabel}>The story</h2>
+                <div className={styles.dividerLineShort} />
+              </div>
+              <Markdown
+                content={project.article!}
+                className={styles.storyBody}
+              />
+            </section>
+          ) : (
+            <>
+              {(project.overview || project.rationale) && (
               <section className={styles.overviewSection}>
                 <div className={styles.sectionDivider}>
                   <div className={styles.dividerLine} />
@@ -217,11 +221,13 @@ export default function ProjectDetailContent({ project }: Props) {
                   )}
                 </div>
               </section>
-            )}
-          </div>
+              )}
+            </>
+          )}
+        </div>
 
-          {project.team.length > 0 && (
-            <aside className={styles.sidebar}>
+        {project.team.length > 0 && (
+          <aside className={styles.sidebar}>
               <div className={styles.sidebarCard}>
                 <h2 className={styles.sidebarLabel}>About the Team</h2>
                 <ul className={styles.teamList}>
@@ -263,46 +269,7 @@ export default function ProjectDetailContent({ project }: Props) {
               </div>
             </aside>
           )}
-        </div>
-      )}
-
-      {/* Team credit for article-mode projects (roles + avatars) */}
-      {hasArticle && project.team.length > 0 && (
-        <section className={styles.teamCredit}>
-          <div className={styles.sectionDivider}>
-            <div className={styles.dividerLine} />
-            <h2 className={styles.sectionLabel}>The builder{project.team.length > 1 ? "s" : ""}</h2>
-            <div className={styles.dividerLineShort} />
-          </div>
-          <ul className={styles.creditList}>
-            {project.team.map((member, i) => (
-              <li key={i} className={styles.teamMember}>
-                <div className={styles.avatarWrapper}>
-                  {member.avatar ? (
-                    <Image
-                      src={member.avatar}
-                      alt={member.name}
-                      fill
-                      className={styles.avatar}
-                      sizes="48px"
-                    />
-                  ) : (
-                    <div className={styles.avatarPlaceholder}>
-                      {member.name.charAt(0)}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className={styles.memberName}>{member.name}</p>
-                  {member.role && (
-                    <p className={styles.memberRole}>{member.role}</p>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      </div>
     </>
   );
 }
