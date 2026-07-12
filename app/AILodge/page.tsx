@@ -383,8 +383,10 @@ export default function AILodgePage() {
                 each intake — grab a seat by the fire.
               </p>
               <div className={styles.closingActions}>
-                {/* TODO: swap for the real AI Lodge infosite link when it arrives */}
-                <Link href={LINKS.aiLodgeInfosite} className={styles.ctaPrimary}>
+                <Link
+                  href={LINKS.aiLodgeInfosite}
+                  className={`${styles.ctaPrimary} gleam`}
+                >
                   Join AI Lodge
                 </Link>
                 <Link

@@ -189,9 +189,9 @@
   text-decoration: none;
   color: var(--pine-deep);
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background-color 0.2s ease;
+    transform 0.35s ease-in-out,
+    box-shadow 0.35s ease-in-out,
+    background-color 0.35s ease-in-out;
   font-family: var(--font-inter);
 }
 
@@ -200,8 +200,10 @@
 }
 
 .ctaBtnDap:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px -10px rgba(125, 215, 194, 0.5);
+  transform: translateY(-3px);
+  box-shadow:
+    0 0 0 3px rgba(125, 215, 194, 0.16),
+    0 8px 36px -2px rgba(125, 215, 194, 0.6);
   color: var(--pine-deep);
 }
 
@@ -210,7 +212,9 @@
 }
 
 .ctaBtnLodge:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px -10px rgba(255, 211, 146, 0.5);
+  transform: translateY(-3px);
+  box-shadow:
+    0 0 0 3px rgba(255, 211, 146, 0.18),
+    0 8px 36px -2px rgba(255, 211, 146, 0.6);
   color: var(--pine-deep);
 }

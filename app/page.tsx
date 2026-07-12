@@ -263,7 +263,7 @@ export default function Home() {
               There&apos;s a seat for you, whatever your background.
             </p>
             <div className={styles.joinCtas}>
-              <Button href="/ContactUs#join" variant="onDark">
+              <Button href="/ContactUs#join" variant="onDark" className="gleam">
                 Join us →
               </Button>
             </div>

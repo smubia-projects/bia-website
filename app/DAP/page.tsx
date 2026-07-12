@@ -190,7 +190,7 @@ export default function DAPPage() {
               No prior machine learning experience needed — only commitment.
             </p>
             <div className={styles.closingActions}>
-              <Button href={LINKS.joinForm} variant="onDark">
+              <Button href={LINKS.joinForm} variant="onDark" className="gleam">
                 Apply to the programme →
               </Button>
             </div>

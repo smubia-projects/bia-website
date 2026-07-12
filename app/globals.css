@@ -138,6 +138,42 @@ body {
   );
 }
 
+/* Gleam: a soft light streak that sweeps across a (filled) button on hover.
+   Pairs with a button's own lift/glow; this class only owns the clip context
+   and the moving highlight. Add the class alongside the button's own class. */
+.gleam {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.gleam::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 75%
+  );
+  transform: translateX(-130%);
+  transition: transform 0.7s ease-in-out;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.gleam:hover::after,
+.gleam:focus-visible::after {
+  transform: translateX(130%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gleam::after {
+    transition: none;
+  }
+}
+
 @keyframes float {
   0%,
   100% {
