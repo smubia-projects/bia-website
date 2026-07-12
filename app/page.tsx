@@ -119,7 +119,7 @@ export default function Home() {
             </figure>
             {/* Playful astro-cat kept as a small floating accent on the cluster */}
             <Image
-              src="/images/biaMascot.png"
+              src="/images/bia-cat-mascot.svg"
               alt=""
               aria-hidden="true"
               width={160}

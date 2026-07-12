@@ -89,7 +89,7 @@
   text-transform: uppercase;
   color: var(--pine-text-soft);
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: color 0.2s var(--ease-inout);
 }
 
 .heroScrollLink:hover {
@@ -457,7 +457,7 @@
   text-transform: uppercase;
   color: var(--pine-text-soft);
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: color 0.2s var(--ease-inout);
 }
 
 .closingLink:hover {

@@ -51,6 +51,13 @@
   gap: 0.875rem;
 }
 
+/* ============ Partner card ============ */
+
+.partnerSection {
+  padding: 1rem 1.25rem 3rem;
+  scroll-margin-top: 5rem; /* clear the fixed nav when scrolled to #partners */
+}
+
 /* ============ Channels ============ */
 
 .channelsSection {
@@ -65,7 +72,7 @@
 
 @media (min-width: 768px) {
   .channelGrid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -80,8 +87,8 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xs);
   transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
+    transform 0.25s var(--ease-inout),
+    box-shadow 0.25s var(--ease-inout);
 }
 
 .channelCard:hover {

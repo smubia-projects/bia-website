@@ -1,5 +1,4 @@
 import React from "react";
-import Link from "next/link";
 import styles from "./page.module.css";
 import SectionHeading from "../components/ui/SectionHeading";
 import Button from "../components/ui/Button";
@@ -54,6 +53,33 @@ const ContactUs = () => {
         </div>
       </section>
 
+      {/* Partner with us — landing target for the Partners page CTAs */}
+      <section id="partners" className={styles.partnerSection}>
+        <div className={styles.inner}>
+          <ScrollReveal>
+            <div className={styles.joinCard}>
+              <h2 className={styles.joinTitle}>Partner with us</h2>
+              <p className={styles.joinText}>
+                Run an event or sponsor a programme challenge and reach 2,000+
+                analytics-minded students at SMU. Tell us what you have in mind
+                — we reply fast.
+              </p>
+              <div className={styles.joinCtas}>
+                <Button
+                  href="mailto:bia@sa.smu.edu.sg?subject=Partnership%20enquiry"
+                  variant="primary"
+                >
+                  Email us
+                </Button>
+                <Button href="/WorkWithUs" variant="outline">
+                  See partnership options
+                </Button>
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
       {/* Other channels */}
       <section className={styles.channelsSection}>
         <div className={styles.inner}>
@@ -83,19 +109,6 @@ const ContactUs = () => {
                 >
                   Connect on LinkedIn →
                 </a>
-              </div>
-            </ScrollReveal>
-            <ScrollReveal delay={200}>
-              <div className={styles.channelCard}>
-                <h3 className={styles.channelTitle}>
-                  Companies &amp; sponsors
-                </h3>
-                <p className={styles.channelText}>
-                  Partner on events or back a programme challenge.
-                </p>
-                <Link href="/WorkWithUs" className={styles.channelLink}>
-                  Work with us →
-                </Link>
               </div>
             </ScrollReveal>
           </div>

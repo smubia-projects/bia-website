@@ -65,14 +65,14 @@ const Timeline = ({ events }: { events: Event[] }) => {
               <button
                 onClick={() => imageSwiper?.slidePrev()}
                 aria-label="Previous event"
-                className="bg-white text-[var(--ink)] border border-[var(--border)] rounded-full p-3 hover:border-[var(--emerald)] hover:text-[var(--emerald)] transition-colors shadow-sm"
+                className="bg-white text-[var(--ink)] border border-[var(--border)] rounded-full p-3 hover:border-[var(--emerald)] hover:text-[var(--emerald)] transition-colors duration-200 ease-[var(--ease-inout)] shadow-sm"
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
               <button
                 onClick={() => imageSwiper?.slideNext()}
                 aria-label="Next event"
-                className="bg-white text-[var(--ink)] border border-[var(--border)] rounded-full p-3 hover:border-[var(--emerald)] hover:text-[var(--emerald)] transition-colors shadow-sm"
+                className="bg-white text-[var(--ink)] border border-[var(--border)] rounded-full p-3 hover:border-[var(--emerald)] hover:text-[var(--emerald)] transition-colors duration-200 ease-[var(--ease-inout)] shadow-sm"
               >
                 <ChevronRight className="w-6 h-6" />
               </button>
@@ -100,7 +100,7 @@ const Timeline = ({ events }: { events: Event[] }) => {
                     {event.futureEvent && (
                       <button className="mt-6 bg-[var(--emerald)] text-white font-semibold
                                      px-8 py-3 rounded-full
-                                     hover:bg-[var(--emerald-strong)] transition-colors
+                                     hover:bg-[var(--emerald-strong)] transition-colors duration-200 ease-[var(--ease-inout)]
                                      text-base uppercase tracking-wider">
                         Sign up
                       </button>

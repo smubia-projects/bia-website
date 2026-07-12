@@ -13,11 +13,11 @@
   white-space: nowrap;
   border: 1px solid transparent;
   transition:
-    transform 0.3s ease-in-out,
-    box-shadow 0.3s ease-in-out,
-    background-color 0.3s ease-in-out,
-    border-color 0.3s ease-in-out,
-    color 0.3s ease-in-out;
+    transform 0.3s var(--ease-inout),
+    box-shadow 0.3s var(--ease-inout),
+    background-color 0.3s var(--ease-inout),
+    border-color 0.3s var(--ease-inout),
+    color 0.3s var(--ease-inout);
 }
 
 .button:hover {

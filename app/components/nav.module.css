@@ -50,8 +50,8 @@
   color: var(--ink-soft);
   text-decoration: none;
   transition:
-    color 0.2s ease,
-    background-color 0.2s ease;
+    color 0.2s var(--ease-inout),
+    background-color 0.2s var(--ease-inout);
 }
 
 .navLink:hover {
@@ -74,9 +74,9 @@
   font-weight: 600;
   text-decoration: none;
   transition:
-    background-color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    background-color 0.2s var(--ease-inout),
+    transform 0.2s var(--ease-inout),
+    box-shadow 0.2s var(--ease-inout);
 }
 
 .joinButton:hover {
@@ -98,7 +98,7 @@
   color: var(--ink);
   font-size: 1rem;
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s var(--ease-inout);
 }
 
 .menuToggle:hover {

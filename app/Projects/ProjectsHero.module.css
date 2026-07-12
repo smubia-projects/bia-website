@@ -107,8 +107,8 @@
   text-decoration: none;
   box-shadow: var(--shadow-md);
   transition:
-    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.4s ease;
+    transform 0.4s var(--ease-inout),
+    box-shadow 0.4s var(--ease-inout);
 }
 
 .slide:hover {
@@ -124,7 +124,7 @@
 
 .slideImg {
   object-fit: cover;
-  transition: transform 0.7s ease;
+  transition: transform 0.7s var(--ease-inout);
 }
 
 .slide:hover .slideImg {

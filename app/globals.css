@@ -64,6 +64,9 @@
   --radius-xl: 24px;
   --radius-pill: 999px;
 
+  /* Motion — shared easing for every hover/interaction transition */
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+
   /* Back-compat aliases */
   --background: var(--bg);
   --foreground: var(--ink);
@@ -158,7 +161,7 @@ body {
     transparent 75%
   );
   transform: translateX(-130%);
-  transition: transform 0.7s ease-in-out;
+  transition: transform 0.7s var(--ease-inout);
   pointer-events: none;
   z-index: 1;
 }

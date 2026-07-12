@@ -94,7 +94,7 @@
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s var(--ease-inout);
   font-family: var(--font-inter);
 }
 
@@ -189,9 +189,9 @@
   text-decoration: none;
   color: var(--pine-deep);
   transition:
-    transform 0.35s ease-in-out,
-    box-shadow 0.35s ease-in-out,
-    background-color 0.35s ease-in-out;
+    transform 0.35s var(--ease-inout),
+    box-shadow 0.35s var(--ease-inout),
+    background-color 0.35s var(--ease-inout);
   font-family: var(--font-inter);
 }
 

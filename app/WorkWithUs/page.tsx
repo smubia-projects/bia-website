@@ -37,7 +37,7 @@ export default function WorkWithUsPage() {
               lede="Reach 2,000+ analytics-minded students at SMU."
             />
             <div className={styles.heroCtas}>
-              <Button href="/ContactUs" variant="primary">
+              <Button href="/ContactUs#partners" variant="primary">
                 Get in touch
               </Button>
             </div>
@@ -115,7 +115,7 @@ export default function WorkWithUsPage() {
                     ))}
                   </ul>
                   <div className={styles.involveCta}>
-                    <Button href="/ContactUs" variant="outline">
+                    <Button href="/ContactUs#partners" variant="outline">
                       {item.cta} →
                     </Button>
                   </div>
@@ -164,7 +164,7 @@ export default function WorkWithUsPage() {
               community. Tell us what you have in mind — we reply fast.
             </p>
             <div className={styles.contactCtas}>
-              <Button href="/ContactUs" variant="onDark">
+              <Button href="/ContactUs#partners" variant="onDark">
                 Get in touch →
               </Button>
             </div>

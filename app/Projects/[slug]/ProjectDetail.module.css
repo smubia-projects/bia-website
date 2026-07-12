@@ -86,9 +86,9 @@
   font-weight: 600;
   text-decoration: none;
   transition:
-    background-color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    background-color 0.2s var(--ease-inout),
+    transform 0.2s var(--ease-inout),
+    box-shadow 0.2s var(--ease-inout);
   font-family: var(--font-inter);
 }
 
@@ -149,7 +149,7 @@
 .breadcrumbLink {
   color: var(--ink-faint);
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color 0.2s var(--ease-inout);
 }
 
 .breadcrumbLink:hover {
@@ -204,9 +204,9 @@
   font-weight: 500;
   text-decoration: none;
   transition:
-    border-color 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease;
+    border-color 0.2s var(--ease-inout),
+    color 0.2s var(--ease-inout),
+    box-shadow 0.2s var(--ease-inout);
   font-family: var(--font-inter);
 }
 
@@ -284,8 +284,8 @@
   justify-content: center;
   cursor: pointer;
   transition:
-    background-color 0.2s,
-    color 0.2s;
+    background-color 0.2s var(--ease-inout),
+    color 0.2s var(--ease-inout);
   line-height: 1;
 }
 
@@ -460,7 +460,7 @@
   background-color: var(--surface-muted);
   border: 1px solid var(--border);
   flex-shrink: 0;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s var(--ease-inout);
 }
 
 .teamMember:hover .avatarWrapper {
@@ -514,9 +514,9 @@
   background-color: var(--surface-muted);
   border: 1px solid var(--border);
   transition:
-    color 0.2s ease,
-    border-color 0.2s ease,
-    background-color 0.2s ease;
+    color 0.2s var(--ease-inout),
+    border-color 0.2s var(--ease-inout),
+    background-color 0.2s var(--ease-inout);
 }
 
 .memberSocialLink:hover {

@@ -8,13 +8,13 @@ import { Menu, X } from "lucide-react";
 import { LINKS } from "@/app/lib/links";
 
 const NAV_LINKS = [
-  { href: "/", label: "Home" },
   { href: "/Events", label: "Events" },
   { href: "/DAP", label: "DAP" },
   // AI Lodge lives on its own site — the internal /AILodge page is kept but unlinked.
   { href: LINKS.aiLodgeInfosite, label: "AI Lodge" },
   { href: "/Projects", label: "Projects" },
-  { href: "/WorkWithUs", label: "Work With Us" },
+  { href: "/WorkWithUs", label: "Partners" },
+  { href: "/ContactUs", label: "Contact" },
 ];
 
 const Navbar = () => {
