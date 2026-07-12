@@ -42,24 +42,26 @@
   background-color: var(--border);
 }
 
-/* Flat, on-theme tag — accent monospace label, no filled pill */
+/* Flat filled pill — solid tint, no border/gradient, monospace label */
 .badgeDAP,
 .badgeAI {
-  padding: 0;
-  background: none;
+  padding: 0.25rem 0.7rem;
+  border-radius: 9999px;
   border: none;
   font-family: var(--font-roboto-mono);
   font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .badgeDAP {
+  background-color: var(--mint-soft);
   color: var(--emerald);
 }
 
 .badgeAI {
+  background-color: var(--amber-soft);
   color: var(--gold-deep);
 }
 

@@ -32,10 +32,6 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           </div>
           <h3 className={styles.title}>{project.title}</h3>
           <p className={styles.description}>{project.description}</p>
-          <div className={styles.cta}>
-            <span>View Case Study</span>
-            <span className={styles.ctaArrow}>→</span>
-          </div>
         </div>
       </div>
     </Link>

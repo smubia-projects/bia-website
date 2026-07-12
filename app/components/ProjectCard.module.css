@@ -55,24 +55,26 @@
   margin-bottom: 1rem;
 }
 
-/* Flat, on-theme tag — accent monospace label, no filled pill */
+/* Flat filled pill — solid tint, no border/gradient, monospace label */
 .badgeDAP,
 .badgeAI {
-  padding: 0;
-  background: none;
+  padding: 0.25rem 0.7rem;
+  border-radius: 9999px;
   border: none;
   font-family: var(--font-roboto-mono);
   font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .badgeDAP {
+  background-color: var(--mint-soft);
   color: var(--emerald);
 }
 
 .badgeAI {
+  background-color: var(--amber-soft);
   color: var(--gold-deep);
 }
 
@@ -101,23 +103,5 @@
   font-size: 0.875rem;
   line-height: 1.6;
   flex: 1;
-  margin-bottom: 2rem;
-}
-
-.cta {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--emerald);
-  font-weight: 700;
-  font-size: 0.875rem;
-  margin-top: auto;
-}
-
-.ctaArrow {
-  transition: transform 0.2s ease;
-}
-
-.card:hover .ctaArrow {
-  transform: translateX(4px);
+  margin-bottom: 0;
 }
