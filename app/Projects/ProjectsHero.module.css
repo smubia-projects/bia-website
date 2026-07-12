@@ -1,13 +1,11 @@
 .hero {
   position: relative;
   width: 100%;
-  min-height: 72vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: clamp(2.5rem, 5vw, 4rem);
+  gap: clamp(1.75rem, 3vw, 2.75rem);
   /* Top padding clears the fixed 4rem navbar; hero bleeds up under it. */
-  padding: clamp(6rem, 9vw, 8rem) 0 clamp(3.5rem, 6vw, 5rem);
+  padding: clamp(5rem, 7vw, 6.5rem) 0 clamp(2.5rem, 4vw, 3.5rem);
   overflow: hidden;
   isolation: isolate;
   /* Big, dimensional wash that resolves into the page background so the grid
@@ -59,65 +57,63 @@
 }
 
 .heading {
-  font-size: clamp(3rem, 8vw, 6rem);
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
   font-weight: 800;
-  line-height: 0.98;
-  letter-spacing: -0.035em;
+  line-height: 1;
+  letter-spacing: -0.03em;
   color: var(--ink);
   font-family: var(--font-display);
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 }
 
 .headingAccent {
   color: var(--emerald);
 }
 
-/* Flowing marquee (full-bleed, edge to edge) */
+/* Flowing marquee (full-bleed, edge to edge). The .viewport is the scroll
+   container driven by JS; the fades are siblings of it so they stay pinned. */
 .marquee {
   position: relative;
   width: 100%;
 }
 
+.viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.viewport::-webkit-scrollbar {
+  display: none;
+}
+
 .track {
   display: flex;
-  gap: 1.75rem;
+  gap: 1.25rem;
   width: max-content;
-  padding: 1.75rem 2rem;
-  animation: scroll 60s linear infinite;
+  padding: 1.25rem clamp(1.5rem, 5vw, 4rem);
 }
 
-.track:hover {
-  animation-play-state: paused;
-}
-
-@keyframes scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    /* -50% because the track holds two identical halves */
-    transform: translateX(-50%);
-  }
-}
-
-/* Editorial poster slide — film-festival title card, not a grid card clone */
+/* Landscape poster slide (16:10) — cleaner in a horizontal rail than a tall card */
 .slide {
   position: relative;
   flex: 0 0 auto;
-  width: clamp(20rem, 30vw, 26rem);
-  aspect-ratio: 3 / 4;
-  border-radius: var(--radius-xl);
+  width: clamp(18rem, 30vw, 25rem);
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   text-decoration: none;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   transition:
     transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.4s ease;
 }
 
 .slide:hover {
-  transform: translateY(-10px) scale(1.015);
-  box-shadow: var(--shadow-xl);
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
 }
 
 .slideMedia {
@@ -192,45 +188,28 @@
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  padding: 1.75rem 1.6rem 1.6rem;
-}
-
-.credit {
-  font-family: var(--font-roboto-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--mint);
+  gap: 0.3rem;
+  padding: 1.25rem 1.3rem;
 }
 
 .slideTitle {
   color: #ffffff;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(1.75rem, 2.6vw, 2.5rem);
-  line-height: 1.02;
-  letter-spacing: -0.02em;
+  font-size: clamp(1.25rem, 1.9vw, 1.625rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
 }
 
-.hook {
-  color: rgba(255, 255, 255, 0.9);
-  font-family: var(--font-inter);
-  font-size: 0.9375rem;
-  line-height: 1.45;
-  font-style: italic;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.tech {
-  margin-top: 0.35rem;
+.slideMeta {
   font-family: var(--font-roboto-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .fadeLeft,
@@ -238,7 +217,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: clamp(3rem, 8vw, 9rem);
+  width: clamp(2.5rem, 7vw, 8rem);
   pointer-events: none;
   z-index: 3;
 }

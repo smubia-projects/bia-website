@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./ProjectsHero.module.css";
@@ -9,43 +10,9 @@ interface Props {
   projects: Project[];
 }
 
-/** Strip the handful of inline markdown tokens our articles use. */
-function stripInline(text: string): string {
-  return text
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .trim();
-}
-
-/**
- * Pull an editorial hook for the hero — the punchy opening line of the project's
- * article (these tend to lead with a question, e.g. "What if you could be the
- * main character of your own story?"), falling back to the short description.
- * Robust for projects with neither: returns "".
- */
-function extractHook(project: Project): string {
-  const source = project.article?.trim() || project.description?.trim() || "";
-  if (!source) return "";
-  const firstLine =
-    source
-      .split(/\n{2,}/)[0]
-      .split(/\n/)
-      .find((l) => l.trim().length > 0) || "";
-  const clean = stripInline(firstLine);
-  const sentence = clean.match(/^.*?[.?!](?=\s|$)/);
-  let hook = (sentence ? sentence[0] : clean).trim();
-  if (hook.length > 128) {
-    // Cut at a word boundary — never mid-word — and shed trailing punctuation.
-    hook = hook.slice(0, 125).replace(/\s+\S*$/, "").replace(/[\s—–,;:-]+$/, "") + "…";
-  }
-  return hook;
-}
-
 function HeroSlide({ project }: { project: Project }) {
   const image = project.coverImage || project.images.find(Boolean) || "";
   const isAILodge = project.badge === "AI Lodge";
-  const hook = extractHook(project);
   const builder = project.team.map((m) => m.name).filter(Boolean)[0];
   const tech = project.techStack.slice(0, 3).join("  ·  ");
 
@@ -83,31 +50,70 @@ function HeroSlide({ project }: { project: Project }) {
       </span>
 
       <div className={styles.slideBody}>
-        {builder && (
-          <span className={styles.credit}>{builder}</span>
-        )}
         <h2 className={styles.slideTitle}>{project.title}</h2>
-        {hook && <p className={styles.hook}>{hook}</p>}
-        {tech && <span className={styles.tech}>{tech}</span>}
+        <span className={styles.slideMeta}>
+          {[builder, tech].filter(Boolean).join("  ·  ")}
+        </span>
       </div>
     </Link>
   );
 }
 
 export default function ProjectsHero({ projects }: Props) {
-  // Repeat the list enough to comfortably span a wide viewport, then duplicate
-  // that base once more so the -50% CSS loop is seamless. This lets the marquee
-  // autoscroll infinitely no matter how few projects exist.
-  const MIN_SLIDES = 8;
+  const viewportRef = useRef<HTMLDivElement>(null);
+
+  // Repeat the list enough to comfortably exceed the viewport, then render three
+  // copies. We start scrolled into the middle copy and wrap by one copy-width in
+  // either direction, so the autoscroll — and manual scrolling — loop seamlessly.
+  const MIN_SLIDES = 6;
   const reps =
     projects.length > 0
-      ? Math.max(2, Math.ceil(MIN_SLIDES / projects.length))
+      ? Math.max(1, Math.ceil(MIN_SLIDES / projects.length))
       : 0;
   const base = Array.from({ length: reps }, () => projects).flat();
-  const track = [...base, ...base];
-  // Scale the duration to the track width so the pixel speed stays roughly
-  // constant regardless of how many slides we ended up with.
-  const duration = `${Math.max(base.length * 6, 30)}s`;
+  const track = base.length > 0 ? [...base, ...base, ...base] : [];
+
+  useEffect(() => {
+    const vp = viewportRef.current;
+    if (!vp || base.length === 0) return;
+
+    let copyWidth = vp.scrollWidth / 3;
+    // Begin in the middle copy so there's a full copy of runway on each side.
+    vp.scrollLeft = copyWidth;
+
+    let paused = false;
+    let last = performance.now();
+    let raf = 0;
+    const SPEED = 42; // px per second — a calm, readable drift
+
+    const step = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      if (!paused) vp.scrollLeft += SPEED * dt;
+      // Keep the scroll position within the middle copy for a seamless loop.
+      if (vp.scrollLeft >= copyWidth * 2) vp.scrollLeft -= copyWidth;
+      else if (vp.scrollLeft <= 0) vp.scrollLeft += copyWidth;
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+
+    // Only pause while the user is actively grabbing/dragging the rail — never
+    // on plain hover — so it always visibly autoscrolls.
+    const pause = () => (paused = true);
+    const resume = () => (paused = false);
+    const remeasure = () => (copyWidth = vp.scrollWidth / 3);
+
+    vp.addEventListener("pointerdown", pause);
+    window.addEventListener("pointerup", resume);
+    window.addEventListener("resize", remeasure);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      vp.removeEventListener("pointerdown", pause);
+      window.removeEventListener("pointerup", resume);
+      window.removeEventListener("resize", remeasure);
+    };
+  }, [base.length]);
 
   return (
     <section className={styles.hero} aria-label="Projects showcase">
@@ -123,10 +129,12 @@ export default function ProjectsHero({ projects }: Props) {
 
       {track.length > 0 && (
         <div className={styles.marquee}>
-          <div className={styles.track} style={{ animationDuration: duration }}>
-            {track.map((project, i) => (
-              <HeroSlide key={`${project.slug}-${i}`} project={project} />
-            ))}
+          <div className={styles.viewport} ref={viewportRef}>
+            <div className={styles.track}>
+              {track.map((project, i) => (
+                <HeroSlide key={`${project.slug}-${i}`} project={project} />
+              ))}
+            </div>
           </div>
           <div className={styles.fadeLeft} aria-hidden="true" />
           <div className={styles.fadeRight} aria-hidden="true" />
