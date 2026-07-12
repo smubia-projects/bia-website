@@ -11,7 +11,12 @@ import {
   toggleProjectVisibility,
   fetchProjects,
 } from "./actions";
-import { Project } from "@/app/Projects/data/types";
+import { Project, HighlightCard } from "@/app/Projects/data/types";
+import {
+  CARD_ICONS,
+  DEFAULT_CARD_ICON,
+  getCardIcon,
+} from "@/app/Projects/data/cardIcons";
 import ImageCropper from "./ImageCropper";
 import styles from "./Admin.module.css";
 
@@ -25,6 +30,47 @@ interface TeamMember {
   name: string;
   role: string;
   avatar: string;
+  linkedin: string;
+  github: string;
+  website: string;
+}
+
+const EMPTY_MEMBER: TeamMember = {
+  name: "",
+  role: "",
+  avatar: "",
+  linkedin: "",
+  github: "",
+  website: "",
+};
+
+const EMPTY_CARD: HighlightCard = {
+  icon: DEFAULT_CARD_ICON,
+  title: "",
+  body: "",
+};
+
+/** Load a project's cards, migrating legacy `lessons` into the new format. */
+function cardsFromProject(project: Project): HighlightCard[] {
+  if (project.cards && project.cards.length > 0) {
+    return project.cards.map((c) => ({ ...EMPTY_CARD, ...c }));
+  }
+  const legacy: HighlightCard[] = [];
+  if (project.lessons?.satisfaction?.trim()) {
+    legacy.push({
+      icon: "circle-check",
+      title: "Project Satisfaction",
+      body: project.lessons.satisfaction,
+    });
+  }
+  if (project.lessons?.takeaway?.trim()) {
+    legacy.push({
+      icon: "lightbulb",
+      title: "Key Takeaway",
+      body: project.lessons.takeaway,
+    });
+  }
+  return legacy.length > 0 ? legacy : [{ ...EMPTY_CARD }];
 }
 
 interface CroppedImage {
@@ -50,15 +96,10 @@ const EMPTY_FORM = {
   badge: "DAP" as "DAP" | "AI Lodge",
   category: "",
   overview: "",
-  rationale: "",
-  satisfaction: "",
-  takeaway: "",
-  status: "Completed" as "Completed" | "Ongoing",
   techStack: "",
   demoUrl: "",
   sourceUrl: "",
   liveUrl: "",
-  article: "",
 };
 
 export default function AdminClient({ initialProjects }: Props) {
@@ -68,6 +109,7 @@ export default function AdminClient({ initialProjects }: Props) {
   const [editSlug, setEditSlug] = useState("");
   const [form, setForm] = useState(EMPTY_FORM);
   const [team, setTeam] = useState<TeamMember[]>([]);
+  const [cards, setCards] = useState<HighlightCard[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [existingCover, setExistingCover] = useState("");
   const [croppedCover, setCroppedCover] = useState<CroppedImage | null>(null);
@@ -104,7 +146,8 @@ export default function AdminClient({ initialProjects }: Props) {
 
   function startAdd() {
     setForm(EMPTY_FORM);
-    setTeam([{ name: "", role: "", avatar: "" }]);
+    setTeam([{ ...EMPTY_MEMBER }]);
+    setCards([{ ...EMPTY_CARD }]);
     setExistingImages([]);
     setExistingCover("");
     setCroppedCover(null);
@@ -118,22 +161,23 @@ export default function AdminClient({ initialProjects }: Props) {
       description: project.description,
       badge: project.badge,
       category: project.category,
-      overview: project.overview,
-      rationale: project.rationale,
-      satisfaction: project.lessons.satisfaction,
-      takeaway: project.lessons.takeaway,
-      status: project.status,
+      // Overview absorbed the old rationale — show them merged so the editor
+      // sees (and re-saves) one field.
+      overview: [project.overview, project.rationale]
+        .map((s) => s?.trim())
+        .filter(Boolean)
+        .join("\n\n"),
       techStack: project.techStack.join(", "),
       demoUrl: project.demoUrl || "",
       sourceUrl: project.sourceUrl || "",
       liveUrl: project.liveUrl || "",
-      article: project.article || "",
     });
     setTeam(
       project.team.length > 0
-        ? project.team.map((t) => ({ ...t }))
-        : [{ name: "", role: "", avatar: "" }]
+        ? project.team.map((t) => ({ ...EMPTY_MEMBER, ...t }))
+        : [{ ...EMPTY_MEMBER }]
     );
+    setCards(cardsFromProject(project));
     setExistingImages(project.images);
     setExistingCover(project.coverImage);
     setCroppedCover(null);
@@ -164,11 +208,27 @@ export default function AdminClient({ initialProjects }: Props) {
   }
 
   function addTeamMember() {
-    setTeam((prev) => [...prev, { name: "", role: "", avatar: "" }]);
+    setTeam((prev) => [...prev, { ...EMPTY_MEMBER }]);
   }
 
   function removeTeamMember(idx: number) {
     setTeam((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function updateCard(idx: number, field: keyof HighlightCard, value: string) {
+    setCards((prev) => {
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], [field]: value };
+      return copy;
+    });
+  }
+
+  function addCard() {
+    setCards((prev) => [...prev, { ...EMPTY_CARD }]);
+  }
+
+  function removeCard(idx: number) {
+    setCards((prev) => prev.filter((_, i) => i !== idx));
   }
 
   function removeExistingImage(idx: number) {
@@ -286,6 +346,18 @@ export default function AdminClient({ initialProjects }: Props) {
 
     const fd = new FormData(e.currentTarget);
     fd.set("team", JSON.stringify(team.filter((t) => t.name.trim())));
+    fd.set(
+      "cards",
+      JSON.stringify(
+        cards
+          .filter((c) => c.title.trim() || c.body.trim())
+          .map((c) => ({
+            icon: c.icon || DEFAULT_CARD_ICON,
+            title: c.title.trim(),
+            body: c.body,
+          }))
+      )
+    );
     fd.set("existingImages", JSON.stringify(existingImages));
     fd.set("existingCoverImage", existingCover);
 
@@ -598,18 +670,6 @@ export default function AdminClient({ initialProjects }: Props) {
                     required
                   />
                 </label>
-                <label className={styles.label}>
-                  Status
-                  <select
-                    name="status"
-                    value={form.status}
-                    onChange={(e) => updateField("status", e.target.value)}
-                    className={styles.select}
-                  >
-                    <option value="Completed">Completed</option>
-                    <option value="Ongoing">Ongoing</option>
-                  </select>
-                </label>
               </div>
             </fieldset>
 
@@ -760,111 +820,153 @@ export default function AdminClient({ initialProjects }: Props) {
             <fieldset className={styles.fieldset}>
               <legend className={styles.legend}>Project Details</legend>
               <label className={styles.label}>
-                Overview
+                Details (markdown)
                 <textarea
                   name="overview"
                   value={form.overview}
                   onChange={(e) => updateField("overview", e.target.value)}
                   className={styles.textarea}
-                  rows={4}
-                />
-              </label>
-              <label className={styles.label}>
-                Rationale
-                <textarea
-                  name="rationale"
-                  value={form.rationale}
-                  onChange={(e) => updateField("rationale", e.target.value)}
-                  className={styles.textarea}
-                  rows={4}
+                  rows={9}
+                  placeholder="What the project is, why the team built it, and how it works. Supports **bold**, *italic*, `code`, [links](https://…), - bullet lists, and ## headings. Blank lines separate paragraphs; single newlines become line breaks."
                 />
               </label>
             </fieldset>
 
-            {/* Story (long-form) */}
+            {/* Highlight cards */}
             <fieldset className={styles.fieldset}>
-              <legend className={styles.legend}>Story</legend>
-              <label className={styles.label}>
-                Story (markdown, optional)
-                <textarea
-                  name="article"
-                  value={form.article}
-                  onChange={(e) => updateField("article", e.target.value)}
-                  className={styles.textarea}
-                  rows={16}
-                  placeholder="Long-form write-up. Supports **bold**, `code`, [links](https://…), and - bullet lists. When filled, this renders as 'The story' on the detail page and replaces the short overview/lessons layout."
-                />
-              </label>
-            </fieldset>
-
-            {/* Lessons */}
-            <fieldset className={styles.fieldset}>
-              <legend className={styles.legend}>Lessons Learned</legend>
-              <label className={styles.label}>
-                Project Satisfaction
-                <textarea
-                  name="satisfaction"
-                  value={form.satisfaction}
-                  onChange={(e) =>
-                    updateField("satisfaction", e.target.value)
-                  }
-                  className={styles.textarea}
-                  rows={3}
-                />
-              </label>
-              <label className={styles.label}>
-                Key Takeaway
-                <textarea
-                  name="takeaway"
-                  value={form.takeaway}
-                  onChange={(e) => updateField("takeaway", e.target.value)}
-                  className={styles.textarea}
-                  rows={3}
-                />
-              </label>
+              <legend className={styles.legend}>Highlight Cards</legend>
+              <p className={styles.fieldHint}>
+                Customizable cards shown below the project details. Pick an icon,
+                give each a heading and markdown body.
+              </p>
+              {cards.map((card, i) => {
+                const PreviewIcon = getCardIcon(card.icon);
+                return (
+                  <div key={i} className={styles.cardEditor}>
+                    <div className={styles.cardEditorHead}>
+                      <span className={styles.cardIconPreview}>
+                        <PreviewIcon size={18} strokeWidth={2.25} aria-hidden />
+                      </span>
+                      <select
+                        value={card.icon}
+                        onChange={(e) => updateCard(i, "icon", e.target.value)}
+                        className={styles.select}
+                        aria-label="Card icon"
+                      >
+                        {CARD_ICONS.map((opt) => (
+                          <option key={opt.key} value={opt.key}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        value={card.title}
+                        onChange={(e) => updateCard(i, "title", e.target.value)}
+                        placeholder="Card heading (e.g. Project Satisfaction)"
+                        className={styles.input}
+                      />
+                      {cards.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeCard(i)}
+                          className={styles.removeBtn}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                    <textarea
+                      value={card.body}
+                      onChange={(e) => updateCard(i, "body", e.target.value)}
+                      className={styles.textarea}
+                      rows={3}
+                      placeholder="Card text (markdown). Supports **bold**, `code`, [links](…), and - bullet lists."
+                    />
+                  </div>
+                );
+              })}
+              <button
+                type="button"
+                onClick={addCard}
+                className={styles.addTeamBtn}
+              >
+                + Add Card
+              </button>
             </fieldset>
 
             {/* Team */}
             <fieldset className={styles.fieldset}>
               <legend className={styles.legend}>Team Members</legend>
               {team.map((member, i) => (
-                <div key={i} className={styles.teamRow}>
-                  <input
-                    type="text"
-                    value={member.name}
-                    onChange={(e) =>
-                      updateTeamMember(i, "name", e.target.value)
-                    }
-                    placeholder="Name"
-                    className={styles.input}
-                  />
-                  <input
-                    type="text"
-                    value={member.role}
-                    onChange={(e) =>
-                      updateTeamMember(i, "role", e.target.value)
-                    }
-                    placeholder="Role"
-                    className={styles.input}
-                  />
-                  <input
-                    type="text"
-                    value={member.avatar}
-                    onChange={(e) =>
-                      updateTeamMember(i, "avatar", e.target.value)
-                    }
-                    placeholder="Avatar URL (optional)"
-                    className={styles.input}
-                  />
-                  {team.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeTeamMember(i)}
-                      className={styles.removeBtn}
-                    >
-                      ×
-                    </button>
-                  )}
+                <div key={i} className={styles.teamMemberCard}>
+                  <div className={styles.teamRow}>
+                    <input
+                      type="text"
+                      value={member.name}
+                      onChange={(e) =>
+                        updateTeamMember(i, "name", e.target.value)
+                      }
+                      placeholder="Name"
+                      className={styles.input}
+                    />
+                    <input
+                      type="text"
+                      value={member.role}
+                      onChange={(e) =>
+                        updateTeamMember(i, "role", e.target.value)
+                      }
+                      placeholder="Role"
+                      className={styles.input}
+                    />
+                    <input
+                      type="text"
+                      value={member.avatar}
+                      onChange={(e) =>
+                        updateTeamMember(i, "avatar", e.target.value)
+                      }
+                      placeholder="Avatar URL (optional)"
+                      className={styles.input}
+                    />
+                    {team.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeTeamMember(i)}
+                        className={styles.removeBtn}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                  <div className={styles.teamSocialRow}>
+                    <input
+                      type="url"
+                      value={member.linkedin}
+                      onChange={(e) =>
+                        updateTeamMember(i, "linkedin", e.target.value)
+                      }
+                      placeholder="LinkedIn URL (optional)"
+                      className={styles.input}
+                    />
+                    <input
+                      type="url"
+                      value={member.github}
+                      onChange={(e) =>
+                        updateTeamMember(i, "github", e.target.value)
+                      }
+                      placeholder="GitHub URL (optional)"
+                      className={styles.input}
+                    />
+                    <input
+                      type="url"
+                      value={member.website}
+                      onChange={(e) =>
+                        updateTeamMember(i, "website", e.target.value)
+                      }
+                      placeholder="Website URL (optional)"
+                      className={styles.input}
+                    />
+                  </div>
                 </div>
               ))}
               <button

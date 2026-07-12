@@ -4,7 +4,9 @@ import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./ProjectDetail.module.css";
-import { Project } from "@/app/Projects/data/types";
+import { Linkedin, Github, Globe } from "lucide-react";
+import { Project, TeamMember, HighlightCard } from "@/app/Projects/data/types";
+import { getCardIcon } from "@/app/Projects/data/cardIcons";
 import Markdown from "@/app/components/ui/Markdown";
 
 interface Props {
@@ -23,16 +25,74 @@ const GithubIcon = () => (
   </svg>
 );
 
+/**
+ * Prefer the flexible `cards` array; fall back to migrating legacy `lessons`
+ * so projects saved before the change still render their two fixed cards.
+ */
+function resolveCards(project: Project): HighlightCard[] {
+  if (project.cards && project.cards.length > 0) {
+    return project.cards.filter((c) => c.title?.trim() || c.body?.trim());
+  }
+  const legacy: HighlightCard[] = [];
+  if (project.lessons?.satisfaction?.trim()) {
+    legacy.push({
+      icon: "circle-check",
+      title: "Project Satisfaction",
+      body: project.lessons.satisfaction,
+    });
+  }
+  if (project.lessons?.takeaway?.trim()) {
+    legacy.push({
+      icon: "lightbulb",
+      title: "Key Takeaway",
+      body: project.lessons.takeaway,
+    });
+  }
+  return legacy;
+}
+
+function TeamSocials({ member }: { member: TeamMember }) {
+  const links = [
+    { href: member.linkedin, label: "LinkedIn", Icon: Linkedin },
+    { href: member.github, label: "GitHub", Icon: Github },
+    { href: member.website, label: "Website", Icon: Globe },
+  ].filter((l) => l.href && l.href.trim().length > 0);
+
+  if (links.length === 0) return null;
+
+  return (
+    <div className={styles.memberSocials}>
+      {links.map(({ href, label, Icon }) => (
+        <a
+          key={label}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.memberSocialLink}
+          aria-label={`${member.name} on ${label}`}
+        >
+          <Icon size={16} strokeWidth={2} aria-hidden />
+        </a>
+      ))}
+    </div>
+  );
+}
+
 export default function ProjectDetailContent({ project }: Props) {
   const carouselRef = useRef<HTMLDivElement>(null);
 
   const images = project.images.filter(Boolean);
   const hasImages = images.length > 0;
   const isAILodge = project.badge === "AI Lodge";
-  const builders = project.team.map((m) => m.name).filter(Boolean);
   // "Try it live" prefers the new liveUrl, falling back to the legacy demoUrl.
   const liveUrl = project.liveUrl || project.demoUrl;
-  const hasArticle = !!project.article && project.article.trim().length > 0;
+  // Project Details is one markdown field now. Legacy records still carry a
+  // separate `rationale`; fold it in so nothing written before the merge is lost.
+  const detailsMarkdown = [project.overview, project.rationale]
+    .map((s) => s?.trim())
+    .filter(Boolean)
+    .join("\n\n");
+  const cards = resolveCards(project);
 
   const scroll = (dir: "left" | "right") => {
     const el = carouselRef.current;
@@ -53,6 +113,53 @@ export default function ProjectDetailContent({ project }: Props) {
         <span className={styles.breadcrumbSep}>›</span>
         <span className={styles.breadcrumbCurrent}>{project.title}</span>
       </nav>
+
+      {/* Header — title + description on the left, actions on the right,
+          sitting above the image (see reference layout) */}
+      <header className={styles.showcaseHeader}>
+        <div className={styles.headerText}>
+          <div className={styles.showcaseEyebrow}>
+            <span className={isAILodge ? styles.badgeAI : styles.badgeDAP}>
+              {project.badge}
+            </span>
+            {project.category && (
+              <>
+                <span className={styles.eyebrowDot} aria-hidden />
+                <span className={styles.category}>{project.category}</span>
+              </>
+            )}
+          </div>
+          <h1 className={styles.title}>{project.title}</h1>
+          <p className={styles.description}>{project.description}</p>
+        </div>
+
+        {(liveUrl || project.sourceUrl) && (
+          <div className={styles.actions}>
+            {liveUrl && (
+              <a
+                href={liveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.actionBtnPrimary}
+              >
+                Try it live
+                <span className={styles.actionIcon}>↗</span>
+              </a>
+            )}
+            {project.sourceUrl && (
+              <a
+                href={project.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.actionBtn}
+              >
+                <GithubIcon />
+                GitHub
+              </a>
+            )}
+          </div>
+        )}
+      </header>
 
       {/* Showcase carousel — skipped entirely when there are no images */}
       {hasImages && (
@@ -93,142 +200,48 @@ export default function ProjectDetailContent({ project }: Props) {
         </section>
       )}
 
-      {/* Showcase meta */}
-      <header className={styles.showcaseHeader}>
-        <div className={styles.showcaseMeta}>
-          <span className={isAILodge ? styles.badgeAI : styles.badgeDAP}>
-            {project.badge}
-          </span>
-          {project.category && (
-            <span className={styles.category}>{project.category}</span>
-          )}
-          <span className={styles.statusBadge}>{project.status}</span>
-        </div>
-
-        <h1 className={styles.title}>{project.title}</h1>
-        <p className={styles.description}>{project.description}</p>
-
-        {builders.length > 0 && (
-          <p className={styles.builder}>
-            Built by <span className={styles.builderName}>{builders.join(", ")}</span>
-          </p>
-        )}
-
-        {project.techStack.length > 0 && (
-          <div className={styles.techStack}>
-            {project.techStack.map((tech) => (
-              <span key={tech} className={styles.techTag}>
-                {tech}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {(liveUrl || project.sourceUrl) && (
-          <div className={styles.actions}>
-            {liveUrl && (
-              <a
-                href={liveUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.actionBtnPrimary}
-              >
-                Try it live
-                <span className={styles.actionIcon}>↗</span>
-              </a>
-            )}
-            {project.sourceUrl && (
-              <a
-                href={project.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.actionBtn}
-              >
-                <GithubIcon />
-                GitHub
-                <span className={styles.actionIcon}>↗</span>
-              </a>
-            )}
-          </div>
-        )}
-      </header>
-
-      {/* One template for both modes: main column (story OR overview+lessons)
-          beside the team/meta sidebar — article pages are not second-class. */}
+      {/* Main column (details + lessons) beside the team/meta sidebar */}
       <div className={styles.contentGrid}>
         <div className={styles.mainContent}>
-          {hasArticle ? (
-            <section className={styles.storySection}>
-              <div className={styles.sectionDivider}>
-                <div className={styles.dividerLine} />
-                <h2 className={styles.sectionLabel}>The story</h2>
-                <div className={styles.dividerLineShort} />
-              </div>
-              <Markdown
-                content={project.article!}
-                className={styles.storyBody}
-              />
-            </section>
-          ) : (
-            <>
-              {(project.overview || project.rationale) && (
+            {detailsMarkdown && (
               <section className={styles.overviewSection}>
                 <div className={styles.sectionDivider}>
                   <div className={styles.dividerLine} />
-                  <h2 className={styles.sectionLabel}>Project Overview</h2>
+                  <h2 className={styles.sectionLabel}>Project Details</h2>
                   <div className={styles.dividerLineShort} />
                 </div>
-                <h3 className={styles.rationaleHeading}>Our Rationale</h3>
-                {project.overview && (
-                  <p className={styles.bodyText}>{project.overview}</p>
-                )}
-                {project.rationale && (
-                  <p className={styles.bodyText}>{project.rationale}</p>
-                )}
+                <Markdown content={detailsMarkdown} />
               </section>
             )}
 
-            {(project.lessons.satisfaction || project.lessons.takeaway) && (
-              <section className={styles.lessonsSection}>
-                <div className={styles.lessonsHeader}>
-                  <h2 className={styles.lessonsTitle}>Lessons Learned</h2>
-                  <div className={styles.dividerLine} />
-                </div>
-                <div className={styles.lessonsGrid}>
-                  {project.lessons.satisfaction && (
-                    <div className={styles.lessonCard}>
-                      <div className={styles.lessonIconRow}>
-                        <span className={styles.lessonIconTeal}>✓</span>
-                        <h4 className={styles.lessonCardTitle}>
-                          Project Satisfaction
-                        </h4>
+            {cards.length > 0 && (
+              <section className={styles.cardsGrid}>
+                {cards.map((card, i) => {
+                  const Icon = getCardIcon(card.icon);
+                  return (
+                    <div key={i} className={styles.card}>
+                      <div className={styles.cardHead}>
+                        <span className={styles.cardIcon}>
+                          <Icon size={18} strokeWidth={2.25} aria-hidden />
+                        </span>
+                        {card.title && (
+                          <h3 className={styles.cardTitle}>{card.title}</h3>
+                        )}
                       </div>
-                      <p className={styles.lessonText}>
-                        {project.lessons.satisfaction}
-                      </p>
+                      {card.body && (
+                        <Markdown variant="compact" content={card.body} />
+                      )}
                     </div>
-                  )}
-                  {project.lessons.takeaway && (
-                    <div className={styles.lessonCard}>
-                      <div className={styles.lessonIconRow}>
-                        <span className={styles.lessonIconBlue}>💡</span>
-                        <h4 className={styles.lessonCardTitle}>Key Takeaway</h4>
-                      </div>
-                      <p className={styles.lessonText}>
-                        {project.lessons.takeaway}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                  );
+                })}
               </section>
-              )}
-            </>
-          )}
+            )}
         </div>
 
-        {project.team.length > 0 && (
-          <aside className={styles.sidebar}>
-              <div className={styles.sidebarCard}>
+        <aside className={styles.sidebar}>
+          <div className={styles.sidebarCard}>
+            {project.team.length > 0 && (
+              <>
                 <h2 className={styles.sidebarLabel}>About the Team</h2>
                 <ul className={styles.teamList}>
                   {project.team.map((member, i) => (
@@ -248,27 +261,36 @@ export default function ProjectDetailContent({ project }: Props) {
                           </div>
                         )}
                       </div>
-                      <div>
+                      <div className={styles.memberInfo}>
                         <p className={styles.memberName}>{member.name}</p>
                         <p className={styles.memberRole}>{member.role}</p>
+                        <TeamSocials member={member} />
                       </div>
                     </li>
                   ))}
                 </ul>
+              </>
+            )}
 
-                <div className={styles.metaSection}>
-                  <div className={styles.metaRow}>
-                    <span className={styles.metaLabel}>Programme</span>
-                    <span className={styles.metaValue}>{project.programme}</span>
-                  </div>
-                  <div className={styles.metaRow}>
-                    <span className={styles.metaLabel}>Status</span>
-                    <span className={styles.statusBadge}>{project.status}</span>
-                  </div>
+            <div className={styles.metaSection}>
+              {project.programme && (
+                <div className={styles.metaRow}>
+                  <span className={styles.metaLabel}>Programme</span>
+                  <span className={styles.metaValue}>{project.programme}</span>
                 </div>
-              </div>
-            </aside>
-          )}
+              )}
+              {project.techStack.length > 0 && (
+                <div className={styles.sidebarTech}>
+                  {project.techStack.map((tech) => (
+                    <span key={tech} className={styles.techTag}>
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </aside>
       </div>
     </>
   );

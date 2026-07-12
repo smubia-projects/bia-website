@@ -55,28 +55,25 @@
   margin-bottom: 1rem;
 }
 
-.badgeDAP {
-  background-color: var(--mint-soft);
-  color: var(--emerald);
-  border: 1px solid rgba(14, 124, 91, 0.25);
-  padding: 0.2rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+/* Flat, on-theme tag — accent monospace label, no filled pill */
+.badgeDAP,
+.badgeAI {
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--font-roboto-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
+.badgeDAP {
+  color: var(--emerald);
+}
+
 .badgeAI {
-  background-color: rgba(233, 196, 0, 0.14);
   color: var(--gold-deep);
-  border: 1px solid rgba(138, 116, 0, 0.25);
-  padding: 0.2rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 
 .category {

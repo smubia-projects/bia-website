@@ -10,7 +10,7 @@ import {
   deleteProjectBySlug,
   uploadImage,
 } from "@/app/lib/projects";
-import { Project } from "@/app/Projects/data/types";
+import { Project, TeamMember, HighlightCard } from "@/app/Projects/data/types";
 
 const COOKIE_NAME = "admin_session";
 const SESSION_MAX_AGE = 24 * 60 * 60 * 1000;
@@ -86,13 +86,22 @@ async function processImages(formData: FormData): Promise<{
   return { coverImage, images };
 }
 
-function parseTeam(
-  formData: FormData
-): { name: string; role: string; avatar: string }[] {
+function parseTeam(formData: FormData): TeamMember[] {
   const teamJson = formData.get("team") as string;
   if (!teamJson) return [];
   try {
     return JSON.parse(teamJson);
+  } catch {
+    return [];
+  }
+}
+
+function parseCards(formData: FormData): HighlightCard[] {
+  const raw = formData.get("cards") as string;
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as HighlightCard[];
+    return parsed.filter((c) => c.title?.trim() || c.body?.trim());
   } catch {
     return [];
   }
@@ -139,20 +148,13 @@ export async function addProject(
       coverImage,
       images,
       overview: (formData.get("overview") as string) || "",
-      rationale: (formData.get("rationale") as string) || "",
-      lessons: {
-        satisfaction: (formData.get("satisfaction") as string) || "",
-        takeaway: (formData.get("takeaway") as string) || "",
-      },
+      cards: parseCards(formData),
       team: parseTeam(formData),
       programme: badge,
-      status:
-        (formData.get("status") as "Completed" | "Ongoing") || "Completed",
       techStack: parseTechStack(formData),
       demoUrl: (formData.get("demoUrl") as string) || undefined,
       sourceUrl: (formData.get("sourceUrl") as string) || undefined,
       liveUrl: (formData.get("liveUrl") as string) || undefined,
-      article: (formData.get("article") as string) || undefined,
       // New projects start hidden; an admin flips them visible when ready
       hidden: true,
     };
@@ -193,26 +195,17 @@ export async function updateProject(
       coverImage: coverImage || existing.coverImage,
       images: images.length > 0 ? images : existing.images,
       overview: (formData.get("overview") as string) || existing.overview,
-      rationale:
-        (formData.get("rationale") as string) || existing.rationale,
-      lessons: {
-        satisfaction:
-          (formData.get("satisfaction") as string) ||
-          existing.lessons.satisfaction,
-        takeaway:
-          (formData.get("takeaway") as string) ||
-          existing.lessons.takeaway,
-      },
+      // `rationale` is merged into `overview`; clear any legacy value on save.
+      rationale: "",
+      cards: parseCards(formData),
+      // `lessons` is superseded by `cards`; clear the legacy field on save.
+      lessons: undefined,
       team: parseTeam(formData),
       programme: badge,
-      status:
-        (formData.get("status") as "Completed" | "Ongoing") ||
-        existing.status,
       techStack: parseTechStack(formData),
       demoUrl: (formData.get("demoUrl") as string) || undefined,
       sourceUrl: (formData.get("sourceUrl") as string) || undefined,
       liveUrl: (formData.get("liveUrl") as string) || undefined,
-      article: (formData.get("article") as string) || undefined,
     };
 
     await saveProject(updated);
