@@ -9,7 +9,6 @@ import SectionHeading from "./components/ui/SectionHeading";
 import AlumniTestimonials from "./components/carousel";
 import PathwaysScroll from "./components/PathwaysScroll";
 import ProjectsMarquee from "./components/ProjectsMarquee";
-import HeroGlobe from "./components/HeroGlobe";
 import { getProjects } from "./lib/projects";
 
 // Keep the live projects rail fresh via ISR (matches the /Projects page).
@@ -50,9 +49,36 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Auto-rotating 3D photo globe of candid club shots */}
+          {/* Candid photo cluster — slightly-tilted collage */}
           <div className={styles.heroCluster}>
-            <HeroGlobe />
+            <figure className={`${styles.clusterPhoto} ${styles.clusterA}`}>
+              <Image
+                src="/images/home/hero-cohort.webp"
+                alt="SMUBIA Data Associate Programme cohort"
+                fill
+                sizes="(min-width: 1024px) 30vw, 60vw"
+                className={styles.clusterImg}
+                priority
+              />
+            </figure>
+            <figure className={`${styles.clusterPhoto} ${styles.clusterB}`}>
+              <Image
+                src="/images/home/hero-demoday.webp"
+                alt="Members presenting at an AI Lodge demo day"
+                fill
+                sizes="(min-width: 1024px) 22vw, 45vw"
+                className={styles.clusterImg}
+              />
+            </figure>
+            <figure className={`${styles.clusterPhoto} ${styles.clusterC}`}>
+              <Image
+                src="/images/home/hero-ailodge.webp"
+                alt="An AI Lodge team hanging out"
+                fill
+                sizes="(min-width: 1024px) 28vw, 55vw"
+                className={styles.clusterImg}
+              />
+            </figure>
             {/* Playful astro-cat kept as a small floating accent on the cluster */}
             <Image
               src="/images/bia-cat-mascot.svg"

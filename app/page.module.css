@@ -82,9 +82,61 @@
 .heroCluster {
   position: relative;
   width: 100%;
-  max-width: 34rem;
+  max-width: 30rem;
   margin: 0 auto;
   aspect-ratio: 1 / 1;
+}
+
+.clusterPhoto {
+  position: absolute;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  border: 4px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  transition: transform 0.35s var(--ease-inout);
+}
+
+.clusterImg {
+  object-fit: cover;
+}
+
+.clusterA {
+  width: 62%;
+  aspect-ratio: 4 / 3;
+  top: 4%;
+  left: 0;
+  transform: rotate(-5deg);
+  z-index: 2;
+}
+
+.clusterB {
+  width: 44%;
+  aspect-ratio: 3 / 4;
+  top: 0;
+  right: 2%;
+  transform: rotate(5deg);
+  z-index: 3;
+}
+
+.clusterC {
+  width: 56%;
+  aspect-ratio: 4 / 3;
+  bottom: 2%;
+  left: 14%;
+  transform: rotate(3deg);
+  z-index: 1;
+}
+
+/* subtle interactive lift on the whole cluster */
+.heroCluster:hover .clusterA {
+  transform: rotate(-6deg) translateY(-4px);
+}
+.heroCluster:hover .clusterB {
+  transform: rotate(6deg) translateY(-4px);
+}
+.heroCluster:hover .clusterC {
+  transform: rotate(4deg) translateY(-4px);
 }
 
 .clusterMascot {
@@ -140,6 +192,12 @@
 @media (prefers-reduced-motion: reduce) {
   .clusterMascot {
     animation: none;
+  }
+  .clusterPhoto,
+  .heroCluster:hover .clusterA,
+  .heroCluster:hover .clusterB,
+  .heroCluster:hover .clusterC {
+    transition: none;
   }
 }
 
