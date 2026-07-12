@@ -99,7 +99,6 @@ export default function AILodgePage() {
               alike, all gathered around the same fire.
             </p>
             <div className={styles.heroActions}>
-              {/* TODO: swap for the real AI Lodge infosite link when it arrives */}
               <Link href={LINKS.aiLodgeInfosite} className={styles.ctaPrimary}>
                 Join AI Lodge
               </Link>

@@ -7,6 +7,7 @@ import CountUp from "./components/ui/CountUp";
 import Button from "./components/ui/Button";
 import SectionHeading from "./components/ui/SectionHeading";
 import AlumniTestimonials from "./components/carousel";
+import { LINKS } from "./lib/links";
 
 /** Three entry points into the club. One line of copy each. */
 const PILLARS = [
@@ -21,7 +22,7 @@ const PILLARS = [
     kicker: "New",
     title: "AI Lodge",
     body: "An eight-week build community where teams ship real AI projects.",
-    href: "/AILodge",
+    href: LINKS.aiLodgeInfosite,
     accent: "lodge",
   },
   {

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import styles from "./Projects.module.css";
+import { LINKS } from "@/app/lib/links";
 import { getProjects } from "@/app/lib/projects";
 import ProjectsContent from "./ProjectsContent";
 import ProjectsHero from "./ProjectsHero";
@@ -34,7 +35,7 @@ export default async function ProjectsPage() {
             <Link href="/DAP" className={styles.ctaBtnDap}>
               Join DAP
             </Link>
-            <Link href="/AILodge" className={styles.ctaBtnLodge}>
+            <Link href={LINKS.aiLodgeInfosite} className={styles.ctaBtnLodge}>
               Join AI Lodge
             </Link>
           </div>

@@ -109,22 +109,6 @@
 
 /* Statement wordmark — barely-there texture, the footer as a designed moment
    rather than a sitemap. Reads only when you look for it. */
-.watermark {
-  font-family: var(--font-display), sans-serif;
-  font-weight: 800;
-  font-size: clamp(4.5rem, 16vw, 14rem);
-  line-height: 0.8;
-  letter-spacing: -0.03em;
-  text-align: center;
-  color: rgba(125, 215, 194, 0.05);
-  user-select: none;
-  pointer-events: none;
-  white-space: nowrap;
-  overflow: hidden;
-  margin-top: 4rem;
-  margin-bottom: -0.06em;
-}
-
 .bottomBar {
   display: flex;
   align-items: center;

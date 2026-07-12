@@ -9,7 +9,7 @@ const EXPLORE_LINKS = [
   { href: "/", label: "Home" },
   { href: "/Events", label: "Events" },
   { href: "/DAP", label: "Data Associate Programme" },
-  { href: "/AILodge", label: "AI Lodge" },
+  { href: LINKS.aiLodgeInfosite, label: "AI Lodge" },
   { href: "/Projects", label: "Projects" },
   { href: "/WorkWithUs", label: "Work With Us" },
   { href: "/ContactUs", label: "Contact" },
@@ -101,10 +101,6 @@ function FooterBar() {
               </a>
             </div>
           </div>
-        </div>
-
-        <div className={styles.watermark} aria-hidden="true">
-          SMUBIA
         </div>
 
         <div className={styles.bottomBar}>

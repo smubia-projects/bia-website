@@ -45,7 +45,7 @@ const ContactUs = () => {
                 <Button href="/DAP" variant="outline">
                   Apply to DAP
                 </Button>
-                <Button href="/AILodge" variant="outline">
+                <Button href={LINKS.aiLodgeInfosite} variant="outline">
                   Join AI Lodge
                 </Button>
               </div>

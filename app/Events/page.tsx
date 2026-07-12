@@ -7,6 +7,7 @@ import TimelineMain from "../components/Timelines/TimelineMain";
 import ScrollReveal from "../components/ui/ScrollReveal";
 import SectionHeading from "../components/ui/SectionHeading";
 import Button from "../components/ui/Button";
+import { LINKS } from "../lib/links";
 
 export const metadata = {
   title: "Events — SMUBIA",
@@ -95,7 +96,7 @@ const PROGRAMMES = [
     blurb: "Our selective ML programme — one full project, mentors beside you.",
   },
   {
-    href: "/AILodge",
+    href: LINKS.aiLodgeInfosite,
     label: "AI Lodge",
     blurb: "An 8-week build community where teams ship real AI projects.",
   },
