@@ -3,9 +3,9 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: clamp(1.75rem, 3vw, 2.75rem);
+  gap: clamp(1.5rem, 2.5vw, 2.25rem);
   /* Top padding clears the fixed 4rem navbar; hero bleeds up under it. */
-  padding: clamp(5rem, 7vw, 6.5rem) 0 clamp(2.5rem, 4vw, 3.5rem);
+  padding: clamp(4.5rem, 6vw, 5.5rem) 0 clamp(2.25rem, 3.5vw, 3rem);
   overflow: hidden;
   isolation: isolate;
   /* Big, dimensional wash that resolves into the page background so the grid
@@ -26,7 +26,7 @@
 
 /* Intro / heading block */
 .intro {
-  max-width: 1200px;
+  max-width: 1040px;
   width: 100%;
   margin: 0 auto;
   padding: 0 2rem;
@@ -57,7 +57,7 @@
 }
 
 .heading {
-  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  font-size: clamp(2rem, 4.2vw, 3rem);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -100,7 +100,7 @@
 .slide {
   position: relative;
   flex: 0 0 auto;
-  width: clamp(18rem, 30vw, 25rem);
+  width: clamp(16rem, 25vw, 21rem);
   aspect-ratio: 16 / 10;
   border-radius: var(--radius-lg);
   overflow: hidden;
