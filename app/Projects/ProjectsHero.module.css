@@ -100,20 +100,6 @@
   }
 }
 
-/* Motion off: no marquee, fall back to a manually scrollable strip. */
-@media (prefers-reduced-motion: reduce) {
-  .marquee {
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .marquee::-webkit-scrollbar {
-    display: none;
-  }
-  .track {
-    animation: none;
-  }
-}
-
 /* Editorial poster slide — film-festival title card, not a grid card clone */
 .slide {
   position: relative;
@@ -173,27 +159,29 @@
   background: linear-gradient(150deg, var(--dusk-surface), var(--dusk-deep));
 }
 
-/* Flat, editorial tag — monospace label, no filled pill (matches .credit/.tech) */
+/* Flat filled pill — solid tint, monospace label */
 .badge {
   position: absolute;
-  top: 1.25rem;
-  left: 1.3rem;
+  top: 1.2rem;
+  left: 1.25rem;
   z-index: 2;
-  padding: 0;
-  font-size: 0.75rem;
+  padding: 0.28rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   font-family: var(--font-roboto-mono);
-  text-shadow: 0 1px 6px rgba(12, 33, 28, 0.55);
 }
 
 .badgeDAP {
-  color: var(--mint);
+  background-color: var(--mint);
+  color: var(--pine-deep);
 }
 
 .badgeAI {
-  color: var(--amber);
+  background-color: var(--amber);
+  color: var(--dusk);
 }
 
 .slideBody {
