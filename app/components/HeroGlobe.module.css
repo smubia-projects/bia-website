@@ -1,0 +1,14 @@
+/* Wrapper for the three.js photo globe (see HeroGlobeScene.tsx). The WebGL
+   canvas fills this box; we only fade the whole thing in once every tile's
+   texture has loaded, so it appears already turning. */
+
+.globe {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.8s var(--ease-out, ease-out);
+}
+
+.ready {
+  opacity: 1;
+}

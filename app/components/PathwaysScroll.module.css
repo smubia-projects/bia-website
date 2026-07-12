@@ -1,0 +1,226 @@
+.wrap {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+/* Per-pathway accent, reused on the rail bar, links and mobile kicker */
+.dap {
+  --accent: var(--emerald);
+}
+.lodge {
+  --accent: #b5751a; /* warm ochre — sand fails text contrast on light */
+}
+.events {
+  --accent: var(--teal-deep);
+}
+
+/* ============ Sticky rail ============ */
+
+.rail {
+  display: block;
+}
+
+/* Section heading rides at the top of the rail so it pins with the tabs */
+.railHeader {
+  margin-bottom: 2rem;
+}
+
+/* The accordion tabs are desktop-only; on mobile each panel carries its own
+   text (see .panelText), so the rail collapses to just the heading. */
+.tabs {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tab {
+  position: relative;
+  padding: 1.35rem 0 1.35rem 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.tab:first-child {
+  border-top: none;
+}
+
+/* Accent bar that grows in beside the active tab */
+.tab::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.35rem;
+  bottom: 1.35rem;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.4s var(--ease-inout);
+}
+
+.tabActive::before {
+  transform: scaleY(1);
+}
+
+.tabHead {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tabTitle {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.375rem, 1.1rem + 1vw, 1.875rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ink-faint);
+  transition: color 0.3s var(--ease-inout);
+}
+
+.tabActive .tabTitle {
+  color: var(--ink);
+}
+
+.tabHead:hover .tabTitle {
+  color: var(--ink-soft);
+}
+
+.tabActive .tabHead:hover .tabTitle {
+  color: var(--ink);
+}
+
+/* Smoothly reveal the body copy via the grid 0fr → 1fr height trick */
+.tabReveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.45s var(--ease-inout),
+    opacity 0.35s var(--ease-inout);
+}
+
+.tabRevealInner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.tabActive .tabReveal {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.tabBody {
+  margin: 0.75rem 0 0;
+  max-width: 26rem;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+.tabLink {
+  display: inline-block;
+  margin-top: 1rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.tabLink:hover {
+  text-decoration: underline;
+}
+
+/* ============ Media stack ============ */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.panel {
+  margin: 0;
+}
+
+.panelMedia {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.panelImg {
+  object-fit: cover;
+}
+
+/* Text block that rides above each image — mobile only */
+.panelText {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.25rem;
+}
+
+.panelKicker {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.panelTitle {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+/* ============ Desktop: sticky rail + scrolling media ============ */
+
+@media (min-width: 900px) {
+  .wrap {
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: clamp(2.5rem, 5vw, 5rem);
+    align-items: start;
+  }
+
+  .rail {
+    position: sticky;
+    top: clamp(5.5rem, 13vh, 8.5rem);
+    align-self: start;
+  }
+
+  .tabs {
+    display: block;
+  }
+
+  /* A modest gap keeps the images close; each still passes the viewport centre
+     one at a time, which drives the matching rail tab active as it scrolls. */
+  .stack {
+    gap: clamp(1.5rem, 4vh, 2.5rem);
+  }
+
+  .panel {
+    min-height: 0;
+  }
+
+  .panelText {
+    display: none;
+  }
+
+  .panelMedia {
+    aspect-ratio: 4 / 3;
+  }
+}

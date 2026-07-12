@@ -7,54 +7,17 @@ import CountUp from "./components/ui/CountUp";
 import Button from "./components/ui/Button";
 import SectionHeading from "./components/ui/SectionHeading";
 import AlumniTestimonials from "./components/carousel";
-import { LINKS } from "./lib/links";
+import PathwaysScroll from "./components/PathwaysScroll";
+import ProjectsMarquee from "./components/ProjectsMarquee";
+import HeroGlobe from "./components/HeroGlobe";
+import { getProjects } from "./lib/projects";
 
-/** Three entry points into the club. One line of copy each. */
-const PILLARS = [
-  {
-    kicker: "Flagship",
-    title: "Data Associate Programme",
-    body: "A selective AI/ML cohort — from theory sessions to a demo-day project.",
-    href: "/DAP",
-    accent: "dap",
-  },
-  {
-    kicker: "New",
-    title: "AI Lodge",
-    body: "An eight-week build community where teams ship real AI projects.",
-    href: LINKS.aiLodgeInfosite,
-    accent: "lodge",
-  },
-  {
-    kicker: "Open to all",
-    title: "Events & Workshops",
-    body: "Hands-on sessions in SQL, Python and data science every semester.",
-    href: "/Events",
-    accent: "events",
-  },
-] as const;
+// Keep the live projects rail fresh via ISR (matches the /Projects page).
+export const revalidate = 3600;
 
-/**
- * Static teaser strip — decoupled from the Redis showcase on purpose (Wave 5
- * owns the real /Projects listing). Titles all point to /Projects until
- * per-project slugs are wired up.
- */
-const FEATURED_PROJECTS = [
-  {
-    title: "CaloTracko",
-    blurb: "Snap a meal, track your calories with AI.",
-  },
-  {
-    title: "Storie",
-    blurb: "Turn everyday photos into shareable stories.",
-  },
-  {
-    title: "Enhance AI",
-    blurb: "Sharpen and upscale images in a single click.",
-  },
-];
+export default async function Home() {
+  const projects = (await getProjects()).filter((p) => !p.hidden);
 
-export default function Home() {
   return (
     <main>
       {/* Hero — dark pine anchor with candid photo cluster */}
@@ -87,36 +50,9 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Candid photo cluster — slightly-tilted collage */}
+          {/* Auto-rotating 3D photo globe of candid club shots */}
           <div className={styles.heroCluster}>
-            <figure className={`${styles.clusterPhoto} ${styles.clusterA}`}>
-              <Image
-                src="/images/home/hero-cohort.webp"
-                alt="SMUBIA Data Associate Programme cohort"
-                fill
-                sizes="(min-width: 1024px) 30vw, 60vw"
-                className={styles.clusterImg}
-                priority
-              />
-            </figure>
-            <figure className={`${styles.clusterPhoto} ${styles.clusterB}`}>
-              <Image
-                src="/images/home/hero-demoday.webp"
-                alt="Members presenting at an AI Lodge demo day"
-                fill
-                sizes="(min-width: 1024px) 22vw, 45vw"
-                className={styles.clusterImg}
-              />
-            </figure>
-            <figure className={`${styles.clusterPhoto} ${styles.clusterC}`}>
-              <Image
-                src="/images/home/hero-ailodge.webp"
-                alt="An AI Lodge team hanging out"
-                fill
-                sizes="(min-width: 1024px) 28vw, 55vw"
-                className={styles.clusterImg}
-              />
-            </figure>
+            <HeroGlobe />
             {/* Playful astro-cat kept as a small floating accent on the cluster */}
             <Image
               src="/images/bia-cat-mascot.svg"
@@ -141,32 +77,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Three pillars */}
+      {/* Three ways in — scroll-linked accordion; the heading is part of the
+          sticky rail, so it pins alongside the tabs (see PathwaysScroll) */}
       <section className={styles.section}>
         <div className={styles.sectionInner}>
-          <ScrollReveal>
-            <SectionHeading
-              eyebrow="What we do"
-              title="Three ways in"
-              lede="Pick your entry point — from your first workshop to a deployed model."
-            />
-          </ScrollReveal>
-          <div className={styles.pillarGrid}>
-            {PILLARS.map((pillar, i) => (
-              <ScrollReveal key={pillar.title} delay={i * 100}>
-                <Link
-                  href={pillar.href}
-                  className={`${styles.pillarCard} ${styles[pillar.accent]}`}
-                >
-                  <span className={styles.pillarBar} aria-hidden="true" />
-                  <span className={styles.pillarKicker}>{pillar.kicker}</span>
-                  <h3 className={styles.pillarTitle}>{pillar.title}</h3>
-                  <p className={styles.pillarBody}>{pillar.body}</p>
-                  <span className={styles.pillarLink}>Explore →</span>
-                </Link>
-              </ScrollReveal>
-            ))}
-          </div>
+          <PathwaysScroll />
         </div>
       </section>
 
@@ -212,7 +127,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured projects strip — static teaser, links to /Projects */}
+      {/* Projects rail — the same live showcase marquee as /Projects */}
       <section className={styles.section}>
         <div className={styles.sectionInner}>
           <ScrollReveal>
@@ -227,18 +142,10 @@ export default function Home() {
               </Link>
             </div>
           </ScrollReveal>
-          <div className={styles.projectGrid}>
-            {FEATURED_PROJECTS.map((project, i) => (
-              <ScrollReveal key={project.title} delay={i * 100}>
-                {/* Links to the showcase listing until per-project slugs are wired */}
-                <Link href="/Projects" className={styles.projectCard}>
-                  <h3 className={styles.projectTitle}>{project.title}</h3>
-                  <p className={styles.projectBlurb}>{project.blurb}</p>
-                  <span className={styles.projectLink}>View →</span>
-                </Link>
-              </ScrollReveal>
-            ))}
-          </div>
+        </div>
+        {/* Full-bleed rail — breaks out of the padded section shell */}
+        <div className={styles.marqueeWrap}>
+          <ProjectsMarquee projects={projects} />
         </div>
       </section>
 

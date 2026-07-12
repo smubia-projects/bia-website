@@ -82,7 +82,10 @@ html {
 body {
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
+  /* `clip` (not `hidden`) so the body doesn't become a scroll container — that
+     would break `position: sticky` for descendants (e.g. PathwaysScroll). The
+     html rule above still clips any horizontal overflow site-wide. */
+  overflow-x: clip;
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;

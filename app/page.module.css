@@ -82,61 +82,9 @@
 .heroCluster {
   position: relative;
   width: 100%;
-  max-width: 30rem;
+  max-width: 34rem;
   margin: 0 auto;
   aspect-ratio: 1 / 1;
-}
-
-.clusterPhoto {
-  position: absolute;
-  margin: 0;
-  overflow: hidden;
-  border-radius: var(--radius-md);
-  border: 4px solid rgba(255, 255, 255, 0.92);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
-  transition: transform 0.35s var(--ease-inout);
-}
-
-.clusterImg {
-  object-fit: cover;
-}
-
-.clusterA {
-  width: 62%;
-  aspect-ratio: 4 / 3;
-  top: 4%;
-  left: 0;
-  transform: rotate(-5deg);
-  z-index: 2;
-}
-
-.clusterB {
-  width: 44%;
-  aspect-ratio: 3 / 4;
-  top: 0;
-  right: 2%;
-  transform: rotate(5deg);
-  z-index: 3;
-}
-
-.clusterC {
-  width: 56%;
-  aspect-ratio: 4 / 3;
-  bottom: 2%;
-  left: 14%;
-  transform: rotate(3deg);
-  z-index: 1;
-}
-
-/* subtle interactive lift on the whole cluster */
-.heroCluster:hover .clusterA {
-  transform: rotate(-6deg) translateY(-4px);
-}
-.heroCluster:hover .clusterB {
-  transform: rotate(6deg) translateY(-4px);
-}
-.heroCluster:hover .clusterC {
-  transform: rotate(4deg) translateY(-4px);
 }
 
 .clusterMascot {
@@ -193,12 +141,6 @@
   .clusterMascot {
     animation: none;
   }
-  .clusterPhoto,
-  .heroCluster:hover .clusterA,
-  .heroCluster:hover .clusterB,
-  .heroCluster:hover .clusterC {
-    transition: none;
-  }
 }
 
 /* ============ Shared section shells ============ */
@@ -219,111 +161,8 @@
   margin: 0 auto;
 }
 
-/* ============ Three pillars ============ */
-
-.pillarGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  margin-top: 3rem;
-}
-
-@media (min-width: 768px) {
-  .pillarGrid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.pillarCard {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 2rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  text-decoration: none;
-  overflow: hidden;
-  transition:
-    transform 0.25s var(--ease-inout),
-    box-shadow 0.25s var(--ease-inout),
-    border-color 0.25s var(--ease-inout);
-}
-
-.pillarCard:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-}
-
-.pillarBar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-}
-
-/* per-pillar accent — DAP cool/premium, Lodge warm, Events mint */
-.dap .pillarBar {
-  background: var(--emerald);
-}
-.dap .pillarKicker {
-  color: var(--emerald);
-}
-.dap:hover {
-  border-color: rgba(14, 124, 91, 0.35);
-}
-
-.lodge .pillarBar {
-  background: var(--sand);
-}
-.lodge .pillarKicker {
-  color: #b5751a; /* warm ochre — readable on light, sand fails text contrast */
-}
-.lodge:hover {
-  border-color: rgba(255, 201, 120, 0.55);
-}
-
-.events .pillarBar {
-  background: var(--teal-mid);
-}
-.events .pillarKicker {
-  color: var(--teal-deep);
-}
-.events:hover {
-  border-color: rgba(30, 122, 112, 0.35);
-}
-
-.pillarKicker {
-  font-family: var(--font-roboto-mono), monospace;
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.pillarTitle {
-  font-family: var(--font-display), sans-serif;
-  font-weight: 700;
-  font-size: 1.375rem;
-  color: var(--ink);
-  margin: 0;
-}
-
-.pillarBody {
-  flex: 1;
-  font-size: 0.9375rem;
-  line-height: 1.65;
-  color: var(--ink-soft);
-  margin: 0;
-}
-
-.pillarLink {
-  font-weight: 600;
-  font-size: 0.9375rem;
-  color: var(--emerald);
-}
+/* Three ways in — the scroll-linked accordion lives in
+   app/components/PathwaysScroll.module.css. */
 
 /* ============ Stat spotlight ============ */
 
@@ -419,61 +258,10 @@
   text-decoration: underline;
 }
 
-.projectGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  margin-top: 2.5rem;
-}
-
-@media (min-width: 768px) {
-  .projectGrid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.projectCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1.75rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  text-decoration: none;
-  transition:
-    transform 0.25s var(--ease-inout),
-    box-shadow 0.25s var(--ease-inout),
-    border-color 0.25s var(--ease-inout);
-}
-
-.projectCard:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-  border-color: rgba(14, 124, 91, 0.35);
-}
-
-.projectTitle {
-  font-family: var(--font-display), sans-serif;
-  font-weight: 700;
-  font-size: 1.1875rem;
-  color: var(--ink);
-  margin: 0;
-}
-
-.projectBlurb {
-  flex: 1;
-  font-size: 0.9375rem;
-  line-height: 1.6;
-  color: var(--ink-soft);
-  margin: 0;
-}
-
-.projectLink {
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--emerald);
+/* Full-bleed rail: negative margins cancel the .section horizontal padding so
+   the marquee runs edge to edge, like the /Projects hero. */
+.marqueeWrap {
+  margin: 2.5rem -1.25rem 0;
 }
 
 /* ============ Join CTA band (dark pine) ============ */

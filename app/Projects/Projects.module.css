@@ -11,53 +11,6 @@
   padding: 0 2rem;
 }
 
-/* Header */
-.header {
-  margin-bottom: 3rem;
-  max-width: 48rem;
-}
-
-.eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.eyebrowLine {
-  display: block;
-  width: 2rem;
-  height: 1px;
-  background-color: var(--emerald);
-  opacity: 0.5;
-}
-
-.eyebrowText {
-  color: var(--emerald);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-family: var(--font-roboto-mono);
-}
-
-.heading {
-  font-size: clamp(2.5rem, 5vw, 3.5rem);
-  font-weight: 800;
-  color: var(--ink);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  margin-bottom: 1.25rem;
-  font-family: var(--font-display);
-}
-
-.subheading {
-  color: var(--ink-soft);
-  font-size: 1.125rem;
-  line-height: 1.6;
-  font-family: var(--font-inter);
-}
-
 /* Grid intro (section label + filters) */
 .gridIntro {
   display: flex;

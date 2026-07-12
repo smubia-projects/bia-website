@@ -1,0 +1,204 @@
+:root {
+  --ink: #161616;
+  --paper: #fffdf5;
+  --board-green: #d9e8d6;
+  --border: #111111;
+  --shadow: rgba(0, 0, 0, 0.22);
+  --green: #1fb25a;
+  --pink: #d93a96;
+  --brown: #955235;
+  --orange: #f7941d;
+  --frame-bg: #fff7cc;
+  --mat-bg: #d9e8d6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  width: 100%;
+  background: var(--board-green);
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  margin: 0;
+  color: var(--ink);
+  background: var(--board-green);
+  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.roadmap-stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  place-items: center;
+  overflow: hidden;
+  padding: 0;
+}
+
+.roadmap-frame {
+  display: grid;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.roadmap-mat {
+  display: grid;
+  width: 100%;
+  place-items: center;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.roadmap-board {
+  display: block;
+  width: min(96vw, 48.56svh);
+  width: min(96vw, 48.56dvh);
+  max-width: 96vw;
+  height: auto;
+  max-height: 100svh;
+  max-height: 100dvh;
+  aspect-ratio: 690 / 1421;
+}
+
+.card-hotspot rect,
+.money-hotspot rect {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 5;
+  cursor: pointer;
+  pointer-events: all;
+  vector-effect: non-scaling-stroke;
+}
+
+.money-rain {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.money-bill {
+  position: absolute;
+  top: -48px;
+  left: var(--start-x);
+  display: block;
+  width: clamp(57px, 17.6vw, 81px);
+  height: auto;
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.16));
+  opacity: 0.96;
+  transform: rotate(var(--tilt));
+  transform-origin: center;
+  animation: money-fall var(--duration) linear forwards;
+}
+
+.card-modal {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  height: 100svh;
+  height: 100dvh;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.card-modal::backdrop {
+  background: rgba(0, 0, 0, 0.52);
+}
+
+.modal-panel {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.modal-image {
+  display: block;
+  width: min(63vw, 54.59svh);
+  width: min(63vw, 54.59dvh);
+  height: auto;
+  max-width: 63vw;
+  max-height: 70.2svh;
+  max-height: 70.2dvh;
+  object-fit: contain;
+}
+
+.sr-only {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .roadmap-stage {
+    padding: 0;
+  }
+
+  .roadmap-frame {
+    padding: 0;
+  }
+
+  .modal-panel {
+    min-height: 0;
+  }
+
+  .modal-image {
+    width: min(63vw, 54.59svh);
+    width: min(63vw, 54.59dvh);
+  }
+}
+
+@keyframes money-fall {
+  to {
+    opacity: 0.94;
+    transform: translate3d(var(--drift), 112svh, 0) rotate(var(--spin));
+    transform: translate3d(var(--drift), 112dvh, 0) rotate(var(--spin));
+  }
+}

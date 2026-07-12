@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="SMU BIA roadmap with focused career path cards.">
+    <title>SMU BIA Roadmap</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="roadmap-stage">
+      <section class="roadmap-frame" aria-label="BIA roadmap">
+        <div class="roadmap-mat">
+          <svg class="roadmap-board" viewBox="0 0 690 1421" role="img" aria-labelledby="roadmap-title roadmap-desc">
+            <title id="roadmap-title">Your Journey with BIA</title>
+            <desc id="roadmap-desc">A Monopoly themed BIA roadmap with four selectable career path cards.</desc>
+            <image href="assests/rawr.svg" width="690" height="1421"></image>
+
+            <a class="money-hotspot" href="#money-rain" aria-label="Make it rain Monopoly-style money">
+              <rect x="455" y="82" width="225" height="125"></rect>
+            </a>
+
+            <a class="card-hotspot hotspot-green" href="#card-modal" data-card="green" aria-label="Open Data Support Analyst card">
+              <rect x="110.857" y="715.857" width="198.571" height="322.857"></rect>
+            </a>
+            <a class="card-hotspot hotspot-pink" href="#card-modal" data-card="pink" aria-label="Open Business Analyst card">
+              <rect x="110.857" y="1084.43" width="198.571" height="322.857"></rect>
+            </a>
+            <a class="card-hotspot hotspot-brown" href="#card-modal" data-card="brown" aria-label="Open Product Strategy Analyst card">
+              <rect x="375.143" y="715.857" width="198.571" height="322.857"></rect>
+            </a>
+            <a class="card-hotspot hotspot-orange" href="#card-modal" data-card="orange" aria-label="Open Data Engineer card">
+              <rect x="375.143" y="1084.6" width="198.571" height="322.857"></rect>
+            </a>
+          </svg>
+        </div>
+      </section>
+    </main>
+
+    <div class="money-rain" id="money-rain" aria-hidden="true"></div>
+
+    <dialog class="card-modal" id="card-modal" aria-labelledby="modal-title">
+      <div class="modal-panel">
+        <h2 class="sr-only" id="modal-title">Career path card</h2>
+        <img class="modal-image" alt="" width="307" height="395">
+      </div>
+    </dialog>
+
+    <script src="script.js"></script>
+  </body>
+</html>

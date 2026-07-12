@@ -1,0 +1,14 @@
+/* The roadmap is a self-contained static site embedded via an iframe so its
+   (intentionally different) styling stays fully isolated from the main site.
+   The global Navbar/Footer still wrap it via the root layout. */
+.frame {
+  display: block;
+  width: 100%;
+  height: calc(100dvh - 4rem);
+  min-height: 560px;
+  /* Clear the fixed 4rem navbar */
+  margin-top: 4rem;
+  border: 0;
+  /* Matches the roadmap's board-green so there's no white flash before load */
+  background: #d9e8d6;
+}
