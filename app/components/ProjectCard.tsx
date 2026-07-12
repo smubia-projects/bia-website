@@ -13,7 +13,11 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
   return (
     <Link href={`/Projects/${project.slug}`} className={styles.cardLink}>
-      <div className={styles.card}>
+      <div
+        className={`${styles.card} ${
+          isAILodge ? styles.cardAI : styles.cardDAP
+        }`}
+      >
         <div className={styles.imageWrapper}>
           <Image
             src={project.coverImage}
