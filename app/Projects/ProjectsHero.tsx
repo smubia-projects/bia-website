@@ -95,14 +95,19 @@ function HeroSlide({ project }: { project: Project }) {
 }
 
 export default function ProjectsHero({ projects }: Props) {
-  // A marquee only earns its motion when there are enough distinct projects
-  // that no slide repeats within a viewport. Below that, show each project
-  // once in a static, centered strip — a duplicate on screen reads as a bug.
-  const useMarquee = projects.length >= 4;
-
-  // For the marquee: duplicate the whole track once so the CSS loop is
-  // seamless at -50%.
-  const track = useMarquee ? [...projects, ...projects] : projects;
+  // Repeat the list enough to comfortably span a wide viewport, then duplicate
+  // that base once more so the -50% CSS loop is seamless. This lets the marquee
+  // autoscroll infinitely no matter how few projects exist.
+  const MIN_SLIDES = 8;
+  const reps =
+    projects.length > 0
+      ? Math.max(2, Math.ceil(MIN_SLIDES / projects.length))
+      : 0;
+  const base = Array.from({ length: reps }, () => projects).flat();
+  const track = [...base, ...base];
+  // Scale the duration to the track width so the pixel speed stays roughly
+  // constant regardless of how many slides we ended up with.
+  const duration = `${Math.max(base.length * 6, 30)}s`;
 
   return (
     <section className={styles.hero} aria-label="Projects showcase">
@@ -114,30 +119,19 @@ export default function ProjectsHero({ projects }: Props) {
         <h1 className={styles.heading}>
           Built at <span className={styles.headingAccent}>SMUBIA</span>
         </h1>
-        <p className={styles.lede}>
-          What our Data Associates and AI Lodgers actually shipped — from calorie
-          bots to storybook generators. Real builds, real people.
-        </p>
       </div>
 
-      {track.length > 0 &&
-        (useMarquee ? (
-          <div className={styles.marquee}>
-            <div className={styles.track}>
-              {track.map((project, i) => (
-                <HeroSlide key={`${project.slug}-${i}`} project={project} />
-              ))}
-            </div>
-            <div className={styles.fadeLeft} aria-hidden="true" />
-            <div className={styles.fadeRight} aria-hidden="true" />
-          </div>
-        ) : (
-          <div className={styles.staticStrip}>
-            {track.map((project) => (
-              <HeroSlide key={project.slug} project={project} />
+      {track.length > 0 && (
+        <div className={styles.marquee}>
+          <div className={styles.track} style={{ animationDuration: duration }}>
+            {track.map((project, i) => (
+              <HeroSlide key={`${project.slug}-${i}`} project={project} />
             ))}
           </div>
-        ))}
+          <div className={styles.fadeLeft} aria-hidden="true" />
+          <div className={styles.fadeRight} aria-hidden="true" />
+        </div>
+      )}
     </section>
   );
 }
