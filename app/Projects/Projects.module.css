@@ -11,24 +11,14 @@
   padding: 0 2rem;
 }
 
-/* Grid intro (section label + filters) */
+/* Project filters */
 .gridIntro {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
   gap: 1rem 1.5rem;
   padding-top: clamp(1.75rem, 3.5vw, 2.75rem);
   margin-bottom: 1.75rem;
-}
-
-.gridLabel {
-  font-size: clamp(1.15rem, 2vw, 1.4rem);
-  font-weight: 700;
-  color: var(--ink);
-  letter-spacing: -0.02em;
-  font-family: var(--font-display);
-  margin-top: 0.375rem;
 }
 
 /* Filter Bar */
@@ -47,19 +37,7 @@
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s var(--ease-inout);
   font-family: var(--font-inter);
-}
-
-.filterBtn:hover {
-  border-color: var(--emerald);
-  color: var(--emerald);
-}
-
-.filterBtnActive {
-  background-color: var(--mint-soft);
-  border-color: var(--emerald);
-  color: var(--emerald);
 }
 
 /* Grid */
@@ -141,33 +119,16 @@
   border-radius: var(--radius-pill);
   text-decoration: none;
   color: var(--pine-deep);
-  transition:
-    transform 0.35s var(--ease-inout),
-    box-shadow 0.35s var(--ease-inout),
-    background-color 0.35s var(--ease-inout);
   font-family: var(--font-inter);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
 }
 
 .ctaBtnDap {
   background: var(--mint);
 }
 
-.ctaBtnDap:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 0 0 3px rgba(125, 215, 194, 0.16),
-    0 8px 36px -2px rgba(125, 215, 194, 0.6);
-  color: var(--pine-deep);
-}
-
 .ctaBtnLodge {
   background: var(--sand);
-}
-
-.ctaBtnLodge:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 0 0 3px rgba(255, 211, 146, 0.18),
-    0 8px 36px -2px rgba(255, 211, 146, 0.6);
-  color: var(--pine-deep);
 }

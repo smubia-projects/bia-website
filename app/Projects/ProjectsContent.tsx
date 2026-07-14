@@ -2,9 +2,11 @@
 
 import { useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import styles from "./Projects.module.css";
 import ProjectCard from "@/app/components/ProjectCard";
 import { Project } from "@/app/Projects/data/types";
+import { MOTION_EASE, motionTransition } from "@/app/components/ui/motion";
 
 const ALL = "All";
 
@@ -33,31 +35,55 @@ export default function ProjectsContent({ projects }: Props) {
 
   return (
     <>
-      {/* Section label + filter bar (the hero above owns the page H1) */}
+      {/* The hero owns the page heading; filters lead directly into the grid. */}
       <div className={styles.gridIntro}>
-        <div>
-          <span className="eyebrow">The catalog</span>
-          <h2 className={styles.gridLabel}>All projects</h2>
-        </div>
-        <div className={styles.filterBar}>
+        <div
+          className={styles.filterBar}
+          role="group"
+          aria-label="Filter projects"
+        >
           {filters.map((f) => (
-            <button
+            <motion.button
               key={f}
               onClick={() => setActiveFilter(f)}
-              className={`${styles.filterBtn} ${activeFilter === f ? styles.filterBtnActive : ""}`}
+              className={styles.filterBtn}
+              animate={{
+                color: activeFilter === f ? "var(--emerald)" : "var(--ink-soft)",
+                borderColor: activeFilter === f ? "var(--emerald)" : "var(--border)",
+                backgroundColor:
+                  activeFilter === f ? "rgba(125, 215, 194, 0.12)" : "var(--surface)",
+              }}
+              whileHover={{ color: "var(--emerald)", borderColor: "var(--emerald)" }}
+              whileTap={{ scale: 0.96 }}
+              transition={motionTransition.quick}
             >
               {f}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
 
       {/* Grid */}
-      <div className={styles.grid}>
-        {filtered.map((project) => (
-          <ProjectCard key={project.slug} project={project} />
-        ))}
-      </div>
+      <motion.div className={styles.grid} layout>
+        <AnimatePresence mode="popLayout">
+          {filtered.map((project, index) => (
+            <motion.div
+              key={project.slug}
+              layout
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              transition={{
+                duration: 0.3,
+                delay: index * 0.035,
+                ease: MOTION_EASE,
+              }}
+            >
+              <ProjectCard project={project} />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </motion.div>
 
       {filtered.length === 0 && (
         <p className={styles.empty}>No projects found for this filter.</p>

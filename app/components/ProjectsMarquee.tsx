@@ -3,8 +3,13 @@
 import { useEffect, useRef, type CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { animate, motion, useReducedMotion } from "framer-motion";
 import styles from "./ProjectsMarquee.module.css";
 import { Project } from "@/app/Projects/data/types";
+import { MOTION_EASE } from "./ui/motion";
+
+const MotionLink = motion.create(Link);
+const MotionImage = motion.create(Image);
 
 interface Props {
   projects: Project[];
@@ -20,19 +25,31 @@ function MarqueeSlide({ project }: { project: Project }) {
   const tech = project.techStack.slice(0, 3).join("  ·  ");
 
   return (
-    <Link
+    <MotionLink
       href={`/Projects/${project.slug}`}
       className={styles.slide}
       aria-label={`${project.title} — ${project.badge}`}
+      initial="rest"
+      animate="rest"
+      whileHover="hover"
+      whileFocus="hover"
+      whileTap={{ scale: 0.99 }}
+      variants={{
+        rest: { y: 0, boxShadow: "var(--shadow-md)" },
+        hover: { y: -5, boxShadow: "var(--shadow-lg)" },
+      }}
+      transition={{ duration: 0.35, ease: MOTION_EASE }}
     >
       <div className={styles.slideMedia}>
         {image ? (
-          <Image
+          <MotionImage
             src={image}
             alt={project.title}
             fill
             className={styles.slideImg}
             sizes="440px"
+            variants={{ rest: { scale: 1 }, hover: { scale: 1.05 } }}
+            transition={{ duration: 0.55, ease: MOTION_EASE }}
           />
         ) : (
           <div
@@ -58,7 +75,7 @@ function MarqueeSlide({ project }: { project: Project }) {
           {[builder, tech].filter(Boolean).join("  ·  ")}
         </span>
       </div>
-    </Link>
+    </MotionLink>
   );
 }
 
@@ -68,6 +85,7 @@ function MarqueeSlide({ project }: { project: Project }) {
  */
 export default function ProjectsMarquee({ projects, fadeLeft, fadeRight }: Props) {
   const viewportRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
 
   // Repeat the list enough to comfortably exceed the viewport, then render three
   // copies. We start scrolled into the middle copy and wrap by one copy-width in
@@ -84,43 +102,45 @@ export default function ProjectsMarquee({ projects, fadeLeft, fadeRight }: Props
     const vp = viewportRef.current;
     if (!vp || base.length === 0) return;
 
-    let copyWidth = vp.scrollWidth / 3;
-    // Begin in the middle copy so there's a full copy of runway on each side.
-    vp.scrollLeft = copyWidth;
-
-    let paused = false;
-    let last = performance.now();
-    let raf = 0;
     const SPEED = 42; // px per second — a calm, readable drift
+    let controls: ReturnType<typeof animate> | null = null;
 
-    const step = (now: number) => {
-      const dt = Math.min((now - last) / 1000, 0.05);
-      last = now;
-      if (!paused) vp.scrollLeft += SPEED * dt;
-      // Keep the scroll position within the middle copy for a seamless loop.
-      if (vp.scrollLeft >= copyWidth * 2) vp.scrollLeft -= copyWidth;
-      else if (vp.scrollLeft <= 0) vp.scrollLeft += copyWidth;
-      raf = requestAnimationFrame(step);
+    const start = () => {
+      controls?.stop();
+      const copyWidth = vp.scrollWidth / 3;
+      vp.scrollLeft = copyWidth;
+
+      if (reduceMotion) return;
+
+      controls = animate(0, copyWidth, {
+        duration: copyWidth / SPEED,
+        ease: "linear",
+        repeat: Infinity,
+        repeatType: "loop",
+        onUpdate: (latest) => {
+          vp.scrollLeft = copyWidth + latest;
+        },
+      });
     };
-    raf = requestAnimationFrame(step);
+    start();
 
     // Only pause while the user is actively grabbing/dragging the rail — never
     // on plain hover — so it always visibly autoscrolls.
-    const pause = () => (paused = true);
-    const resume = () => (paused = false);
-    const remeasure = () => (copyWidth = vp.scrollWidth / 3);
+    const pause = () => controls?.pause();
+    const resume = () => controls?.play();
+    const remeasure = () => start();
 
     vp.addEventListener("pointerdown", pause);
     window.addEventListener("pointerup", resume);
     window.addEventListener("resize", remeasure);
 
     return () => {
-      cancelAnimationFrame(raf);
+      controls?.stop();
       vp.removeEventListener("pointerdown", pause);
       window.removeEventListener("pointerup", resume);
       window.removeEventListener("resize", remeasure);
     };
-  }, [base.length]);
+  }, [base.length, reduceMotion]);
 
   if (track.length === 0) return null;
 

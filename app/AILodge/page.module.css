@@ -474,12 +474,6 @@
   border-radius: var(--radius-lg);
   padding: 1.75rem 1.5rem;
   box-shadow: var(--warm-card-shadow);
-  transition: transform 220ms var(--ease-inout), box-shadow 220ms var(--ease-inout);
-}
-.step:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 8px rgba(92, 60, 20, 0.06),
-    0 20px 44px rgba(92, 60, 20, 0.15);
 }
 .stepTop {
   display: flex;
@@ -552,18 +546,6 @@
   gap: 1rem;
   width: max-content;
   padding: 0 1.25rem;
-  animation: reelScroll 46s linear infinite;
-}
-.reelTrack:hover {
-  animation-play-state: paused;
-}
-@keyframes reelScroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
 }
 .reelItem {
   position: relative;
@@ -653,15 +635,9 @@
   color: var(--dusk-deep);
   background: var(--amber);
   box-shadow: 0 8px 24px rgba(255, 150, 58, 0.28);
-  transition: transform 350ms var(--ease-inout), box-shadow 350ms var(--ease-inout),
-    background-color 350ms var(--ease-inout);
-}
-.ctaPrimary:hover {
-  transform: translateY(-3px);
-  background: #ffd48f;
-  box-shadow:
-    0 0 0 3px rgba(255, 150, 58, 0.18),
-    0 8px 38px -2px rgba(255, 150, 58, 0.5);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
 }
 .ctaGhost {
   display: inline-flex;
@@ -674,12 +650,6 @@
   font-size: 0.9375rem;
   color: var(--dusk-text);
   border: 1px solid var(--dusk-border);
-  transition: transform 200ms var(--ease-inout), border-color 200ms var(--ease-inout), color 200ms var(--ease-inout);
-}
-.ctaGhost:hover {
-  transform: translateY(-2px);
-  border-color: var(--amber);
-  color: var(--amber);
 }
 
 /* =========================================================================
@@ -695,19 +665,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .reelTrack {
-    animation: none;
     flex-wrap: wrap;
     width: auto;
     justify-content: center;
-  }
-  .ctaPrimary,
-  .ctaGhost,
-  .step {
-    transition: none;
-  }
-  .ctaPrimary:hover,
-  .ctaGhost:hover,
-  .step:hover {
-    transform: none;
   }
 }

@@ -1,6 +1,10 @@
+"use client";
+
 import Image from "next/image";
+import { motion } from "framer-motion";
 import styles from "./carousel.module.css";
 import SectionHeading from "./ui/SectionHeading";
+import { motionTransition } from "./ui/motion";
 
 const AlumniTestimonials = () => {
   const testimonials = [
@@ -31,12 +35,17 @@ const AlumniTestimonials = () => {
     <div>
       <SectionHeading
         eyebrow="Alumni"
-        title="Beyond Singapore Management University"
-        lede="Our alumni have gone on to leading companies across finance and technology — and they stay close to the club, mentoring the next batch."
+        title="Beyond SMU"
+        lede="Our alumni have gone on to careers across technology, finance, and other industries."
       />
       <div className={styles.grid}>
         {testimonials.map((testimonial) => (
-          <figure key={testimonial.name} className={styles.card}>
+          <motion.figure
+            key={testimonial.name}
+            className={styles.card}
+            whileHover={{ y: -2, boxShadow: "var(--shadow-md)" }}
+            transition={motionTransition.quick}
+          >
             <blockquote className={styles.quote}>
               &ldquo;{testimonial.text}&rdquo;
             </blockquote>
@@ -53,7 +62,7 @@ const AlumniTestimonials = () => {
                 <p className={styles.title}>{testimonial.title}</p>
               </div>
             </figcaption>
-          </figure>
+          </motion.figure>
         ))}
       </div>
     </div>

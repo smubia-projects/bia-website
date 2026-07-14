@@ -1,9 +1,15 @@
+"use client";
+
 import React from "react";
 import styles from "./footer.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import { Linkedin, Instagram, Send, Mail } from "lucide-react";
+import { motion } from "framer-motion";
 import { LINKS } from "@/app/lib/links";
+import { motionTransition } from "./ui/motion";
+
+const MotionLink = motion.create(Link);
 
 const EXPLORE_LINKS = [
   { href: "/", label: "Home" },
@@ -39,9 +45,14 @@ function FooterBar() {
             <ul className={styles.linkList}>
               {EXPLORE_LINKS.map(({ href, label }) => (
                 <li key={href}>
-                  <Link href={href} className={styles.footerLink}>
+                  <MotionLink
+                    href={href}
+                    className={styles.footerLink}
+                    whileHover={{ color: "var(--mint)", x: 3 }}
+                    transition={motionTransition.quick}
+                  >
                     {label}
-                  </Link>
+                  </MotionLink>
                 </li>
               ))}
             </ul>
@@ -58,47 +69,80 @@ function FooterBar() {
               <br />
               Singapore 178908
             </p>
-            <a href={LINKS.email} className={styles.footerLink}>
+            <motion.a
+              href={LINKS.email}
+              className={styles.footerLink}
+              whileHover={{ color: "var(--mint)", x: 3 }}
+              transition={motionTransition.quick}
+            >
               bia@sa.smu.edu.sg
-            </a>
+            </motion.a>
           </div>
 
           <div className={styles.column}>
             <h3 className={styles.columnTitle}>Connect</h3>
             <div className={styles.socialRow}>
-              <a
+              <motion.a
                 href={LINKS.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn"
                 className={styles.socialIcon}
+                whileHover={{
+                  y: -2,
+                  color: "var(--mint)",
+                  borderColor: "var(--mint)",
+                }}
+                whileTap={{ scale: 0.94 }}
+                transition={motionTransition.quick}
               >
                 <Linkedin size={18} strokeWidth={1.75} />
-              </a>
-              <a
+              </motion.a>
+              <motion.a
                 href={LINKS.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
                 className={styles.socialIcon}
+                whileHover={{
+                  y: -2,
+                  color: "var(--mint)",
+                  borderColor: "var(--mint)",
+                }}
+                whileTap={{ scale: 0.94 }}
+                transition={motionTransition.quick}
               >
                 <Instagram size={18} strokeWidth={1.75} />
-              </a>
+              </motion.a>
               {/* TODO: restore target="_blank" when LINKS.telegram is the real invite */}
-              <a
+              <motion.a
                 href={LINKS.telegram}
                 aria-label="Telegram"
                 className={styles.socialIcon}
+                whileHover={{
+                  y: -2,
+                  color: "var(--mint)",
+                  borderColor: "var(--mint)",
+                }}
+                whileTap={{ scale: 0.94 }}
+                transition={motionTransition.quick}
               >
                 <Send size={18} strokeWidth={1.75} />
-              </a>
-              <a
+              </motion.a>
+              <motion.a
                 href={LINKS.email}
                 aria-label="Email"
                 className={styles.socialIcon}
+                whileHover={{
+                  y: -2,
+                  color: "var(--mint)",
+                  borderColor: "var(--mint)",
+                }}
+                whileTap={{ scale: 0.94 }}
+                transition={motionTransition.quick}
               >
                 <Mail size={18} strokeWidth={1.75} />
-              </a>
+              </motion.a>
             </div>
           </div>
         </div>

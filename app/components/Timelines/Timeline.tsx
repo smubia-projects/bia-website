@@ -3,6 +3,8 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCards, Controller } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { motionTransition } from '@/app/components/ui/motion';
 import 'swiper/css';
 import 'swiper/css/effect-cards';
 
@@ -49,10 +51,12 @@ const Timeline = ({ events }: { events: Event[] }) => {
                         alt={event.title}
                         className="w-full h-full object-cover"
                       />
-                      <div
+                      <motion.div
                         className={`absolute inset-0 ${
                           index !== activeIndex ? 'bg-[var(--pine-deep)]/30' : ''
                         }`}
+                        animate={{ opacity: index !== activeIndex ? 1 : 0 }}
+                        transition={motionTransition.quick}
                       />
                     </div>
                   </SwiperSlide>
@@ -62,20 +66,26 @@ const Timeline = ({ events }: { events: Event[] }) => {
 
             {/* Navigation Buttons */}
             <div className="flex justify-center gap-4 mt-6">
-              <button
+              <motion.button
                 onClick={() => imageSwiper?.slidePrev()}
                 aria-label="Previous event"
-                className="bg-white text-[var(--ink)] border border-[var(--border)] rounded-full p-3 hover:border-[var(--emerald)] hover:text-[var(--emerald)] transition-colors duration-200 ease-[var(--ease-inout)] shadow-sm"
+                className="bg-white text-[var(--ink)] border border-[var(--border)] rounded-full p-3 shadow-sm"
+                whileHover={{ color: 'var(--emerald)', borderColor: 'var(--emerald)', scale: 1.05 }}
+                whileTap={{ scale: 0.94 }}
+                transition={motionTransition.quick}
               >
                 <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 onClick={() => imageSwiper?.slideNext()}
                 aria-label="Next event"
-                className="bg-white text-[var(--ink)] border border-[var(--border)] rounded-full p-3 hover:border-[var(--emerald)] hover:text-[var(--emerald)] transition-colors duration-200 ease-[var(--ease-inout)] shadow-sm"
+                className="bg-white text-[var(--ink)] border border-[var(--border)] rounded-full p-3 shadow-sm"
+                whileHover={{ color: 'var(--emerald)', borderColor: 'var(--emerald)', scale: 1.05 }}
+                whileTap={{ scale: 0.94 }}
+                transition={motionTransition.quick}
               >
                 <ChevronRight className="w-6 h-6" />
-              </button>
+              </motion.button>
             </div>
           </div>
 
@@ -98,12 +108,14 @@ const Timeline = ({ events }: { events: Event[] }) => {
                       {event.description}
                     </p>
                     {event.futureEvent && (
-                      <button className="mt-6 bg-[var(--emerald)] text-white font-semibold
+                      <motion.button className="mt-6 bg-[var(--emerald)] text-white font-semibold
                                      px-8 py-3 rounded-full
-                                     hover:bg-[var(--emerald-strong)] transition-colors duration-200 ease-[var(--ease-inout)]
-                                     text-base uppercase tracking-wider">
+                                     text-base uppercase tracking-wider"
+                        whileHover={{ y: -2, backgroundColor: 'var(--emerald-strong)', boxShadow: 'var(--shadow-md)' }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={motionTransition.quick}>
                         Sign up
-                      </button>
+                      </motion.button>
                     )}
                   </div>
                 </SwiperSlide>

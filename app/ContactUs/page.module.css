@@ -86,14 +86,6 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xs);
-  transition:
-    transform 0.25s var(--ease-inout),
-    box-shadow 0.25s var(--ease-inout);
-}
-
-.channelCard:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
 }
 
 .channelTitle {
@@ -117,11 +109,6 @@
   font-size: 0.9375rem;
   color: var(--emerald);
   text-decoration: none;
-}
-
-.channelLink:hover {
-  text-decoration: underline;
-  color: var(--emerald-strong);
 }
 
 .addressBlock {

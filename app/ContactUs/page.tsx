@@ -4,6 +4,7 @@ import SectionHeading from "../components/ui/SectionHeading";
 import Button from "../components/ui/Button";
 import ScrollReveal from "../components/ui/ScrollReveal";
 import { LINKS } from "../lib/links";
+import { MotionAnchor, MotionSurface } from "../components/ui/MotionElements";
 
 export const metadata = {
   title: "Contact — SMUBIA",
@@ -85,31 +86,42 @@ const ContactUs = () => {
         <div className={styles.inner}>
           <div className={styles.channelGrid}>
             <ScrollReveal>
-              <div className={styles.channelCard}>
+              <MotionSurface
+                className={styles.channelCard}
+                hover={{ y: -2, boxShadow: "var(--shadow-sm)" }}
+              >
                 <h3 className={styles.channelTitle}>General enquiries</h3>
                 <p className={styles.channelText}>
                   Questions about workshops, DAP or anything else.
                 </p>
-                <a href={LINKS.email} className={styles.channelLink}>
+                <MotionAnchor
+                  href={LINKS.email}
+                  className={styles.channelLink}
+                  hover={{ x: 3, color: "var(--emerald-strong)" }}
+                >
                   bia@sa.smu.edu.sg →
-                </a>
-              </div>
+                </MotionAnchor>
+              </MotionSurface>
             </ScrollReveal>
             <ScrollReveal delay={100}>
-              <div className={styles.channelCard}>
+              <MotionSurface
+                className={styles.channelCard}
+                hover={{ y: -2, boxShadow: "var(--shadow-sm)" }}
+              >
                 <h3 className={styles.channelTitle}>Professional network</h3>
                 <p className={styles.channelText}>
                   Follow club news and alumni stories on LinkedIn.
                 </p>
-                <a
+                <MotionAnchor
                   href={LINKS.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={styles.channelLink}
+                  hover={{ x: 3, color: "var(--emerald-strong)" }}
                 >
                   Connect on LinkedIn →
-                </a>
-              </div>
+                </MotionAnchor>
+              </MotionSurface>
             </ScrollReveal>
           </div>
 

@@ -19,6 +19,14 @@ import {
 } from "@/app/Projects/data/cardIcons";
 import ImageCropper from "./ImageCropper";
 import styles from "./Admin.module.css";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  AdminButton,
+  AdminInput,
+  AdminSelect,
+  AdminTextarea,
+  AdminToggle,
+} from "./AdminMotion";
 
 interface Props {
   initialProjects: Project[];
@@ -462,21 +470,31 @@ export default function AdminClient({ initialProjects }: Props) {
             </div>
             <h1 className={styles.heading}>Project Management</h1>
           </div>
-          <button onClick={handleLogout} className={styles.logoutBtn}>
+          <AdminButton
+            onClick={handleLogout}
+            className={styles.logoutBtn}
+            effect="neutral"
+          >
             Logout
-          </button>
+          </AdminButton>
         </header>
 
         {/* Messages */}
-        {message && (
-          <div
-            className={
-              message.type === "success" ? styles.successMsg : styles.errorMsg
-            }
-          >
-            {message.text}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {message && (
+            <motion.div
+              key={`${message.type}-${message.text}`}
+              className={
+                message.type === "success" ? styles.successMsg : styles.errorMsg
+              }
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+            >
+              {message.text}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* List View */}
         {view === "list" && (
@@ -485,18 +503,27 @@ export default function AdminClient({ initialProjects }: Props) {
               <span className={styles.projectCount}>
                 {projects.length} project{projects.length !== 1 ? "s" : ""}
               </span>
-              <button onClick={startAdd} className={styles.primaryBtn}>
+              <AdminButton
+                onClick={startAdd}
+                className={styles.primaryBtn}
+                effect="primary"
+              >
                 + Add Project
-              </button>
+              </AdminButton>
             </div>
 
-            <div className={styles.projectList}>
+            <motion.div className={styles.projectList} layout>
+              <AnimatePresence mode="popLayout">
               {projects.map((p) => (
-                <div
+                <motion.div
                   key={p.slug}
                   className={`${styles.projectRow} ${
                     p.hidden ? styles.projectRowHidden : ""
                   }`}
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -16 }}
                 >
                   <div className={styles.projectRowImage}>
                     {p.coverImage ? (
@@ -535,7 +562,7 @@ export default function AdminClient({ initialProjects }: Props) {
                   </div>
                   <div className={styles.projectRowActions}>
                     <div className={styles.visControl}>
-                      <button
+                      <AdminToggle
                         role="switch"
                         aria-checked={!p.hidden}
                         aria-label={
@@ -544,76 +571,85 @@ export default function AdminClient({ initialProjects }: Props) {
                             : `Hide ${p.title} from the Projects page`
                         }
                         onClick={() => handleToggleVisibility(p)}
-                        className={`${styles.visToggle} ${
-                          !p.hidden ? styles.visToggleOn : ""
-                        }`}
-                      >
-                        <span className={styles.visKnob} />
-                      </button>
+                        className={styles.visToggle}
+                        on={!p.hidden}
+                        knobClassName={styles.visKnob}
+                      />
                       <span className={styles.visLabel}>
                         {p.hidden ? "Hidden" : "Visible"}
                       </span>
                     </div>
-                    <button
+                    <AdminButton
                       onClick={() => startEdit(p)}
                       className={styles.editBtn}
+                      effect="edit"
                     >
                       Edit
-                    </button>
+                    </AdminButton>
                     {deleteConfirm === p.slug ? (
                       <div className={styles.deleteConfirm}>
                         <span className={styles.deleteConfirmText}>
                           Delete?
                         </span>
-                        <button
+                        <AdminButton
                           onClick={() => handleDelete(p.slug)}
                           className={styles.deleteConfirmYes}
                           disabled={loading}
+                          effect="delete"
                         >
                           Yes
-                        </button>
-                        <button
+                        </AdminButton>
+                        <AdminButton
                           onClick={() => setDeleteConfirm(null)}
                           className={styles.deleteConfirmNo}
+                          effect="neutral"
                         >
                           No
-                        </button>
+                        </AdminButton>
                       </div>
                     ) : (
-                      <button
+                      <AdminButton
                         onClick={() => setDeleteConfirm(p.slug)}
                         className={styles.deleteBtn}
+                        effect="delete"
                       >
                         Delete
-                      </button>
+                      </AdminButton>
                     )}
                   </div>
-                </div>
+                </motion.div>
               ))}
+              </AnimatePresence>
 
               {projects.length === 0 && (
                 <p className={styles.emptyText}>
                   No projects yet. Click &quot;Add Project&quot; to get started.
                 </p>
               )}
-            </div>
+            </motion.div>
           </>
         )}
 
         {/* Add / Edit Form */}
         {(view === "add" || view === "edit") && (
-          <form onSubmit={handleSubmit} className={styles.form}>
+          <motion.form
+            onSubmit={handleSubmit}
+            className={styles.form}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             <div className={styles.formHeader}>
               <h2 className={styles.formHeading}>
                 {view === "edit" ? "Edit Project" : "Add New Project"}
               </h2>
-              <button
+              <AdminButton
                 type="button"
                 onClick={cancelForm}
                 className={styles.cancelBtn}
+                effect="neutral"
               >
                 Cancel
-              </button>
+              </AdminButton>
             </div>
 
             {/* Basic Info */}
@@ -622,7 +658,7 @@ export default function AdminClient({ initialProjects }: Props) {
               <div className={styles.fieldGroup}>
                 <label className={styles.label}>
                   Title *
-                  <input
+                  <AdminInput
                     type="text"
                     name="title"
                     value={form.title}
@@ -633,7 +669,7 @@ export default function AdminClient({ initialProjects }: Props) {
                 </label>
                 <label className={styles.label}>
                   Short Description *
-                  <textarea
+                  <AdminTextarea
                     name="description"
                     value={form.description}
                     onChange={(e) =>
@@ -648,7 +684,7 @@ export default function AdminClient({ initialProjects }: Props) {
               <div className={styles.fieldRow}>
                 <label className={styles.label}>
                   Badge *
-                  <select
+                  <AdminSelect
                     name="badge"
                     value={form.badge}
                     onChange={(e) => updateField("badge", e.target.value)}
@@ -656,11 +692,11 @@ export default function AdminClient({ initialProjects }: Props) {
                   >
                     <option value="DAP">DAP</option>
                     <option value="AI Lodge">AI Lodge</option>
-                  </select>
+                  </AdminSelect>
                 </label>
                 <label className={styles.label}>
                   Category *
-                  <input
+                  <AdminInput
                     type="text"
                     name="category"
                     value={form.category}
@@ -706,33 +742,36 @@ export default function AdminClient({ initialProjects }: Props) {
                       )}
                     </div>
                     <div className={styles.coverPreviewActions}>
-                      <button
+                      <AdminButton
                         type="button"
                         onClick={() => coverInputRef.current?.click()}
                         className={styles.editBtn}
+                        effect="edit"
                       >
                         Replace
-                      </button>
-                      <button
+                      </AdminButton>
+                      <AdminButton
                         type="button"
                         onClick={removeCover}
                         className={styles.deleteBtn}
+                        effect="delete"
                       >
                         Remove
-                      </button>
+                      </AdminButton>
                     </div>
                   </div>
                 ) : (
-                  <button
+                  <AdminButton
                     type="button"
                     onClick={() => coverInputRef.current?.click()}
                     className={styles.uploadZone}
+                    effect="upload"
                   >
                     <span className={styles.uploadIcon}>+</span>
                     <span className={styles.uploadText}>
                       Click to upload cover image
                     </span>
-                  </button>
+                  </AdminButton>
                 )}
                 <input
                   ref={coverInputRef}
@@ -778,7 +817,7 @@ export default function AdminClient({ initialProjects }: Props) {
                             <span className={styles.newBadge}>New</span>
                           )}
                         </div>
-                        <button
+                        <AdminButton
                           type="button"
                           onClick={() =>
                             item.type === "existing"
@@ -786,17 +825,19 @@ export default function AdminClient({ initialProjects }: Props) {
                               : removeCroppedImage(item.index)
                           }
                           className={styles.removeThumbBtn}
+                          effect="remove"
                         >
                           ×
-                        </button>
+                        </AdminButton>
                       </div>
                     ))}
                   </div>
                 )}
-                <button
+                <AdminButton
                   type="button"
                   onClick={() => imagesInputRef.current?.click()}
                   className={styles.uploadZone}
+                  effect="upload"
                 >
                   <span className={styles.uploadIcon}>+</span>
                   <span className={styles.uploadText}>
@@ -804,7 +845,7 @@ export default function AdminClient({ initialProjects }: Props) {
                       ? "Add more images"
                       : "Click to upload carousel images"}
                   </span>
-                </button>
+                </AdminButton>
                 <input
                   ref={imagesInputRef}
                   type="file"
@@ -821,7 +862,7 @@ export default function AdminClient({ initialProjects }: Props) {
               <legend className={styles.legend}>Project Details</legend>
               <label className={styles.label}>
                 Details (markdown)
-                <textarea
+                <AdminTextarea
                   name="overview"
                   value={form.overview}
                   onChange={(e) => updateField("overview", e.target.value)}
@@ -842,12 +883,18 @@ export default function AdminClient({ initialProjects }: Props) {
               {cards.map((card, i) => {
                 const PreviewIcon = getCardIcon(card.icon);
                 return (
-                  <div key={i} className={styles.cardEditor}>
+                  <motion.div
+                    key={i}
+                    className={styles.cardEditor}
+                    layout
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
                     <div className={styles.cardEditorHead}>
                       <span className={styles.cardIconPreview}>
                         <PreviewIcon size={18} strokeWidth={2.25} aria-hidden />
                       </span>
-                      <select
+                      <AdminSelect
                         value={card.icon}
                         onChange={(e) => updateCard(i, "icon", e.target.value)}
                         className={styles.select}
@@ -858,8 +905,8 @@ export default function AdminClient({ initialProjects }: Props) {
                             {opt.label}
                           </option>
                         ))}
-                      </select>
-                      <input
+                      </AdminSelect>
+                      <AdminInput
                         type="text"
                         value={card.title}
                         onChange={(e) => updateCard(i, "title", e.target.value)}
@@ -867,41 +914,49 @@ export default function AdminClient({ initialProjects }: Props) {
                         className={styles.input}
                       />
                       {cards.length > 1 && (
-                        <button
+                        <AdminButton
                           type="button"
                           onClick={() => removeCard(i)}
                           className={styles.removeBtn}
+                          effect="delete"
                         >
                           ×
-                        </button>
+                        </AdminButton>
                       )}
                     </div>
-                    <textarea
+                    <AdminTextarea
                       value={card.body}
                       onChange={(e) => updateCard(i, "body", e.target.value)}
                       className={styles.textarea}
                       rows={3}
                       placeholder="Card text (markdown). Supports **bold**, `code`, [links](…), and - bullet lists."
                     />
-                  </div>
+                  </motion.div>
                 );
               })}
-              <button
+              <AdminButton
                 type="button"
                 onClick={addCard}
                 className={styles.addTeamBtn}
+                effect="add"
               >
                 + Add Card
-              </button>
+              </AdminButton>
             </fieldset>
 
             {/* Team */}
             <fieldset className={styles.fieldset}>
               <legend className={styles.legend}>Team Members</legend>
               {team.map((member, i) => (
-                <div key={i} className={styles.teamMemberCard}>
+                <motion.div
+                  key={i}
+                  className={styles.teamMemberCard}
+                  layout
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
                   <div className={styles.teamRow}>
-                    <input
+                    <AdminInput
                       type="text"
                       value={member.name}
                       onChange={(e) =>
@@ -910,7 +965,7 @@ export default function AdminClient({ initialProjects }: Props) {
                       placeholder="Name"
                       className={styles.input}
                     />
-                    <input
+                    <AdminInput
                       type="text"
                       value={member.role}
                       onChange={(e) =>
@@ -919,7 +974,7 @@ export default function AdminClient({ initialProjects }: Props) {
                       placeholder="Role"
                       className={styles.input}
                     />
-                    <input
+                    <AdminInput
                       type="text"
                       value={member.avatar}
                       onChange={(e) =>
@@ -929,17 +984,18 @@ export default function AdminClient({ initialProjects }: Props) {
                       className={styles.input}
                     />
                     {team.length > 1 && (
-                      <button
+                      <AdminButton
                         type="button"
                         onClick={() => removeTeamMember(i)}
                         className={styles.removeBtn}
+                        effect="delete"
                       >
                         ×
-                      </button>
+                      </AdminButton>
                     )}
                   </div>
                   <div className={styles.teamSocialRow}>
-                    <input
+                    <AdminInput
                       type="url"
                       value={member.linkedin}
                       onChange={(e) =>
@@ -948,7 +1004,7 @@ export default function AdminClient({ initialProjects }: Props) {
                       placeholder="LinkedIn URL (optional)"
                       className={styles.input}
                     />
-                    <input
+                    <AdminInput
                       type="url"
                       value={member.github}
                       onChange={(e) =>
@@ -957,7 +1013,7 @@ export default function AdminClient({ initialProjects }: Props) {
                       placeholder="GitHub URL (optional)"
                       className={styles.input}
                     />
-                    <input
+                    <AdminInput
                       type="url"
                       value={member.website}
                       onChange={(e) =>
@@ -967,15 +1023,16 @@ export default function AdminClient({ initialProjects }: Props) {
                       className={styles.input}
                     />
                   </div>
-                </div>
+                </motion.div>
               ))}
-              <button
+              <AdminButton
                 type="button"
                 onClick={addTeamMember}
                 className={styles.addTeamBtn}
+                effect="add"
               >
                 + Add Member
-              </button>
+              </AdminButton>
             </fieldset>
 
             {/* Links & Tech */}
@@ -983,7 +1040,7 @@ export default function AdminClient({ initialProjects }: Props) {
               <legend className={styles.legend}>Links & Technology</legend>
               <label className={styles.label}>
                 Tech Stack (comma-separated)
-                <input
+                <AdminInput
                   type="text"
                   name="techStack"
                   value={form.techStack}
@@ -995,7 +1052,7 @@ export default function AdminClient({ initialProjects }: Props) {
               <div className={styles.fieldRow}>
                 <label className={styles.label}>
                   Live URL (deployed demo)
-                  <input
+                  <AdminInput
                     type="url"
                     name="liveUrl"
                     value={form.liveUrl}
@@ -1006,7 +1063,7 @@ export default function AdminClient({ initialProjects }: Props) {
                 </label>
                 <label className={styles.label}>
                   Source Code URL
-                  <input
+                  <AdminInput
                     type="url"
                     name="sourceUrl"
                     value={form.sourceUrl}
@@ -1017,7 +1074,7 @@ export default function AdminClient({ initialProjects }: Props) {
                 </label>
                 <label className={styles.label}>
                   Demo URL (legacy)
-                  <input
+                  <AdminInput
                     type="url"
                     name="demoUrl"
                     value={form.demoUrl}
@@ -1030,32 +1087,35 @@ export default function AdminClient({ initialProjects }: Props) {
             </fieldset>
 
             <div className={styles.formFooter}>
-              <button
+              <AdminButton
                 type="button"
                 onClick={cancelForm}
                 className={styles.cancelBtn}
+                effect="neutral"
               >
                 Cancel
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
                 type="submit"
                 className={styles.primaryBtn}
                 disabled={loading}
+                effect="primary"
               >
                 {loading
                   ? "Saving..."
                   : view === "edit"
                     ? "Update Project"
                     : "Add Project"}
-              </button>
+              </AdminButton>
             </div>
-          </form>
+          </motion.form>
         )}
       </div>
 
       {/* Cropper Modal */}
-      {cropperState && (
-        <ImageCropper
+      <AnimatePresence>
+        {cropperState && (
+          <ImageCropper
           imageSrc={cropperState.imageSrc}
           aspectRatio={cropperState.aspectRatio}
           aspectLabel={
@@ -1066,8 +1126,9 @@ export default function AdminClient({ initialProjects }: Props) {
           }
           onComplete={handleCropComplete}
           onCancel={handleCropCancel}
-        />
-      )}
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 }

@@ -3,7 +3,6 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: clamp(1.5rem, 2.5vw, 2.25rem);
   /* Top padding clears the fixed 4rem navbar; hero bleeds up under it. */
   padding: clamp(4.5rem, 6vw, 5.5rem) 0 clamp(2.25rem, 3.5vw, 3rem);
   overflow: hidden;
@@ -71,6 +70,3 @@
 .headingAccent {
   color: var(--emerald);
 }
-
-/* The flowing marquee itself now lives in the shared <ProjectsMarquee>
-   component (app/components/ProjectsMarquee.module.css). */

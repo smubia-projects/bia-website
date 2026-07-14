@@ -1,17 +1,9 @@
+.frame {
+  display: inline-grid;
+}
+
 .word {
+  grid-area: 1 / 1;
   display: inline-block;
   color: var(--mint);
-  transition:
-    opacity 0.4s ease,
-    transform 0.4s ease;
-}
-
-.entering {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.leaving {
-  opacity: 0;
-  transform: translateY(0.35em);
 }

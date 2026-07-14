@@ -1,5 +1,4 @@
-import Image from "next/image";
-import Link from "next/link";
+import { MotionNextLink } from "./components/ui/MotionElements";
 import styles from "./page.module.css";
 import ScrollReveal from "./components/ui/ScrollReveal";
 import RotatingWord from "./components/ui/RotatingWord";
@@ -10,6 +9,7 @@ import AlumniTestimonials from "./components/carousel";
 import PathwaysScroll from "./components/PathwaysScroll";
 import ProjectsMarquee from "./components/ProjectsMarquee";
 import { getProjects } from "./lib/projects";
+import HomeHeroCluster from "./components/HomeHeroCluster";
 
 // Keep the live projects rail fresh via ISR (matches the /Projects page).
 export const revalidate = 3600;
@@ -31,13 +31,13 @@ export default async function Home() {
               </span>
             </div>
             <h1 className={styles.heroTitle}>
-              Where SMU does
+              SMU&apos;s home for
               <br />
               <RotatingWord />
             </h1>
             <p className={styles.heroSub}>
-              Workshops, a flagship AI programme and a builder community — open
-              to every faculty, no experience needed.
+              Build your foundation through our beginner-friendly curriculum and
+              flagship AI/ML programmes.
             </p>
             <div className={styles.heroCtas}>
               <Button href="/ContactUs#join" variant="onDark">
@@ -50,61 +50,11 @@ export default async function Home() {
           </div>
 
           {/* Candid photo cluster — slightly-tilted collage */}
-          <div className={styles.heroCluster}>
-            <figure className={`${styles.clusterPhoto} ${styles.clusterA}`}>
-              <Image
-                src="/images/home/hero-cohort.webp"
-                alt="SMUBIA Data Associate Programme cohort"
-                fill
-                sizes="(min-width: 1024px) 30vw, 60vw"
-                className={styles.clusterImg}
-                priority
-              />
-            </figure>
-            <figure className={`${styles.clusterPhoto} ${styles.clusterB}`}>
-              <Image
-                src="/images/home/hero-demoday.webp"
-                alt="Members presenting at an AI Lodge demo day"
-                fill
-                sizes="(min-width: 1024px) 22vw, 45vw"
-                className={styles.clusterImg}
-              />
-            </figure>
-            <figure className={`${styles.clusterPhoto} ${styles.clusterC}`}>
-              <Image
-                src="/images/home/hero-ailodge.webp"
-                alt="An AI Lodge team hanging out"
-                fill
-                sizes="(min-width: 1024px) 28vw, 55vw"
-                className={styles.clusterImg}
-              />
-            </figure>
-            {/* Playful astro-cat kept as a small floating accent on the cluster */}
-            <Image
-              src="/images/bia-cat-mascot.svg"
-              alt=""
-              aria-hidden="true"
-              width={160}
-              height={160}
-              className={styles.clusterMascot}
-            />
-          </div>
-        </div>
-        <div className={styles.heroStats}>
-          <span className={styles.heroStat}>
-            <strong>2,000+</strong> members {/* TBC — confirm with club */}
-          </span>
-          <span className={styles.heroStat}>
-            <strong>5</strong> faculties
-          </span>
-          <span className={styles.heroStat}>
-            est. <strong>2015</strong>
-          </span>
+          <HomeHeroCluster />
         </div>
       </section>
 
-      {/* Three ways in — scroll-linked accordion; the heading is part of the
-          sticky rail, so it pins alongside the tabs (see PathwaysScroll) */}
+      {/* Scroll-linked programme accordion */}
       <section className={styles.section}>
         <div className={styles.sectionInner}>
           <PathwaysScroll />
@@ -159,13 +109,18 @@ export default async function Home() {
           <ScrollReveal>
             <div className={styles.projectsHead}>
               <SectionHeading
-                eyebrow="From our builders"
-                title="Projects that shipped"
-                lede="A taste of what members build across DAP and AI Lodge."
+                eyebrow="Project Showcase"
+                title="Our members&apos; creations"
+                lede="Explore what DAP and AI Lodge members have built."
               />
-              <Link href="/Projects" className={styles.seeAll}>
+              <MotionNextLink
+                href="/Projects"
+                className={styles.seeAll}
+                whileHover={{ x: 4 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 See all projects →
-              </Link>
+              </MotionNextLink>
             </div>
           </ScrollReveal>
         </div>
@@ -190,14 +145,11 @@ export default async function Home() {
         <div className={styles.joinInner}>
           <ScrollReveal>
             <h2 className={styles.joinHeading}>
-              Ready to get your hands on data?
+              Interested in data and AI?
             </h2>
-            <p className={styles.joinText}>
-              There&apos;s a seat for you, whatever your background.
-            </p>
             <div className={styles.joinCtas}>
               <Button href="/ContactUs#join" variant="onDark" className="gleam">
-                Join us →
+                Join BIA →
               </Button>
             </div>
           </ScrollReveal>

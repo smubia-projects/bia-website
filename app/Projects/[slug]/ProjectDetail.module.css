@@ -85,18 +85,7 @@
   font-size: 0.9375rem;
   font-weight: 600;
   text-decoration: none;
-  transition:
-    background-color 0.2s var(--ease-inout),
-    transform 0.2s var(--ease-inout),
-    box-shadow 0.2s var(--ease-inout);
   font-family: var(--font-inter);
-}
-
-.actionBtnPrimary:hover {
-  background-color: var(--emerald-strong);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  color: #ffffff;
 }
 
 .teamCredit {
@@ -149,11 +138,6 @@
 .breadcrumbLink {
   color: var(--ink-faint);
   text-decoration: none;
-  transition: color 0.2s var(--ease-inout);
-}
-
-.breadcrumbLink:hover {
-  color: var(--emerald);
 }
 
 .breadcrumbSep {
@@ -203,17 +187,7 @@
   font-size: 0.875rem;
   font-weight: 500;
   text-decoration: none;
-  transition:
-    border-color 0.2s var(--ease-inout),
-    color 0.2s var(--ease-inout),
-    box-shadow 0.2s var(--ease-inout);
   font-family: var(--font-inter);
-}
-
-.actionBtn:hover {
-  border-color: var(--emerald);
-  color: var(--emerald);
-  box-shadow: var(--shadow-sm);
 }
 
 .actionIcon {
@@ -247,7 +221,6 @@
   width: 100%;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -283,15 +256,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition:
-    background-color 0.2s var(--ease-inout),
-    color 0.2s var(--ease-inout);
   line-height: 1;
-}
-
-.carouselBtn:hover {
-  background-color: #ffffff;
-  color: var(--emerald);
 }
 
 .carouselBtnLeft {
@@ -460,11 +425,6 @@
   background-color: var(--surface-muted);
   border: 1px solid var(--border);
   flex-shrink: 0;
-  transition: border-color 0.2s var(--ease-inout);
-}
-
-.teamMember:hover .avatarWrapper {
-  border-color: var(--emerald);
 }
 
 .avatar {
@@ -513,16 +473,6 @@
   color: var(--ink-faint);
   background-color: var(--surface-muted);
   border: 1px solid var(--border);
-  transition:
-    color 0.2s var(--ease-inout),
-    border-color 0.2s var(--ease-inout),
-    background-color 0.2s var(--ease-inout);
-}
-
-.memberSocialLink:hover {
-  color: var(--emerald);
-  border-color: var(--emerald);
-  background-color: var(--mint-soft);
 }
 
 /* Meta */

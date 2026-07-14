@@ -5,7 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { LINKS } from "@/app/lib/links";
+import { MOTION_EASE, motionTransition } from "./ui/motion";
+
+const MotionLink = motion.create(Link);
 
 const NAV_LINKS = [
   { href: "/Events", label: "Events" },
@@ -32,7 +36,14 @@ const Navbar = () => {
   return (
     <header className={styles.navbar}>
       <div className={styles.inner}>
-        <Link href="/" className={styles.logoLink} aria-label="SMUBIA home">
+        <MotionLink
+          href="/"
+          className={styles.logoLink}
+          aria-label="SMUBIA home"
+          whileHover={{ scale: 1.025 }}
+          whileTap={{ scale: 0.98 }}
+          transition={motionTransition.quick}
+        >
           <Image
             src="/images/logo.png"
             alt="SMUBIA"
@@ -41,62 +52,119 @@ const Navbar = () => {
             className={styles.logo}
             priority
           />
-        </Link>
+        </MotionLink>
 
         <nav className={styles.desktopLinks} aria-label="Main navigation">
           {NAV_LINKS.map(({ href, label }) => (
-            <Link
+            <MotionLink
               key={href}
               href={href}
               className={`${styles.navLink} ${
                 isActive(href) ? styles.navLinkActive : ""
               }`}
+              whileHover={{
+                color: "var(--emerald)",
+                backgroundColor: "rgba(125, 215, 194, 0.12)",
+              }}
+              whileTap={{ scale: 0.97 }}
+              transition={motionTransition.quick}
             >
               {label}
-            </Link>
+            </MotionLink>
           ))}
-          <Link href="/ContactUs#join" className={styles.joinButton}>
+          <MotionLink
+            href="/ContactUs#join"
+            className={styles.joinButton}
+            whileHover={{
+              y: -1,
+              backgroundColor: "var(--emerald-strong)",
+              boxShadow: "var(--shadow-sm)",
+            }}
+            whileTap={{ y: 0, scale: 0.98 }}
+            transition={motionTransition.quick}
+          >
             Join Us
-          </Link>
+          </MotionLink>
         </nav>
 
-        <button
+        <motion.button
           className={styles.menuToggle}
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-label={menuOpen ? "Close menu" : "Open menu"}
+          whileHover={{ borderColor: "var(--emerald)" }}
+          whileTap={{ scale: 0.94 }}
+          transition={motionTransition.quick}
         >
-          {menuOpen ? (
-            <X size={22} strokeWidth={1.75} />
-          ) : (
-            <Menu size={22} strokeWidth={1.75} />
-          )}
-        </button>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={menuOpen ? "close" : "open"}
+              initial={{ opacity: 0, rotate: -45, scale: 0.8 }}
+              animate={{ opacity: 1, rotate: 0, scale: 1 }}
+              exit={{ opacity: 0, rotate: 45, scale: 0.8 }}
+              transition={{ duration: 0.18, ease: MOTION_EASE }}
+              className={styles.menuIcon}
+            >
+              {menuOpen ? (
+                <X size={22} strokeWidth={1.75} />
+              ) : (
+                <Menu size={22} strokeWidth={1.75} />
+              )}
+            </motion.span>
+          </AnimatePresence>
+        </motion.button>
       </div>
 
-      {menuOpen && (
-        <nav className={styles.mobilePanel} aria-label="Mobile navigation">
-          {NAV_LINKS.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`${styles.mobileLink} ${
-                isActive(href) ? styles.mobileLinkActive : ""
-              }`}
-              onClick={() => setMenuOpen(false)}
-            >
-              {label}
-            </Link>
-          ))}
-          <Link
-            href="/ContactUs#join"
-            className={styles.mobileJoinButton}
-            onClick={() => setMenuOpen(false)}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.nav
+            className={styles.mobilePanel}
+            aria-label="Mobile navigation"
+            initial={{ opacity: 0, height: 0, y: -8 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: MOTION_EASE }}
           >
-            Join Us
-          </Link>
-        </nav>
-      )}
+            {NAV_LINKS.map(({ href, label }, index) => (
+              <MotionLink
+                key={href}
+                href={href}
+                className={`${styles.mobileLink} ${
+                  isActive(href) ? styles.mobileLinkActive : ""
+                }`}
+                onClick={() => setMenuOpen(false)}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{
+                  duration: 0.22,
+                  delay: index * 0.025,
+                  ease: MOTION_EASE,
+                }}
+                whileHover={{
+                  x: 4,
+                  color: "var(--emerald)",
+                  backgroundColor: "rgba(125, 215, 194, 0.12)",
+                }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {label}
+              </MotionLink>
+            ))}
+            <MotionLink
+              href="/ContactUs#join"
+              className={styles.mobileJoinButton}
+              onClick={() => setMenuOpen(false)}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.22, delay: 0.15, ease: MOTION_EASE }}
+              whileHover={{ backgroundColor: "var(--emerald-strong)" }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Join Us
+            </MotionLink>
+          </motion.nav>
+        )}
+      </AnimatePresence>
     </header>
   );
 };

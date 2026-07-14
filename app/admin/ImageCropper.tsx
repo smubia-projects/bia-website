@@ -3,7 +3,10 @@
 import { useState, useCallback } from "react";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
+import { motion } from "framer-motion";
 import styles from "./Admin.module.css";
+import { AdminButton } from "./AdminMotion";
+import { MOTION_EASE } from "@/app/components/ui/motion";
 
 interface Props {
   imageSrc: string;
@@ -88,10 +91,20 @@ export default function ImageCropper({
   }
 
   return (
-    <div className={styles.cropperOverlay} onClick={onCancel}>
-      <div
+    <motion.div
+      className={styles.cropperOverlay}
+      onClick={onCancel}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
         className={styles.cropperModal}
         onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0, y: 18, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 12, scale: 0.98 }}
+        transition={{ duration: 0.28, ease: MOTION_EASE }}
       >
         <div className={styles.cropperHeader}>
           <h3 className={styles.cropperTitle}>Crop Image</h3>
@@ -134,23 +147,25 @@ export default function ImageCropper({
         </div>
 
         <div className={styles.cropperActions}>
-          <button
+          <AdminButton
             type="button"
             onClick={onCancel}
             className={styles.cancelBtn}
+            effect="neutral"
           >
             Cancel
-          </button>
-          <button
+          </AdminButton>
+          <AdminButton
             type="button"
             onClick={handleConfirm}
             className={styles.primaryBtn}
             disabled={saving}
+            effect="primary"
           >
             {saving ? "Processing..." : "Crop & Save"}
-          </button>
+          </AdminButton>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

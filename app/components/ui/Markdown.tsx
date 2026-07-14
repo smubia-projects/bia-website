@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import styles from "./Markdown.module.css";
+import { MotionAnchor } from "./MotionElements";
 
 /**
  * Shared markdown renderer for project copy (overview, lessons, story).
@@ -30,13 +31,15 @@ function MarkdownLink({
 }: AnchorHTMLAttributes<HTMLAnchorElement>) {
   const external = /^https?:\/\//.test(href);
   return (
-    <a
+    <MotionAnchor
       href={href}
       {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-      {...rest}
+      className={rest.className}
+      title={rest.title}
+      hover={{ x: 1, color: "var(--emerald-strong)" }}
     >
       {children}
-    </a>
+    </MotionAnchor>
   );
 }
 

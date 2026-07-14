@@ -64,9 +64,6 @@
   --radius-xl: 24px;
   --radius-pill: 999px;
 
-  /* Motion — shared easing for every hover/interaction transition */
-  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
-
   /* Back-compat aliases */
   --background: var(--bg);
   --foreground: var(--ink);
@@ -76,7 +73,6 @@ html {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  scroll-behavior: smooth;
 }
 
 body {
@@ -144,70 +140,7 @@ body {
   );
 }
 
-/* Gleam: a soft light streak that sweeps across a (filled) button on hover.
-   Pairs with a button's own lift/glow; this class only owns the clip context
-   and the moving highlight. Add the class alongside the button's own class. */
-.gleam {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.gleam::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    transparent 25%,
-    rgba(255, 255, 255, 0.55) 50%,
-    transparent 75%
-  );
-  transform: translateX(-130%);
-  transition: transform 0.7s var(--ease-inout);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.gleam:hover::after,
-.gleam:focus-visible::after {
-  transform: translateX(130%);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .gleam::after {
-    transition: none;
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-12px);
-  }
-}
-
-.fade-in {
-  animation: fadeIn 0.5s ease-in;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
   *,
   *::before,
   *::after {

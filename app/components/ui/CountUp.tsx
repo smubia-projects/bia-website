@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { animate, useInView, useReducedMotion } from "framer-motion";
 
 interface CountUpProps {
   value: number;
@@ -17,33 +18,26 @@ export default function CountUp({
   const [display, setDisplay] = useState(0);
   const ref = useRef<HTMLSpanElement | null>(null);
   const started = useRef(false);
+  const inView = useInView(ref, { once: true, amount: 0.4 });
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+    if (!inView || started.current) return;
+    started.current = true;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting || started.current) return;
-        started.current = true;
-        observer.disconnect();
+    if (reduceMotion) {
+      setDisplay(value);
+      return;
+    }
 
-        const start = performance.now();
-        const tick = (now: number) => {
-          const progress = Math.min((now - start) / duration, 1);
-          // ease-out cubic so the count settles gently
-          const eased = 1 - Math.pow(1 - progress, 3);
-          setDisplay(Math.round(eased * value));
-          if (progress < 1) requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
-      },
-      { threshold: 0.4 }
-    );
+    const controls = animate(0, value, {
+      duration: duration / 1000,
+      ease: "easeOut",
+      onUpdate: (latest) => setDisplay(Math.round(latest)),
+    });
 
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [value, duration]);
+    return controls.stop;
+  }, [duration, inView, reduceMotion, value]);
 
   return (
     <span ref={ref}>

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./Admin.module.css";
+import { AnimatePresence, motion } from "framer-motion";
+import { AdminButton, AdminInput } from "./AdminMotion";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -33,7 +35,12 @@ export default function LoginForm() {
   return (
     <main className={styles.page}>
       <div className={styles.loginContainer}>
-        <div className={styles.loginCard}>
+        <motion.div
+          className={styles.loginCard}
+          initial={{ opacity: 0, y: 18, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.4 }}
+        >
           <div className={styles.eyebrow}>
             <span className={styles.eyebrowLine} />
             <span className={styles.eyebrowText}>Admin Access</span>
@@ -44,7 +51,7 @@ export default function LoginForm() {
           </p>
 
           <form onSubmit={handleSubmit} method="post" className={styles.loginForm}>
-            <input
+            <AdminInput
               type="password"
               name="password"
               placeholder="Password"
@@ -52,16 +59,28 @@ export default function LoginForm() {
               required
               autoFocus
             />
-            {error && <p className={styles.errorText}>{error}</p>}
-            <button
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  className={styles.errorText}
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                >
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
+            <AdminButton
               type="submit"
               className={styles.primaryBtn}
               disabled={loading}
+              effect="primary"
             >
               {loading ? "Signing in..." : "Sign In"}
-            </button>
+            </AdminButton>
           </form>
-        </div>
+        </motion.div>
       </div>
     </main>
   );

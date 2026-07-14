@@ -4,6 +4,18 @@
   gap: 2rem;
 }
 
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Per-pathway accent, reused on the rail bar, links and mobile kicker */
 .dap {
   --accent: var(--emerald);
@@ -21,13 +33,8 @@
   display: block;
 }
 
-/* Section heading rides at the top of the rail so it pins with the tabs */
-.railHeader {
-  margin-bottom: 2rem;
-}
-
 /* The accordion tabs are desktop-only; on mobile each panel carries its own
-   text (see .panelText), so the rail collapses to just the heading. */
+   text (see .panelText). */
 .tabs {
   display: none;
   list-style: none;
@@ -45,9 +52,7 @@
   border-top: none;
 }
 
-/* Accent bar that grows in beside the active tab */
-.tab::before {
-  content: "";
+.tabIndicator {
   position: absolute;
   left: 0;
   top: 1.35rem;
@@ -55,13 +60,7 @@
   width: 3px;
   border-radius: 2px;
   background: var(--accent);
-  transform: scaleY(0);
   transform-origin: top;
-  transition: transform 0.4s var(--ease-inout);
-}
-
-.tabActive::before {
-  transform: scaleY(1);
 }
 
 .tabHead {
@@ -80,40 +79,15 @@
   font-size: clamp(1.375rem, 1.1rem + 1vw, 1.875rem);
   line-height: 1.15;
   letter-spacing: -0.01em;
-  color: var(--ink-faint);
-  transition: color 0.3s var(--ease-inout);
 }
 
-.tabActive .tabTitle {
-  color: var(--ink);
-}
-
-.tabHead:hover .tabTitle {
-  color: var(--ink-soft);
-}
-
-.tabActive .tabHead:hover .tabTitle {
-  color: var(--ink);
-}
-
-/* Smoothly reveal the body copy via the grid 0fr → 1fr height trick */
 .tabReveal {
-  display: grid;
-  grid-template-rows: 0fr;
-  opacity: 0;
-  transition:
-    grid-template-rows 0.45s var(--ease-inout),
-    opacity 0.35s var(--ease-inout);
+  overflow: hidden;
 }
 
 .tabRevealInner {
   overflow: hidden;
   min-height: 0;
-}
-
-.tabActive .tabReveal {
-  grid-template-rows: 1fr;
-  opacity: 1;
 }
 
 .tabBody {
@@ -131,10 +105,6 @@
   font-size: 0.9375rem;
   color: var(--accent);
   text-decoration: none;
-}
-
-.tabLink:hover {
-  text-decoration: underline;
 }
 
 /* ============ Media stack ============ */
@@ -163,20 +133,15 @@
   object-fit: cover;
 }
 
-/* Text block that rides above each image — mobile only */
+/* Mobile-only text split around the image for a clear reading order. */
+.panelHeading,
 .panelText {
   display: flex;
   flex-direction: column;
-  margin-bottom: 1.25rem;
 }
 
-.panelKicker {
-  font-family: var(--font-roboto-mono), monospace;
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 0.5rem;
+.panelHeading {
+  margin-bottom: 1.25rem;
 }
 
 .panelTitle {
@@ -185,6 +150,10 @@
   font-size: 1.5rem;
   line-height: 1.15;
   color: var(--ink);
+}
+
+.panelText .tabBody {
+  margin-top: 1.25rem;
 }
 
 /* ============ Desktop: sticky rail + scrolling media ============ */
@@ -216,6 +185,7 @@
     min-height: 0;
   }
 
+  .panelHeading,
   .panelText {
     display: none;
   }

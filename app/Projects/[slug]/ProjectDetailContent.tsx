@@ -3,11 +3,15 @@
 import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { animate, motion } from "framer-motion";
 import styles from "./ProjectDetail.module.css";
 import { Linkedin, Github, Globe } from "lucide-react";
 import { Project, TeamMember, HighlightCard } from "@/app/Projects/data/types";
 import { getCardIcon } from "@/app/Projects/data/cardIcons";
 import Markdown from "@/app/components/ui/Markdown";
+import { MOTION_EASE, motionTransition } from "@/app/components/ui/motion";
+
+const MotionLink = motion.create(Link);
 
 interface Props {
   project: Project;
@@ -63,16 +67,24 @@ function TeamSocials({ member }: { member: TeamMember }) {
   return (
     <div className={styles.memberSocials}>
       {links.map(({ href, label, Icon }) => (
-        <a
+        <motion.a
           key={label}
           href={href}
           target="_blank"
           rel="noopener noreferrer"
           className={styles.memberSocialLink}
           aria-label={`${member.name} on ${label}`}
+          whileHover={{
+            color: "var(--emerald)",
+            borderColor: "var(--emerald)",
+            backgroundColor: "rgba(125, 215, 194, 0.12)",
+            y: -1,
+          }}
+          whileTap={{ scale: 0.94 }}
+          transition={motionTransition.quick}
         >
           <Icon size={16} strokeWidth={2} aria-hidden />
-        </a>
+        </motion.a>
       ))}
     </div>
   );
@@ -97,9 +109,14 @@ export default function ProjectDetailContent({ project }: Props) {
   const scroll = (dir: "left" | "right") => {
     const el = carouselRef.current;
     if (!el) return;
-    el.scrollBy({
-      left: dir === "right" ? el.offsetWidth : -el.offsetWidth,
-      behavior: "smooth",
+    const target =
+      el.scrollLeft + (dir === "right" ? el.offsetWidth : -el.offsetWidth);
+    animate(el.scrollLeft, target, {
+      duration: 0.45,
+      ease: MOTION_EASE,
+      onUpdate: (latest) => {
+        el.scrollLeft = latest;
+      },
     });
   };
 
@@ -107,9 +124,14 @@ export default function ProjectDetailContent({ project }: Props) {
     <>
       {/* Breadcrumb */}
       <nav className={styles.breadcrumb}>
-        <Link href="/Projects" className={styles.breadcrumbLink}>
+        <MotionLink
+          href="/Projects"
+          className={styles.breadcrumbLink}
+          whileHover={{ color: "var(--emerald)", x: -2 }}
+          transition={motionTransition.quick}
+        >
           Projects
-        </Link>
+        </MotionLink>
         <span className={styles.breadcrumbSep}>›</span>
         <span className={styles.breadcrumbCurrent}>{project.title}</span>
       </nav>
@@ -136,26 +158,41 @@ export default function ProjectDetailContent({ project }: Props) {
         {(liveUrl || project.sourceUrl) && (
           <div className={styles.actions}>
             {liveUrl && (
-              <a
+              <motion.a
                 href={liveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.actionBtnPrimary}
+                whileHover={{
+                  y: -2,
+                  backgroundColor: "var(--emerald-strong)",
+                  boxShadow: "var(--shadow-md)",
+                }}
+                whileTap={{ scale: 0.98 }}
+                transition={motionTransition.quick}
               >
                 Try it live
                 <span className={styles.actionIcon}>↗</span>
-              </a>
+              </motion.a>
             )}
             {project.sourceUrl && (
-              <a
+              <motion.a
                 href={project.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.actionBtn}
+                whileHover={{
+                  borderColor: "var(--emerald)",
+                  color: "var(--emerald)",
+                  boxShadow: "var(--shadow-sm)",
+                  y: -1,
+                }}
+                whileTap={{ scale: 0.98 }}
+                transition={motionTransition.quick}
               >
                 <GithubIcon />
                 GitHub
-              </a>
+              </motion.a>
             )}
           </div>
         )}
@@ -180,20 +217,34 @@ export default function ProjectDetailContent({ project }: Props) {
             </div>
             {images.length > 1 && (
               <>
-                <button
+                <motion.button
                   className={`${styles.carouselBtn} ${styles.carouselBtnLeft}`}
                   onClick={() => scroll("left")}
                   aria-label="Previous image"
+                  whileHover={{
+                    backgroundColor: "#ffffff",
+                    color: "var(--emerald)",
+                    scale: 1.05,
+                  }}
+                  whileTap={{ scale: 0.94 }}
+                  transition={motionTransition.quick}
                 >
                   ‹
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   className={`${styles.carouselBtn} ${styles.carouselBtnRight}`}
                   onClick={() => scroll("right")}
                   aria-label="Next image"
+                  whileHover={{
+                    backgroundColor: "#ffffff",
+                    color: "var(--emerald)",
+                    scale: 1.05,
+                  }}
+                  whileTap={{ scale: 0.94 }}
+                  transition={motionTransition.quick}
                 >
                   ›
-                </button>
+                </motion.button>
               </>
             )}
           </div>
@@ -219,7 +270,12 @@ export default function ProjectDetailContent({ project }: Props) {
                 {cards.map((card, i) => {
                   const Icon = getCardIcon(card.icon);
                   return (
-                    <div key={i} className={styles.card}>
+                    <motion.div
+                      key={i}
+                      className={styles.card}
+                      whileHover={{ y: -2, boxShadow: "var(--shadow-md)" }}
+                      transition={motionTransition.quick}
+                    >
                       <div className={styles.cardHead}>
                         <span className={styles.cardIcon}>
                           <Icon size={18} strokeWidth={2.25} aria-hidden />
@@ -231,7 +287,7 @@ export default function ProjectDetailContent({ project }: Props) {
                       {card.body && (
                         <Markdown variant="compact" content={card.body} />
                       )}
-                    </div>
+                    </motion.div>
                   );
                 })}
               </section>
@@ -245,8 +301,20 @@ export default function ProjectDetailContent({ project }: Props) {
                 <h2 className={styles.sidebarLabel}>About the Team</h2>
                 <ul className={styles.teamList}>
                   {project.team.map((member, i) => (
-                    <li key={i} className={styles.teamMember}>
-                      <div className={styles.avatarWrapper}>
+                    <motion.li
+                      key={i}
+                      className={styles.teamMember}
+                      initial="rest"
+                      whileHover="hover"
+                    >
+                      <motion.div
+                        className={styles.avatarWrapper}
+                        variants={{
+                          rest: { borderColor: "var(--border)" },
+                          hover: { borderColor: "var(--emerald)", scale: 1.03 },
+                        }}
+                        transition={motionTransition.quick}
+                      >
                         {member.avatar ? (
                           <Image
                             src={member.avatar}
@@ -260,13 +328,13 @@ export default function ProjectDetailContent({ project }: Props) {
                             {member.name.charAt(0)}
                           </div>
                         )}
-                      </div>
+                      </motion.div>
                       <div className={styles.memberInfo}>
                         <p className={styles.memberName}>{member.name}</p>
                         <p className={styles.memberRole}>{member.role}</p>
                         <TeamSocials member={member} />
                       </div>
-                    </li>
+                    </motion.li>
                   ))}
                 </ul>
               </>

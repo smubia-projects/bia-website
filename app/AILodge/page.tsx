@@ -1,6 +1,5 @@
 import React from "react";
 import Image from "next/image";
-import Link from "next/link";
 import {
   Compass,
   FlaskConical,
@@ -15,6 +14,8 @@ import ScrollReveal from "@/app/components/ui/ScrollReveal";
 import CountUp from "@/app/components/ui/CountUp";
 import { LINKS } from "@/app/lib/links";
 import styles from "./page.module.css";
+import AILodgeReel from "./AILodgeReel";
+import { MotionNextLink, MotionSurface } from "@/app/components/ui/MotionElements";
 
 export const metadata = {
   title: "AI Lodge | SMUBIA",
@@ -99,9 +100,18 @@ export default function AILodgePage() {
               alike, all gathered around the same fire.
             </p>
             <div className={styles.heroActions}>
-              <Link href={LINKS.aiLodgeInfosite} className={styles.ctaPrimary}>
+              <MotionNextLink
+                href={LINKS.aiLodgeInfosite}
+                className={styles.ctaPrimary}
+                hover={{
+                  y: -3,
+                  backgroundColor: "#ffd48f",
+                  boxShadow:
+                    "0 0 0 3px rgba(255, 150, 58, 0.18), 0 8px 38px -2px rgba(255, 150, 58, 0.5)",
+                }}
+              >
                 Join AI Lodge
-              </Link>
+              </MotionNextLink>
             </div>
           </div>
 
@@ -317,7 +327,14 @@ export default function AILodgePage() {
             {steps.map((s, i) => (
               <React.Fragment key={s.title}>
                 <ScrollReveal delay={i * 50}>
-                  <div className={styles.step}>
+                  <MotionSurface
+                    className={styles.step}
+                    hover={{
+                      y: -3,
+                      boxShadow:
+                        "0 4px 8px rgba(92, 60, 20, 0.06), 0 20px 44px rgba(92, 60, 20, 0.15)",
+                    }}
+                  >
                     <div className={styles.stepTop}>
                       <span className={styles.stepIcon} aria-hidden="true">
                         <s.Icon size={22} strokeWidth={2} />
@@ -326,7 +343,7 @@ export default function AILodgePage() {
                     </div>
                     <h3 className={styles.stepTitle}>{s.title}</h3>
                     <p className={styles.stepBody}>{s.body}</p>
-                  </div>
+                  </MotionSurface>
                 </ScrollReveal>
                 {i < steps.length - 1 && (
                   <ArrowRight
@@ -351,23 +368,7 @@ export default function AILodgePage() {
             </div>
           </ScrollReveal>
         </div>
-        <div className={styles.reelViewport}>
-          <div className={styles.reelTrack}>
-            {[...reel, ...reel].map((img, i) => (
-              <div className={styles.reelItem} key={`${img.src}-${i}`}>
-                <Image
-                  src={img.src}
-                  alt={i < reel.length ? img.alt : ""}
-                  fill
-                  sizes="(max-width: 640px) 55vw, 15rem"
-                  className={styles.photoImg}
-                />
-              </div>
-            ))}
-          </div>
-          <div className={styles.reelFadeLeft} aria-hidden="true" />
-          <div className={styles.reelFadeRight} aria-hidden="true" />
-        </div>
+        <AILodgeReel images={reel} />
       </section>
 
       {/* 8 — CLOSING CTA · deep dusk, embers, single primary CTA */}
@@ -383,19 +384,27 @@ export default function AILodgePage() {
                 each intake — grab a seat by the fire.
               </p>
               <div className={styles.closingActions}>
-                <Link
+                <MotionNextLink
                   href={LINKS.aiLodgeInfosite}
-                  className={`${styles.ctaPrimary} gleam`}
+                  className={styles.ctaPrimary}
+                  gleam
+                  hover={{
+                    y: -3,
+                    backgroundColor: "#ffd48f",
+                    boxShadow:
+                      "0 0 0 3px rgba(255, 150, 58, 0.18), 0 8px 38px -2px rgba(255, 150, 58, 0.5)",
+                  }}
                 >
                   Join AI Lodge
-                </Link>
-                <Link
+                </MotionNextLink>
+                <MotionNextLink
                   href="/Projects?badge=AI%20Lodge"
                   className={styles.ctaGhost}
+                  hover={{ y: -2, borderColor: "var(--amber)", color: "var(--amber)" }}
                 >
                   See what lodgers built
                   <ArrowRight size={16} aria-hidden="true" />
-                </Link>
+                </MotionNextLink>
               </div>
             </div>
           </ScrollReveal>

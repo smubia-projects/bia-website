@@ -1,5 +1,7 @@
 "use client";
-import React, { useState, useEffect, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { motion } from "framer-motion";
+import { fadeRise, motionTransition } from "./motion";
 
 interface ScrollRevealProps {
   children: ReactNode;
@@ -13,36 +15,18 @@ export default function ScrollReveal({
   threshold = 0.1,
   delay = 0,
 }: ScrollRevealProps) {
-  const [isVisible, setIsVisible] = useState(false);
-  const [ref, setRef] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    if (!ref) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold }
-    );
-
-    observer.observe(ref);
-
-    return () => observer.disconnect();
-  }, [ref, threshold]);
-
   return (
-    <div
-      ref={setRef}
-      style={{ transitionDelay: delay ? `${delay}ms` : undefined }}
-      className={`transition-all duration-700 ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-      }`}
+    <motion.div
+      variants={fadeRise}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: threshold }}
+      transition={{
+        ...motionTransition.reveal,
+        delay: delay / 1000,
+      }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }

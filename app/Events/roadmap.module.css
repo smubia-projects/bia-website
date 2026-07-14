@@ -1,14 +1,118 @@
-/* The roadmap is a self-contained static site embedded via an iframe so its
-   (intentionally different) styling stays fully isolated from the main site.
-   The global Navbar/Footer still wrap it via the root layout. */
-.frame {
-  display: block;
+.stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
   width: 100%;
-  height: calc(100dvh - 4rem);
-  min-height: 560px;
-  /* Clear the fixed 4rem navbar */
+  min-height: calc(100dvh - 4rem);
   margin-top: 4rem;
-  border: 0;
-  /* Matches the roadmap's board-green so there's no white flash before load */
+  place-items: center;
+  overflow: hidden;
   background: #d9e8d6;
+}
+
+.frame {
+  display: grid;
+  width: 100%;
+  place-items: center;
+  transform-origin: center;
+}
+
+.board {
+  display: block;
+  width: min(96vw, 48.56dvh);
+  max-width: 96vw;
+  height: auto;
+  max-height: calc(100dvh - 4rem);
+  aspect-ratio: 690 / 1421;
+}
+
+.hotspot {
+  cursor: pointer;
+  outline: none;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.hotspot rect {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 5;
+  pointer-events: all;
+  vector-effect: non-scaling-stroke;
+}
+
+.hotspot:focus-visible rect {
+  stroke: rgba(255, 255, 255, 0.92);
+}
+
+.moneyRain {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.moneyBill {
+  position: absolute;
+  top: 0;
+  display: block;
+  width: clamp(57px, 17.6vw, 81px);
+  height: auto;
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.16));
+  transform-origin: center;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.52);
+}
+
+.modalButton {
+  display: grid;
+  max-width: 100%;
+  max-height: 100%;
+  padding: 0;
+  border: 0;
+  place-items: center;
+  background: transparent;
+  cursor: pointer;
+  transform-origin: center;
+}
+
+.modalButton:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.95);
+  outline-offset: 6px;
+}
+
+.modalImage {
+  display: block;
+  width: min(63vw, 54.59dvh);
+  height: auto;
+  max-width: 63vw;
+  max-height: 70.2dvh;
+  object-fit: contain;
+  filter: drop-shadow(0 20px 44px rgba(0, 0, 0, 0.25));
+}
+
+.srOnly {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@media (max-height: 720px) {
+  .board {
+    width: min(92vw, 48.56dvh);
+  }
 }

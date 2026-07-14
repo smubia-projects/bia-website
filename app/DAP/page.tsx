@@ -1,13 +1,11 @@
 import React from "react";
 import Image from "next/image";
-import Link from "next/link";
 import styles from "./DAP.module.css";
 import ScrollReveal from "../components/ui/ScrollReveal";
 import Button from "../components/ui/Button";
 import { LINKS } from "../lib/links";
+import { MotionAnchor, MotionNextLink } from "../components/ui/MotionElements";
 import {
-  PROGRAMME_META,
-  STATS,
   CURRICULUM,
   COHORT_PHOTO,
   STRUCTURE,
@@ -43,21 +41,18 @@ export default function DAPPage() {
             <Button href={LINKS.joinForm} variant="onDark">
               Apply to the programme →
             </Button>
-            <a href="#curriculum" className={styles.heroScrollLink}>
+            <MotionAnchor
+              href="#curriculum"
+              className={styles.heroScrollLink}
+              hover={{ y: -2, color: "var(--mint)" }}
+            >
               See the curriculum ↓
-            </a>
+            </MotionAnchor>
           </div>
-          <ul className={styles.heroMeta}>
-            {PROGRAMME_META.map((item) => (
-              <li key={item} className={styles.heroMetaItem}>
-                {item}
-              </li>
-            ))}
-          </ul>
         </div>
       </section>
 
-      {/* ── The programme + stat strip ──────────────────────────── */}
+      {/* ── The programme ───────────────────────────────────────── */}
       <section className={styles.section}>
         <div className={styles.sectionInner}>
           <ScrollReveal>
@@ -73,16 +68,6 @@ export default function DAPPage() {
             </div>
           </ScrollReveal>
 
-          <ScrollReveal delay={100}>
-            <dl className={styles.statStrip}>
-              {STATS.map((stat) => (
-                <div key={stat.label} className={styles.stat}>
-                  <dt className={styles.statValue}>{stat.value}</dt>
-                  <dd className={styles.statLabel}>{stat.label}</dd>
-                </div>
-              ))}
-            </dl>
-          </ScrollReveal>
         </div>
       </section>
 
@@ -194,9 +179,13 @@ export default function DAPPage() {
                 Apply to the programme →
               </Button>
             </div>
-            <Link href="/Projects?badge=DAP" className={styles.closingLink}>
+            <MotionNextLink
+              href="/Projects?badge=DAP"
+              className={styles.closingLink}
+              hover={{ x: 3, color: "var(--mint)" }}
+            >
               See what associates built →
-            </Link>
+            </MotionNextLink>
           </ScrollReveal>
         </div>
       </section>

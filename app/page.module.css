@@ -4,7 +4,7 @@
   position: relative;
   background: var(--pine-deep);
   color: var(--pine-text);
-  padding: 9.5rem 1.25rem 0;
+  padding: 9.5rem 1.25rem 4rem;
   overflow: hidden;
 }
 
@@ -94,7 +94,6 @@
   border-radius: var(--radius-md);
   border: 4px solid rgba(255, 255, 255, 0.92);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
-  transition: transform 0.35s var(--ease-inout);
 }
 
 .clusterImg {
@@ -106,7 +105,6 @@
   aspect-ratio: 4 / 3;
   top: 4%;
   left: 0;
-  transform: rotate(-5deg);
   z-index: 2;
 }
 
@@ -115,7 +113,6 @@
   aspect-ratio: 3 / 4;
   top: 0;
   right: 2%;
-  transform: rotate(5deg);
   z-index: 3;
 }
 
@@ -124,19 +121,7 @@
   aspect-ratio: 4 / 3;
   bottom: 2%;
   left: 14%;
-  transform: rotate(3deg);
   z-index: 1;
-}
-
-/* subtle interactive lift on the whole cluster */
-.heroCluster:hover .clusterA {
-  transform: rotate(-6deg) translateY(-4px);
-}
-.heroCluster:hover .clusterB {
-  transform: rotate(6deg) translateY(-4px);
-}
-.heroCluster:hover .clusterC {
-  transform: rotate(4deg) translateY(-4px);
 }
 
 .clusterMascot {
@@ -147,32 +132,13 @@
   bottom: -6%;
   right: -6%;
   filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.4));
-  animation: float 6s ease-in-out infinite;
   pointer-events: none;
 }
 
-.heroStats {
-  position: relative;
-  max-width: 76rem;
-  margin: 4rem auto 0;
-  padding: 1.5rem 0 2rem;
-  border-top: 1px solid var(--pine-border);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 2.5rem;
-}
-
-.heroStat {
-  font-family: var(--font-roboto-mono), monospace;
-  font-size: 0.8125rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--pine-text-soft);
-}
-
-.heroStat strong {
-  color: var(--mint);
-  font-weight: 500;
+.clusterMascot img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 @media (min-width: 1024px) {
@@ -186,18 +152,6 @@
 
   .heroCluster {
     margin: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .clusterMascot {
-    animation: none;
-  }
-  .clusterPhoto,
-  .heroCluster:hover .clusterA,
-  .heroCluster:hover .clusterB,
-  .heroCluster:hover .clusterC {
-    transition: none;
   }
 }
 
@@ -310,10 +264,6 @@
   color: var(--emerald);
   text-decoration: none;
   padding-bottom: 0.25rem;
-}
-
-.seeAll:hover {
-  text-decoration: underline;
 }
 
 /* Full-bleed rail: negative margins cancel the .section horizontal padding so

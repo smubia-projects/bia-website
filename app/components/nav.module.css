@@ -49,14 +49,6 @@
   font-weight: 500;
   color: var(--ink-soft);
   text-decoration: none;
-  transition:
-    color 0.2s var(--ease-inout),
-    background-color 0.2s var(--ease-inout);
-}
-
-.navLink:hover {
-  color: var(--emerald);
-  background: var(--mint-soft);
 }
 
 .navLinkActive {
@@ -73,17 +65,6 @@
   font-size: 0.9375rem;
   font-weight: 600;
   text-decoration: none;
-  transition:
-    background-color 0.2s var(--ease-inout),
-    transform 0.2s var(--ease-inout),
-    box-shadow 0.2s var(--ease-inout);
-}
-
-.joinButton:hover {
-  background: var(--emerald-strong);
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
 }
 
 .menuToggle {
@@ -98,11 +79,12 @@
   color: var(--ink);
   font-size: 1rem;
   cursor: pointer;
-  transition: border-color 0.2s var(--ease-inout);
 }
 
-.menuToggle:hover {
-  border-color: var(--emerald);
+.menuIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mobilePanel {
@@ -113,18 +95,7 @@
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-md);
-  animation: panelIn 0.25s ease;
-}
-
-@keyframes panelIn {
-  from {
-    opacity: 0;
-    transform: translateY(-0.5rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  overflow: hidden;
 }
 
 .mobileLink {
@@ -134,11 +105,6 @@
   font-weight: 500;
   color: var(--ink-soft);
   text-decoration: none;
-}
-
-.mobileLink:hover {
-  color: var(--emerald);
-  background: var(--mint-soft);
 }
 
 .mobileLinkActive {
@@ -155,11 +121,6 @@
   font-weight: 600;
   text-align: center;
   text-decoration: none;
-}
-
-.mobileJoinButton:hover {
-  background: var(--emerald-strong);
-  color: #ffffff;
 }
 
 @media (min-width: 1024px) {

@@ -139,11 +139,6 @@
   color: var(--emerald);
   text-decoration: underline;
   text-underline-offset: 2px;
-  transition: color 0.2s var(--ease-inout);
-}
-
-.prose a:hover {
-  color: var(--emerald-strong);
 }
 
 .prose blockquote {

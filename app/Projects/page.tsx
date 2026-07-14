@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import styles from "./Projects.module.css";
 import { LINKS } from "@/app/lib/links";
 import { getProjects } from "@/app/lib/projects";
 import ProjectsContent from "./ProjectsContent";
 import ProjectsHero from "./ProjectsHero";
+import { MotionNextLink } from "@/app/components/ui/MotionElements";
 
 export const revalidate = 3600;
 
@@ -13,8 +13,7 @@ export default async function ProjectsPage() {
 
   return (
     <main className={styles.page}>
-      {/* Flowing marquee hero (full-bleed) */}
-      <ProjectsHero projects={projects} />
+      <ProjectsHero />
 
       <div className={styles.container}>
         {/* Suspense boundary required for useSearchParams inside ProjectsContent */}
@@ -32,15 +31,30 @@ export default async function ProjectsPage() {
             showcase it right here.
           </p>
           <div className={styles.ctaBandActions}>
-            <Link href="/DAP" className={`${styles.ctaBtnDap} gleam`}>
+            <MotionNextLink
+              href="/DAP"
+              className={styles.ctaBtnDap}
+              gleam
+              hover={{
+                y: -3,
+                boxShadow:
+                  "0 0 0 3px rgba(125, 215, 194, 0.16), 0 8px 36px -2px rgba(125, 215, 194, 0.6)",
+              }}
+            >
               Join DAP
-            </Link>
-            <Link
+            </MotionNextLink>
+            <MotionNextLink
               href={LINKS.aiLodgeInfosite}
-              className={`${styles.ctaBtnLodge} gleam`}
+              className={styles.ctaBtnLodge}
+              gleam
+              hover={{
+                y: -3,
+                boxShadow:
+                  "0 0 0 3px rgba(255, 211, 146, 0.18), 0 8px 36px -2px rgba(255, 211, 146, 0.6)",
+              }}
             >
               Join AI Lodge
-            </Link>
+            </MotionNextLink>
           </div>
         </div>
       </section>

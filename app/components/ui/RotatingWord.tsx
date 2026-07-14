@@ -1,38 +1,42 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import styles from "./RotatingWord.module.css";
+import { MOTION_EASE } from "./motion";
 
 const HOLD_MS = 2500;
-const FADE_MS = 400;
 
 interface RotatingWordProps {
   words?: string[];
 }
 
 export default function RotatingWord({
-  words = ["data analytics", "AI", "machine learning", "hackathons"],
+  words = ["data analytics", "machine learning", "AI"],
 }: RotatingWordProps) {
   const [index, setIndex] = useState(0);
-  const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setLeaving(true);
-      setTimeout(() => {
-        setIndex((i) => (i + 1) % words.length);
-        setLeaving(false);
-      }, FADE_MS);
+      setIndex((i) => (i + 1) % words.length);
     }, HOLD_MS);
 
     return () => clearInterval(interval);
   }, [words.length]);
 
   return (
-    <span
-      className={`${styles.word} ${leaving ? styles.leaving : styles.entering}`}
-      aria-live="polite"
-    >
-      {words[index]}
+    <span className={styles.frame} aria-live="polite">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={words[index]}
+          className={styles.word}
+          initial={{ opacity: 0, y: "0.3em" }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: "-0.25em" }}
+          transition={{ duration: 0.4, ease: MOTION_EASE }}
+        >
+          {words[index]}
+        </motion.span>
+      </AnimatePresence>
     </span>
   );
 }

@@ -3,24 +3,6 @@
  * The page is a restrained "programme brief" in deep pine; keep copy tight.
  */
 
-/* ── Programme metadata (hero + stat strip) ─────────────────────────── */
-
-export const PROGRAMME_META = ["AY 26/27", "9 topics", "Teams of 4", "One cohort"];
-
-export interface Stat {
-  value: string;
-  label: string;
-  /** true → number still to be confirmed with the club */
-  tbc?: boolean;
-}
-
-export const STATS: Stat[] = [
-  { value: "~50", label: "associates per cohort", tbc: true }, // TBC — confirm with club
-  { value: "4", label: "to a project team" },
-  { value: "9", label: "topics, one semester" },
-  { value: "Weekly", label: "co-learning sessions" },
-];
-
 /* ── Curriculum — AY 26/27, the centrepiece ─────────────────────────── */
 
 export interface CurriculumTopic {

@@ -1,11 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import {
+  AnimatePresence,
+  animate,
+  motion,
+  useInView,
+  useReducedMotion,
+} from "framer-motion";
 import styles from "./PathwaysScroll.module.css";
-import SectionHeading from "./ui/SectionHeading";
 import { LINKS } from "@/app/lib/links";
+import { MOTION_EASE, motionTransition } from "./ui/motion";
+
+const MotionLink = motion.create(Link);
 
 /**
  * The three entry points into the club, in the order a member usually meets
@@ -14,27 +23,24 @@ import { LINKS } from "@/app/lib/links";
  */
 const PATHWAYS = [
   {
-    kicker: "Flagship",
     title: "Data Associate Programme",
-    body: "A selective AI/ML cohort — from theory sessions to a demo-day project, with mentors beside you the whole way.",
+    body: "An intensive cohort for students who want to build a stronger foundation in AI and machine learning through guided learning and project work.",
     href: "/DAP",
     image: "/images/dap/dap-presentation-1.webp",
     alt: "A Data Associate Programme member presenting their project",
     accent: "dap",
   },
   {
-    kicker: "New",
     title: "AI Lodge",
-    body: "An eight-week build community where teams ship real AI projects and demo them to the whole club.",
+    body: "Explore applied AI in a small group through hands-on learning and a personal project.",
     href: LINKS.aiLodgeInfosite,
     image: "/images/ailodge/hero-1.webp",
     alt: "AI Lodge builders working together",
     accent: "lodge",
   },
   {
-    kicker: "Open to all",
-    title: "Events & Workshops",
-    body: "Hands-on sessions in SQL, Python and data science every semester — no prerequisites, every faculty welcome.",
+    title: "Curriculum",
+    body: "Explore SQL, Python, data analysis, and visualisation through our structured hands-on workshops.",
     href: "/Events",
     image: "/images/excelWorkshop.jpg",
     alt: "Members at a hands-on data workshop",
@@ -42,73 +48,193 @@ const PATHWAYS = [
   },
 ] as const;
 
+type Pathway = (typeof PATHWAYS)[number];
+
+function PathwayPanel({
+  pathway,
+  index,
+  register,
+  onActive,
+}: {
+  pathway: Pathway;
+  index: number;
+  register: (index: number, element: HTMLElement | null) => void;
+  onActive: (index: number) => void;
+}) {
+  const ref = useRef<HTMLElement | null>(null);
+  const inView = useInView(ref, { margin: "-45% 0px -45% 0px" });
+
+  useEffect(() => {
+    register(index, ref.current);
+    return () => register(index, null);
+  }, [index, register]);
+
+  useEffect(() => {
+    if (inView) onActive(index);
+  }, [inView, index, onActive]);
+
+  return (
+    <motion.figure
+      ref={ref}
+      data-index={index}
+      className={`${styles.panel} ${styles[pathway.accent]}`}
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.22 }}
+      transition={{ duration: 0.55, ease: MOTION_EASE }}
+    >
+      <div className={styles.panelHeading}>
+        <span className={styles.panelTitle}>{pathway.title}</span>
+      </div>
+      <motion.div
+        className={styles.panelMedia}
+        whileHover={{ y: -3, boxShadow: "var(--shadow-xl)" }}
+        transition={motionTransition.standard}
+      >
+        <Image
+          src={pathway.image}
+          alt={pathway.alt}
+          fill
+          sizes="(min-width: 900px) 46vw, 100vw"
+          className={styles.panelImg}
+        />
+      </motion.div>
+      <figcaption className={styles.panelText}>
+        <p className={styles.tabBody}>{pathway.body}</p>
+        <MotionLink
+          href={pathway.href}
+          className={styles.tabLink}
+          whileHover={{ x: 3 }}
+          whileTap={{ scale: 0.98 }}
+          transition={motionTransition.quick}
+        >
+          Explore →
+        </MotionLink>
+      </figcaption>
+    </motion.figure>
+  );
+}
+
 export default function PathwaysScroll() {
   const [active, setActive] = useState(0);
   const panelRefs = useRef<(HTMLElement | null)[]>([]);
+  const reduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const idx = Number(
-              (entry.target as HTMLElement).dataset.index ?? 0
-            );
-            setActive(idx);
-          }
-        });
-      },
-      // Fire when a panel's centre band crosses the middle of the viewport.
-      { rootMargin: "-45% 0px -45% 0px", threshold: 0 }
-    );
+  const registerPanel = useCallback(
+    (index: number, element: HTMLElement | null) => {
+      panelRefs.current[index] = element;
+    },
+    []
+  );
 
-    panelRefs.current.forEach((el) => el && observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
+  const selectPanel = useCallback((index: number) => setActive(index), []);
 
-  const goTo = (i: number) =>
-    panelRefs.current[i]?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
+  const goTo = (i: number) => {
+    const panel = panelRefs.current[i];
+    if (!panel) return;
+
+    const rect = panel.getBoundingClientRect();
+    const target =
+      window.scrollY + rect.top - (window.innerHeight - rect.height) / 2;
+
+    if (reduceMotion) {
+      window.scrollTo(0, target);
+      return;
+    }
+
+    animate(window.scrollY, target, {
+      duration: 0.65,
+      ease: MOTION_EASE,
+      onUpdate: (latest) => window.scrollTo(0, latest),
     });
+  };
 
   return (
     <div className={styles.wrap}>
-      {/* Sticky rail — section heading + accordion of the three pathways.
-          Pinning the whole rail keeps the heading in view while images scroll. */}
+      <h2 className={styles.visuallyHidden}>What we do</h2>
+      {/* Sticky rail — accordion of the three pathways. */}
       <div className={styles.rail}>
-        <div className={styles.railHeader}>
-          <SectionHeading
-            eyebrow="What we do"
-            title="Three ways in"
-            lede="Pick your entry point — from your first workshop to a deployed model."
-          />
-        </div>
         <ol className={styles.tabs}>
           {PATHWAYS.map((p, i) => (
-            <li
+            <motion.li
               key={p.title}
-              className={`${styles.tab} ${styles[p.accent]} ${
-                i === active ? styles.tabActive : ""
-              }`}
+              className={`${styles.tab} ${styles[p.accent]}`}
+              layout
+              transition={motionTransition.standard}
             >
-              <button
+              <motion.span
+                className={styles.tabIndicator}
+                initial={false}
+                animate={{ scaleY: i === active ? 1 : 0, opacity: i === active ? 1 : 0 }}
+                transition={motionTransition.standard}
+                aria-hidden="true"
+              />
+              <motion.button
                 type="button"
                 className={styles.tabHead}
                 onClick={() => goTo(i)}
                 aria-current={i === active}
+                whileTap={{ scale: 0.99 }}
               >
-                <span className={styles.tabTitle}>{p.title}</span>
-              </button>
-              <div className={styles.tabReveal}>
-                <div className={styles.tabRevealInner}>
-                  <p className={styles.tabBody}>{p.body}</p>
-                  <Link href={p.href} className={styles.tabLink}>
-                    Explore →
-                  </Link>
-                </div>
-              </div>
-            </li>
+                <motion.span
+                  className={styles.tabTitle}
+                  animate={{
+                    x: i === active ? 3 : 0,
+                    color: i === active ? "var(--ink)" : "var(--ink-faint)",
+                  }}
+                  whileHover={{ color: "var(--ink-soft)", x: i === active ? 3 : 2 }}
+                  transition={motionTransition.quick}
+                >
+                  {p.title}
+                </motion.span>
+              </motion.button>
+              <AnimatePresence initial={false}>
+                {i === active && (
+                  <motion.div
+                    className={styles.tabReveal}
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.32, ease: MOTION_EASE }}
+                  >
+                    <motion.div
+                      className={styles.tabRevealInner}
+                      initial="hidden"
+                      animate="visible"
+                      variants={{
+                        hidden: {},
+                        visible: {
+                          transition: { staggerChildren: 0.06, delayChildren: 0.04 },
+                        },
+                      }}
+                    >
+                      <motion.p
+                        className={styles.tabBody}
+                        variants={{
+                          hidden: { opacity: 0, y: -6 },
+                          visible: { opacity: 1, y: 0 },
+                        }}
+                      >
+                        {p.body}
+                      </motion.p>
+                      <MotionLink
+                        href={p.href}
+                        className={styles.tabLink}
+                        variants={{
+                          hidden: { opacity: 0, y: -5 },
+                          visible: { opacity: 1, y: 0 },
+                        }}
+                        whileHover={{ x: 3 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={motionTransition.quick}
+                      >
+                        Explore →
+                      </MotionLink>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.li>
           ))}
         </ol>
       </div>
@@ -116,33 +242,13 @@ export default function PathwaysScroll() {
       {/* Media stack — one tall image panel per pathway */}
       <div className={styles.stack}>
         {PATHWAYS.map((p, i) => (
-          <figure
+          <PathwayPanel
             key={p.title}
-            ref={(el) => {
-              panelRefs.current[i] = el;
-            }}
-            data-index={i}
-            className={`${styles.panel} ${styles[p.accent]}`}
-          >
-            {/* Text repeats here only on mobile, where the rail is hidden */}
-            <figcaption className={styles.panelText}>
-              <span className={styles.panelKicker}>{p.kicker}</span>
-              <span className={styles.panelTitle}>{p.title}</span>
-              <p className={styles.tabBody}>{p.body}</p>
-              <Link href={p.href} className={styles.tabLink}>
-                Explore →
-              </Link>
-            </figcaption>
-            <div className={styles.panelMedia}>
-              <Image
-                src={p.image}
-                alt={p.alt}
-                fill
-                sizes="(min-width: 900px) 46vw, 100vw"
-                className={styles.panelImg}
-              />
-            </div>
-          </figure>
+            pathway={p}
+            index={i}
+            register={registerPanel}
+            onActive={selectPanel}
+          />
         ))}
       </div>
     </div>

@@ -66,11 +66,6 @@
   font-size: 0.9375rem;
   color: var(--pine-text-soft);
   text-decoration: none;
-  transition: color 0.2s var(--ease-inout);
-}
-
-.footerLink:hover {
-  color: var(--mint);
 }
 
 .address {
@@ -95,16 +90,6 @@
   border-radius: var(--radius-pill);
   color: var(--pine-text-soft);
   font-size: 1.125rem;
-  transition:
-    color 0.2s var(--ease-inout),
-    border-color 0.2s var(--ease-inout),
-    transform 0.2s var(--ease-inout);
-}
-
-.socialIcon:hover {
-  color: var(--mint);
-  border-color: var(--mint);
-  transform: translateY(-2px);
 }
 
 /* Statement wordmark — barely-there texture, the footer as a designed moment

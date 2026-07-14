@@ -6,6 +6,7 @@ import LoadingScreen from "./components/loadingscreen";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import MotionProvider from "./components/ui/MotionProvider";
 
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -39,13 +40,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${display.variable} ${inter.variable} ${mono.variable}`}>
-        <LoadingScreen />
-        <Navbar />
-        {children}
-        <Analytics />
-        <SpeedInsights />
-        <div id="portal"></div>
-        <FooterBar />
+        <MotionProvider>
+          <LoadingScreen />
+          <Navbar />
+          {children}
+          <Analytics />
+          <SpeedInsights />
+          <div id="portal"></div>
+          <FooterBar />
+        </MotionProvider>
       </body>
     </html>
   );

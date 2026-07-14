@@ -34,14 +34,6 @@
   overflow: hidden;
   text-decoration: none;
   box-shadow: var(--shadow-md);
-  transition:
-    transform 0.4s var(--ease-inout),
-    box-shadow 0.4s var(--ease-inout);
-}
-
-.slide:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
 }
 
 .slideMedia {
@@ -52,11 +44,6 @@
 
 .slideImg {
   object-fit: cover;
-  transition: transform 0.7s var(--ease-inout);
-}
-
-.slide:hover .slideImg {
-  transform: scale(1.06);
 }
 
 .slideScrim {
@@ -145,7 +132,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: clamp(2.5rem, 7vw, 8rem);
+  width: clamp(1.5rem, 3.5vw, 4rem);
   pointer-events: none;
   z-index: 3;
 }

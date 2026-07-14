@@ -5,6 +5,7 @@ import ScrollReveal from "../components/ui/ScrollReveal";
 import SectionHeading from "../components/ui/SectionHeading";
 import Button from "../components/ui/Button";
 import CountUp from "../components/ui/CountUp";
+import { MotionImage, MotionSurface } from "../components/ui/MotionElements";
 import {
   STAT_FOCAL,
   STAT_MINOR,
@@ -105,7 +106,11 @@ export default function WorkWithUsPage() {
           <div className={styles.involveGrid}>
             {INVOLVEMENT.map((item, i) => (
               <ScrollReveal key={item.title} delay={i * 100}>
-                <article className={styles.involveCard}>
+                <MotionSurface
+                  as="article"
+                  className={styles.involveCard}
+                  hover={{ y: -3, boxShadow: "var(--shadow-md)" }}
+                >
                   <span className={styles.involveKicker}>{item.kicker}</span>
                   <h3 className={styles.involveTitle}>{item.title}</h3>
                   <p className={styles.involveBody}>{item.body}</p>
@@ -119,7 +124,7 @@ export default function WorkWithUsPage() {
                       {item.cta} →
                     </Button>
                   </div>
-                </article>
+                </MotionSurface>
               </ScrollReveal>
             ))}
           </div>
@@ -139,13 +144,14 @@ export default function WorkWithUsPage() {
             </ScrollReveal>
             <div className={styles.partnerStrip}>
               {PARTNERS.map((partner) => (
-                <Image
+                <MotionImage
                   key={partner.name}
                   src={partner.logo}
                   alt={partner.name}
                   width={140}
                   height={56}
                   className={styles.partnerLogo}
+                  hover={{ opacity: 1 }}
                 />
               ))}
             </div>
