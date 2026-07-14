@@ -41,10 +41,10 @@ const PATHWAYS = [
   {
     title: "Curriculum",
     body: "Explore SQL, Python, data analysis, and visualisation through our structured hands-on workshops.",
-    href: "/Events",
+    href: "/Curriculum",
     image: "/images/excelWorkshop.jpg",
     alt: "Members at a hands-on data workshop",
-    accent: "events",
+    accent: "curriculum",
   },
 ] as const;
 

@@ -40,6 +40,11 @@
   font-family: var(--font-inter);
 }
 
+.clearFilterBtn {
+  display: inline-flex;
+  align-items: center;
+}
+
 /* Grid */
 .grid {
   display: grid;

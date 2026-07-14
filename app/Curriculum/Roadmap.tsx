@@ -7,22 +7,22 @@ import styles from "./roadmap.module.css";
 
 const cards = {
   green: {
-    src: "/events-roadmap/assests/green.svg",
+    src: "/curriculum-roadmap/assests/green.svg",
     title: "Data Support Analyst card",
     rect: { x: 110.857, y: 715.857, width: 198.571, height: 322.857 },
   },
   pink: {
-    src: "/events-roadmap/assests/pink.svg",
+    src: "/curriculum-roadmap/assests/pink.svg",
     title: "Business Analyst card",
     rect: { x: 110.857, y: 1084.43, width: 198.571, height: 322.857 },
   },
   brown: {
-    src: "/events-roadmap/assests/brown.svg",
+    src: "/curriculum-roadmap/assests/brown.svg",
     title: "Product Strategy Analyst card",
     rect: { x: 375.143, y: 715.857, width: 198.571, height: 322.857 },
   },
   orange: {
-    src: "/events-roadmap/assests/orange.svg",
+    src: "/curriculum-roadmap/assests/orange.svg",
     title: "Data Engineer card",
     rect: { x: 375.143, y: 1084.6, width: 198.571, height: 322.857 },
   },
@@ -73,7 +73,7 @@ export default function Roadmap() {
       ...current,
       {
         id: nextBillId.current++,
-        src: `/events-roadmap/assests/${denomination}.svg`,
+        src: `/curriculum-roadmap/assests/${denomination}.svg`,
         left: randomBetween(-8, 98),
         drift: randomBetween(-54, 54),
         tilt: randomBetween(-34, 34),
@@ -139,7 +139,7 @@ export default function Roadmap() {
             A Monopoly-themed BIA roadmap with four selectable career path cards.
           </desc>
           <image
-            href="/events-roadmap/assests/rawr.svg"
+            href="/curriculum-roadmap/assests/rawr.svg"
             width="690"
             height="1421"
           />

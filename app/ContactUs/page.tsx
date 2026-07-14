@@ -36,11 +36,9 @@ const ContactUs = () => {
                 No prerequisites, no interviews to be a member — every faculty
                 and every skill level is welcome. Three ways in:
               </p>
-              {/* TODO: add "Join our Telegram" + membership form buttons when
-                  the real links land in app/lib/links.ts */}
               <div className={styles.joinCtas}>
-                <Button href={LINKS.instagram} variant="primary" external>
-                  DM us on Instagram
+                <Button href={LINKS.telegram} variant="primary" external>
+                  Join our Telegram
                 </Button>
                 <Button href="/DAP" variant="outline">
                   Apply to DAP
@@ -67,7 +65,7 @@ const ContactUs = () => {
               </p>
               <div className={styles.joinCtas}>
                 <Button
-                  href="mailto:bia@sa.smu.edu.sg?subject=Partnership%20enquiry"
+                  href={LINKS.partnershipEmail}
                   variant="primary"
                 >
                   Email us

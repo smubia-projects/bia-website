@@ -23,7 +23,7 @@
 .lodge {
   --accent: #b5751a; /* warm ochre — sand fails text contrast on light */
 }
-.events {
+.curriculum {
   --accent: var(--teal-deep);
 }
 

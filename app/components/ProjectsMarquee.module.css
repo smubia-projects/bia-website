@@ -116,6 +116,10 @@
   letter-spacing: -0.015em;
 }
 
+.slideDescription {
+  display: none;
+}
+
 .slideMeta {
   font-family: var(--font-roboto-mono);
   font-size: 0.7rem;
@@ -145,4 +149,85 @@
 .fadeRight {
   right: 0;
   background: linear-gradient(270deg, var(--fade-r, var(--bg)), transparent);
+}
+
+/* On the homepage, mobile gives each project enough room to be inspected.
+   The following card still peeks into view as a quiet swipe cue. */
+@media (max-width: 639px) {
+  .mobileFocused .viewport {
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 1.25rem;
+  }
+
+  .mobileFocused .track {
+    gap: 1.25rem;
+    padding: 1rem 1.25rem 1.5rem;
+  }
+
+  .mobileFocused .slide {
+    width: min(calc(100vw - 3.75rem), 28rem);
+    aspect-ratio: auto;
+    display: grid;
+    grid-template-rows: auto auto;
+    background: var(--surface);
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .mobileFocused .slideMedia {
+    position: relative;
+    inset: auto;
+    aspect-ratio: 4 / 3;
+  }
+
+  .mobileFocused .slideImg {
+    object-fit: contain;
+  }
+
+  .mobileFocused .slideScrim {
+    background: linear-gradient(
+      180deg,
+      rgba(12, 33, 28, 0.02) 0%,
+      rgba(12, 33, 28, 0.2) 100%
+    );
+  }
+
+  .mobileFocused .badge {
+    top: 1rem;
+    left: 1rem;
+    font-size: 0.75rem;
+  }
+
+  .mobileFocused .slideBody {
+    position: static;
+    gap: 0.35rem;
+    padding: 1rem 1.1rem 1.1rem;
+    background: var(--surface);
+  }
+
+  .mobileFocused .slideTitle {
+    color: var(--ink);
+    font-size: 1.3rem;
+  }
+
+  .mobileFocused .slideDescription {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .mobileFocused .slideMeta {
+    margin-top: 0.25rem;
+    color: var(--ink-faint);
+    font-size: 0.75rem;
+  }
+
+  .mobileFocused .fadeLeft,
+  .mobileFocused .fadeRight {
+    width: 1.25rem;
+  }
 }

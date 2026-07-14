@@ -12,7 +12,7 @@ import { MOTION_EASE, motionTransition } from "./ui/motion";
 const MotionLink = motion.create(Link);
 
 const NAV_LINKS = [
-  { href: "/Events", label: "Events" },
+  { href: "/Curriculum", label: "Curriculum" },
   { href: "/DAP", label: "DAP" },
   // AI Lodge lives on its own site — the internal /AILodge page is kept but unlinked.
   { href: LINKS.aiLodgeInfosite, label: "AI Lodge" },
@@ -73,7 +73,9 @@ const Navbar = () => {
             </MotionLink>
           ))}
           <MotionLink
-            href="/ContactUs#join"
+            href={LINKS.telegram}
+            target="_blank"
+            rel="noopener noreferrer"
             className={styles.joinButton}
             whileHover={{
               y: -1,
@@ -151,7 +153,9 @@ const Navbar = () => {
               </MotionLink>
             ))}
             <MotionLink
-              href="/ContactUs#join"
+              href={LINKS.telegram}
+              target="_blank"
+              rel="noopener noreferrer"
               className={styles.mobileJoinButton}
               onClick={() => setMenuOpen(false)}
               initial={{ opacity: 0, y: 6 }}

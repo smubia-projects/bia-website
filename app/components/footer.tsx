@@ -13,7 +13,7 @@ const MotionLink = motion.create(Link);
 
 const EXPLORE_LINKS = [
   { href: "/", label: "Home" },
-  { href: "/Events", label: "Events" },
+  { href: "/Curriculum", label: "Curriculum" },
   { href: "/DAP", label: "Data Associate Programme" },
   { href: LINKS.aiLodgeInfosite, label: "AI Lodge" },
   { href: "/Projects", label: "Projects" },
@@ -114,9 +114,10 @@ function FooterBar() {
               >
                 <Instagram size={18} strokeWidth={1.75} />
               </motion.a>
-              {/* TODO: restore target="_blank" when LINKS.telegram is the real invite */}
               <motion.a
                 href={LINKS.telegram}
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label="Telegram"
                 className={styles.socialIcon}
                 whileHover={{

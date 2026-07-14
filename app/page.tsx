@@ -10,6 +10,7 @@ import PathwaysScroll from "./components/PathwaysScroll";
 import ProjectsMarquee from "./components/ProjectsMarquee";
 import { getProjects } from "./lib/projects";
 import HomeHeroCluster from "./components/HomeHeroCluster";
+import { LINKS } from "./lib/links";
 
 // Keep the live projects rail fresh via ISR (matches the /Projects page).
 export const revalidate = 3600;
@@ -40,7 +41,7 @@ export default async function Home() {
               flagship AI/ML programmes.
             </p>
             <div className={styles.heroCtas}>
-              <Button href="/ContactUs#join" variant="onDark">
+              <Button href={LINKS.telegram} variant="onDark" external>
                 Join us →
               </Button>
               <Button href="/Projects" variant="outlineOnDark">
@@ -57,6 +58,13 @@ export default async function Home() {
       {/* Scroll-linked programme accordion */}
       <section className={styles.section}>
         <div className={styles.sectionInner}>
+          <ScrollReveal>
+            <SectionHeading
+              eyebrow="What We Do"
+              title="Across data, machine learning & AI"
+              lede="Whether you're a complete beginner or a data buff, we've got something for you."
+            />
+          </ScrollReveal>
           <PathwaysScroll />
         </div>
       </section>
@@ -126,7 +134,7 @@ export default async function Home() {
         </div>
         {/* Full-bleed rail — breaks out of the padded section shell */}
         <div className={styles.marqueeWrap}>
-          <ProjectsMarquee projects={projects} />
+          <ProjectsMarquee projects={projects} mobileFocused />
         </div>
       </section>
 
@@ -148,7 +156,12 @@ export default async function Home() {
               Interested in data and AI?
             </h2>
             <div className={styles.joinCtas}>
-              <Button href="/ContactUs#join" variant="onDark" className="gleam">
+              <Button
+                href={LINKS.telegram}
+                variant="onDark"
+                className="gleam"
+                external
+              >
                 Join BIA →
               </Button>
             </div>

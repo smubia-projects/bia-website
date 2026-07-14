@@ -2,7 +2,7 @@
  * BIA Datathon section content.
  *
  * RETAINED / UNUSED (as of 2026-07): the Datathon section was removed from the
- * Events page in Wave 3. This data is kept on disk so the section can be
+ * Curriculum page in Wave 3. This data is kept on disk so the section can be
  * restored from git history without re-authoring the content when the event
  * returns. Stats are from the Datathon 2023 edition (see partnership prospectus).
  */

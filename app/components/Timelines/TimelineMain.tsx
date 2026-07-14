@@ -2,7 +2,7 @@
 import React from "react";
 import Timeline from "./Timeline";
 
-// Community moments only — workshops live in the track cards on /Events.
+// Community moments only — workshops live in the track cards on /Curriculum.
 const TimelineMain = () => {
   const events = [
     {

@@ -15,7 +15,7 @@ npm run lint     # Run ESLint
 
 ## Project Overview
 
-SMUBIA (Singapore Management University Business Intelligence & Analytics Club) website built with Next.js 14. The site showcases the club's mission, vision, events, and community.
+SMUBIA (Singapore Management University Business Intelligence & Analytics Club) website built with Next.js 14. The site showcases the club's mission, vision, curriculum, and community.
 
 **Key Technologies:**
 - **Framework:** Next.js 14 with App Router
@@ -60,9 +60,11 @@ app/
 │   └── [slug]/         # Project detail page (Redis fetch + carousel)
 ├── DAP/                # Flagship Data Associate Programme page (content in data.ts)
 ├── WorkWithUs/         # Sponsorship page (tiers/benefits/events in data.ts, from prospectus)
-├── WhatWeDo/           # Offerings: workshops curriculum, events timeline, datathon section
-│   └── datathonData.ts # Datathon stats/copy
-├── Datathon/page.tsx   # Redirects to /WhatWeDo#datathon (route kept for old links)
+├── Curriculum/         # Curriculum page — workshops roadmap (Monopoly-themed SVG board)
+│   └── datathonData.ts # Datathon stats/copy (retained, unused since Wave 3)
+├── Events/page.tsx     # Redirects to /Curriculum (route kept for old links)
+├── WhatWeDo/page.tsx   # Redirects to /Curriculum (route kept for old links)
+├── Datathon/page.tsx   # Redirects to /Curriculum (route kept for old links)
 ├── ContactUs/page.tsx  # Join CTAs (#join anchor), channels, address
 ├── Merchandise/page.tsx # Placeholder (not in nav)
 ├── layout.tsx          # Root layout: fonts, metadata, Navbar/Footer/LoadingScreen

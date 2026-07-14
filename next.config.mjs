@@ -7,6 +7,21 @@ const nextConfig = {
         destination: "https://ailodge.smubia.com",
         permanent: true,
       },
+      {
+        source: "/Events",
+        destination: "/Curriculum",
+        permanent: true,
+      },
+      {
+        source: "/WhatWeDo",
+        destination: "/Curriculum",
+        permanent: true,
+      },
+      {
+        source: "/Datathon",
+        destination: "/Curriculum",
+        permanent: true,
+      },
     ];
   },
   experimental: {

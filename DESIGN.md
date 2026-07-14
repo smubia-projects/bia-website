@@ -213,7 +213,7 @@ Locked in during the site-wide touch-up; hold these in all future work:
   `globals.css`. Marquees/reels exist (Projects hero, AI Lodge highlights) as
   deliberate exceptions — they must keep their static fallbacks.
 - **Programme colours are jobs, not decoration**: mint/emerald = DAP + brand,
-  sand/amber = AI Lodge, teal = Events. Where programmes appear side by side
+  sand/amber = AI Lodge, teal = Curriculum. Where programmes appear side by side
   (home pillars, Projects CTA), they get equal visual weight in their own colour.
 - **Footer** carries the oversized `SMUBIA` watermark texture (mint at 5% alpha) —
   a designed statement, keep it barely-there.
