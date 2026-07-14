@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/AILodge",
+        destination: "https://ailodge.smubia.com",
+        permanent: true,
+      },
+    ];
+  },
   experimental: {
     staleTimes: {
       dynamic: 0,

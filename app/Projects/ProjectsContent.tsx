@@ -8,7 +8,8 @@ import ProjectCard from "@/app/components/ProjectCard";
 import { Project } from "@/app/Projects/data/types";
 import { MOTION_EASE, motionTransition } from "@/app/components/ui/motion";
 
-const ALL = "All";
+const FILTERS = ["DAP", "AI Lodge"] as const;
+type ProjectFilter = (typeof FILTERS)[number] | null;
 
 interface Props {
   projects: Project[];
@@ -17,19 +18,14 @@ interface Props {
 export default function ProjectsContent({ projects }: Props) {
   const searchParams = useSearchParams();
 
-  const filters = useMemo(() => {
-    const badges = Array.from(new Set(projects.map((p) => p.badge)));
-    return [ALL, ...badges];
-  }, [projects]);
-
   // Allow deep links like /Projects?badge=DAP; ignore unknown badges
   const requestedBadge = searchParams.get("badge");
-  const initialFilter =
-    requestedBadge && filters.includes(requestedBadge) ? requestedBadge : ALL;
-  const [activeFilter, setActiveFilter] = useState<string>(initialFilter);
+  const initialFilter: ProjectFilter =
+    FILTERS.find((filter) => filter === requestedBadge) ?? null;
+  const [activeFilter, setActiveFilter] = useState<ProjectFilter>(initialFilter);
 
   const filtered = useMemo(() => {
-    if (activeFilter === ALL) return projects;
+    if (!activeFilter) return projects;
     return projects.filter((p) => p.badge === activeFilter);
   }, [activeFilter, projects]);
 
@@ -42,11 +38,12 @@ export default function ProjectsContent({ projects }: Props) {
           role="group"
           aria-label="Filter projects"
         >
-          {filters.map((f) => (
+          {FILTERS.map((f) => (
             <motion.button
               key={f}
-              onClick={() => setActiveFilter(f)}
+              onClick={() => setActiveFilter(activeFilter === f ? null : f)}
               className={styles.filterBtn}
+              aria-pressed={activeFilter === f}
               animate={{
                 color: activeFilter === f ? "var(--emerald)" : "var(--ink-soft)",
                 borderColor: activeFilter === f ? "var(--emerald)" : "var(--border)",
@@ -60,6 +57,23 @@ export default function ProjectsContent({ projects }: Props) {
               {f}
             </motion.button>
           ))}
+          {activeFilter && (
+            <motion.button
+              type="button"
+              onClick={() => setActiveFilter(null)}
+              className={`${styles.filterBtn} ${styles.clearFilterBtn}`}
+              aria-label={`Clear ${activeFilter} filter`}
+              title="Clear filter"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              whileHover={{ borderColor: "var(--emerald)", color: "var(--emerald)" }}
+              whileTap={{ scale: 0.96 }}
+              transition={motionTransition.quick}
+            >
+              × Clear
+            </motion.button>
+          )}
         </div>
       </div>
 
