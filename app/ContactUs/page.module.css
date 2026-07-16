@@ -12,118 +12,85 @@
   padding: 5rem 1.25rem 2.5rem;
 }
 
-/* ============ Join card ============ */
+/* ============ Audience cards ============ */
 
-.joinSection {
-  padding: 1rem 1.25rem 3rem;
-  scroll-margin-top: 5rem;
-}
-
-.joinCard {
-  padding: clamp(2rem, 5vw, 3.5rem);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
-  text-align: center;
-}
-
-.joinTitle {
-  font-family: var(--font-display), sans-serif;
-  font-weight: 700;
-  font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
-  color: var(--ink);
-  margin: 0 0 0.875rem;
-}
-
-.joinText {
-  max-width: 34rem;
-  margin: 0 auto 2rem;
-  font-size: 1.0625rem;
-  line-height: 1.65;
-  color: var(--ink-soft);
-}
-
-.joinCtas {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.875rem;
-}
-
-/* ============ Partner card ============ */
-
-.partnerSection {
-  padding: 1rem 1.25rem 3rem;
-  scroll-margin-top: 5rem; /* clear the fixed nav when scrolled to #partners */
-}
-
-/* ============ Channels ============ */
-
-.channelsSection {
+.cardsSection {
   padding: 1rem 1.25rem 5rem;
 }
 
-.channelGrid {
+.cardGrid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
+  align-items: stretch;
 }
 
 @media (min-width: 768px) {
-  .channelGrid {
+  .cardGrid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-.channelCard {
+.audienceCard {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
-  padding: 1.75rem;
+  gap: 1rem;
+  padding: clamp(2rem, 4vw, 3rem);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xs);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  scroll-margin-top: 5rem; /* clear the fixed nav for #join / #partners */
 }
 
-.channelTitle {
+.cardKicker {
+  align-self: flex-start;
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--radius-pill);
+  background: var(--mint-soft);
+  color: var(--emerald-strong);
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cardTitle {
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 1.125rem;
+  font-size: clamp(1.5rem, 1.3rem + 1.2vw, 2rem);
   color: var(--ink);
   margin: 0;
 }
 
-.channelText {
+.cardText {
   flex: 1;
-  font-size: 0.9375rem;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.cardCtas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+/* ============ Fallback email line ============ */
+
+.fallback {
+  margin: 3rem 0 0;
+  text-align: center;
+  font-size: 1rem;
   line-height: 1.6;
   color: var(--ink-soft);
-  margin: 0;
 }
 
-.channelLink {
+.fallbackLink {
   font-weight: 600;
-  font-size: 0.9375rem;
   color: var(--emerald);
   text-decoration: none;
-}
-
-.addressBlock {
-  margin-top: 3rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  text-align: center;
-  align-items: center;
-}
-
-.address {
-  font-size: 0.9375rem;
-  color: var(--ink-soft);
-  margin: 0;
 }

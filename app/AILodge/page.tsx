@@ -101,7 +101,9 @@ export default function AILodgePage() {
             </p>
             <div className={styles.heroActions}>
               <MotionNextLink
-                href={LINKS.aiLodgeInfosite}
+                href={LINKS.aiLodgeSignup}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={styles.ctaPrimary}
                 hover={{
                   y: -3,
@@ -385,7 +387,9 @@ export default function AILodgePage() {
               </p>
               <div className={styles.closingActions}>
                 <MotionNextLink
-                  href={LINKS.aiLodgeInfosite}
+                  href={LINKS.aiLodgeSignup}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={styles.ctaPrimary}
                   gleam
                   hover={{

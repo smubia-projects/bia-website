@@ -36,9 +36,7 @@ export default function DAPPage() {
             project — mentored from first idea to final showcase.
           </p>
           <div className={styles.heroActions}>
-            {/* joinForm routes to /ContactUs#join until the real form lands —
-                restore `external` with the Google Form URL */}
-            <Button href={LINKS.joinForm} variant="onDark">
+            <Button href={LINKS.dapTelegram} variant="onDark" external>
               Apply to the programme →
             </Button>
             <MotionAnchor
@@ -175,7 +173,12 @@ export default function DAPPage() {
               No prior machine learning experience needed — only commitment.
             </p>
             <div className={styles.closingActions}>
-              <Button href={LINKS.joinForm} variant="onDark" className="gleam">
+              <Button
+                href={LINKS.dapTelegram}
+                variant="onDark"
+                className="gleam"
+                external
+              >
                 Apply to the programme →
               </Button>
             </div>

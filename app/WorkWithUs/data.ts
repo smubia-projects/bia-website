@@ -24,30 +24,18 @@ export const STAT_FOCAL: Stat = {
   label: "Members and counting",
 };
 
-// TBC — confirm every figure below with the club before launch.
-export const STAT_MINOR: Stat[] = [
-  { value: 400, suffix: "+", label: "New members / year" }, // TBC — confirm with club
-  { value: 1000, suffix: "+", label: "Instagram" }, // TBC — confirm with club
-  { value: 2000, suffix: "+", label: "Telegram" }, // TBC — confirm with club
-  { value: 700, suffix: "+", label: "LinkedIn" }, // TBC — confirm with club
-];
-
 /* ============ Involvement types ============ */
 
 export interface Involvement {
-  /** Small mono label above the title. */
-  kicker: string;
   title: string;
   /** 2–3 short benefit-led lines. */
   body: string;
   /** A few concise benefit bullets. */
   points: string[];
-  cta: string;
 }
 
 export const INVOLVEMENT: Involvement[] = [
   {
-    kicker: "Option 01",
     title: "Partner on events",
     body: "Run a workshop or a corporate event with our community — from a hands-on skills session to a hiring showcase in front of SMU's largest analytics crowd.",
     points: [
@@ -55,10 +43,8 @@ export const INVOLVEMENT: Involvement[] = [
       "Networking Night booths & hiring",
       "Brand reach across our channels",
     ],
-    cta: "Get in touch",
   },
   {
-    kicker: "Option 02",
     title: "Sponsor or partner on our programmes",
     body: "Back a flagship programme with a real problem statement. Set a challenge for the Data Associate Programme or the AI Lodge Hackathon and see students build against it.",
     points: [
@@ -66,7 +52,6 @@ export const INVOLVEMENT: Involvement[] = [
       "Mentor DAP or AI Lodge teams",
       "First look at emerging builders",
     ],
-    cta: "Get in touch",
   },
 ];
 

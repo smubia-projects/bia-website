@@ -19,6 +19,7 @@ type MotionStyle = {
 
 type SurfaceProps = {
   as?: "div" | "article" | "li";
+  id?: string;
   children: ReactNode;
   className?: string;
   hover?: MotionStyle;
@@ -27,12 +28,14 @@ type SurfaceProps = {
 
 export function MotionSurface({
   as = "div",
+  id,
   children,
   className,
   hover = { y: -2, boxShadow: "var(--shadow-md)" },
   tap,
 }: SurfaceProps) {
   const props = {
+    id,
     className,
     whileHover: hover,
     whileTap: tap,

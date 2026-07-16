@@ -6,13 +6,8 @@ import SectionHeading from "../components/ui/SectionHeading";
 import Button from "../components/ui/Button";
 import CountUp from "../components/ui/CountUp";
 import { MotionImage, MotionSurface } from "../components/ui/MotionElements";
-import {
-  STAT_FOCAL,
-  STAT_MINOR,
-  INVOLVEMENT,
-  SHOW_PARTNERS,
-  PARTNERS,
-} from "./data";
+import { LINKS } from "../lib/links";
+import { STAT_FOCAL, INVOLVEMENT, SHOW_PARTNERS, PARTNERS } from "./data";
 
 export const metadata = {
   title: "Work with Us — SMUBIA",
@@ -38,7 +33,7 @@ export default function WorkWithUsPage() {
               lede="Reach 2,000+ analytics-minded students at SMU."
             />
             <div className={styles.heroCtas}>
-              <Button href="/ContactUs#partners" variant="primary">
+              <Button href={LINKS.partnershipEmail} variant="primary">
                 Get in touch
               </Button>
             </div>
@@ -56,41 +51,27 @@ export default function WorkWithUsPage() {
         </div>
       </section>
 
-      {/* Why partner — stat spotlight */}
+      {/* Why partner — copy left, focal stat right (mirrors the hero split) */}
       <section className={styles.sectionMuted}>
         <div className={styles.sectionInner}>
-          <ScrollReveal>
-            <SectionHeading
-              eyebrow="Why partner with us"
-              title="One of SMU's largest analytics communities"
-              align="center"
-            />
-          </ScrollReveal>
+          <div className={styles.whyGrid}>
+            <ScrollReveal>
+              <SectionHeading
+                eyebrow="Why partner with us"
+                title="One of SMU's largest analytics communities"
+              />
+            </ScrollReveal>
 
-          <ScrollReveal delay={100}>
-            {/* Stat spotlight — ONE focal number, minor stats beneath. All TBC. */}
-            <div className={styles.spotlight}>
-              <span className={styles.spotlightNum}>
-                {/* TBC — confirm with club */}
-                <CountUp value={STAT_FOCAL.value} suffix={STAT_FOCAL.suffix} />
-              </span>
-              <span className={styles.spotlightLabel}>{STAT_FOCAL.label}</span>
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal delay={150}>
-            <div className={styles.minorRow}>
-              {STAT_MINOR.map((stat) => (
-                <div key={stat.label} className={styles.minorStat}>
-                  <span className={styles.minorNum}>
-                    {/* TBC — confirm with club */}
-                    <CountUp value={stat.value} suffix={stat.suffix} />
-                  </span>
-                  <span className={styles.minorLabel}>{stat.label}</span>
-                </div>
-              ))}
-            </div>
-          </ScrollReveal>
+            <ScrollReveal delay={100}>
+              <div className={styles.spotlight}>
+                <span className={styles.spotlightNum}>
+                  {/* TBC — confirm with club */}
+                  <CountUp value={STAT_FOCAL.value} suffix={STAT_FOCAL.suffix} />
+                </span>
+                <span className={styles.spotlightLabel}>{STAT_FOCAL.label}</span>
+              </div>
+            </ScrollReveal>
+          </div>
         </div>
       </section>
 
@@ -100,7 +81,7 @@ export default function WorkWithUsPage() {
           <ScrollReveal>
             <SectionHeading
               eyebrow="Ways to work together"
-              title="Two ways to get involved"
+              title="Two ways to work with us"
             />
           </ScrollReveal>
           <div className={styles.involveGrid}>
@@ -111,7 +92,6 @@ export default function WorkWithUsPage() {
                   className={styles.involveCard}
                   hover={{ y: -3, boxShadow: "var(--shadow-md)" }}
                 >
-                  <span className={styles.involveKicker}>{item.kicker}</span>
                   <h3 className={styles.involveTitle}>{item.title}</h3>
                   <p className={styles.involveBody}>{item.body}</p>
                   <ul className={styles.involveList}>
@@ -119,11 +99,6 @@ export default function WorkWithUsPage() {
                       <li key={point}>{point}</li>
                     ))}
                   </ul>
-                  <div className={styles.involveCta}>
-                    <Button href="/ContactUs#partners" variant="outline">
-                      {item.cta} →
-                    </Button>
-                  </div>
                 </MotionSurface>
               </ScrollReveal>
             ))}
@@ -165,12 +140,8 @@ export default function WorkWithUsPage() {
         <div className={styles.contactInner}>
           <ScrollReveal>
             <h2 className={styles.contactTitle}>Let&apos;s talk partnership</h2>
-            <p className={styles.contactText}>
-              One email gets you in front of SMU&apos;s largest analytics
-              community. Tell us what you have in mind — we reply fast.
-            </p>
             <div className={styles.contactCtas}>
-              <Button href="/ContactUs#partners" variant="onDark">
+              <Button href={LINKS.partnershipEmail} variant="onDark">
                 Get in touch →
               </Button>
             </div>

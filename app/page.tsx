@@ -2,7 +2,6 @@ import { MotionNextLink } from "./components/ui/MotionElements";
 import styles from "./page.module.css";
 import ScrollReveal from "./components/ui/ScrollReveal";
 import RotatingWord from "./components/ui/RotatingWord";
-import CountUp from "./components/ui/CountUp";
 import Button from "./components/ui/Button";
 import SectionHeading from "./components/ui/SectionHeading";
 import AlumniTestimonials from "./components/carousel";
@@ -66,48 +65,6 @@ export default async function Home() {
             />
           </ScrollReveal>
           <PathwaysScroll />
-        </div>
-      </section>
-
-      {/* Stat spotlight — one focal number, minors beneath */}
-      <section className={styles.sectionMuted}>
-        <div className={styles.sectionInner}>
-          <ScrollReveal>
-            <div className={styles.spotlight}>
-              <div className={styles.spotlightFocal}>
-                <div className={styles.spotlightNumber}>
-                  {/* TBC — confirm with club */}
-                  <CountUp value={2000} suffix="+" />
-                </div>
-                <p className={styles.spotlightLabel}>
-                  members &amp; alumni across SMU
-                </p>
-              </div>
-              <div className={styles.spotlightMinors}>
-                <div className={styles.spotlightMinor}>
-                  <div className={styles.minorNumber}>
-                    {/* TBC — confirm with club */}
-                    <CountUp value={400} suffix="+" />
-                  </div>
-                  <div className={styles.minorLabel}>new members / year</div>
-                </div>
-                <div className={styles.spotlightMinor}>
-                  <div className={styles.minorNumber}>
-                    {/* TBC — confirm with club */}
-                    <CountUp value={9} />
-                  </div>
-                  <div className={styles.minorLabel}>DAP cohorts</div>
-                </div>
-                <div className={styles.spotlightMinor}>
-                  <div className={styles.minorNumber}>
-                    {/* TBC — confirm with club */}
-                    <CountUp value={5} />
-                  </div>
-                  <div className={styles.minorLabel}>faculties</div>
-                </div>
-              </div>
-            </div>
-          </ScrollReveal>
         </div>
       </section>
 

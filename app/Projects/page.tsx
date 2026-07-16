@@ -32,7 +32,9 @@ export default async function ProjectsPage() {
           </p>
           <div className={styles.ctaBandActions}>
             <MotionNextLink
-              href="/DAP"
+              href={LINKS.dapTelegram}
+              target="_blank"
+              rel="noopener noreferrer"
               className={styles.ctaBtnDap}
               gleam
               hover={{
@@ -44,7 +46,9 @@ export default async function ProjectsPage() {
               Join DAP
             </MotionNextLink>
             <MotionNextLink
-              href={LINKS.aiLodgeInfosite}
+              href={LINKS.aiLodgeSignup}
+              target="_blank"
+              rel="noopener noreferrer"
               className={styles.ctaBtnLodge}
               gleam
               hover={{

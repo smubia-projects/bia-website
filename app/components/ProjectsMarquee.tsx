@@ -23,8 +23,6 @@ interface Props {
 function MarqueeSlide({ project }: { project: Project }) {
   const image = project.coverImage || project.images.find(Boolean) || "";
   const isAILodge = project.badge === "AI Lodge";
-  const builder = project.team.map((m) => m.name).filter(Boolean)[0];
-  const tech = project.techStack.slice(0, 3).join("  ·  ");
 
   return (
     <MotionLink
@@ -60,7 +58,6 @@ function MarqueeSlide({ project }: { project: Project }) {
             }`}
           />
         )}
-        <div className={styles.slideScrim} />
       </div>
 
       <span
@@ -74,9 +71,6 @@ function MarqueeSlide({ project }: { project: Project }) {
       <div className={styles.slideBody}>
         <h3 className={styles.slideTitle}>{project.title}</h3>
         <p className={styles.slideDescription}>{project.description}</p>
-        <span className={styles.slideMeta}>
-          {[builder, tech].filter(Boolean).join("  ·  ")}
-        </span>
       </div>
     </MotionLink>
   );
