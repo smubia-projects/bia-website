@@ -47,7 +47,7 @@ export const CURRICULUM: CurriculumTopic[] = [
   },
   {
     title: "Computer Vision",
-    blurb: "Convolutional architectures that allow a machine read an image.",
+    blurb: "Convolutional architectures that allow a machine to read an image.",
   },
   {
     title: "Reinforcement Learning",
@@ -76,7 +76,7 @@ export const STRUCTURE: Movement[] = [
     label: "Co-learning",
     title: "Learn a topic by teaching it",
     blurb:
-      "The surest way to learn something is to teach it. Teams of four are assigned a topic from the curriculum. Mentors then teach them the mathematics and intuition, then they teach it back to the cohort. Week by week, all associates builds the machine learning core together.",
+      "The surest way to learn something is to teach it. Teams of four are assigned a topic from the curriculum. Mentors then teach them the mathematics and intuition, then they teach it back to the cohort. Week by week, all associates build the machine learning core together.",
     photos: [
       { src: "/images/dap/dap-colearning-1.webp", alt: "Associates presenting a co-learning session" },
       { src: "/images/dap/dap-colearning-2.webp", alt: "A co-learning team leading a topic" },
