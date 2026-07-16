@@ -5,6 +5,7 @@ import ScrollReveal from "../components/ui/ScrollReveal";
 import Button from "../components/ui/Button";
 import { LINKS } from "../lib/links";
 import { MotionAnchor, MotionNextLink } from "../components/ui/MotionElements";
+import RotatingHeadline from "../components/ui/RotatingHeadline";
 import {
   CURRICULUM,
   COHORT_PHOTO,
@@ -25,15 +26,17 @@ export default function DAPPage() {
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={styles.heroInner}>
           <p className={styles.eyebrow}>Data Associate Programme</p>
-          <h1 className={styles.heroTitle}>
-            Machine learning,
-            <br />
-            built — not memorised.
-          </h1>
+          <RotatingHeadline
+            className={styles.heroTitle}
+            headlines={[
+              "Machine Learning built practically",
+              "Co-Learning Community",
+              "Guidance from experienced mentors",
+            ]}
+          />
           <p className={styles.heroLede}>
-            SMUBIA&apos;s flagship programme. A selective cohort spends a
-            semester learning the machine learning core and shipping a real
-            project — mentored from first idea to final showcase.
+            SMUBIA&apos;s flagship programme. Data-Associates build projects in small teams, 
+            and learn through teaching Machine Learning concepts to others.
           </p>
           <div className={styles.heroActions}>
             {/* joinForm routes to /ContactUs#join until the real form lands —
@@ -59,11 +62,10 @@ export default function DAPPage() {
             <div className={styles.intro}>
               <p className={styles.eyebrow}>The programme</p>
               <p className={styles.introText}>
-                DAP is application-based. Rather than sit through lectures,
-                associates learn the way the field is practised — in small
-                teams, teaching the theory to one another and building a
-                project of their own alongside it, mentors beside them the
-                whole way.
+                Application based. Instead of sitting through lectures and tests, associates will learn through
+                building real projects while being guided by mentors. At the same time, they will further their 
+                machine learning and data analytics knowledge through weekly Co-learning sessions, where they teach
+                the curriculum to other associates.
               </p>
             </div>
           </ScrollReveal>
@@ -79,9 +81,8 @@ export default function DAPPage() {
               <p className={styles.eyebrow}>AY 26/27 curriculum</p>
               <h2 className={styles.sectionTitle}>The machine learning core</h2>
               <p className={styles.sectionLede}>
-                Nine topics across one semester — each taken deep by a team and
-                taught back to the cohort. Together they map the essentials of
-                modern machine learning.
+                Nine topics across one semester. No pre-requisite knowledge required.
+                Together they map the essentials of modern machine learning.
               </p>
             </div>
           </ScrollReveal>
@@ -131,7 +132,7 @@ export default function DAPPage() {
             <div className={styles.curriculumHead}>
               <p className={styles.eyebrow}>How it runs</p>
               <h2 className={styles.sectionTitle}>
-                Two things happen every week
+                Weekly Co-Learning Sessions and Guided Projects
               </h2>
             </div>
           </ScrollReveal>
@@ -170,15 +171,16 @@ export default function DAPPage() {
         <div className={styles.closingGlow} aria-hidden="true" />
         <div className={styles.closingInner}>
           <ScrollReveal>
-            <h2 className={styles.closingTitle}>Applications open each semester.</h2>
+            <h2 className={styles.closingTitle}>Applications only open once a year</h2>
             <p className={styles.closingText}>
-              No prior machine learning experience needed — only commitment.
+              No prior machine learning experience needed — only your full commitment.
             </p>
             <div className={styles.closingActions}>
               <Button href={LINKS.joinForm} variant="onDark" className="gleam">
                 Apply to the programme →
               </Button>
             </div>
+            <br/>
             <MotionNextLink
               href="/Projects?badge=DAP"
               className={styles.closingLink}
