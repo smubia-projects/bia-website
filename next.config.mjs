@@ -18,11 +18,6 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: "/dap",
-        destination: "/DAP",
-        permanent: true,
-      },
-      {
         source: "/Events",
         destination: "/Curriculum",
         permanent: true,
