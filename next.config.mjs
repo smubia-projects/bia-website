@@ -36,10 +36,15 @@ const nextConfig = {
   },
   experimental: {
     staleTimes: {
-      dynamic: 0,
+      // Client-side router cache TTL (seconds). Kept long to reuse RSC
+      // payloads across in-session navigations and cut function invocations.
+      dynamic: 1209600,
     },
   },
   images: {
+    // Cache optimized image variants for 30 days so the same source image
+    // is not re-transformed (and re-billed) after a short expiry window.
+    minimumCacheTTL: 2592000,
     remotePatterns: [
       {
         protocol: "https",

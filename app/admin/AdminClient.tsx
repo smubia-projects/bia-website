@@ -533,6 +533,7 @@ export default function AdminClient({ initialProjects }: Props) {
                         fill
                         className={styles.projectRowImg}
                         sizes="64px"
+                        unoptimized
                       />
                     ) : (
                       <div className={styles.projectRowPlaceholder}>
@@ -738,6 +739,7 @@ export default function AdminClient({ initialProjects }: Props) {
                           fill
                           className={styles.coverImg}
                           sizes="400px"
+                          unoptimized
                         />
                       )}
                     </div>
@@ -804,6 +806,7 @@ export default function AdminClient({ initialProjects }: Props) {
                               fill
                               className={styles.carouselThumbImg}
                               sizes="200px"
+                              unoptimized
                             />
                           ) : (
                             // eslint-disable-next-line @next/next/no-img-element
