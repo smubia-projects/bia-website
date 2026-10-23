@@ -7,7 +7,7 @@ import SectionHeading from "./components/ui/SectionHeading";
 import AlumniTestimonials from "./components/carousel";
 import PathwaysScroll from "./components/PathwaysScroll";
 import ProjectsMarquee from "./components/ProjectsMarquee";
-import { getProjects } from "./lib/projects";
+import { getPublicProjects } from "./lib/projects";
 import HomeHeroCluster from "./components/HomeHeroCluster";
 import { LINKS } from "./lib/links";
 
@@ -15,7 +15,7 @@ import { LINKS } from "./lib/links";
 export const revalidate = 3600;
 
 export default async function Home() {
-  const projects = (await getProjects()).filter((p) => !p.hidden);
+  const projects = (await getPublicProjects()).filter((p) => !p.hidden);
 
   return (
     <main>

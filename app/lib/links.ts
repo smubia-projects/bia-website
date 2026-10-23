@@ -10,8 +10,7 @@ export const LINKS = {
   // while the internal /AILodge page is kept but unlinked.
   aiLodgeInfosite: "https://ailodge.smubia.com",
   // Sign-up survey behind every "Join AI Lodge" CTA (distinct from the infosite).
-  aiLodgeSignup:
-    "https://smu.opine.asia/survey?id=d9968e73-86c2-42e2-a2b9-fa7ef7289a3c",
+  aiLodgeSignup: "https://forms.gle/ZU3dx3i3fioxkvjv8",
   instagram: "https://www.instagram.com/smu.bia/",
   linkedin: "https://www.linkedin.com/company/13402601/",
   email: "mailto:bia@sa.smu.edu.sg",

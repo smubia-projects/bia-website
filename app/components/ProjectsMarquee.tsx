@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import { Pause, Play } from "lucide-react";
 import styles from "./ProjectsMarquee.module.css";
 import { Project } from "@/app/Projects/data/types";
-import { MOTION_EASE } from "./ui/motion";
-
-const MotionLink = motion.create(Link);
-const MotionImage = motion.create(Image);
 
 interface Props {
   projects: Project[];
@@ -20,36 +17,38 @@ interface Props {
   mobileFocused?: boolean;
 }
 
-function MarqueeSlide({ project }: { project: Project }) {
+/** Delay before autoscroll resumes after the user lets go of the rail. */
+const RESUME_AFTER_MS = 2000;
+
+// Hover/tap motion lives in CSS: the rail renders three copies of every card,
+// and a framer-motion component per card made hydration heavy on phones.
+function MarqueeSlide({
+  project,
+  duplicate,
+}: {
+  project: Project;
+  /** Loop copies are hidden from assistive tech and the tab order. */
+  duplicate: boolean;
+}) {
   const image = project.coverImage || project.images.find(Boolean) || "";
   const isAILodge = project.badge === "AI Lodge";
 
   return (
-    <MotionLink
+    <Link
       href={`/Projects/${project.slug}`}
       className={styles.slide}
       aria-label={`${project.title} — ${project.badge}`}
-      initial="rest"
-      animate="rest"
-      whileHover="hover"
-      whileFocus="hover"
-      whileTap={{ scale: 0.99 }}
-      variants={{
-        rest: { y: 0, boxShadow: "var(--shadow-md)" },
-        hover: { y: -5, boxShadow: "var(--shadow-lg)" },
-      }}
-      transition={{ duration: 0.35, ease: MOTION_EASE }}
+      aria-hidden={duplicate || undefined}
+      tabIndex={duplicate ? -1 : undefined}
     >
       <div className={styles.slideMedia}>
         {image ? (
-          <MotionImage
+          <Image
             src={image}
-            alt={project.title}
+            alt=""
             fill
             className={styles.slideImg}
-            sizes="440px"
-            variants={{ rest: { scale: 1 }, hover: { scale: 1.05 } }}
-            transition={{ duration: 0.55, ease: MOTION_EASE }}
+            sizes="(max-width: 639px) 90vw, 340px"
           />
         ) : (
           <div
@@ -72,7 +71,7 @@ function MarqueeSlide({ project }: { project: Project }) {
         <h3 className={styles.slideTitle}>{project.title}</h3>
         <p className={styles.slideDescription}>{project.description}</p>
       </div>
-    </MotionLink>
+    </Link>
   );
 }
 
@@ -88,6 +87,8 @@ export default function ProjectsMarquee({
 }: Props) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
+  // WCAG 2.2.2: moving content needs a way to pause it
+  const [userPaused, setUserPaused] = useState(false);
 
   // Repeat the list enough to comfortably exceed the viewport, then render three
   // copies. We start scrolled into the middle copy and wrap by one copy-width in
@@ -99,6 +100,14 @@ export default function ProjectsMarquee({
       : 0;
   const base = Array.from({ length: reps }, () => projects).flat();
   const track = base.length > 0 ? [...base, ...base, ...base] : [];
+  const autoscroll = !reduceMotion && !userPaused;
+  const autoscrollRef = useRef(autoscroll);
+  const syncRef = useRef<() => void>();
+
+  useEffect(() => {
+    autoscrollRef.current = autoscroll;
+    syncRef.current?.();
+  }, [autoscroll]);
 
   useEffect(() => {
     const vp = viewportRef.current;
@@ -111,7 +120,10 @@ export default function ProjectsMarquee({
     let copyWidth = 0;
     let frame = 0;
     let lastTimestamp: number | null = null;
-    let paused = false;
+    let grabbed = false;
+    let focused = false;
+    let onScreen = false;
+    let resumeTimer = 0;
 
     const wrapIntoMiddleCopy = () => {
       if (!copyWidth) return;
@@ -132,48 +144,102 @@ export default function ProjectsMarquee({
     };
 
     const tick = (timestamp: number) => {
-      if (!paused && !document.hidden) {
-        if (lastTimestamp !== null) {
-          const elapsedSeconds = Math.min(timestamp - lastTimestamp, 64) / 1000;
-          vp.scrollLeft += SPEED * elapsedSeconds;
-          wrapIntoMiddleCopy();
-        }
-        lastTimestamp = timestamp;
-      } else {
-        lastTimestamp = null;
+      if (lastTimestamp !== null) {
+        const elapsedSeconds = Math.min(timestamp - lastTimestamp, 64) / 1000;
+        vp.scrollLeft += SPEED * elapsedSeconds;
+        wrapIntoMiddleCopy();
       }
-
+      lastTimestamp = timestamp;
       frame = window.requestAnimationFrame(tick);
     };
 
+    // Only run the frame loop while it can actually be seen and nobody is
+    // holding or keyboard-browsing the rail. Mobile scroll-snap is switched
+    // off while it runs, otherwise the browser re-snaps every frame and the
+    // programmatic scroll fights it (stutter / stalls on phones).
+    const sync = () => {
+      const shouldRun =
+        autoscrollRef.current && onScreen && !grabbed && !focused && !document.hidden;
+      vp.dataset.autoscroll = shouldRun ? "on" : "off";
+      if (shouldRun && !frame) {
+        lastTimestamp = null;
+        frame = window.requestAnimationFrame(tick);
+      } else if (!shouldRun && frame) {
+        window.cancelAnimationFrame(frame);
+        frame = 0;
+      }
+    };
+
     measure();
-    if (!reduceMotion) frame = window.requestAnimationFrame(tick);
+    syncRef.current = sync;
 
-    // Only pause while the user is actively grabbing/dragging the rail — never
-    // on plain hover — so it always visibly autoscrolls.
-    const pause = () => {
-      paused = true;
+    const grab = () => {
+      window.clearTimeout(resumeTimer);
+      resumeTimer = 0;
+      grabbed = true;
+      sync();
     };
-    const resume = () => {
-      wrapIntoMiddleCopy();
-      paused = false;
-      lastTimestamp = null;
+    const release = () => {
+      if (!grabbed) return;
+      window.clearTimeout(resumeTimer);
+      // Let touch momentum and snapping settle before taking over again
+      resumeTimer = window.setTimeout(() => {
+        wrapIntoMiddleCopy();
+        grabbed = false;
+        sync();
+      }, RESUME_AFTER_MS);
     };
+    const onScroll = () => {
+      if (grabbed && resumeTimer) release();
+    };
+    const onFocusIn = () => {
+      focused = true;
+      sync();
+    };
+    const onFocusOut = (event: FocusEvent) => {
+      if (vp.contains(event.relatedTarget as Node | null)) return;
+      focused = false;
+      sync();
+    };
+
     const resizeObserver = new ResizeObserver(measure);
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      sync();
+    });
 
-    vp.addEventListener("pointerdown", pause);
-    window.addEventListener("pointerup", resume);
+    vp.addEventListener("pointerdown", grab);
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
+    vp.addEventListener("scroll", onScroll, { passive: true });
+    vp.addEventListener("focusin", onFocusIn);
+    vp.addEventListener("focusout", onFocusOut);
+    document.addEventListener("visibilitychange", sync);
     resizeObserver.observe(vp);
+    visibilityObserver.observe(vp);
 
     return () => {
+      syncRef.current = undefined;
       window.cancelAnimationFrame(frame);
-      vp.removeEventListener("pointerdown", pause);
-      window.removeEventListener("pointerup", resume);
+      window.clearTimeout(resumeTimer);
+      vp.removeEventListener("pointerdown", grab);
+      window.removeEventListener("pointerup", release);
+      window.removeEventListener("pointercancel", release);
+      vp.removeEventListener("scroll", onScroll);
+      vp.removeEventListener("focusin", onFocusIn);
+      vp.removeEventListener("focusout", onFocusOut);
+      document.removeEventListener("visibilitychange", sync);
       resizeObserver.disconnect();
+      visibilityObserver.disconnect();
     };
-  }, [base.length, mobileFocused, reduceMotion]);
+  }, [base.length, mobileFocused]);
 
   if (track.length === 0) return null;
+
+  // Only the first run of real projects in the middle copy is exposed to
+  // screen readers and keyboard users; everything else is a visual loop copy.
+  const firstAccessible = base.length;
+  const lastAccessible = base.length + projects.length;
 
   return (
     <div
@@ -190,12 +256,32 @@ export default function ProjectsMarquee({
       <div className={styles.viewport} ref={viewportRef}>
         <div className={styles.track}>
           {track.map((project, i) => (
-            <MarqueeSlide key={`${project.slug}-${i}`} project={project} />
+            <MarqueeSlide
+              key={`${project.slug}-${i}`}
+              project={project}
+              duplicate={i < firstAccessible || i >= lastAccessible}
+            />
           ))}
         </div>
       </div>
       <div className={styles.fadeLeft} aria-hidden="true" />
       <div className={styles.fadeRight} aria-hidden="true" />
+      {!reduceMotion && (
+        <button
+          type="button"
+          className={styles.pauseButton}
+          onClick={() => setUserPaused((paused) => !paused)}
+          aria-label={
+            userPaused ? "Resume project scrolling" : "Pause project scrolling"
+          }
+        >
+          {userPaused ? (
+            <Play size={16} strokeWidth={2} aria-hidden="true" />
+          ) : (
+            <Pause size={16} strokeWidth={2} aria-hidden="true" />
+          )}
+        </button>
+      )}
     </div>
   );
 }

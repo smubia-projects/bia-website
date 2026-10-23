@@ -62,8 +62,9 @@ const Navbar = () => {
               className={`${styles.navLink} ${
                 isActive(href) ? styles.navLinkActive : ""
               }`}
+              aria-current={isActive(href) ? "page" : undefined}
               whileHover={{
-                color: "var(--emerald)",
+                color: "var(--emerald-strong)",
                 backgroundColor: "rgba(125, 215, 194, 0.12)",
               }}
               whileTap={{ scale: 0.97 }}
@@ -93,6 +94,7 @@ const Navbar = () => {
           className={styles.menuToggle}
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
+          aria-controls="mobile-navigation"
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           whileHover={{ borderColor: "var(--emerald)" }}
           whileTap={{ scale: 0.94 }}
@@ -120,6 +122,7 @@ const Navbar = () => {
       <AnimatePresence>
         {menuOpen && (
           <motion.nav
+            id="mobile-navigation"
             className={styles.mobilePanel}
             aria-label="Mobile navigation"
             initial={{ opacity: 0, height: 0, y: -8 }}
@@ -134,6 +137,7 @@ const Navbar = () => {
                 className={`${styles.mobileLink} ${
                   isActive(href) ? styles.mobileLinkActive : ""
                 }`}
+                aria-current={isActive(href) ? "page" : undefined}
                 onClick={() => setMenuOpen(false)}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -144,7 +148,7 @@ const Navbar = () => {
                 }}
                 whileHover={{
                   x: 4,
-                  color: "var(--emerald)",
+                  color: "var(--emerald-strong)",
                   backgroundColor: "rgba(125, 215, 194, 0.12)",
                 }}
                 whileTap={{ scale: 0.98 }}

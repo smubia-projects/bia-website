@@ -1,19 +1,13 @@
-"use client";
-
-import { motion } from "framer-motion";
-import { motionTransition } from "./components/ui/motion";
-
+/*
+ * Route-change fade. A CSS animation (not framer-motion) so it runs on the
+ * compositor from the very first paint: the server HTML is never stuck at
+ * opacity 0 waiting for JS to hydrate, and no transform is left on the wrapper
+ * (a transformed ancestor breaks `position: fixed` descendants like modals).
+ */
 export default function Template({ children }: { children: React.ReactNode }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={motionTransition.standard}
-      style={{ flex: 1, display: "flex", flexDirection: "column" }}
-    >
+    <div id="main-content" tabIndex={-1} className="page-enter">
       {children}
-    </motion.div>
+    </div>
   );
 }
-

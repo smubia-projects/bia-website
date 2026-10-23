@@ -51,8 +51,10 @@
   text-decoration: none;
 }
 
+/* emerald-strong: plain emerald drops to ~3.6:1 where the glass bar
+   passes over the dark pine heroes */
 .navLinkActive {
-  color: var(--emerald);
+  color: var(--emerald-strong);
   font-weight: 600;
 }
 
@@ -108,7 +110,7 @@
 }
 
 .mobileLinkActive {
-  color: var(--emerald);
+  color: var(--emerald-strong);
   font-weight: 600;
 }
 

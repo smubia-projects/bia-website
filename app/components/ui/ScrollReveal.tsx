@@ -8,15 +8,22 @@ interface ScrollRevealProps {
   threshold?: number;
   /** Stagger delay in ms applied once the element enters the viewport */
   delay?: number;
+  /** Render as a list item so it can sit directly inside <ol>/<ul> */
+  as?: "div" | "li";
+  className?: string;
 }
 
 export default function ScrollReveal({
   children,
   threshold = 0.1,
   delay = 0,
+  as = "div",
+  className,
 }: ScrollRevealProps) {
+  const Component = as === "li" ? motion.li : motion.div;
   return (
-    <motion.div
+    <Component
+      className={className}
       variants={fadeRise}
       initial="hidden"
       whileInView="visible"
@@ -27,6 +34,6 @@ export default function ScrollReveal({
       }}
     >
       {children}
-    </motion.div>
+    </Component>
   );
 }

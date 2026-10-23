@@ -56,6 +56,7 @@ function activateWithKeyboard(event: React.KeyboardEvent, action: () => void) {
 export default function Roadmap() {
   const reduceMotion = useReducedMotion();
   const [activeCard, setActiveCard] = useState<CardName | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [bills, setBills] = useState<Bill[]>([]);
   const rainTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const rainEndTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -73,7 +74,7 @@ export default function Roadmap() {
       ...current,
       {
         id: nextBillId.current++,
-        src: `/curriculum-roadmap/assests/${denomination}.svg`,
+        src: `/curriculum-roadmap/assests/${denomination}.webp`,
         left: randomBetween(-8, 98),
         drift: randomBetween(-54, 54),
         tilt: randomBetween(-34, 34),
@@ -111,16 +112,22 @@ export default function Roadmap() {
       if (event.key === "Escape") setActiveCard(null);
     };
 
+    // Move focus into the dialog and hand it back to the hotspot on close
+    const opener = document.activeElement as HTMLElement | SVGElement | null;
+    closeButtonRef.current?.focus();
+
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", closeOnEscape);
     return () => {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", closeOnEscape);
+      opener?.focus();
     };
   }, [activeCard]);
 
   return (
     <main className={styles.stage}>
+      <h1 className={styles.srOnly}>Curriculum: your journey with BIA</h1>
       <motion.section
         className={styles.frame}
         aria-label="BIA roadmap"
@@ -128,18 +135,21 @@ export default function Roadmap() {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.72, ease: MOTION_EASE }}
       >
+        {/* role="group" (not "img"): an img role would hide the hotspot buttons
+            from assistive tech. */}
         <svg
           className={styles.board}
           viewBox="0 0 690 1421"
-          role="img"
-          aria-labelledby="roadmap-title roadmap-desc"
+          role="group"
+          aria-labelledby="roadmap-title"
+          aria-describedby="roadmap-desc"
         >
           <title id="roadmap-title">Your Journey with BIA</title>
           <desc id="roadmap-desc">
             A Monopoly-themed BIA roadmap with four selectable career path cards.
           </desc>
           <image
-            href="/curriculum-roadmap/assests/rawr.svg"
+            href="/curriculum-roadmap/assests/rawr.webp"
             width="690"
             height="1421"
           />
@@ -232,6 +242,7 @@ export default function Roadmap() {
               {cards[activeCard].title}
             </h2>
             <motion.button
+              ref={closeButtonRef}
               type="button"
               className={styles.modalButton}
               aria-label={`Close ${cards[activeCard].title}`}

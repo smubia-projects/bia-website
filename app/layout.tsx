@@ -41,6 +41,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${display.variable} ${inter.variable} ${mono.variable}`}>
         <MotionProvider>
+          <a href="#main-content" className="skip-link">
+            Skip to content
+          </a>
           <LoadingScreen />
           <Navbar />
           {children}

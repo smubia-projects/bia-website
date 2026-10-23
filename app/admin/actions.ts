@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { createHmac, timingSafeEqual } from "crypto";
 import {
@@ -9,6 +9,7 @@ import {
   saveProject,
   deleteProjectBySlug,
   uploadImage,
+  PROJECTS_TAG,
 } from "@/app/lib/projects";
 import { Project, TeamMember, HighlightCard } from "@/app/Projects/data/types";
 
@@ -160,6 +161,9 @@ export async function addProject(
     };
 
     await saveProject(project);
+    // The tag refreshes every cached public read (home rail, /Projects, details)
+    revalidateTag(PROJECTS_TAG);
+    revalidatePath("/");
     revalidatePath("/Projects");
     revalidatePath("/Projects/" + slug);
     return { success: true };
@@ -209,6 +213,9 @@ export async function updateProject(
     };
 
     await saveProject(updated);
+    // The tag refreshes every cached public read (home rail, /Projects, details)
+    revalidateTag(PROJECTS_TAG);
+    revalidatePath("/");
     revalidatePath("/Projects");
     revalidatePath("/Projects/" + slug);
     return { success: true };
@@ -230,6 +237,9 @@ export async function toggleProjectVisibility(
     if (!existing) return { success: false, error: "Project not found" };
 
     await saveProject({ ...existing, hidden });
+    // The tag refreshes every cached public read (home rail, /Projects, details)
+    revalidateTag(PROJECTS_TAG);
+    revalidatePath("/");
     revalidatePath("/Projects");
     revalidatePath("/Projects/" + slug);
     return { success: true };
@@ -250,6 +260,9 @@ export async function deleteProject(
     if (!removed) {
       return { success: false, error: "Project not found" };
     }
+    // The tag refreshes every cached public read (home rail, /Projects, details)
+    revalidateTag(PROJECTS_TAG);
+    revalidatePath("/");
     revalidatePath("/Projects");
     return { success: true };
   } catch (e) {

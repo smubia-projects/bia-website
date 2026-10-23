@@ -41,7 +41,7 @@ function FooterBar() {
           </div>
 
           <div className={styles.column}>
-            <h3 className={styles.columnTitle}>Explore</h3>
+            <h2 className={styles.columnTitle}>Explore</h2>
             <ul className={styles.linkList}>
               {EXPLORE_LINKS.map(({ href, label }) => (
                 <li key={href}>
@@ -59,7 +59,7 @@ function FooterBar() {
           </div>
 
           <div className={styles.column}>
-            <h3 className={styles.columnTitle}>Find us</h3>
+            <h2 className={styles.columnTitle}>Find us</h2>
             <p className={styles.address}>
               Singapore Management University
               <br />
@@ -80,7 +80,7 @@ function FooterBar() {
           </div>
 
           <div className={styles.column}>
-            <h3 className={styles.columnTitle}>Connect</h3>
+            <h2 className={styles.columnTitle}>Connect</h2>
             <div className={styles.socialRow}>
               <motion.a
                 href={LINKS.linkedin}

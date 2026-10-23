@@ -32,6 +32,7 @@ export default function ProjectsContent({ projects }: Props) {
   return (
     <>
       {/* The hero owns the page heading; filters lead directly into the grid. */}
+      <h2 className="sr-only">All projects</h2>
       <div className={styles.gridIntro}>
         <div
           className={styles.filterBar}
@@ -79,7 +80,9 @@ export default function ProjectsContent({ projects }: Props) {
 
       {/* Grid */}
       <motion.div className={styles.grid} layout>
-        <AnimatePresence mode="popLayout">
+        {/* initial={false}: server-rendered cards start visible instead of
+            waiting for hydration to fade in (blank grid on slow phones). */}
+        <AnimatePresence mode="popLayout" initial={false}>
           {filtered.map((project, index) => (
             <motion.div
               key={project.slug}
@@ -89,7 +92,7 @@ export default function ProjectsContent({ projects }: Props) {
               exit={{ opacity: 0, y: -10, scale: 0.98 }}
               transition={{
                 duration: 0.3,
-                delay: index * 0.035,
+                delay: Math.min(index, 8) * 0.035,
                 ease: MOTION_EASE,
               }}
             >

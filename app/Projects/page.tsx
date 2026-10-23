@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import styles from "./Projects.module.css";
 import { LINKS } from "@/app/lib/links";
-import { getProjects } from "@/app/lib/projects";
+import { getPublicProjects } from "@/app/lib/projects";
 import ProjectsContent from "./ProjectsContent";
 import ProjectsHero from "./ProjectsHero";
 import { MotionNextLink } from "@/app/components/ui/MotionElements";
@@ -9,7 +9,7 @@ import { MotionNextLink } from "@/app/components/ui/MotionElements";
 export const revalidate = 3600;
 
 export default async function ProjectsPage() {
-  const projects = (await getProjects()).filter((p) => !p.hidden);
+  const projects = (await getPublicProjects()).filter((p) => !p.hidden);
 
   return (
     <main className={styles.page}>

@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
 import styles from "./ProjectDetail.module.css";
-import { getProject, getProjects } from "@/app/lib/projects";
+import { getPublicProject, getPublicProjects } from "@/app/lib/projects";
 import ProjectDetailContent from "./ProjectDetailContent";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  const projects = await getProjects();
+  const projects = await getPublicProjects();
   return projects.map((p) => ({ slug: p.slug }));
 }
 
@@ -17,7 +17,7 @@ interface Props {
 
 export default async function ProjectDetailPage({ params }: Props) {
   const { slug } = params;
-  const project = await getProject(slug);
+  const project = await getPublicProject(slug);
 
   if (!project) notFound();
 

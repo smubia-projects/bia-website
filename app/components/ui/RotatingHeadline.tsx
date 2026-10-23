@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { MOTION_EASE } from "./motion";
 
 const ROTATE_MS = 10000;
@@ -15,20 +15,22 @@ export default function RotatingHeadline({
   className,
 }: RotatingHeadlineProps) {
   const [index, setIndex] = useState(0);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    if (headlines.length < 2) return;
+    if (headlines.length < 2 || reduceMotion) return;
     const interval = setInterval(() => {
       setIndex((i) => (i + 1) % headlines.length);
     }, ROTATE_MS);
 
     return () => clearInterval(interval);
-  }, [headlines.length]);
+  }, [headlines.length, reduceMotion]);
 
   return (
     // inline-grid stacks every headline in the same cell so the box keeps the
-    // height of the tallest line and nothing shifts as they swap
-    <h1 className={className} style={{ display: "grid" }} aria-live="polite">
+    // height of the tallest line and nothing shifts as they swap. No live
+    // region: re-announcing the page heading every 10s interrupts readers.
+    <h1 className={className} style={{ display: "grid" }}>
       <AnimatePresence mode="wait" initial={false}>
         <motion.span
           key={index}

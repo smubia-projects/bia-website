@@ -87,14 +87,17 @@ export default function DAPPage() {
 
           <ol className={styles.curriculum}>
             {CURRICULUM.map((topic, i) => (
-              <ScrollReveal key={topic.title} delay={Math.min(i, 4) * 40}>
-                <li className={styles.curriculumRow}>
-                  <span className={styles.curriculumNum}>
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className={styles.curriculumTitle}>{topic.title}</h3>
-                  <p className={styles.curriculumBlurb}>{topic.blurb}</p>
-                </li>
+              <ScrollReveal
+                key={topic.title}
+                as="li"
+                className={styles.curriculumRow}
+                delay={Math.min(i, 4) * 40}
+              >
+                <span className={styles.curriculumNum}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h3 className={styles.curriculumTitle}>{topic.title}</h3>
+                <p className={styles.curriculumBlurb}>{topic.blurb}</p>
               </ScrollReveal>
             ))}
           </ol>

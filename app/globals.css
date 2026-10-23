@@ -140,6 +140,70 @@ body {
   );
 }
 
+/* Route-change fade (see app/template.tsx) */
+.page-enter {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  animation: page-enter 0.3s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+.page-enter:focus {
+  outline: none;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The splash is server-rendered, so if JS is slow to arrive (weak mobile
+   connections) this CSS-only fade still reveals the page after 1.2s. */
+.splash-failsafe {
+  animation: splash-out 0.3s 1.2s forwards;
+}
+
+@keyframes splash-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* Gentle bob for decorative mascots — CSS so it stays off the main thread */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+/* Keyboard "skip to content" link, visible only when focused */
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 2000;
+  padding: 0.625rem 1rem;
+  border-radius: var(--radius-pill);
+  background: var(--pine-deep);
+  color: var(--pine-text);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

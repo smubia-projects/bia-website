@@ -35,6 +35,19 @@
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-md);
+  transition:
+    transform 0.35s cubic-bezier(0.65, 0, 0.35, 1),
+    box-shadow 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.slide:hover,
+.slide:focus-visible {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.slide:active {
+  transform: translateY(-5px) scale(0.99);
 }
 
 .slideMedia {
@@ -46,6 +59,37 @@
 
 .slideImg {
   object-fit: cover;
+  transition: transform 0.55s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.slide:hover .slideImg,
+.slide:focus-visible .slideImg {
+  transform: scale(1.05);
+}
+
+/* Pause/resume control for the autoscroll (WCAG 2.2.2) */
+.pauseButton {
+  position: absolute;
+  right: clamp(1.5rem, 5vw, 4rem);
+  bottom: -1.75rem;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.pauseButton:hover {
+  border-color: var(--emerald);
+  color: var(--emerald);
 }
 
 .slidePlaceholder {
@@ -138,6 +182,16 @@
   .mobileFocused .viewport {
     scroll-snap-type: x proximity;
     scroll-padding-inline: 1.25rem;
+  }
+
+  /* Snapping fights the programmatic autoscroll; it is only on while the
+     user is driving the rail (see ProjectsMarquee.tsx). */
+  .mobileFocused .viewport[data-autoscroll="on"] {
+    scroll-snap-type: none;
+  }
+
+  .mobileFocused .pauseButton {
+    right: 1.25rem;
   }
 
   .mobileFocused .track {

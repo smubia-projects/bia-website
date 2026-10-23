@@ -64,19 +64,15 @@ export default function HomeHeroCluster() {
           className={styles.clusterImg}
         />
       </motion.figure>
-      <motion.div
-        className={styles.clusterMascot}
-        animate={{ y: [0, -12, 0] }}
-        transition={{ duration: 6, ease: "easeInOut", repeat: Infinity }}
-      >
+      <div className={styles.clusterMascot}>
         <Image
-          src="/images/bia-cat-mascot.svg"
+          src="/images/bia-cat-mascot.webp"
           alt=""
           aria-hidden="true"
           width={160}
           height={160}
         />
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
