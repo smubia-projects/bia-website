@@ -49,16 +49,18 @@ app/
 │   ├── Wordcard.tsx + CustomModal.tsx  # Image card with modal details (workshops)
 │   └── Timelines/      # TimelineMain (event data) + Timeline (Swiper cards)
 ├── lib/
-│   ├── auth.ts         # HMAC cookie auth (ADMIN_PASSWORD env var)
+│   ├── cms/            # CMS service layer (projects, cohorts, newsletter, people, telegram, uploads)
+│   ├── db/             # Drizzle schema + Neon/PGlite client
 │   ├── links.ts        # Single source of truth for all club URLs/CTAs
-│   └── projects.ts     # Read/write project data via Upstash Redis + image upload to Vercel Blob
-├── admin/              # Password-protected admin panel (stays dark-themed, style-isolated)
+│   └── projects.ts     # Re-exports the public project reads from lib/cms
+├── admin/              # CMS: (cms)/ route group behind Google sign-in, login/, actions.ts
+├── api/                # auth (Auth.js), mcp (Claude tools), cron/publish
 ├── Projects/
 │   ├── data/types.ts   # Project & TeamMember interfaces
-│   ├── page.tsx        # Server Component — fetches from Redis (ISR 1h), Suspense for search params
-│   ├── ProjectsContent.tsx  # Client component — filter/grid; supports /Projects?badge=DAP deep links
-│   └── [slug]/         # Project detail page (Redis fetch + carousel)
-├── DAP/                # Flagship Data Associate Programme page (content in data.ts)
+│   ├── page.tsx        # All projects (ISR 1h) + ProjectsExplorer (search, facets, wall/cards)
+│   ├── ai-lodge/       # AI Lodge yearbook (current + past semesters)
+│   └── [slug]/         # Project detail page
+├── DAP/                # DAP recruitment page (data.ts) + newsletter/ + projects/ (yearbook)
 ├── WorkWithUs/         # Sponsorship page (tiers/benefits/events in data.ts, from prospectus)
 ├── Curriculum/         # Curriculum page — workshops roadmap (Monopoly-themed SVG board)
 │   └── datathonData.ts # Datathon stats/copy (retained, unused since Wave 3)
@@ -135,42 +137,71 @@ The home page (`app/page.tsx`) demonstrates a custom `ScrollReveal` component us
 - Image domains configured in `next.config.mjs` - add new domains there if adding remote image sources
 - Use Next.js `Image` component with `width={0} height={0} sizes="100vw"` for responsive remote images
 
-## Project Data & Admin Panel
+## Content Data & CMS (`/admin`)
 
-### How Project Data Works
-- Project data is stored in Upstash Redis as per-project keys:
-  - `projects:index` — a Redis list of all project slugs (maintains order)
-  - `project:{slug}` — a JSON object for each individual project
-- Images/PDFs remain on Vercel Blob (CDN) — Redis stores only the URLs
-- The `/Projects` page fetches all projects from Redis at render time with ISR (revalidates every 1 hour)
-- The `/Projects/[slug]` detail page fetches a single project (1 Redis GET)
-- When projects are added/edited/deleted via the admin panel, `revalidatePath()` busts the cache immediately
-- The `Project` and `TeamMember` interfaces are defined in `app/Projects/data/types.ts`
+### Where content lives
+- **Neon Postgres** (Drizzle ORM) holds all CMS content: `projects`, `cohorts` (AI Lodge
+  semesters + DAP cohorts), `tracks`, `people` (CMS access + roles), `sessions` (DAP
+  co-learning schedule) and `issues` ("This week in DAP"). Schema: `app/lib/db/schema.ts`;
+  SQL migrations in `drizzle/` (generate with `npm run db:generate` after editing the schema).
+- **Local development needs no database account**: without `DATABASE_URL`, `app/lib/db`
+  uses an embedded PGlite database in `.data/pglite`, migrated on first use. It is
+  single-process: stop `npm run dev` before running a script against it, and never open it
+  from `generateStaticParams` (those run in worker processes).
+- Images stay on **Vercel Blob** (or `public/uploads/` locally without a Blob token).
+- **Upstash Redis is no longer used by this site.** It still backs the rate limiter for the
+  deployed student projects (see `../bia-all-projects`).
 
-### Admin Panel (`/admin`)
-- Password-protected route — password stored as `ADMIN_PASSWORD` Vercel env var
-- Auth uses HMAC-signed httpOnly cookies (24h expiry), no database required
-- Supports: add, edit, delete projects + direct image upload to Vercel Blob
-- Per-project show/hide toggle controls whether a project appears on the public `/Projects` listing (`hidden` flag on the Project type); **new projects are created hidden** and must be toggled visible
-- Server Actions in `app/admin/actions.ts` handle all mutations
+### Service layer
+`app/lib/cms/*` is the only place that reads or writes content. The admin server actions
+(`app/admin/actions.ts`), the MCP endpoint (`app/api/mcp/route.ts`) and the cron route all
+call it, so validation, permissions (`actor.ts`), the one-winner-per-track rule and cache
+revalidation (`revalidate.ts`, tags `projects` / `cohorts` / `newsletter`) apply everywhere.
+Public pages read through `unstable_cache` with those tags (ISR 1h, busted on every change).
 
-### Environment Variables Required
+### CMS
+- Sign-in: Auth.js (`auth.ts`) with Google, `@smu.edu.sg` accounts only, plus the email must
+  be on the People list (or in `CMS_BOOTSTRAP_ADMINS`). Roles are re-read from the database
+  on every request. Local dev also has a dev sign-in with a role picker (never in production).
+- Roles: **exco** (everything), **lodge head** (own track's projects; submits for review),
+  **DAP editor** (newsletter, sessions, DAP projects).
+- Project status: `draft` → `in_review` → `published` (replaces the Redis-era `hidden` flag;
+  `Project.hidden` is now derived). Exco approves. Each AI Lodge track has at most one
+  **Hack Day winner** (gold glow + medal on cards).
+- Newsletter: publish now, or schedule a date; the daily Vercel Cron
+  (`vercel.json`, 01:00 UTC = 09:00 SGT, ±1 h on Hobby) publishes due issues. Publishing can
+  post once to the DAP Telegram channel; "Send test" sends to one Telegram user ID (they must
+  have sent /start to the bot). The bot is outbound-only: no webhook.
+- MCP: `/api/mcp` exposes the CMS as tools for Claude (bearer `CMS_MCP_TOKEN`).
+
+### URLs
+- `/Projects` (all projects), `/Projects/ai-lodge[/<semester>]`, `/Projects/<slug>`
+- `/DAP` (recruitment page, unchanged), `/DAP/newsletter[/<cohort>-week-<n>]`,
+  `/DAP/projects[/<cohort>]`
+- Legacy `/Projects?badge=…`, `/Projects/dap` and case variants redirect in `middleware.ts`.
+- Project slugs `ai-lodge`, `dap`, `new` are reserved.
+
+### Environment variables
 | Variable | Purpose |
 |---|---|
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob access for image/PDF uploads (auto-set when you link a Blob store in Vercel) |
-| `ADMIN_PASSWORD` | Password for the `/admin` route |
-| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST API URL |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST API token |
+| `DATABASE_URL` | Neon connection string (set by the Vercel ↔ Neon integration). Unset locally = PGlite |
+| `AUTH_SECRET` | Auth.js session secret (`npx auth secret`) |
+| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth client for CMS sign-in |
+| `CMS_BOOTSTRAP_ADMINS` | Comma-separated emails with exco access before anyone is on the People list |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob uploads |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_BOT_USERNAME` | Club bot (unset = messages are logged, not sent) |
+| `TELEGRAM_DAP_CHANNEL_ID` | Where published issues are posted (`@channel` or `-100…`) |
+| `CRON_SECRET` | Authenticates the Vercel Cron call to `/api/cron/publish` |
+| `CMS_MCP_TOKEN` | Bearer token for `/api/mcp` (unset locally = open on localhost only) |
+| `NEXT_PUBLIC_SITE_URL` | Absolute links in Telegram posts (default `https://www.smubia.com`) |
 
-### Project Data Is Live
-Redis is the single live source of project data — all changes go through the `/admin`
-panel. Do not add seed scripts; the seeding era ended July 2026.
+### Scripts
+- `npm run db:migrate`: apply migrations (runs automatically on Vercel via `vercel-build`)
+- `npm run db:import-redis [-- --commit] [--overwrite]`: the one-off, re-runnable import of the
+  Redis-era projects. It is the only data script allowed: content changes go through `/admin`
+  or the MCP tools, not seed scripts.
 
-### Adding a Project (via Admin)
-1. Go to `/admin` and log in
-2. Click "Add Project" and fill in the form
-3. Submit — project is saved to Redis (images uploaded to Blob) as **hidden**
-4. Flip the project's visibility toggle in the list when it's ready to go live; the showcase page updates immediately
+Full setup and cutover checklist: [docs/cms-setup.md](docs/cms-setup.md).
 
 ## Common Development Tasks
 
@@ -202,8 +233,20 @@ The `Timelines/` folder contains multiple timeline variants:
 - **Analytics:** `@vercel/analytics/react` imported in layout
 - **Speed Insights:** `@vercel/speed-insights/next` imported in layout
 - **Blob Storage:** Used for hosting images and PDFs (CDN)
-- **Upstash Redis:** Used for project data storage (structured JSON)
+- **Neon Postgres:** CMS content (via the Vercel Marketplace integration)
+- **Vercel Cron:** daily newsletter publishing (`vercel.json`)
 - **Deployment:** Automatic on push to main branch
+
+## URL Paths
+
+**Never remove a public URL path. Redirect it instead.** Old links live on in Telegram posts, the
+AI Lodge infosite, Instagram and sponsor decks. This covers query deep links
+(`/Projects?badge=DAP`, `/Projects?badge=AI%20Lodge`) and case variants (`/dap`, `/ailodge`).
+When a page moves or is retired, add its redirect in the same change.
+
+- Case-variant redirects go in `middleware.ts`. `next.config.mjs` redirect sources match
+  case-insensitively, so a `/dap` → `/DAP` rule there loops forever.
+- Cross-domain and other simple redirects can live in `next.config.mjs`.
 
 ## Notes for Future Development
 

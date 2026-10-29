@@ -38,3 +38,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .npm-cache
+
+# Local embedded Postgres (PGlite)
+/.data/
+# Local CMS uploads when BLOB_READ_WRITE_TOKEN is unset
+/public/uploads/

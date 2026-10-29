@@ -45,8 +45,6 @@ export interface Project {
   };
   team: TeamMember[];
   programme: string;
-  /** @deprecated No longer surfaced in the UI. Retained for back-compat. */
-  status?: "Completed" | "Ongoing";
   techStack: string[];
   demoUrl?: string;
   sourceUrl?: string;
@@ -59,4 +57,25 @@ export interface Project {
   article?: string;
   /** When true, the project is excluded from the public /Projects listing */
   hidden?: boolean;
+
+  // ── CMS fields (Postgres era). `hidden` is derived: status !== "published".
+  // (The Redis-era "Completed" | "Ongoing" status was never shown and is dropped.)
+  status?: "draft" | "in_review" | "published";
+  cohortId?: string | null;
+  /** e.g. "AY26/27 Semester 1" */
+  cohortName?: string;
+  /** e.g. "ay2627-s1", for yearbook links */
+  cohortSlug?: string;
+  trackId?: number | null;
+  trackName?: string;
+  /** Track position in its semester (drives the shelf accent colour) */
+  trackPosition?: number;
+  /** Audience facet ("Made for") */
+  madeFor?: string;
+  /** Technique facet ("Built with") */
+  builtWith?: string;
+  /** Hack Day winner of its track */
+  winner?: boolean;
+  updatedAt?: string;
+  updatedBy?: string;
 }

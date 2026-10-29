@@ -49,6 +49,13 @@ export default function DAPPage() {
             >
               See the curriculum ↓
             </MotionAnchor>
+            <MotionNextLink
+              href="/DAP/newsletter"
+              className={styles.heroScrollLink}
+              hover={{ y: -2, color: "var(--mint)" }}
+            >
+              This week in DAP →
+            </MotionNextLink>
           </div>
         </div>
       </section>
@@ -188,11 +195,19 @@ export default function DAPPage() {
             </div>
             <br/>
             <MotionNextLink
-              href="/Projects?badge=DAP"
+              href="/DAP/projects"
               className={styles.closingLink}
               hover={{ x: 3, color: "var(--mint)" }}
             >
               See what associates built →
+            </MotionNextLink>
+            <br />
+            <MotionNextLink
+              href="/DAP/newsletter"
+              className={styles.closingLink}
+              hover={{ x: 3, color: "var(--mint)" }}
+            >
+              Read this week in DAP →
             </MotionNextLink>
           </ScrollReveal>
         </div>

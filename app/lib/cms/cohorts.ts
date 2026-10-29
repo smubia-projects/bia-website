@@ -1,0 +1,187 @@
+import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
+import { getDb } from "@/app/lib/db";
+import { cohorts, projects, sessions, tracks, type CohortRow, type TrackRow } from "@/app/lib/db/schema";
+import { can, ensure, type Actor } from "./actor";
+import { revalidateCms, TAGS } from "./revalidate";
+import { COHORT_VISIBILITY, DAP_WEEKS, PROGRAMMES, type CohortVisibility, type Programme } from "./taxonomy";
+
+export type Cohort = CohortRow;
+export type Track = TrackRow & { projectCount: number };
+
+export const cohortIdFor = (programme: Programme, slug: string) =>
+  `${programme === "AI Lodge" ? "ai-lodge" : "dap"}-${slug}`;
+
+/** Newest first: slugs are "ay2627-s1" style, so they sort chronologically. */
+export async function listCohorts(programme?: Programme): Promise<Cohort[]> {
+  const db = await getDb();
+  const q = db.select().from(cohorts);
+  return (programme ? q.where(eq(cohorts.programme, programme)) : q).orderBy(desc(cohorts.slug));
+}
+
+export async function getCohort(id: string): Promise<Cohort | null> {
+  const db = await getDb();
+  const [row] = await db.select().from(cohorts).where(eq(cohorts.id, id));
+  return row ?? null;
+}
+
+export async function listTracks(cohortId: string): Promise<Track[]> {
+  const db = await getDb();
+  const rows = await db
+    .select({
+      t: tracks,
+      projectCount: sql<number>`(select count(*) from ${projects} where ${projects.trackId} = ${tracks.id})`,
+    })
+    .from(tracks)
+    .where(eq(tracks.cohortId, cohortId))
+    .orderBy(asc(tracks.position), asc(tracks.id));
+  return rows.map((r) => ({ ...r.t, projectCount: Number(r.projectCount) }));
+}
+
+export async function listAllTracks(): Promise<(TrackRow & { cohortName: string })[]> {
+  const db = await getDb();
+  const rows = await db
+    .select({ t: tracks, cohortName: cohorts.name })
+    .from(tracks)
+    .innerJoin(cohorts, eq(tracks.cohortId, cohorts.id))
+    .orderBy(desc(cohorts.slug), asc(tracks.position));
+  return rows.map((r) => ({ ...r.t, cohortName: r.cohortName }));
+}
+
+// ── Public (cached) ──────────────────────────────────────────────────────
+
+export interface PublicCohort extends Cohort {
+  tracks: Track[];
+}
+
+const readPublicCohorts = unstable_cache(
+  async (programme: Programme): Promise<PublicCohort[]> => {
+    const all = (await listCohorts(programme)).filter((c) => c.visibility !== "hidden");
+    return Promise.all(all.map(async (c) => ({ ...c, tracks: await listTracks(c.id) })));
+  },
+  ["cms-public-cohorts"],
+  { revalidate: 3600, tags: [TAGS.cohorts, TAGS.projects] }
+);
+
+/** Visible cohorts of a programme, newest first, with their tracks. */
+export async function getPublicCohorts(programme: Programme): Promise<PublicCohort[]> {
+  try {
+    return await readPublicCohorts(programme);
+  } catch (error) {
+    console.error("[cms] public cohort read failed", error);
+    return [];
+  }
+}
+
+/** The live cohort, or the newest archived one when none is live. */
+export function pickCurrentCohort<T extends Cohort>(list: T[]): T | null {
+  return list.find((c) => c.visibility === "live") ?? list[0] ?? null;
+}
+
+// ── Mutations ────────────────────────────────────────────────────────────
+
+export interface CohortInput {
+  name?: string;
+  visibility?: CohortVisibility;
+  headline?: string;
+  writeup?: string;
+  hackDay?: string;
+}
+
+export async function createCohort(
+  actor: Actor,
+  input: { programme: Programme; slug: string; name: string }
+): Promise<Cohort> {
+  ensure((PROGRAMMES as readonly string[]).includes(input.programme), "Unknown programme");
+  ensure(can.editCohort(actor, input.programme), "You can't add cohorts");
+  const slug = input.slug.trim().toLowerCase();
+  ensure(/^[a-z0-9-]+$/.test(slug), 'Use a short URL name like "ay2627-s2"');
+  const name = input.name.trim();
+  ensure(name, "Name is required");
+  const db = await getDb();
+  const id = cohortIdFor(input.programme, slug);
+  ensure(!(await getCohort(id)), "That cohort already exists");
+  await db.insert(cohorts).values({ id, programme: input.programme, slug, name });
+  if (input.programme === "DAP") {
+    // DAP cohorts start with a blank co-learning schedule.
+    await db
+      .insert(sessions)
+      .values(Array.from({ length: DAP_WEEKS }, (_, i) => ({ cohortId: id, week: i + 1 })));
+  }
+  revalidateCms("cohorts");
+  return (await getCohort(id))!;
+}
+
+export async function updateCohort(actor: Actor, id: string, input: CohortInput): Promise<Cohort> {
+  const db = await getDb();
+  const row = await getCohort(id);
+  ensure(row, "Cohort not found");
+  ensure(can.editCohort(actor, row.programme), "Only exco can edit this page");
+  if (input.visibility) {
+    ensure((COHORT_VISIBILITY as readonly string[]).includes(input.visibility), "Unknown visibility");
+  }
+  const values: Partial<typeof cohorts.$inferInsert> = { updatedAt: new Date().toISOString() };
+  if (input.name !== undefined) {
+    values.name = input.name.trim();
+    ensure(values.name, "Name is required");
+  }
+  for (const key of ["visibility", "headline", "writeup", "hackDay"] as const) {
+    if (input[key] !== undefined) (values as Record<string, unknown>)[key] = input[key];
+  }
+  if (input.visibility === "live") {
+    // Only one live cohort per programme: the previous one is archived.
+    await db
+      .update(cohorts)
+      .set({ visibility: "archived" })
+      .where(and(eq(cohorts.programme, row.programme), eq(cohorts.visibility, "live"), ne(cohorts.id, id)));
+  }
+  await db.update(cohorts).set(values).where(eq(cohorts.id, id));
+  revalidateCms("cohorts", "newsletter");
+  return (await getCohort(id))!;
+}
+
+export interface TrackInput {
+  id?: number;
+  cohortId: string;
+  letter?: string;
+  name: string;
+  heads?: string;
+}
+
+export async function saveTrack(actor: Actor, input: TrackInput): Promise<TrackRow> {
+  const cohort = await getCohort(input.cohortId);
+  ensure(cohort, "Cohort not found");
+  ensure(cohort.programme === "AI Lodge", "Only AI Lodge semesters have tracks");
+  ensure(can.editCohort(actor, cohort.programme), "Only exco can edit tracks");
+  const name = input.name.trim();
+  ensure(name, "Track name is required");
+  const db = await getDb();
+  if (input.id) {
+    const [row] = await db
+      .update(tracks)
+      .set({ name, letter: (input.letter ?? "").trim(), heads: (input.heads ?? "").trim() })
+      .where(and(eq(tracks.id, input.id), eq(tracks.cohortId, input.cohortId)))
+      .returning();
+    ensure(row, "Track not found");
+    revalidateCms("cohorts", "projects");
+    return row;
+  }
+  const existing = await listTracks(input.cohortId);
+  const letter = (input.letter ?? "").trim() || String.fromCharCode(65 + existing.length);
+  const [row] = await db
+    .insert(tracks)
+    .values({ cohortId: input.cohortId, name, letter, heads: (input.heads ?? "").trim(), position: existing.length })
+    .returning();
+  revalidateCms("cohorts", "projects");
+  return row;
+}
+
+export async function deleteTrack(actor: Actor, id: number) {
+  ensure(actor.role === "exco", "Only exco can remove tracks");
+  const db = await getDb();
+  const [row] = await db.select().from(tracks).where(eq(tracks.id, id));
+  ensure(row, "Track not found");
+  ensure(Number((await listTracks(row.cohortId)).find((t) => t.id === id)?.projectCount ?? 0) === 0, "Move this track's projects to another track first");
+  await db.delete(tracks).where(eq(tracks.id, id));
+  revalidateCms("cohorts", "projects");
+}

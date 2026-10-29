@@ -1,0 +1,42 @@
+# Nightly Neon backup. Copy this file to .github/workflows/backup.yml in a
+# PRIVATE repo in the club's GitHub org (e.g. bia-db-backups), never in the
+# public bia-website repo: workflow artifacts are readable by anyone who can
+# read the repo, and the dump contains CMS access emails.
+#
+# Repo secret required: NEON_DATABASE_URL (the production branch's connection
+# string; a read-only role is enough). See ops/db-backup/README.md.
+
+name: Nightly database backup
+
+on:
+  schedule:
+    - cron: "30 18 * * *" # 02:30 SGT
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Dump the database
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          stamp=$(date -u +%Y-%m-%dT%H%MZ)
+          # Neon runs Postgres 17; the client must be at least as new.
+          docker run --rm -e DATABASE_URL postgres:17 \
+            pg_dump --format=custom --no-owner --no-privileges "$DATABASE_URL" > "smubia-cms-$stamp.dump"
+          ls -lh smubia-cms-*.dump
+          echo "STAMP=$stamp" >> "$GITHUB_ENV"
+
+      - name: Keep for 30 days
+        uses: actions/upload-artifact@v4
+        with:
+          name: smubia-cms-${{ env.STAMP }}
+          path: smubia-cms-*.dump
+          retention-days: 30
+          if-no-files-found: error

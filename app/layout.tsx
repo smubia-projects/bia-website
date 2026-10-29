@@ -7,6 +7,7 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import MotionProvider from "./components/ui/MotionProvider";
+import SiteChrome from "./components/SiteChrome";
 
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -44,13 +45,17 @@ export default function RootLayout({
           <a href="#main-content" className="skip-link">
             Skip to content
           </a>
-          <LoadingScreen />
-          <Navbar />
+          <SiteChrome>
+            <LoadingScreen />
+            <Navbar />
+          </SiteChrome>
           {children}
           <Analytics />
           <SpeedInsights />
           <div id="portal"></div>
-          <FooterBar />
+          <SiteChrome>
+            <FooterBar />
+          </SiteChrome>
         </MotionProvider>
       </body>
     </html>

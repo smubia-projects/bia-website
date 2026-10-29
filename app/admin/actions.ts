@@ -1,276 +1,211 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
-import { cookies } from "next/headers";
-import { createHmac, timingSafeEqual } from "crypto";
-import {
-  getProjects,
-  getProject,
-  saveProject,
-  deleteProjectBySlug,
-  uploadImage,
-  PROJECTS_TAG,
-} from "@/app/lib/projects";
-import { Project, TeamMember, HighlightCard } from "@/app/Projects/data/types";
+import { revalidatePath } from "next/cache";
+import { signOut } from "@/auth";
+import { CmsError, type Actor } from "@/app/lib/cms/actor";
+import { requireActor } from "@/app/lib/cms/session";
+import * as projects from "@/app/lib/cms/projects";
+import * as cohorts from "@/app/lib/cms/cohorts";
+import * as newsletter from "@/app/lib/cms/newsletter";
+import * as people from "@/app/lib/cms/people";
+import { uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
+import type { CohortVisibility, Programme, ProjectStatus, Role } from "@/app/lib/cms/taxonomy";
 
-const COOKIE_NAME = "admin_session";
-const SESSION_MAX_AGE = 24 * 60 * 60 * 1000;
+export type ActionResult<T = null> = { ok: true; data: T; message?: string } | { ok: false; error: string };
 
-function checkAuth(): boolean {
+/** Every action re-checks the session and turns CmsErrors into editor-facing messages. */
+async function run<T>(fn: (actor: Actor) => Promise<T>, message?: string): Promise<ActionResult<T>> {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get(COOKIE_NAME)?.value;
-    if (!token) return false;
-
-    const [timestamp, hmac] = token.split(".");
-    if (!timestamp || !hmac) return false;
-
-    const secret = process.env.ADMIN_PASSWORD;
-    if (!secret) return false;
-
-    const age = Date.now() - parseInt(timestamp, 10);
-    if (age > SESSION_MAX_AGE || age < 0) return false;
-
-    const expected = createHmac("sha256", secret)
-      .update(timestamp)
-      .digest("hex");
-    return timingSafeEqual(Buffer.from(hmac), Buffer.from(expected));
-  } catch {
-    return false;
+    const actor = await requireActor();
+    const data = await fn(actor);
+    return { ok: true, data, message };
+  } catch (error) {
+    if (error instanceof CmsError) return { ok: false, error: error.message };
+    console.error("[cms action]", error);
+    return { ok: false, error: "Something went wrong. Try again, and check the server logs if it keeps failing." };
   }
 }
 
-export async function logout(): Promise<{ done: boolean }> {
-  cookies().delete(COOKIE_NAME);
-  return { done: true };
-}
+const refreshAdmin = () => revalidatePath("/admin", "layout");
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
+// ── Projects ─────────────────────────────────────────────────────────────
 
-async function processImages(formData: FormData): Promise<{
-  coverImage: string;
-  images: string[];
-}> {
-  const coverFile = formData.get("coverImage") as File | null;
-  const existingCover = formData.get("existingCoverImage") as string;
-  let coverImage = existingCover || "";
+export type SaveIntent = "draft" | "submit" | "publish" | "keep";
 
-  if (coverFile && coverFile.size > 0) {
-    coverImage = await uploadImage(coverFile);
-  }
-
-  const imageFiles = formData.getAll("images") as File[];
-  const existingImages = formData.get("existingImages") as string;
-  let images: string[] = existingImages ? JSON.parse(existingImages) : [];
-
-  const newImages = await Promise.all(
-    imageFiles
-      .filter((f) => f.size > 0)
-      .map((f) => uploadImage(f))
-  );
-  if (newImages.length > 0) {
-    images = [...images, ...newImages];
-  }
-
-  if (images.length === 0 && coverImage) {
-    images = [coverImage];
-  }
-
-  return { coverImage, images };
-}
-
-function parseTeam(formData: FormData): TeamMember[] {
-  const teamJson = formData.get("team") as string;
-  if (!teamJson) return [];
-  try {
-    return JSON.parse(teamJson);
-  } catch {
-    return [];
-  }
-}
-
-function parseCards(formData: FormData): HighlightCard[] {
-  const raw = formData.get("cards") as string;
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw) as HighlightCard[];
-    return parsed.filter((c) => c.title?.trim() || c.body?.trim());
-  } catch {
-    return [];
-  }
-}
-
-function parseTechStack(formData: FormData): string[] {
-  const raw = formData.get("techStack") as string;
-  if (!raw) return [];
-  return raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-export async function addProject(
-  formData: FormData
-): Promise<{ success: boolean; error?: string }> {
-  if (!checkAuth()) {
-    return { success: false, error: "Not authenticated" };
-  }
-
-  try {
-    const title = (formData.get("title") as string) || "";
-    const slug = slugify(title);
-    if (!slug) return { success: false, error: "Title is required" };
-
-    const existing = await getProject(slug);
-    if (existing) {
-      return {
-        success: false,
-        error: "A project with this title already exists",
-      };
+export async function saveProjectAction(
+  slug: string | null,
+  input: projects.ProjectInput,
+  intent: SaveIntent
+): Promise<ActionResult<{ slug: string; status: ProjectStatus }>> {
+  return run(async (actor) => {
+    const target: ProjectStatus | null =
+      intent === "draft" ? "draft" : intent === "submit" ? "in_review" : intent === "publish" ? "published" : null;
+    let project = slug
+      ? await projects.updateProject(actor, slug, input)
+      : await projects.createProject(actor, { ...input, status: target ?? "draft" });
+    if (slug && target && target !== project.status) {
+      await projects.setProjectStatus(actor, project.slug, target);
+      project = (await projects.getProject(project.slug))!;
     }
-
-    const { coverImage, images } = await processImages(formData);
-    const badge = (formData.get("badge") as "DAP" | "AI Lodge") || "DAP";
-
-    const project: Project = {
-      slug,
-      title,
-      description: (formData.get("description") as string) || "",
-      badge,
-      category: (formData.get("category") as string) || "",
-      coverImage,
-      images,
-      overview: (formData.get("overview") as string) || "",
-      cards: parseCards(formData),
-      team: parseTeam(formData),
-      programme: badge,
-      techStack: parseTechStack(formData),
-      demoUrl: (formData.get("demoUrl") as string) || undefined,
-      sourceUrl: (formData.get("sourceUrl") as string) || undefined,
-      liveUrl: (formData.get("liveUrl") as string) || undefined,
-      // New projects start hidden; an admin flips them visible when ready
-      hidden: true,
-    };
-
-    await saveProject(project);
-    // The tag refreshes every cached public read (home rail, /Projects, details)
-    revalidateTag(PROJECTS_TAG);
-    revalidatePath("/");
-    revalidatePath("/Projects");
-    revalidatePath("/Projects/" + slug);
-    return { success: true };
-  } catch (e) {
-    return { success: false, error: String(e) };
-  }
+    refreshAdmin();
+    return { slug: project.slug, status: project.status ?? "draft" };
+  });
 }
 
-export async function updateProject(
-  formData: FormData
-): Promise<{ success: boolean; error?: string }> {
-  if (!checkAuth()) {
-    return { success: false, error: "Not authenticated" };
-  }
-
-  try {
-    const slug = formData.get("slug") as string;
-    if (!slug) return { success: false, error: "Project slug is required" };
-
-    const existing = await getProject(slug);
-    if (!existing) return { success: false, error: "Project not found" };
-
-    const { coverImage, images } = await processImages(formData);
-    const badge = (formData.get("badge") as "DAP" | "AI Lodge") || "DAP";
-
-    const updated: Project = {
-      ...existing,
-      title: (formData.get("title") as string) || existing.title,
-      description:
-        (formData.get("description") as string) || existing.description,
-      badge,
-      category: (formData.get("category") as string) || existing.category,
-      coverImage: coverImage || existing.coverImage,
-      images: images.length > 0 ? images : existing.images,
-      overview: (formData.get("overview") as string) || existing.overview,
-      // `rationale` is merged into `overview`; clear any legacy value on save.
-      rationale: "",
-      cards: parseCards(formData),
-      // `lessons` is superseded by `cards`; clear the legacy field on save.
-      lessons: undefined,
-      team: parseTeam(formData),
-      programme: badge,
-      techStack: parseTechStack(formData),
-      demoUrl: (formData.get("demoUrl") as string) || undefined,
-      sourceUrl: (formData.get("sourceUrl") as string) || undefined,
-      liveUrl: (formData.get("liveUrl") as string) || undefined,
-    };
-
-    await saveProject(updated);
-    // The tag refreshes every cached public read (home rail, /Projects, details)
-    revalidateTag(PROJECTS_TAG);
-    revalidatePath("/");
-    revalidatePath("/Projects");
-    revalidatePath("/Projects/" + slug);
-    return { success: true };
-  } catch (e) {
-    return { success: false, error: String(e) };
-  }
+export async function approveProjectAction(slug: string) {
+  return run(async (actor) => {
+    await projects.setProjectStatus(actor, slug, "published");
+    refreshAdmin();
+    return null;
+  }, "Published");
 }
 
-export async function toggleProjectVisibility(
-  slug: string,
-  hidden: boolean
-): Promise<{ success: boolean; error?: string }> {
-  if (!checkAuth()) {
-    return { success: false, error: "Not authenticated" };
-  }
-
-  try {
-    const existing = await getProject(slug);
-    if (!existing) return { success: false, error: "Project not found" };
-
-    await saveProject({ ...existing, hidden });
-    // The tag refreshes every cached public read (home rail, /Projects, details)
-    revalidateTag(PROJECTS_TAG);
-    revalidatePath("/");
-    revalidatePath("/Projects");
-    revalidatePath("/Projects/" + slug);
-    return { success: true };
-  } catch (e) {
-    return { success: false, error: String(e) };
-  }
+export async function setWinnerAction(slug: string, winner: boolean) {
+  return run(async (actor) => {
+    await projects.setProjectWinner(actor, slug, winner);
+    refreshAdmin();
+    return null;
+  });
 }
 
-export async function deleteProject(
-  slug: string
-): Promise<{ success: boolean; error?: string }> {
-  if (!checkAuth()) {
-    return { success: false, error: "Not authenticated" };
-  }
-
-  try {
-    const removed = await deleteProjectBySlug(slug);
-    if (!removed) {
-      return { success: false, error: "Project not found" };
-    }
-    // The tag refreshes every cached public read (home rail, /Projects, details)
-    revalidateTag(PROJECTS_TAG);
-    revalidatePath("/");
-    revalidatePath("/Projects");
-    return { success: true };
-  } catch (e) {
-    return { success: false, error: String(e) };
-  }
+export async function deleteProjectAction(slug: string) {
+  return run(async (actor) => {
+    await projects.deleteProject(actor, slug);
+    refreshAdmin();
+    return null;
+  });
 }
 
-export async function fetchProjects(): Promise<Project[]> {
-  if (!checkAuth()) return [];
-  return getProjects();
+export async function uploadImageAction(formData: FormData): Promise<ActionResult<string>> {
+  return run(async () => {
+    const file = formData.get("file");
+    const folder = (formData.get("folder") as UploadFolder) || "projects";
+    if (!(file instanceof Blob)) throw new CmsError("No image received");
+    const name = (formData.get("name") as string) || (file instanceof File ? file.name : "image.jpg");
+    return uploadImage(file, name, folder);
+  });
+}
+
+// ── Cohorts and tracks ───────────────────────────────────────────────────
+
+export async function createCohortAction(programme: Programme, slug: string, name: string) {
+  return run(async (actor) => {
+    const c = await cohorts.createCohort(actor, { programme, slug, name });
+    refreshAdmin();
+    return c.id;
+  });
+}
+
+export async function saveCohortAction(
+  id: string,
+  input: { name?: string; visibility?: CohortVisibility; headline?: string; writeup?: string; hackDay?: string }
+) {
+  return run(async (actor) => {
+    await cohorts.updateCohort(actor, id, input);
+    refreshAdmin();
+    return null;
+  }, "Changes saved");
+}
+
+export async function saveTrackAction(input: cohorts.TrackInput) {
+  return run(async (actor) => {
+    const t = await cohorts.saveTrack(actor, input);
+    refreshAdmin();
+    return t.id;
+  });
+}
+
+export async function deleteTrackAction(id: number) {
+  return run(async (actor) => {
+    await cohorts.deleteTrack(actor, id);
+    refreshAdmin();
+    return null;
+  });
+}
+
+// ── Newsletter ───────────────────────────────────────────────────────────
+
+export async function createIssueAction(cohortId: string) {
+  return run(async (actor) => (await newsletter.createIssue(actor, cohortId)).id);
+}
+
+export async function saveIssueAction(id: number, input: newsletter.IssueInput) {
+  return run(async (actor) => {
+    await newsletter.updateIssue(actor, id, input);
+    refreshAdmin();
+    return null;
+  }, "Draft saved");
+}
+
+export async function publishIssueAction(id: number, input: newsletter.IssueInput) {
+  return run(async (actor) => {
+    await newsletter.updateIssue(actor, id, input);
+    const { issue, telegram } = await newsletter.publishIssue(actor, id);
+    refreshAdmin();
+    return { week: issue.week, telegram };
+  });
+}
+
+export async function scheduleIssueAction(id: number, input: newsletter.IssueInput, date: string) {
+  return run(async (actor) => {
+    await newsletter.updateIssue(actor, id, input);
+    const issue = await newsletter.scheduleIssue(actor, id, date);
+    refreshAdmin();
+    return issue.publishAt;
+  });
+}
+
+export async function revertIssueAction(id: number) {
+  return run(async (actor) => {
+    await newsletter.revertIssueToDraft(actor, id);
+    refreshAdmin();
+    return null;
+  }, "Moved back to draft");
+}
+
+export async function deleteIssueAction(id: number) {
+  return run(async (actor) => {
+    await newsletter.deleteIssue(actor, id);
+    refreshAdmin();
+    return null;
+  });
+}
+
+/** Saves first, so the test shows exactly what's in the editor. */
+export async function sendIssueTestAction(id: number, input: newsletter.IssueInput, telegramUserId: string) {
+  return run(async (actor) => {
+    await newsletter.updateIssue(actor, id, input);
+    const res = await newsletter.sendIssueTest(actor, id, telegramUserId);
+    return res.dryRun ? "dry-run" : "sent";
+  });
+}
+
+export async function saveSessionsAction(cohortId: string, rows: newsletter.SessionInput[]) {
+  return run(async (actor) => {
+    await newsletter.saveSessions(actor, cohortId, rows);
+    refreshAdmin();
+    return null;
+  }, "Schedule saved");
+}
+
+// ── People ───────────────────────────────────────────────────────────────
+
+export async function savePersonAction(input: { email: string; name?: string; role: Role; trackId?: number | null }) {
+  return run(async (actor) => {
+    await people.savePerson(actor, input);
+    refreshAdmin();
+    return null;
+  }, "Saved");
+}
+
+export async function removePersonAction(email: string) {
+  return run(async (actor) => {
+    await people.removePerson(actor, email);
+    refreshAdmin();
+    return null;
+  }, "Removed");
+}
+
+export async function signOutAction() {
+  await signOut({ redirectTo: "/admin/login" });
 }
