@@ -24,11 +24,6 @@ export default async function CmsLayout({ children }: { children: React.ReactNod
       seeDap={can.seeDap(actor)}
       seeSettings={can.managePeople(actor)}
       reviewCount={reviewCount}
-      notice={
-        actor.role === "lodge_head"
-          ? "You can add and edit projects in your own track. An exco admin reviews them before they go live."
-          : undefined
-      }
     >
       {children}
     </Shell>

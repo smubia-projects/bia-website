@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { can } from "@/app/lib/cms/actor";
-import { listCohorts, pickCurrentCohort } from "@/app/lib/cms/cohorts";
+import { listCohorts, listGroups, pickCurrentCohort } from "@/app/lib/cms/cohorts";
 import { listIssues, listSessions } from "@/app/lib/cms/newsletter";
 import { requireActorPage } from "@/app/lib/cms/session";
 import styles from "../../cms.module.css";
@@ -25,16 +25,17 @@ export default async function SessionsPage({ searchParams }: { searchParams: { c
       </div>
     );
   }
-  const [sessions, issues] = await Promise.all([listSessions(cohort.id), listIssues(cohort.id)]);
+  const [sessions, issues, groups] = await Promise.all([listSessions(cohort.id), listIssues(cohort.id), listGroups(cohort.id)]);
   return (
     <SessionsEditor
       key={cohort.id}
       cohortId={cohort.id}
       cohorts={cohorts.map((c) => ({ id: c.id, name: c.name }))}
+      groups={groups.map((g) => ({ id: g.id, name: g.name }))}
       initial={sessions.map((s) => ({
         week: s.week,
         topic: s.topic,
-        group: s.group,
+        groupId: s.groupId,
         slides: s.slides,
         issue: issues.find((i) => i.week === s.week)?.status ?? null,
       }))}

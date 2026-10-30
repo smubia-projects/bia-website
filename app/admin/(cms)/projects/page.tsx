@@ -7,18 +7,13 @@ import ProjectsTable from "./ProjectsTable";
 export default async function AdminProjectsPage({ searchParams }: { searchParams: { track?: string; cohort?: string } }) {
   const actor = await requireActorPage();
   const [all, tracks, cohorts] = await Promise.all([listProjects(), listAllTracks(), listCohorts()]);
-  let projects = all.filter((p) => can.editProject(actor, { programme: p.badge, trackId: p.trackId ?? null }));
+  let projects = all.filter((p) => can.editProject(actor, { programme: p.badge }));
   const trackId = Number(searchParams.track);
   const track = trackId ? tracks.find((t) => t.id === trackId) : undefined;
   if (track) projects = projects.filter((p) => p.trackId === track.id);
 
-  const own = actor.trackId ? tracks.find((t) => t.id === actor.trackId) : undefined;
   const subtitle =
-    actor.role === "lodge_head"
-      ? `${own?.name ?? "Your track"} · ${projects.length} projects you can edit`
-      : actor.role === "dap_editor"
-        ? `${projects.length} DAP projects`
-        : `${all.length} projects across AI Lodge and DAP`;
+    actor.role === "dap_editor" ? `${projects.length} DAP projects` : `${all.length} projects across AI Lodge and DAP`;
 
   return (
     <ProjectsTable
@@ -27,7 +22,7 @@ export default async function AdminProjectsPage({ searchParams }: { searchParams
       canApprove={can.publishProject(actor)}
       trackFilter={track ? { id: track.id, name: `${track.name} (${track.cohortName})` } : null}
       cohorts={cohorts
-        .filter((c) => actor.role === "exco" || (actor.role === "dap_editor" ? c.programme === "DAP" : c.programme === "AI Lodge"))
+        .filter((c) => actor.role === "exco" || c.programme === "DAP")
         .map((c) => ({ id: c.id, name: c.name, programme: c.programme }))}
       initialCohort={searchParams.cohort ?? ""}
     />

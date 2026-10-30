@@ -11,12 +11,15 @@ import { createCohortAction, deleteTrackAction, moveTrackAction, saveCohortActio
 import { useActionToast, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
 import CohortProjects from "./CohortProjects";
+import LodgesPanel from "./LodgesPanel";
+import type { Lodge } from "@/app/lib/cms/cohorts";
 
 interface Props {
   programme: Programme;
   cohorts: Cohort[];
   cohort: Cohort | null;
   tracks: Track[];
+  lodges: Lodge[];
   /** Every project of this programme (for the projects panel) */
   projects: Project[];
   canEdit: boolean;
@@ -39,7 +42,7 @@ function suggestSlug(name: string, isLodge: boolean) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-export default function CohortEditor({ programme, cohorts, cohort, tracks, projects, canEdit, canSetWinner, basePath, previewHref }: Props) {
+export default function CohortEditor({ programme, cohorts, cohort, tracks, lodges, projects, canEdit, canSetWinner, basePath, previewHref }: Props) {
   const router = useRouter();
   const { handle, node } = useActionToast();
   const isLodge = programme === "AI Lodge";
@@ -54,8 +57,8 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
   const [saving, setSaving] = useState(false);
   const [creating, setCreating] = useState(cohorts.length === 0);
   const [draft, setDraft] = useState({ slug: "", name: "", slugEdited: false });
-  const [editing, setEditing] = useState<Record<number, { name: string; heads: string }>>({});
-  const [newTrack, setNewTrack] = useState<{ name: string; heads: string } | null>(null);
+  const [editing, setEditing] = useState<Record<number, { name: string }>>({});
+  const [newTrack, setNewTrack] = useState<{ name: string } | null>(null);
 
   const set = (k: keyof typeof form, v: string) => setForm((s) => ({ ...s, [k]: v }));
   useUnsavedChanges(
@@ -81,7 +84,7 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
     }
   }
 
-  async function saveTrack(input: { id?: number; name: string; heads: string }) {
+  async function saveTrack(input: { id?: number; name: string }) {
     if (!cohort) return;
     const id = handle(await saveTrackAction({ ...input, cohortId: cohort.id }), "Track saved");
     if (id) {
@@ -224,10 +227,11 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
           </section>
 
           {isLodge && (
-            <section className={`${styles.colSide} ${styles.panel}`} style={{ position: "static", gap: 0 }}>
-              <h2 className={styles.h2}>Tracks</h2>
+            <div className={styles.colSide} style={{ position: "static" }}>
+            <section className={styles.panel} style={{ gap: 0 }}>
+              <h2 className={styles.h2}>Hack Day tracks</h2>
               <p className={styles.hint} style={{ margin: "4px 0 14px", fontSize: 13 }}>
-                Each track becomes a shelf. This order is used here and for the track colours; the public page shuffles it per visitor.
+                The tracks teams entered at Hack Day. Each becomes a shelf with one winner. This order sets the shelf colours; the public page shuffles it per visitor.
               </p>
               {tracks.map((t, index) => {
                 const edit = editing[t.id];
@@ -239,7 +243,6 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
                     {edit ? (
                       <span className={styles.trackText} style={{ gap: 6 }}>
                         <input className={`${styles.inp} ${styles.inpSmall}`} value={edit.name} aria-label="Track name" onChange={(e) => setEditing((s) => ({ ...s, [t.id]: { ...edit, name: e.target.value } }))} />
-                        <input className={`${styles.inp} ${styles.inpSmall}`} value={edit.heads} placeholder="Lodge heads" aria-label="Lodge heads" onChange={(e) => setEditing((s) => ({ ...s, [t.id]: { ...edit, heads: e.target.value } }))} />
                         <span className={styles.row}>
                           <button type="button" className={styles.lnk} onClick={() => saveTrack({ id: t.id, ...edit })}>
                             Save
@@ -258,7 +261,7 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
                       <span className={styles.trackText}>
                         <span className={styles.trackName}>{t.name}</span>
                         <span className={styles.hint}>
-                          {t.heads || "No lodge heads yet"} · {t.projectCount} {t.projectCount === 1 ? "project" : "projects"}
+                          {t.projectCount} {t.projectCount === 1 ? "project" : "projects"}
                         </span>
                       </span>
                     )}
@@ -272,7 +275,7 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
                             ↓
                           </button>
                         </span>
-                        <button type="button" className={styles.lnk} onClick={() => setEditing((s) => ({ ...s, [t.id]: { name: t.name, heads: t.heads } }))}>
+                        <button type="button" className={styles.lnk} onClick={() => setEditing((s) => ({ ...s, [t.id]: { name: t.name } }))}>
                           Edit
                         </button>
                       </>
@@ -284,7 +287,6 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
                 (newTrack ? (
                   <div className={styles.subItem} style={{ marginTop: 10 }}>
                     <input className={`${styles.inp} ${styles.inpSmall}`} value={newTrack.name} placeholder="Track name, e.g. Agents" aria-label="Track name" onChange={(e) => setNewTrack({ ...newTrack, name: e.target.value })} />
-                    <input className={`${styles.inp} ${styles.inpSmall}`} value={newTrack.heads} placeholder="Lodge heads" aria-label="Lodge heads" onChange={(e) => setNewTrack({ ...newTrack, heads: e.target.value })} />
                     <span className={styles.row}>
                       <button type="button" className={styles.btn} disabled={!newTrack.name.trim()} onClick={() => saveTrack(newTrack)}>
                         Add track
@@ -295,11 +297,13 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
                     </span>
                   </div>
                 ) : (
-                  <button type="button" className={styles.add} style={{ marginTop: 10 }} onClick={() => setNewTrack({ name: "", heads: "" })}>
+                  <button type="button" className={styles.add} style={{ marginTop: 10 }} onClick={() => setNewTrack({ name: "" })}>
                     + Track
                   </button>
                 ))}
             </section>
+            <LodgesPanel cohortId={cohort.id} lodges={lodges} canEdit={canEdit} />
+            </div>
           )}
         </div>
       )}
@@ -308,6 +312,7 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
           cohort={cohort}
           cohorts={cohorts}
           tracks={tracks}
+          lodges={lodges}
           projects={projects}
           canEdit={canEdit}
           canSetWinner={canSetWinner}

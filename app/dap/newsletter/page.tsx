@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ui from "@/app/components/cms/public.module.css";
+import PeopleList from "@/app/components/cms/PeopleList";
 import { getSiteLinks } from "@/app/lib/cms/links";
 import { formatIssueDate, getPublicNewsletter, issuePath } from "@/app/lib/cms/newsletter";
 
@@ -71,8 +72,9 @@ export default async function NewsletterPage() {
                 </span>
                 <span className={ui.nextTopic}>{current.topic}</span>
                 <span style={{ fontSize: 14 }}>
-                  {current.group ? `Taught by ${current.group} · ` : ""}Week {current.week}
+                  {current.group ? `Taught by ${current.group.name} · ` : ""}Week {current.week}
                 </span>
+                {current.group && <PeopleList people={current.group.members} compact label={`${current.group.name} members`} />}
               </div>
             )}
           </div>
@@ -97,7 +99,7 @@ export default async function NewsletterPage() {
                   <li key={s.week} className={`${ui.sessionRow} ${state === "This week" ? ui.sessionNow : ""}`}>
                     <span className={ui.sessionWeek}>WEEK {s.week}</span>
                     <span className={ui.sessionTopic}>{s.topic || "To be announced"}</span>
-                    <span className={ui.sessionGroup}>{s.group}</span>
+                    <span className={ui.sessionGroup}>{s.group?.name}</span>
                     <span className={`${ui.state} ${stateClass}`}>{state}</span>
                     {published.has(s.week) && cohort ? (
                       <Link href={issuePath(cohort.slug, s.week)} className={`${ui.pill} ${ui.pillSmall}`}>

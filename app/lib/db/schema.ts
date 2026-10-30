@@ -47,7 +47,10 @@ export const cohorts = pgTable(
   (t) => [uniqueIndex("cohorts_programme_slug").on(t.programme, t.slug)]
 );
 
-/** An AI Lodge track inside one semester; each becomes a yearbook shelf. */
+/**
+ * A Hack Day track inside one AI Lodge semester; each becomes a yearbook shelf and
+ * has at most one winner. Separate from lodges, which are who taught the team.
+ */
 export const tracks = pgTable(
   "tracks",
   {
@@ -57,10 +60,28 @@ export const tracks = pgTable(
       .references(() => cohorts.id, { onDelete: "cascade" }),
     letter: text("letter").notNull().default(""),
     name: text("name").notNull(),
-    heads: text("heads").notNull().default(""),
     position: integer("position").notNull().default(0),
   },
   (t) => [index("tracks_cohort").on(t.cohortId)]
+);
+
+/**
+ * An AI Lodge lodge in one semester (a themed group run by lodge heads). Lodge
+ * pages and head profiles live on ailodge.smubia.com; this only links there.
+ */
+export const lodges = pgTable(
+  "lodges",
+  {
+    id: serial("id").primaryKey(),
+    cohortId: text("cohort_id")
+      .notNull()
+      .references(() => cohorts.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** The lodge's page on the AI Lodge site */
+    url: text("url").notNull().default(""),
+    position: integer("position").notNull().default(0),
+  },
+  (t) => [index("lodges_cohort").on(t.cohortId)]
 );
 
 export const projects = pgTable(
@@ -71,7 +92,10 @@ export const projects = pgTable(
     description: text("description").notNull().default(""),
     programme: text("programme").$type<Programme>().notNull(),
     cohortId: text("cohort_id").references(() => cohorts.id, { onDelete: "set null" }),
+    /** Hack Day track it entered (AI Lodge) */
     trackId: integer("track_id").references(() => tracks.id, { onDelete: "set null" }),
+    /** Lodge its team was in (AI Lodge) */
+    lodgeId: integer("lodge_id").references(() => lodges.id, { onDelete: "set null" }),
     madeFor: text("made_for").notNull().default(""),
     builtWith: text("built_with").notNull().default(""),
     /** Legacy free-text category from the Redis era; not edited any more */
@@ -108,10 +132,34 @@ export const people = pgTable("people", {
   email: text("email").primaryKey(),
   name: text("name").notNull().default(""),
   role: text("role").$type<Role>().notNull(),
-  /** Lodge heads are scoped to one track */
-  trackId: integer("track_id").references(() => tracks.id, { onDelete: "set null" }),
   createdAt: createdAt(),
 });
+
+/** A person shown on the site: DAP group members and mentors. */
+export interface Profile {
+  name: string;
+  image?: string;
+  linkedin?: string;
+  email?: string;
+  /** @handle or a t.me link */
+  telegram?: string;
+}
+
+/** A DAP teaching group: it teaches co-learning sessions; 1–3 mentors guide it. */
+export const dapGroups = pgTable(
+  "dap_groups",
+  {
+    id: serial("id").primaryKey(),
+    cohortId: text("cohort_id")
+      .notNull()
+      .references(() => cohorts.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    position: integer("position").notNull().default(0),
+    members: jsonb("members").$type<Profile[]>().notNull().default([]),
+    mentors: jsonb("mentors").$type<Profile[]>().notNull().default([]),
+  },
+  (t) => [index("dap_groups_cohort").on(t.cohortId)]
+);
 
 /** DAP co-learning schedule: one row per week of a DAP cohort. */
 export const sessions = pgTable(
@@ -123,7 +171,8 @@ export const sessions = pgTable(
       .references(() => cohorts.id, { onDelete: "cascade" }),
     week: integer("week").notNull(),
     topic: text("topic").notNull().default(""),
-    group: text("teaching_group").notNull().default(""),
+    /** The DAP group teaching that week */
+    groupId: integer("group_id").references(() => dapGroups.id, { onDelete: "set null" }),
     slides: text("slides").notNull().default(""),
   },
   (t) => [uniqueIndex("sessions_cohort_week").on(t.cohortId, t.week)]
@@ -183,6 +232,8 @@ export const siteSettings = pgTable("site_settings", {
 
 export type CohortRow = typeof cohorts.$inferSelect;
 export type TrackRow = typeof tracks.$inferSelect;
+export type LodgeRow = typeof lodges.$inferSelect;
+export type DapGroupRow = typeof dapGroups.$inferSelect;
 export type ProjectRow = typeof projects.$inferSelect;
 export type PersonRow = typeof people.$inferSelect;
 export type SessionRow = typeof sessions.$inferSelect;

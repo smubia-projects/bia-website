@@ -391,3 +391,41 @@
   color: var(--pine-text-soft);
   text-decoration: none;
 }
+
+/* ============ Groups (CMS: DAP › Groups) ============ */
+
+.groups {
+  --meta: var(--pine-text-soft);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1.25rem;
+}
+
+.groupCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg, 16px);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(125, 215, 194, 0.14);
+}
+
+.groupName {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--pine-text);
+  margin: 0;
+}
+
+.groupLabel {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mint);
+  margin: 0.5rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(125, 215, 194, 0.12);
+}

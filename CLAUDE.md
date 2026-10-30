@@ -140,8 +140,9 @@ The home page (`app/page.tsx`) demonstrates a custom `ScrollReveal` component us
 
 ### Where content lives
 - **Neon Postgres** (Drizzle ORM) holds all CMS content: `projects`, `cohorts` (AI Lodge
-  semesters + DAP cohorts), `tracks`, `people` (CMS access + roles), `sessions` (DAP
-  co-learning schedule), `issues` ("This week in DAP"), `site_links` (club links) and `site_settings` (switches such as applications open). Schema: `app/lib/db/schema.ts`;
+  semesters + DAP cohorts), `tracks` (Hack Day tracks), `lodges` (AI Lodge lodges, linking to
+  ailodge.smubia.com), `dap_groups` (DAP teaching groups with members and mentors), `people`
+  (CMS access + roles), `sessions` (DAP co-learning schedule, each linked to a group), `issues` ("This week in DAP"), `site_links` (club links) and `site_settings` (switches such as applications open). Schema: `app/lib/db/schema.ts`;
   SQL migrations in `drizzle/` (generate with `npm run db:generate` after editing the schema).
 - **Local development needs no database account**: without `DATABASE_URL`, `app/lib/db`
   uses an embedded PGlite database in `.data/pglite`, migrated on first use. It is
@@ -162,14 +163,20 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
 - Sign-in: Auth.js (`auth.ts`) with Google, `@smu.edu.sg` accounts only, plus the email must
   be on the People list (or in `CMS_BOOTSTRAP_ADMINS`). Roles are re-read from the database
   on every request. Local dev also has a dev sign-in with a role picker (never in production).
-- Roles: **exco** (everything), **lodge head** (own track's projects; submits for review),
-  **DAP editor** (newsletter, sessions, DAP projects).
+- Roles: **exco** (everything) and **DAP editor** (newsletter, groups, sessions, DAP projects;
+  exco approves their projects). There is no lodge head role: lodge head profiles live on the
+  AI Lodge site (ailodge.smubia.com).
 - Project status: `draft` → `in_review` → `published` (replaces the Redis-era `hidden` flag;
   `Project.hidden` is now derived). Exco approves. A project needs a semester (AI Lodge) or
   cohort (DAP) before it can be published, because its page lives under it. Each AI Lodge
   track has at most one **Hack Day winner** (gold glow + medal, shown in the yearbook only).
-- Projects are placed into a semester and track from **AI Lodge › Semesters** (or **DAP ›
-  Cohorts**): add existing projects, start new ones in a track, move them, mark the winner.
+- AI Lodge has two separate groupings per semester: **Hack Day tracks** (yearbook shelves, one
+  winner each) and **lodges** (who taught the team; each links to its page on the AI Lodge
+  site). A project has one of each. Both are managed on **AI Lodge › Semesters**, where projects
+  are also added, moved between tracks, given a lodge and marked as winners.
+- DAP **Groups** (DAP › Groups): each cohort's teaching groups, with members and 1–3 mentors
+  (name, optional photo, LinkedIn, email, Telegram). Sessions pick the group teaching that week;
+  groups show on the newsletter pages and in a Groups section on `/dap`.
 - Newsletter: publish now, or schedule a date; the daily Vercel Cron
   (`vercel.json`, 01:00 UTC = 09:00 SGT, ±1 h on Hobby) publishes due issues. Publishing can
   post once to the DAP Telegram channel; "Send test" sends to one Telegram user ID (they must

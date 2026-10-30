@@ -19,6 +19,7 @@ export default async function DapCohortAdminPage({ searchParams }: { searchParam
       cohorts={cohorts}
       cohort={cohort}
       tracks={[]}
+      lodges={[]}
       projects={projects}
       canEdit={can.editCohort(actor, "DAP")}
       canSetWinner={can.setWinner(actor)}

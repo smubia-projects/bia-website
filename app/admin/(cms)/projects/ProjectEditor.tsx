@@ -31,13 +31,14 @@ export interface TrackOption {
   name: string;
   cohortId: string;
 }
+export type LodgeOption = TrackOption;
 
 interface Props {
   project: Project | null;
   cohorts: CohortOption[];
   tracks: TrackOption[];
+  lodges: LodgeOption[];
   role: Role;
-  ownTrackId: number | null;
   /** New projects started from the Semesters / Cohorts page */
   preset?: { cohortId: string; trackId: number | null } | null;
 }
@@ -49,19 +50,17 @@ const AVATAR_CROP = { ratio: 1, label: "1:1 · avatar" };
 function initialForm(
   p: Project | null,
   role: Role,
-  ownTrackId: number | null,
-  tracks: TrackOption[],
   cohorts: CohortOption[],
   preset: Props["preset"]
 ) {
-  const ownTrack = tracks.find((t) => t.id === ownTrackId);
   const presetCohort = cohorts.find((c) => c.id === preset?.cohortId);
   return {
     title: p?.title ?? "",
     description: p?.description ?? "",
     programme: (p?.badge ?? presetCohort?.programme ?? (role === "dap_editor" ? "DAP" : "AI Lodge")) as Programme,
-    cohortId: p?.cohortId ?? (role === "lodge_head" ? ownTrack?.cohortId ?? "" : presetCohort?.id ?? ""),
-    trackId: p?.trackId ?? (role === "lodge_head" ? ownTrackId : presetCohort ? preset?.trackId ?? null : null),
+    cohortId: p?.cohortId ?? presetCohort?.id ?? "",
+    trackId: p?.trackId ?? (presetCohort ? preset?.trackId ?? null : null),
+    lodgeId: p?.lodgeId ?? null,
     madeFor: p?.madeFor ?? "",
     builtWith: p?.builtWith ?? "",
     liveUrl: p?.liveUrl || p?.demoUrl || "",
@@ -75,20 +74,17 @@ function initialForm(
   };
 }
 
-export default function ProjectEditor({ project, cohorts, tracks, role, ownTrackId, preset }: Props) {
+export default function ProjectEditor({ project, cohorts, tracks, lodges, role, preset }: Props) {
   const router = useRouter();
   const { handle, node, show } = useActionToast();
   const cover = useImageUpload("projects");
   const team = useImageUpload("team");
-  const [initial] = useState(() => initialForm(project, role, ownTrackId, tracks, cohorts, preset));
+  const [initial] = useState(() => initialForm(project, role, cohorts, preset));
   const [f, setF] = useState(initial);
   const [saving, setSaving] = useState(false);
   useUnsavedChanges(!saving && JSON.stringify(f) !== JSON.stringify(initial));
   const [winner, setWinner] = useState(Boolean(project?.winner));
   const isExco = role === "exco";
-  // Lodge heads' projects stay in their track; DAP editors can only pick DAP cohorts.
-  const lockPlacement = role === "lodge_head";
-  const lockTrack = role !== "exco";
   const status = project?.status ?? "draft";
   const set = <K extends keyof typeof f>(key: K, value: (typeof f)[K]) => setF((s) => ({ ...s, [key]: value }));
 
@@ -99,6 +95,7 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
     cohorts: cohorts.filter((c) => c.programme === p),
   }));
   const trackOptions = tracks.filter((t) => t.cohortId === f.cohortId);
+  const lodgeOptions = lodges.filter((l) => l.cohortId === f.cohortId);
   const trackName = useMemo(() => tracks.find((t) => t.id === f.trackId)?.name, [tracks, f.trackId]);
 
   async function upload(fn: () => Promise<string | null>) {
@@ -120,6 +117,7 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
         programme: f.programme,
         cohortId: f.cohortId || null,
         trackId: f.trackId,
+        lodgeId: f.lodgeId,
         madeFor: f.madeFor,
         builtWith: f.builtWith,
         liveUrl: f.liveUrl,
@@ -221,10 +219,9 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
               <select
                 className={styles.inp}
                 value={`${f.programme}|${f.cohortId}`}
-                disabled={lockPlacement}
                 onChange={(e) => {
                   const [programme, cohortId] = e.target.value.split("|");
-                  setF((s) => ({ ...s, programme: programme as Programme, cohortId, trackId: null }));
+                  setF((s) => ({ ...s, programme: programme as Programme, cohortId, trackId: null, lodgeId: null }));
                 }}
               >
                 {placementGroups.map((g) => (
@@ -257,17 +254,35 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
             </label>
             {f.programme === "AI Lodge" && (
               <label className={styles.fld}>
-                Track
+                Hack Day track
                 <select
                   className={styles.inp}
                   value={f.trackId ?? ""}
-                  disabled={lockTrack || trackOptions.length === 0}
+                  disabled={trackOptions.length === 0}
                   onChange={(e) => set("trackId", e.target.value ? Number(e.target.value) : null)}
                 >
                   <option value="">{trackOptions.length ? "Not set" : "No tracks yet"}</option>
                   {trackOptions.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {f.programme === "AI Lodge" && (
+              <label className={styles.fld}>
+                Lodge
+                <select
+                  className={styles.inp}
+                  value={f.lodgeId ?? ""}
+                  disabled={lodgeOptions.length === 0}
+                  onChange={(e) => set("lodgeId", e.target.value ? Number(e.target.value) : null)}
+                >
+                  <option value="">{lodgeOptions.length ? "Not set" : "No lodges yet"}</option>
+                  {lodgeOptions.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
                     </option>
                   ))}
                 </select>
@@ -485,7 +500,7 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
                   <span className={styles.hint}>
                     {project.trackId
                       ? `One winner per track. Marking this replaces the current ${project.trackName ?? "track"} winner.`
-                      : "Assign a track and save first."}
+                      : "Pick a Hack Day track and save first."}
                   </span>
                 </span>
               </label>

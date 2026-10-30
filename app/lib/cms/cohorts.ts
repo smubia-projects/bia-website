@@ -1,13 +1,27 @@
 import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/app/lib/db";
-import { cohorts, projects, sessions, tracks, type CohortRow, type TrackRow } from "@/app/lib/db/schema";
+import {
+  cohorts,
+  dapGroups,
+  lodges,
+  projects,
+  sessions,
+  tracks,
+  type CohortRow,
+  type DapGroupRow,
+  type LodgeRow,
+  type Profile,
+  type TrackRow,
+} from "@/app/lib/db/schema";
 import { can, ensure, type Actor } from "./actor";
 import { revalidateCms, TAGS } from "./revalidate";
 import { COHORT_VISIBILITY, DAP_WEEKS, PROGRAMMES, type CohortVisibility, type Programme } from "./taxonomy";
 
 export type Cohort = CohortRow;
 export type Track = TrackRow & { projectCount: number };
+export type Lodge = LodgeRow;
+export type DapGroup = DapGroupRow;
 
 export const cohortIdFor = (programme: Programme, slug: string) =>
   `${programme === "AI Lodge" ? "ai-lodge" : "dap"}-${slug}`;
@@ -52,12 +66,19 @@ export async function listAllTracks(): Promise<(TrackRow & { cohortName: string 
 
 export interface PublicCohort extends Cohort {
   tracks: Track[];
+  lodges: Lodge[];
+  groups: DapGroup[];
 }
 
 const readPublicCohorts = unstable_cache(
   async (programme: Programme): Promise<PublicCohort[]> => {
     const all = (await listCohorts(programme)).filter((c) => c.visibility !== "hidden");
-    return Promise.all(all.map(async (c) => ({ ...c, tracks: await listTracks(c.id) })));
+    return Promise.all(
+      all.map(async (c) => {
+        const [t, l, g] = await Promise.all([listTracks(c.id), listLodges(c.id), listGroups(c.id)]);
+        return { ...c, tracks: t, lodges: l, groups: g };
+      })
+    );
   },
   ["cms-public-cohorts"],
   { revalidate: 3600, tags: [TAGS.cohorts, TAGS.projects] }
@@ -145,7 +166,6 @@ export interface TrackInput {
   cohortId: string;
   letter?: string;
   name: string;
-  heads?: string;
 }
 
 export async function saveTrack(actor: Actor, input: TrackInput): Promise<TrackRow> {
@@ -159,7 +179,7 @@ export async function saveTrack(actor: Actor, input: TrackInput): Promise<TrackR
   if (input.id) {
     const [row] = await db
       .update(tracks)
-      .set({ name, letter: (input.letter ?? "").trim(), heads: (input.heads ?? "").trim() })
+      .set({ name, letter: (input.letter ?? "").trim() })
       .where(and(eq(tracks.id, input.id), eq(tracks.cohortId, input.cohortId)))
       .returning();
     ensure(row, "Track not found");
@@ -170,7 +190,7 @@ export async function saveTrack(actor: Actor, input: TrackInput): Promise<TrackR
   const letter = (input.letter ?? "").trim() || String.fromCharCode(65 + existing.length);
   const [row] = await db
     .insert(tracks)
-    .values({ cohortId: input.cohortId, name, letter, heads: (input.heads ?? "").trim(), position: existing.length })
+    .values({ cohortId: input.cohortId, name, letter, position: existing.length })
     .returning();
   revalidateCms("cohorts", "projects");
   return row;
@@ -202,4 +222,128 @@ export async function deleteTrack(actor: Actor, id: number) {
   ensure(Number((await listTracks(row.cohortId)).find((t) => t.id === id)?.projectCount ?? 0) === 0, "Move this track's projects to another track first");
   await db.delete(tracks).where(eq(tracks.id, id));
   revalidateCms("cohorts", "projects");
+}
+
+// ── Lodges (AI Lodge) ────────────────────────────────────────────────────
+
+export async function listLodges(cohortId: string): Promise<Lodge[]> {
+  const db = await getDb();
+  return db.select().from(lodges).where(eq(lodges.cohortId, cohortId)).orderBy(asc(lodges.position), asc(lodges.id));
+}
+
+export async function listAllLodges(): Promise<Lodge[]> {
+  const db = await getDb();
+  return db.select().from(lodges).orderBy(asc(lodges.position), asc(lodges.id));
+}
+
+export interface LodgeInput {
+  id?: number;
+  cohortId: string;
+  name: string;
+  url?: string;
+}
+
+export async function saveLodge(actor: Actor, input: LodgeInput): Promise<Lodge> {
+  const cohort = await getCohort(input.cohortId);
+  ensure(cohort, "Semester not found");
+  ensure(cohort.programme === "AI Lodge", "Only AI Lodge semesters have lodges");
+  ensure(can.editCohort(actor, cohort.programme), "Only exco can edit lodges");
+  const name = input.name.trim();
+  ensure(name, "Lodge name is required");
+  const url = (input.url ?? "").trim();
+  ensure(!url || /^https:\/\/\S+$/i.test(url), "The lodge page must be a full https:// link");
+  const db = await getDb();
+  let row: Lodge | undefined;
+  if (input.id) {
+    [row] = await db
+      .update(lodges)
+      .set({ name, url })
+      .where(and(eq(lodges.id, input.id), eq(lodges.cohortId, input.cohortId)))
+      .returning();
+    ensure(row, "Lodge not found");
+  } else {
+    const existing = await listLodges(input.cohortId);
+    [row] = await db.insert(lodges).values({ cohortId: input.cohortId, name, url, position: existing.length }).returning();
+  }
+  revalidateCms("cohorts", "projects");
+  return row!;
+}
+
+/** Projects in a removed lodge keep everything else; only the lodge link goes. */
+export async function deleteLodge(actor: Actor, id: number) {
+  ensure(actor.role === "exco", "Only exco can remove lodges");
+  const db = await getDb();
+  await db.delete(lodges).where(eq(lodges.id, id));
+  revalidateCms("cohorts", "projects");
+}
+
+// ── DAP groups ───────────────────────────────────────────────────────────
+
+export async function listGroups(cohortId: string): Promise<DapGroup[]> {
+  const db = await getDb();
+  return db.select().from(dapGroups).where(eq(dapGroups.cohortId, cohortId)).orderBy(asc(dapGroups.position), asc(dapGroups.id));
+}
+
+export interface GroupInput {
+  id?: number;
+  cohortId: string;
+  name: string;
+  members?: Profile[];
+  mentors?: Profile[];
+}
+
+function cleanProfiles(list: Profile[] | undefined, label: string): Profile[] {
+  return (list ?? [])
+    .map((p) => ({
+      name: (p.name ?? "").trim(),
+      image: (p.image ?? "").trim() || undefined,
+      linkedin: (p.linkedin ?? "").trim() || undefined,
+      email: (p.email ?? "").trim() || undefined,
+      telegram: (p.telegram ?? "").trim() || undefined,
+    }))
+    .filter((p) => p.name || p.image || p.linkedin || p.email || p.telegram)
+    .map((p) => {
+      ensure(p.name, `Every ${label} needs a name`);
+      ensure(!p.linkedin || /^https:\/\/\S+$/i.test(p.linkedin), `${p.name}'s LinkedIn must be a full https:// link`);
+      ensure(!p.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email), `${p.name}'s email doesn't look right`);
+      return p;
+    });
+}
+
+export async function saveGroup(actor: Actor, input: GroupInput): Promise<DapGroup> {
+  const cohort = await getCohort(input.cohortId);
+  ensure(cohort, "Cohort not found");
+  ensure(cohort.programme === "DAP", "Only DAP cohorts have groups");
+  ensure(can.editCohort(actor, "DAP"), "You can't edit DAP groups");
+  const name = input.name.trim();
+  ensure(name, "Group name is required");
+  const values = {
+    name,
+    ...(input.members !== undefined ? { members: cleanProfiles(input.members, "member") } : {}),
+    ...(input.mentors !== undefined ? { mentors: cleanProfiles(input.mentors, "mentor") } : {}),
+  };
+  const db = await getDb();
+  let row: DapGroup | undefined;
+  if (input.id) {
+    [row] = await db
+      .update(dapGroups)
+      .set(values)
+      .where(and(eq(dapGroups.id, input.id), eq(dapGroups.cohortId, input.cohortId)))
+      .returning();
+    ensure(row, "Group not found");
+  } else {
+    const existing = await listGroups(input.cohortId);
+    ensure(!existing.some((g) => g.name.toLowerCase() === name.toLowerCase()), `There is already a group called ${name}`);
+    [row] = await db.insert(dapGroups).values({ cohortId: input.cohortId, position: existing.length, ...values }).returning();
+  }
+  revalidateCms("cohorts", "newsletter");
+  return row!;
+}
+
+/** Sessions taught by a removed group just lose the link. */
+export async function deleteGroup(actor: Actor, id: number) {
+  ensure(can.editCohort(actor, "DAP"), "You can't edit DAP groups");
+  const db = await getDb();
+  await db.delete(dapGroups).where(eq(dapGroups.id, id));
+  revalidateCms("cohorts", "newsletter");
 }

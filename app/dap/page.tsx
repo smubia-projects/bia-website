@@ -4,6 +4,8 @@ import styles from "./DAP.module.css";
 import ScrollReveal from "../components/ui/ScrollReveal";
 import Button from "../components/ui/Button";
 import { getSiteLinks } from "@/app/lib/cms/links";
+import { getPublicCohorts, pickCurrentCohort } from "@/app/lib/cms/cohorts";
+import PeopleList from "@/app/components/cms/PeopleList";
 import { joinLink } from "@/app/lib/links";
 import { MotionAnchor, MotionNextLink } from "../components/ui/MotionElements";
 import RotatingHeadline from "../components/ui/RotatingHeadline";
@@ -20,7 +22,10 @@ export const metadata = {
 };
 
 export default async function DAPPage() {
-  const join = joinLink(await getSiteLinks(), "DAP");
+  const [links, cohorts] = await Promise.all([getSiteLinks(), getPublicCohorts("DAP")]);
+  const join = joinLink(links, "DAP");
+  const cohort = pickCurrentCohort(cohorts);
+  const groups = (cohort?.groups ?? []).filter((g) => g.members.length + g.mentors.length > 0);
   return (
     <main className={styles.page}>
       {/* ── Hero — typographic, deep pine ───────────────────────── */}
@@ -175,6 +180,37 @@ export default async function DAPPage() {
           </div>
         </div>
       </section>
+
+      {/* ── This cohort's groups (from the CMS) ─────────────────── */}
+      {cohort && groups.length > 0 && (
+        <section className={styles.section}>
+          <div className={styles.sectionInner}>
+            <ScrollReveal>
+              <div className={styles.curriculumHead}>
+                <p className={styles.eyebrow}>{cohort.name}</p>
+                <h2 className={styles.sectionTitle}>The groups</h2>
+                <p className={styles.sectionLede}>
+                  Each group teaches a co-learning session to the rest of the cohort, guided by its mentors.
+                </p>
+              </div>
+            </ScrollReveal>
+            <div className={styles.groups}>
+              {groups.map((g) => (
+                <article key={g.id} className={styles.groupCard}>
+                  <h3 className={styles.groupName}>{g.name}</h3>
+                  <PeopleList people={g.members} onDark label={`${g.name} members`} />
+                  {g.mentors.length > 0 && (
+                    <>
+                      <p className={styles.groupLabel}>{g.mentors.length === 1 ? "Mentor" : "Mentors"}</p>
+                      <PeopleList people={g.mentors} onDark label={`${g.name} mentors`} />
+                    </>
+                  )}
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Closing — quiet CTA band ────────────────────────────── */}
       <section className={styles.closing}>

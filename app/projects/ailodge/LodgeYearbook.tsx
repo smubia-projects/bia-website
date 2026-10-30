@@ -36,8 +36,10 @@ export default function LodgeYearbook({
       projects: unassigned,
     });
   }
-  const tracksWithHeads = (cohort?.tracks ?? []).filter((t) => t.projectCount > 0 || t.heads);
+  const glanceTracks = (cohort?.tracks ?? []).filter((t) => t.projectCount > 0);
+  const lodges = cohort?.lodges ?? [];
   const hasAbout = Boolean(cohort && (cohort.headline || cohort.writeup));
+  const hasGlance = Boolean(cohort && (cohort.hackDay || glanceTracks.length > 0 || lodges.length > 0));
 
   return (
     <main id="main-content" className={ui.page}>
@@ -83,18 +85,20 @@ export default function LodgeYearbook({
       </section>
 
       <div className={ui.main} style={{ paddingBottom: 24 }}>
-        {hasAbout && cohort && (
+        {(hasAbout || hasGlance) && cohort && (
           <section aria-label="About this semester" className={ui.about}>
-            <div className={ui.aboutMain}>
-              <div className={ui.label}>About this semester</div>
-              {cohort.headline && <h2 className={ui.aboutHeadline}>{cohort.headline}</h2>}
-              {cohort.writeup && (
-                <div className={ui.aboutBody}>
-                  <Markdown content={cohort.writeup} />
-                </div>
-              )}
-            </div>
-            {(cohort.hackDay || tracksWithHeads.length > 0) && (
+            {hasAbout && (
+              <div className={ui.aboutMain}>
+                <div className={ui.label}>About this semester</div>
+                {cohort.headline && <h2 className={ui.aboutHeadline}>{cohort.headline}</h2>}
+                {cohort.writeup && (
+                  <div className={ui.aboutBody}>
+                    <Markdown content={cohort.writeup} />
+                  </div>
+                )}
+              </div>
+            )}
+            {hasGlance && (
               <div className={ui.aboutSide}>
                 <div className={ui.label}>At a glance</div>
                 {cohort.hackDay && (
@@ -103,15 +107,34 @@ export default function LodgeYearbook({
                     <span className={ui.glanceValue}>{cohort.hackDay}</span>
                   </div>
                 )}
-                {tracksWithHeads.length > 0 && (
+                {glanceTracks.length > 0 && (
                   <div className={ui.glanceItem} style={{ gap: 6 }}>
-                    <span className={ui.glanceKey}>Tracks and lodge heads</span>
-                    {tracksWithHeads.map((t) => (
+                    <span className={ui.glanceKey}>Hack Day tracks</span>
+                    {glanceTracks.map((t) => (
                       <a key={t.id} href={`#track-${t.id}`} className={ui.glanceTrack}>
                         <strong>{t.name}</strong>
-                        <span>{t.heads}</span>
+                        <span>
+                          {t.projectCount} {t.projectCount === 1 ? "project" : "projects"}
+                        </span>
                       </a>
                     ))}
+                  </div>
+                )}
+                {lodges.length > 0 && (
+                  <div className={ui.glanceItem} style={{ gap: 6 }}>
+                    <span className={ui.glanceKey}>Lodges</span>
+                    {lodges.map((l) =>
+                      l.url ? (
+                        <a key={l.id} href={l.url} target="_blank" rel="noopener noreferrer" className={ui.glanceTrack}>
+                          <strong>{l.name}</strong>
+                          <span aria-hidden="true">↗</span>
+                        </a>
+                      ) : (
+                        <span key={l.id} className={ui.glanceTrack}>
+                          <strong>{l.name}</strong>
+                        </span>
+                      )
+                    )}
                   </div>
                 )}
               </div>

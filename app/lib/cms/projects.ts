@@ -1,7 +1,7 @@
 import { and, asc, eq, ne, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/app/lib/db";
-import { cohorts, projects, tracks, type ProjectRow } from "@/app/lib/db/schema";
+import { cohorts, lodges, projects, tracks, type ProjectRow } from "@/app/lib/db/schema";
 import type { HighlightCard, Project, TeamMember } from "@/app/projects/data/types";
 import { can, CmsError, ensure, type Actor } from "./actor";
 import { revalidateCms, TAGS } from "./revalidate";
@@ -20,7 +20,10 @@ export interface ProjectInput {
   description?: string;
   programme?: Programme;
   cohortId?: string | null;
+  /** Hack Day track (AI Lodge) */
   trackId?: number | null;
+  /** Lodge the team was in (AI Lodge) */
+  lodgeId?: number | null;
   madeFor?: string;
   builtWith?: string;
   coverImage?: string;
@@ -50,6 +53,8 @@ const projectSelect = {
   cohortSlug: cohorts.slug,
   trackName: tracks.name,
   trackPosition: tracks.position,
+  lodgeName: lodges.name,
+  lodgeUrl: lodges.url,
 };
 
 type JoinedRow = {
@@ -58,6 +63,8 @@ type JoinedRow = {
   cohortSlug: string | null;
   trackName: string | null;
   trackPosition: number | null;
+  lodgeName: string | null;
+  lodgeUrl: string | null;
 };
 
 function toProject(r: JoinedRow): Project {
@@ -87,6 +94,9 @@ function toProject(r: JoinedRow): Project {
     trackId: p.trackId,
     trackName: r.trackName ?? undefined,
     trackPosition: r.trackPosition ?? undefined,
+    lodgeId: p.lodgeId,
+    lodgeName: r.lodgeName ?? undefined,
+    lodgeUrl: r.lodgeUrl || undefined,
     madeFor: p.madeFor,
     builtWith: p.builtWith,
     winner: p.winner,
@@ -101,7 +111,8 @@ async function selectProjects(where?: ReturnType<typeof eq>) {
     .select(projectSelect)
     .from(projects)
     .leftJoin(cohorts, eq(projects.cohortId, cohorts.id))
-    .leftJoin(tracks, eq(projects.trackId, tracks.id));
+    .leftJoin(tracks, eq(projects.trackId, tracks.id))
+    .leftJoin(lodges, eq(projects.lodgeId, lodges.id));
   const rows = await (where ? q.where(where) : q).orderBy(
     asc(projects.position),
     asc(projects.createdAt)
@@ -159,8 +170,23 @@ function cleanList(values: string[] | undefined) {
   return (values ?? []).map((s) => s.trim()).filter(Boolean);
 }
 
-/** Resolves cohort/track so they always agree with each other and the programme. */
+/** Resolves cohort, track and lodge so they always agree with each other and the programme. */
 async function resolvePlacement(
+  programme: Programme,
+  cohortId: string | null | undefined,
+  trackId: number | null | undefined,
+  lodgeId: number | null | undefined
+) {
+  const base = await resolveCohortTrack(programme, cohortId, trackId);
+  if (!lodgeId || programme !== "AI Lodge") return { ...base, lodgeId: null };
+  const db = await getDb();
+  const [lodge] = await db.select().from(lodges).where(eq(lodges.id, lodgeId));
+  ensure(lodge, "That lodge no longer exists");
+  ensure(lodge.cohortId === base.cohortId, "The lodge belongs to a different semester");
+  return { ...base, lodgeId: lodge.id };
+}
+
+async function resolveCohortTrack(
   programme: Programme,
   cohortId: string | null | undefined,
   trackId: number | null | undefined
@@ -235,19 +261,14 @@ export async function createProject(
   ensure(slug, "Project name needs at least one letter or number");
   ensure(!RESERVED_PROJECT_SLUGS.includes(slug), `"${title}" clashes with a site page; pick another name`);
 
-  let programme = input.programme ?? "AI Lodge";
+  const programme = input.programme ?? (actor.role === "dap_editor" ? "DAP" : "AI Lodge");
   ensure((PROGRAMMES as readonly string[]).includes(programme), "Unknown programme");
-  let trackId = input.trackId ?? null;
-  if (actor.role === "lodge_head") {
-    programme = "AI Lodge";
-    trackId = actor.trackId;
-  }
-  ensure(can.editProject(actor, { programme, trackId }), "You can't add projects here");
+  ensure(can.editProject(actor, { programme }), "You can't add projects here");
 
   const [existing] = await db.select({ slug: projects.slug }).from(projects).where(eq(projects.slug, slug));
   ensure(!existing, "A project with this name already exists");
 
-  const placement = await resolvePlacement(programme, input.cohortId, trackId);
+  const placement = await resolvePlacement(programme, input.cohortId, input.trackId, input.lodgeId);
   let status: ProjectStatus = input.status === "in_review" ? "in_review" : "draft";
   if (input.status === "published" && can.publishProject(actor)) status = "published";
   ensure(status !== "published" || placement.cohortId, NEEDS_COHORT);
@@ -277,19 +298,15 @@ export async function updateProject(actor: Actor, slug: string, input: ProjectIn
   ensure(can.editProject(actor, row), "You can't edit this project");
 
   let programme = row.programme;
-  let cohortId = input.cohortId === undefined ? row.cohortId : input.cohortId;
-  let trackId = input.trackId === undefined ? row.trackId : input.trackId;
+  const cohortId = input.cohortId === undefined ? row.cohortId : input.cohortId;
+  const trackId = input.trackId === undefined ? row.trackId : input.trackId;
+  const lodgeId = input.lodgeId === undefined ? row.lodgeId : input.lodgeId;
   if (actor.role === "exco" && input.programme) {
     ensure((PROGRAMMES as readonly string[]).includes(input.programme), "Unknown programme");
     programme = input.programme;
   }
-  if (actor.role === "lodge_head") {
-    // A lodge head's projects stay in their own track.
-    cohortId = row.cohortId;
-    trackId = row.trackId;
-  }
-  if (actor.role === "dap_editor") trackId = null; // DAP has no tracks; the cohort can change
-  const placement = await resolvePlacement(programme, cohortId, trackId);
+  // Moving to another semester drops a lodge that belonged to the old one.
+  const placement = await resolvePlacement(programme, cohortId, trackId, cohortId === row.cohortId ? lodgeId : input.lodgeId ?? null);
   ensure(
     row.status !== "published" || placement.cohortId,
     "A published project needs a semester or cohort. Move it to draft first."

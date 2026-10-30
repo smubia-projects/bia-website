@@ -22,6 +22,20 @@
       "when": 1793350615521,
       "tag": "0002_site_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793353574214,
+      "tag": "0003_lodges_and_dap_groups",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793353601014,
+      "tag": "0004_drop_session_group_text",
+      "breakpoints": true
     }
   ]
 }

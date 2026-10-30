@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Markdown from "@/app/components/ui/Markdown";
 import ui from "@/app/components/cms/public.module.css";
+import PeopleList from "@/app/components/cms/PeopleList";
 import { formatIssueDate, getPublicIssue, issuePath } from "@/app/lib/cms/newsletter";
 
 export const revalidate = 3600;
@@ -57,7 +58,15 @@ export default async function IssuePage({ params }: Props) {
             <div className={ui.sessionBoxText}>
               <span className={ui.sessionBoxLabel}>This week&apos;s co-learning</span>
               <span className={ui.sessionBoxTopic}>{session.topic}</span>
-              {session.group && <span className={ui.sessionBoxGroup}>Taught by {session.group}</span>}
+              {session.group && (
+                <>
+                  <span className={ui.sessionBoxGroup}>Taught by {session.group.name}</span>
+                  <PeopleList people={session.group.members} compact onDark label={`${session.group.name} members`} />
+                  {session.group.mentors.length > 0 && (
+                    <span className={ui.mentorLine}>Mentored by {session.group.mentors.map((m) => m.name).join(", ")}</span>
+                  )}
+                </>
+              )}
             </div>
             {session.slides && (
               <a className={`${ui.pill} ${ui.pillOnDark}`} href={session.slides} target="_blank" rel="noopener noreferrer">
@@ -101,7 +110,7 @@ export default async function IssuePage({ params }: Props) {
             </div>
             {next.group && (
               <div className={ui.muted} style={{ fontSize: 14 }}>
-                Taught by {next.group}
+                Taught by {next.group.name}
               </div>
             )}
           </div>

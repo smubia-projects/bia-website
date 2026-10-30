@@ -2,7 +2,6 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { findAccess, upsertDevPerson } from "@/app/lib/cms/people";
-import { listAllTracks } from "@/app/lib/cms/cohorts";
 import { ROLES, type Role } from "@/app/lib/cms/taxonomy";
 
 /**
@@ -48,9 +47,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             async authorize(credentials) {
               const role = String(credentials?.role ?? "") as Role;
               if (!ROLES.includes(role)) return null;
-              const trackId = role === "lodge_head" ? (await listAllTracks())[0]?.id ?? null : null;
               const email = `dev-${role.replace("_", "-")}@localhost`;
-              await upsertDevPerson(email, role, trackId);
+              await upsertDevPerson(email, role);
               return { id: email, email, name: `Local ${role.replace("_", " ")}` };
             },
           }),

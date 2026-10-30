@@ -8,9 +8,9 @@ import { editorOptions } from "../editorData";
 export default async function EditProjectPage({ params }: { params: { slug: string } }) {
   const actor = await requireActorPage();
   const project = await getProject(params.slug);
-  if (!project || !can.editProject(actor, { programme: project.badge, trackId: project.trackId ?? null })) notFound();
-  const { cohorts, tracks } = await editorOptions();
+  if (!project || !can.editProject(actor, { programme: project.badge })) notFound();
+  const { cohorts, tracks, lodges } = await editorOptions();
   return (
-    <ProjectEditor key={project.updatedAt} project={project} cohorts={cohorts} tracks={tracks} role={actor.role} ownTrackId={actor.trackId} />
+    <ProjectEditor key={project.updatedAt} project={project} cohorts={cohorts} tracks={tracks} lodges={lodges} role={actor.role} />
   );
 }

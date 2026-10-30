@@ -42,23 +42,13 @@ export const ISSUE_STATUS_LABEL: Record<IssueStatus, string> = {
 export const COHORT_VISIBILITY = ["live", "hidden", "archived"] as const;
 export type CohortVisibility = (typeof COHORT_VISIBILITY)[number];
 
-export const ROLES = ["exco", "lodge_head", "dap_editor"] as const;
+export const ROLES = ["exco", "dap_editor"] as const;
 export type Role = (typeof ROLES)[number];
 export const ROLE_LABEL: Record<Role, string> = {
   exco: "Exco admin",
-  lodge_head: "Lodge head",
   dap_editor: "DAP editor",
 };
 
-export const TEACHING_GROUPS = [
-  "Group 1",
-  "Group 2",
-  "Group 3",
-  "Group 4",
-  "Group 5",
-  "Group 6",
-  "All teams",
-] as const;
 
 export const BLOCK_TYPES = ["Text", "Team updates", "Shout-outs", "Image"] as const;
 export type BlockType = (typeof BLOCK_TYPES)[number];

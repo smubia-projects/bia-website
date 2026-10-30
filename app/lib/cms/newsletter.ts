@@ -1,14 +1,15 @@
 import { and, asc, desc, eq, lte } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/app/lib/db";
-import { cohorts, issues, sessions, type IssueBlock, type IssueRow, type SessionRow } from "@/app/lib/db/schema";
+import { cohorts, dapGroups, issues, sessions, type DapGroupRow, type IssueBlock, type IssueRow, type SessionRow } from "@/app/lib/db/schema";
 import { AGENT_ACTOR, can, CmsError, ensure, type Actor } from "./actor";
 import { getCohort, listCohorts, pickCurrentCohort, type Cohort } from "./cohorts";
 import { revalidateCms, TAGS } from "./revalidate";
 import { sendIssueToTelegram, SITE_URL } from "./telegram";
-import { BLOCK_DEFAULT_HEADING, BLOCK_TYPES, TEACHING_GROUPS, type BlockType } from "./taxonomy";
+import { BLOCK_DEFAULT_HEADING, BLOCK_TYPES, type BlockType } from "./taxonomy";
 
-export type Session = SessionRow;
+/** A schedule row with the DAP group teaching it (members and mentors included). */
+export type Session = SessionRow & { group: DapGroupRow | null };
 export type Issue = IssueRow & { slug: string; cohortSlug: string };
 
 /** Scheduled issues go out at 09:00 SGT (01:00 UTC) on their date. */
@@ -47,13 +48,20 @@ async function requireDapCohort(cohortId: string): Promise<Cohort> {
 
 export async function listSessions(cohortId: string): Promise<Session[]> {
   const db = await getDb();
-  return db.select().from(sessions).where(eq(sessions.cohortId, cohortId)).orderBy(asc(sessions.week));
+  const rows = await db
+    .select({ s: sessions, g: dapGroups })
+    .from(sessions)
+    .leftJoin(dapGroups, eq(sessions.groupId, dapGroups.id))
+    .where(eq(sessions.cohortId, cohortId))
+    .orderBy(asc(sessions.week));
+  return rows.map((r) => ({ ...r.s, group: r.g }));
 }
 
 export interface SessionInput {
   week: number;
   topic?: string;
-  group?: string;
+  /** A DAP group of this cohort, or null for none */
+  groupId?: number | null;
   slides?: string;
 }
 
@@ -61,15 +69,14 @@ export async function saveSessions(actor: Actor, cohortId: string, rows: Session
   ensure(can.editNewsletter(actor), "You can't edit the co-learning schedule");
   await requireDapCohort(cohortId);
   const db = await getDb();
+  const groupIds = new Set((await db.select({ id: dapGroups.id }).from(dapGroups).where(eq(dapGroups.cohortId, cohortId))).map((g) => g.id));
   for (const r of rows) {
     ensure(Number.isInteger(r.week) && r.week >= 1 && r.week <= 30, "Week must be between 1 and 30");
-    if (r.group) {
-      ensure((TEACHING_GROUPS as readonly string[]).includes(r.group), `Teaching group must be one of: ${TEACHING_GROUPS.join(", ")}`);
-    }
+    ensure(!r.groupId || groupIds.has(r.groupId), "That group isn't in this cohort");
     if (r.slides) ensure(/^https?:\/\//i.test(r.slides.trim()), "Slides links must start with https://");
     const values = {
       ...(r.topic !== undefined ? { topic: r.topic.trim() } : {}),
-      ...(r.group !== undefined ? { group: r.group } : {}),
+      ...(r.groupId !== undefined ? { groupId: r.groupId || null } : {}),
       ...(r.slides !== undefined ? { slides: r.slides.trim() } : {}),
     };
     await db
@@ -189,7 +196,7 @@ async function telegramPayload(issue: Issue) {
     coverImage: issue.coverImage,
     url: `${SITE_URL}${issuePath(issue.cohortSlug, issue.week)}`,
     sessionTopic: session?.topic || undefined,
-    sessionGroup: session?.group || undefined,
+    sessionGroup: session?.group?.name || undefined,
   };
 }
 

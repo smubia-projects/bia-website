@@ -11,47 +11,36 @@ interface PersonView {
   email: string;
   name: string;
   role: Role;
-  trackId: number | null;
   scope: string;
 }
+
+type PersonInput = { email: string; name: string; role: Role };
 
 const ROLE_INFO: { role: Role; can: string; who: string }[] = [
   {
     role: "exco",
-    can: "Everything: semester pages, all projects, approvals, track winners, the DAP newsletter and sessions, and people and roles.",
+    can: "Everything: semesters, all projects, approvals, Hack Day winners, the DAP newsletter, groups and sessions, site links, and people and roles.",
     who: "Exco members",
   },
   {
-    role: "lodge_head",
-    can: "Add and edit projects in their own track, then submit them for review. Can't publish or edit the semester page.",
-    who: "Lodge heads, scoped to one track",
-  },
-  {
     role: "dap_editor",
-    can: "Write and publish DAP newsletter issues, keep the co-learning schedule up to date, and edit DAP projects.",
+    can: "Write and publish DAP newsletter issues, keep groups and the co-learning schedule up to date, and edit DAP projects (exco approves them).",
     who: "DAP leads",
   },
 ];
 
 export default function PeopleManager({
   people,
-  tracks,
   me,
   bootstrap,
 }: {
   people: PersonView[];
-  tracks: { id: number; label: string }[];
   me: string;
   bootstrap: string[];
 }) {
   const router = useRouter();
   const { handle, node } = useActionToast();
-  const [form, setForm] = useState<{ email: string; name: string; role: Role; trackId: number | null }>({
-    email: "",
-    name: "",
-    role: "lodge_head",
-    trackId: tracks[0]?.id ?? null,
-  });
+  const [form, setForm] = useState<PersonInput>({ email: "", name: "", role: "dap_editor" });
   const [editing, setEditing] = useState<string | null>(null);
 
   async function save(input = form) {
@@ -105,19 +94,6 @@ export default function PeopleManager({
               ))}
             </select>
           </label>
-          {form.role === "lodge_head" && (
-            <label className={styles.fld}>
-              Track
-              <select className={styles.inp} value={form.trackId ?? ""} onChange={(e) => setForm({ ...form, trackId: e.target.value ? Number(e.target.value) : null })}>
-                {tracks.length === 0 && <option value="">Create tracks on the semester page first</option>}
-                {tracks.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
         </div>
         <button type="button" className={styles.btn} style={{ alignSelf: "flex-start" }} disabled={!form.email.trim()} onClick={() => save()}>
           Add person
@@ -145,7 +121,7 @@ export default function PeopleManager({
             ))}
             {people.map((p) =>
               editing === p.email ? (
-                <EditRow key={p.email} person={p} tracks={tracks} onCancel={() => setEditing(null)} onSave={(input) => save(input)} />
+                <EditRow key={p.email} person={p} onCancel={() => setEditing(null)} onSave={(input) => save(input)} />
               ) : (
                 <tr key={p.email}>
                   <td>
@@ -178,21 +154,14 @@ export default function PeopleManager({
 
 function EditRow({
   person,
-  tracks,
   onCancel,
   onSave,
 }: {
   person: PersonView;
-  tracks: { id: number; label: string }[];
   onCancel: () => void;
-  onSave: (input: { email: string; name: string; role: Role; trackId: number | null }) => void;
+  onSave: (input: PersonInput) => void;
 }) {
-  const [f, setF] = useState<{ email: string; name: string; role: Role; trackId: number | null }>({
-    email: person.email,
-    name: person.name,
-    role: person.role,
-    trackId: person.trackId ?? tracks[0]?.id ?? null,
-  });
+  const [f, setF] = useState<PersonInput>({ email: person.email, name: person.name, role: person.role });
   return (
     <tr>
       <td>
@@ -209,17 +178,7 @@ function EditRow({
         </select>
       </td>
       <td>
-        {f.role === "lodge_head" ? (
-          <select className={`${styles.inp} ${styles.inpSmall}`} value={f.trackId ?? ""} aria-label="Track" onChange={(e) => setF({ ...f, trackId: e.target.value ? Number(e.target.value) : null })}>
-            {tracks.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        ) : (
-          "—"
-        )}
+        {f.role === "dap_editor" ? "DAP" : "Everything"}
       </td>
       <td className={styles.actionsCell}>
         <button type="button" className={styles.lnk} onClick={() => onSave(f)}>

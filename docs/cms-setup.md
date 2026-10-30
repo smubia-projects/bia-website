@@ -113,14 +113,17 @@ Keep `ADMIN_PASSWORD` and `UPSTASH_REDIS_REST_*` until step 9.
 
 1. Merge `feat/cms` into `main`. Production deploys against the Neon production branch.
 2. In production `/admin`, sign in with the bootstrap email, then:
-   - **AI Lodge › Semesters**: create the tracks, add the write-up and Hack Day details, and set
-     visibility. In **Projects in this semester**, move each project into its track and mark one
+   - **AI Lodge › Semesters**: create the Hack Day tracks and the lodges (each with a link to its
+     page on ailodge.smubia.com), add the write-up and Hack Day details, and set visibility. In
+     **Projects in this semester**, move each project into its track, set its lodge, and mark one
      winner per track.
+   - **DAP › Groups**: add each group's members and mentors, then pick each week's group on
+     **Co-learning sessions**.
    - **Projects**: fill in the Made for / Built with facets.
    - **DAP › Cohorts**: check the AY26/27 cohort is current. Fill in **Co-learning sessions**.
    - **Settings › Site links**: check the application forms, the "applications open" switches, the
      emails, and add the prospectus PDF link if you have one. Every join button uses these.
-   - **People and roles**: add exco, lodge heads (with their track) and DAP editors.
+   - **People and roles**: add exco and DAP editors.
      After that you can clear `CMS_BOOTSTRAP_ADMINS`.
 
 ## 8. Backups and Claude access

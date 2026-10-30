@@ -8,7 +8,7 @@ import * as projects from "@/app/lib/cms/projects";
 import { listSiteLinks, saveSiteLinks } from "@/app/lib/cms/links";
 import { projectPath } from "@/app/lib/cms/paths";
 import { EDITABLE_LINKS } from "@/app/lib/links";
-import { BLOCK_TYPES, BUILT_WITH, MADE_FOR, PROGRAMMES, PROJECT_STATUSES, TEACHING_GROUPS } from "@/app/lib/cms/taxonomy";
+import { BLOCK_TYPES, BUILT_WITH, MADE_FOR, PROGRAMMES, PROJECT_STATUSES } from "@/app/lib/cms/taxonomy";
 import { uploadImageFromBase64, uploadImageFromUrl } from "@/app/lib/cms/uploads";
 
 /*
@@ -51,12 +51,13 @@ const projectFields = {
   description: z.string().max(400).optional().describe("Card description, ideally 200 characters or fewer"),
   programme: z.enum(PROGRAMMES).optional(),
   cohortId: z.string().nullable().optional().describe("From list_cohorts, e.g. ai-lodge-ay2627-s1"),
-  trackId: z.number().int().nullable().optional().describe("From list_cohorts (AI Lodge tracks)"),
+  trackId: z.number().int().nullable().optional().describe("Hack Day track id from list_cohorts (AI Lodge)"),
+  lodgeId: z.number().int().nullable().optional().describe("Lodge id from list_cohorts (AI Lodge): the lodge the team was in"),
   madeFor: z.enum(MADE_FOR).or(z.literal("")).optional(),
   builtWith: z.enum(BUILT_WITH).or(z.literal("")).optional(),
   coverImage: z.string().optional().describe("URL from upload_image (16:10 works best)"),
   images: z.array(z.string()).optional().describe("Screenshot URLs from upload_image (16:9)"),
-  overview: z.string().optional().describe("Markdown write-up shown as 'How it works'"),
+  overview: z.string().optional().describe("Markdown write-up shown as 'Project details'"),
   cards: z.array(card).optional(),
   team: z.array(teamMember).optional(),
   techStack: z.array(z.string()).optional(),
@@ -88,7 +89,8 @@ const handler = createMcpHandler(
       "list_cohorts",
       {
         title: "List cohorts and tracks",
-        description: "AI Lodge semesters (with their tracks) and DAP cohorts. Use the ids when placing projects.",
+        description:
+          "AI Lodge semesters (with their Hack Day tracks and lodges) and DAP cohorts (with their teaching groups). Use the ids when placing projects or setting session groups.",
         inputSchema: z.object({}),
       },
       () =>
@@ -101,7 +103,9 @@ const handler = createMcpHandler(
               slug: c.slug,
               name: c.name,
               visibility: c.visibility,
-              tracks: c.programme === "AI Lodge" ? (await cohorts.listTracks(c.id)).map((t) => ({ id: t.id, name: t.name, heads: t.heads, projects: t.projectCount })) : undefined,
+              tracks: c.programme === "AI Lodge" ? (await cohorts.listTracks(c.id)).map((t) => ({ id: t.id, name: t.name, projects: t.projectCount })) : undefined,
+              lodges: c.programme === "AI Lodge" ? (await cohorts.listLodges(c.id)).map((l) => ({ id: l.id, name: l.name, url: l.url })) : undefined,
+              groups: c.programme === "DAP" ? (await cohorts.listGroups(c.id)).map((g) => ({ id: g.id, name: g.name, members: g.members.length, mentors: g.mentors.length })) : undefined,
             }))
           );
         })
@@ -260,11 +264,53 @@ const handler = createMcpHandler(
     server.registerTool(
       "save_track",
       {
-        title: "Create or rename a track",
-        description: "Pass id to edit an existing track; omit it to add one to an AI Lodge semester.",
-        inputSchema: z.object({ id: z.number().int().optional(), cohortId: z.string(), name: z.string(), heads: z.string().optional(), letter: z.string().optional() }),
+        title: "Create or rename a Hack Day track",
+        description: "Pass id to edit an existing track; omit it to add one to an AI Lodge semester. Tracks are the Hack Day categories (one winner each), separate from lodges.",
+        inputSchema: z.object({ id: z.number().int().optional(), cohortId: z.string(), name: z.string(), letter: z.string().optional() }),
       },
       (input) => tool(() => cohorts.saveTrack(AGENT_ACTOR, input))
+    );
+
+    server.registerTool(
+      "save_lodge",
+      {
+        title: "Create or edit a lodge",
+        description: "A lodge in an AI Lodge semester: its name and the link to its page on ailodge.smubia.com (lodge head profiles live there). Pass id to edit.",
+        inputSchema: z.object({ id: z.number().int().optional(), cohortId: z.string(), name: z.string(), url: z.string().optional() }),
+      },
+      (input) => tool(() => cohorts.saveLodge(AGENT_ACTOR, input))
+    );
+
+    const profile = z.object({
+      name: z.string(),
+      image: z.string().optional().describe("URL from upload_image (square works best)"),
+      linkedin: z.string().optional(),
+      email: z.string().optional(),
+      telegram: z.string().optional().describe("@handle or t.me link"),
+    });
+
+    server.registerTool(
+      "get_dap_group",
+      { title: "Get DAP group", description: "A DAP teaching group with its members and mentors.", inputSchema: z.object({ cohortId: z.string(), id: z.number().int() }) },
+      ({ cohortId, id }) =>
+        tool(async () => (await cohorts.listGroups(cohortId)).find((g) => g.id === id) ?? Promise.reject(new CmsError("Group not found")))
+    );
+
+    server.registerTool(
+      "save_dap_group",
+      {
+        title: "Create or edit a DAP group",
+        description:
+          "A DAP cohort's teaching group. members and mentors (usually 1 to 3) replace the whole list when given. Pass id to edit; omit it to create.",
+        inputSchema: z.object({
+          id: z.number().int().optional(),
+          cohortId: z.string(),
+          name: z.string(),
+          members: z.array(profile).optional(),
+          mentors: z.array(profile).optional(),
+        }),
+      },
+      (input) => tool(() => cohorts.saveGroup(AGENT_ACTOR, input))
     );
 
     // ── DAP newsletter ──
@@ -350,7 +396,7 @@ const handler = createMcpHandler(
             z.object({
               week: z.number().int(),
               topic: z.string().optional(),
-              group: z.enum(TEACHING_GROUPS).or(z.literal("")).optional(),
+              groupId: z.number().int().nullable().optional().describe("Teaching group id from list_cohorts, or null"),
               slides: z.string().optional(),
             })
           ),

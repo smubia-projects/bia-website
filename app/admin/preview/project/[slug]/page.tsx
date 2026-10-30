@@ -15,7 +15,7 @@ export const metadata = { title: "Preview | SMUBIA CMS", robots: { index: false,
 export default async function ProjectPreviewPage({ params }: { params: { slug: string } }) {
   const actor = await requireActorPage();
   const project = await getProject(params.slug);
-  if (!project || !can.editProject(actor, { programme: project.badge, trackId: project.trackId ?? null })) notFound();
+  if (!project || !can.editProject(actor, { programme: project.badge })) notFound();
   const status = project.status ?? "draft";
 
   return (

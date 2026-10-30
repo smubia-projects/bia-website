@@ -142,6 +142,46 @@ export async function moveTrackAction(id: number, direction: "up" | "down") {
   });
 }
 
+export async function saveLodgeAction(input: cohorts.LodgeInput) {
+  return run(async (actor) => {
+    const l = await cohorts.saveLodge(actor, input);
+    refreshAdmin();
+    return l.id;
+  });
+}
+
+export async function deleteLodgeAction(id: number) {
+  return run(async (actor) => {
+    await cohorts.deleteLodge(actor, id);
+    refreshAdmin();
+    return null;
+  });
+}
+
+export async function saveGroupAction(input: cohorts.GroupInput) {
+  return run(async (actor) => {
+    const g = await cohorts.saveGroup(actor, input);
+    refreshAdmin();
+    return g.id;
+  });
+}
+
+export async function deleteGroupAction(id: number) {
+  return run(async (actor) => {
+    await cohorts.deleteGroup(actor, id);
+    refreshAdmin();
+    return null;
+  });
+}
+
+export async function setProjectLodgeAction(slug: string, lodgeId: number | null) {
+  return run(async (actor) => {
+    await projects.updateProject(actor, slug, { lodgeId });
+    refreshAdmin();
+    return slug;
+  });
+}
+
 export async function deleteTrackAction(id: number) {
   return run(async (actor) => {
     await cohorts.deleteTrack(actor, id);
@@ -227,7 +267,7 @@ export async function saveSessionsAction(cohortId: string, rows: newsletter.Sess
 
 // ── People ───────────────────────────────────────────────────────────────
 
-export async function savePersonAction(input: { email: string; name?: string; role: Role; trackId?: number | null }) {
+export async function savePersonAction(input: { email: string; name?: string; role: Role }) {
   return run(async (actor) => {
     await people.savePerson(actor, input);
     refreshAdmin();

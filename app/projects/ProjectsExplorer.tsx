@@ -64,7 +64,7 @@ export default function ProjectsExplorer({ projects }: { projects: Project[] }) 
 
   const defs: { key: FacetKey; label: string; values: readonly string[] }[] = [
     { key: "programme", label: "Programme", values: PROGRAMMES },
-    ...(trackValues.length ? [{ key: "track" as const, label: "AI Lodge track", values: trackValues }] : []),
+    ...(trackValues.length ? [{ key: "track" as const, label: "Hack Day track", values: trackValues }] : []),
     { key: "madeFor", label: "Made for", values: MADE_FOR },
     { key: "builtWith", label: "Built with", values: BUILT_WITH },
   ];

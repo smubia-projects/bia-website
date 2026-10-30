@@ -25,6 +25,7 @@ const CRUMBS: [RegExp, string][] = [
   [/^\/admin\/newsletter/, "DAP › Newsletter"],
   [/^\/admin\/sessions/, "DAP › Co-learning sessions"],
   [/^\/admin\/dap-cohort/, "DAP › Cohorts"],
+  [/^\/admin\/groups/, "DAP › Groups"],
   [/^\/admin\/links/, "Settings › Site links"],
   [/^\/admin\/people/, "Settings › People and roles"],
   [/^\/admin$/, "Home"],
@@ -34,6 +35,7 @@ const PUBLIC_FOR: [RegExp, string][] = [
   [/^\/admin\/projects/, "/projects"],
   [/^\/admin\/semester/, "/projects/ailodge"],
   [/^\/admin\/(newsletter|sessions)/, "/dap/newsletter"],
+  [/^\/admin\/groups/, "/dap"],
   [/^\/admin\/dap-cohort/, "/dap/projects"],
 ];
 
@@ -71,6 +73,7 @@ export default function Shell(props: Props) {
           <>
             <div className={styles.sideGroup}>DAP</div>
             {item("/admin/dap-cohort", "Cohorts")}
+            {item("/admin/groups", "Groups")}
             {item("/admin/newsletter", "Newsletter")}
             {item("/admin/sessions", "Co-learning sessions")}
           </>

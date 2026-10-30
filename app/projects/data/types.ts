@@ -70,6 +70,10 @@ export interface Project {
   trackName?: string;
   /** Track position in its semester (drives the shelf accent colour) */
   trackPosition?: number;
+  /** AI Lodge lodge the team was in; its page lives on ailodge.smubia.com */
+  lodgeId?: number | null;
+  lodgeName?: string;
+  lodgeUrl?: string;
   /** Audience facet ("Made for") */
   madeFor?: string;
   /** Technique facet ("Built with") */

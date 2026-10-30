@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ISSUE_STATUS_LABEL, TEACHING_GROUPS, type IssueStatus } from "@/app/lib/cms/taxonomy";
+import { ISSUE_STATUS_LABEL, type IssueStatus } from "@/app/lib/cms/taxonomy";
 import { saveSessionsAction } from "../../actions";
 import { StatusChip, useActionToast, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
@@ -11,7 +11,7 @@ import styles from "../../cms.module.css";
 interface Row {
   week: number;
   topic: string;
-  group: string;
+  groupId: number | null;
   slides: string;
   issue: IssueStatus | null;
 }
@@ -19,10 +19,12 @@ interface Row {
 export default function SessionsEditor({
   cohortId,
   cohorts,
+  groups,
   initial,
 }: {
   cohortId: string;
   cohorts: { id: string; name: string }[];
+  groups: { id: number; name: string }[];
   initial: Row[];
 }) {
   const router = useRouter();
@@ -34,7 +36,7 @@ export default function SessionsEditor({
 
   async function save() {
     setSaving(true);
-    const ok = handle(await saveSessionsAction(cohortId, rows.map(({ week, topic, group, slides }) => ({ week, topic, group, slides }))));
+    const ok = handle(await saveSessionsAction(cohortId, rows.map(({ week, topic, groupId, slides }) => ({ week, topic, groupId, slides }))));
     setSaving(false);
     if (ok !== undefined) router.refresh();
   }
@@ -44,7 +46,13 @@ export default function SessionsEditor({
       <div className={styles.pageHead}>
         <div>
           <h1 className={styles.h1}>Co-learning sessions</h1>
-          <p className={styles.sub}>Feeds the schedule on the newsletter page and the session box in each issue.</p>
+          <p className={styles.sub}>
+            Feeds the schedule on the newsletter page and the session box in each issue. Set up the teaching groups on{" "}
+            <Link className={styles.lnk} style={{ padding: 0, minHeight: 0, fontSize: "inherit" }} href={`/admin/groups?cohort=${cohortId}`}>
+              Groups
+            </Link>
+            .
+          </p>
         </div>
         <button type="button" className={styles.btn} onClick={save} disabled={saving}>
           {saving ? "Saving…" : "Save schedule"}
@@ -78,10 +86,18 @@ export default function SessionsEditor({
                   <input className={`${styles.inp} ${styles.inpSmall}`} value={r.topic} aria-label={`Week ${r.week} topic`} onChange={(e) => patch(r.week, { topic: e.target.value })} />
                 </td>
                 <td>
-                  <select className={`${styles.inp} ${styles.inpSmall}`} value={r.group} aria-label={`Week ${r.week} teaching group`} onChange={(e) => patch(r.week, { group: e.target.value })}>
-                    <option value="">Not set</option>
-                    {TEACHING_GROUPS.map((g) => (
-                      <option key={g}>{g}</option>
+                  <select
+                    className={`${styles.inp} ${styles.inpSmall}`}
+                    value={r.groupId ?? ""}
+                    aria-label={`Week ${r.week} teaching group`}
+                    disabled={groups.length === 0}
+                    onChange={(e) => patch(r.week, { groupId: e.target.value ? Number(e.target.value) : null })}
+                  >
+                    <option value="">{groups.length ? "Not set" : "No groups yet"}</option>
+                    {groups.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
                     ))}
                   </select>
                 </td>

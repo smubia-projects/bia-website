@@ -27,7 +27,7 @@ export default async function IssueEditorPage({ params }: { params: { id: string
         telegramPostedAt: issue.telegramPostedAt,
         path: issuePath(issue.cohortSlug, issue.week),
       }}
-      sessions={sessions.map((s) => ({ week: s.week, topic: s.topic, group: s.group }))}
+      sessions={sessions.map((s) => ({ week: s.week, topic: s.topic, group: s.group?.name ?? "" }))}
       takenWeeks={siblings.map((s) => s.week)}
       botUsername={botUsername()}
       telegramReady={Boolean(process.env.TELEGRAM_BOT_TOKEN)}

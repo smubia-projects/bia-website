@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { Cohort, Track } from "@/app/lib/cms/cohorts";
+import type { Cohort, Lodge, Track } from "@/app/lib/cms/cohorts";
 import type { Project } from "@/app/projects/data/types";
 import ProjectCover from "@/app/components/cms/ProjectCover";
 import Medal from "@/app/components/cms/Medal";
 import { trackAccent } from "@/app/components/cms/visuals";
 import { PROJECT_STATUS_LABEL } from "@/app/lib/cms/taxonomy";
-import { placeProjectAction, setWinnerAction } from "../../actions";
+import { placeProjectAction, setProjectLodgeAction, setWinnerAction } from "../../actions";
 import { StatusChip, useActionToast } from "../../_components/ui";
 import styles from "../../cms.module.css";
 
@@ -17,6 +17,7 @@ interface Props {
   cohort: Cohort;
   cohorts: Cohort[];
   tracks: Track[];
+  lodges: Lodge[];
   /** Every project of this programme, any status */
   projects: Project[];
   canEdit: boolean;
@@ -38,7 +39,7 @@ const OUT = "__out";
  * The semester's (or DAP cohort's) projects, grouped by track. Projects are added,
  * moved between tracks and marked as winners here; the editor handles everything else.
  */
-export default function CohortProjects({ cohort, cohorts, tracks, projects, canEdit, canSetWinner }: Props) {
+export default function CohortProjects({ cohort, cohorts, tracks, lodges, projects, canEdit, canSetWinner }: Props) {
   const router = useRouter();
   const { handle, node } = useActionToast();
   const [busy, setBusy] = useState<string | null>(null);
@@ -67,6 +68,13 @@ export default function CohortProjects({ cohort, cohorts, tracks, projects, canE
         },
       ]
     : [{ key: "all", track: null, title: "Projects", accent: "#0e7c5b", letter: "D", projects: mine }];
+
+  async function setLodge(p: Project, lodgeId: number | null) {
+    setBusy(p.slug);
+    const ok = handle(await setProjectLodgeAction(p.slug, lodgeId), lodgeId ? "Lodge set" : "Lodge removed");
+    setBusy(null);
+    if (ok !== undefined) router.refresh();
+  }
 
   async function place(slug: string, trackId: number | null, cohortId: string | null = cohort.id, message?: string) {
     setBusy(slug);
@@ -103,7 +111,7 @@ export default function CohortProjects({ cohort, cohorts, tracks, projects, canE
           <h2 className={styles.h2}>Projects in this {noun}</h2>
           <p className={styles.hint} style={{ margin: "4px 0 0", fontSize: 13 }}>
             {isLodge
-              ? "Projects show on the semester page under their track. Add existing projects here, or start a new one in a track."
+              ? "Projects show on the semester page under their Hack Day track. Add existing projects here or start a new one in a track, and set each project's lodge."
               : "Projects show on this cohort's yearbook page. Add existing projects here, or start a new one."}
           </p>
         </div>
@@ -138,6 +146,22 @@ export default function CohortProjects({ cohort, cohorts, tracks, projects, canE
                   {p.title}
                 </Link>
                 <StatusChip status={p.status ?? "draft"} label={PROJECT_STATUS_LABEL[p.status ?? "draft"]} />
+                {isLodge && lodges.length > 0 && (
+                  <select
+                    className={`${styles.inp} ${styles.inpSmall} ${styles.projRowMove}`}
+                    aria-label={`Lodge for ${p.title}`}
+                    value={p.lodgeId ?? ""}
+                    disabled={!canEdit || busy === p.slug}
+                    onChange={(e) => setLodge(p, e.target.value ? Number(e.target.value) : null)}
+                  >
+                    <option value="">No lodge</option>
+                    {lodges.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 {isLodge && g.track && canSetWinner && (
                   <button
                     type="button"

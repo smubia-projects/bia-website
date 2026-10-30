@@ -1,10 +1,10 @@
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "@/app/lib/db";
-import { cohorts, people, tracks, type PersonRow } from "@/app/lib/db/schema";
+import { people, type PersonRow } from "@/app/lib/db/schema";
 import { can, ensure, type Actor } from "./actor";
 import { ROLES, type Role } from "./taxonomy";
 
-export type Person = PersonRow & { trackName: string | null; cohortName: string | null };
+export type Person = PersonRow;
 
 /** Comma-separated emails that always get exco access (first sign-in bootstrap). */
 function bootstrapAdmins() {
@@ -16,13 +16,7 @@ function bootstrapAdmins() {
 
 export async function listPeople(): Promise<Person[]> {
   const db = await getDb();
-  const rows = await db
-    .select({ p: people, trackName: tracks.name, cohortName: cohorts.name })
-    .from(people)
-    .leftJoin(tracks, eq(people.trackId, tracks.id))
-    .leftJoin(cohorts, eq(tracks.cohortId, cohorts.id))
-    .orderBy(asc(people.role), asc(people.email));
-  return rows.map((r) => ({ ...r.p, trackName: r.trackName, cohortName: r.cohortName }));
+  return db.select().from(people).orderBy(asc(people.role), asc(people.email));
 }
 
 /** Resolves a signed-in email to CMS access, or null when they have none. */
@@ -32,10 +26,12 @@ export async function findAccess(email: string): Promise<Actor | null> {
   const db = await getDb();
   const [row] = await db.select().from(people).where(eq(people.email, key));
   if (row) {
-    return { email: row.email, name: row.name || row.email, role: row.role, trackId: row.trackId };
+    // A role that no longer exists (e.g. the retired lodge head) gives no access.
+    if (!(ROLES as readonly string[]).includes(row.role)) return null;
+    return { email: row.email, name: row.name || row.email, role: row.role };
   }
   if (bootstrapAdmins().includes(key)) {
-    return { email: key, name: key, role: "exco", trackId: null };
+    return { email: key, name: key, role: "exco" };
   }
   return null;
 }
@@ -44,7 +40,6 @@ export interface PersonInput {
   email: string;
   name?: string;
   role: Role;
-  trackId?: number | null;
 }
 
 export async function savePerson(actor: Actor, input: PersonInput) {
@@ -52,9 +47,7 @@ export async function savePerson(actor: Actor, input: PersonInput) {
   const email = input.email.trim().toLowerCase();
   ensure(/^[^@\s]+@smu\.edu\.sg$/.test(email), "Use an @smu.edu.sg Google account");
   ensure((ROLES as readonly string[]).includes(input.role), "Unknown role");
-  const trackId = input.role === "lodge_head" ? input.trackId ?? null : null;
-  ensure(input.role !== "lodge_head" || trackId, "Pick the lodge head's track");
-  const values = { name: (input.name ?? "").trim(), role: input.role, trackId };
+  const values = { name: (input.name ?? "").trim(), role: input.role };
   const db = await getDb();
   await db
     .insert(people)
@@ -71,8 +64,8 @@ export async function removePerson(actor: Actor, email: string) {
 }
 
 /** Local development only: grants the dev sign-in its chosen role. */
-export async function upsertDevPerson(email: string, role: Role, trackId: number | null) {
+export async function upsertDevPerson(email: string, role: Role) {
   const db = await getDb();
-  const values = { name: `Local ${role.replace("_", " ")}`, role, trackId };
+  const values = { name: `Local ${role.replace("_", " ")}`, role };
   await db.insert(people).values({ email, ...values }).onConflictDoUpdate({ target: people.email, set: values });
 }

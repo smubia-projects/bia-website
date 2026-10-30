@@ -369,8 +369,20 @@ export default function ProjectDetailContent({ project, cohortHref, cohortLabel 
               )}
               {isAILodge && project.trackName && (
                 <div className={styles.metaRow}>
-                  <span className={styles.metaLabel}>Track</span>
+                  <span className={styles.metaLabel}>Hack Day track</span>
                   <span className={styles.metaValue}>{project.trackName}</span>
+                </div>
+              )}
+              {isAILodge && project.lodgeName && (
+                <div className={styles.metaRow}>
+                  <span className={styles.metaLabel}>Lodge</span>
+                  {project.lodgeUrl ? (
+                    <a href={project.lodgeUrl} target="_blank" rel="noopener noreferrer" className={styles.metaLink}>
+                      {project.lodgeName} ↗
+                    </a>
+                  ) : (
+                    <span className={styles.metaValue}>{project.lodgeName}</span>
+                  )}
                 </div>
               )}
               {project.techStack.length > 0 && (
