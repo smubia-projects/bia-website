@@ -122,7 +122,7 @@ Keep `ADMIN_PASSWORD` and `UPSTASH_REDIS_REST_*` until step 9.
    - **All projects**: fill in the Made for / Built with facets.
    - **Settings › Site links**: check the application forms, the "applications open" switches, the
      emails, and add the prospectus PDF link if you have one. Every join button uses these.
-   - **People and roles**: add exco and DAP editors.
+   - **People and roles**: add exco admins, DAP exco and AI Lodge exco.
      After that you can clear `CMS_BOOTSTRAP_ADMINS`.
 
 ## 8. Backups and Claude access

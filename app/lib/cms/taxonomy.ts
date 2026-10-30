@@ -42,11 +42,18 @@ export const ISSUE_STATUS_LABEL: Record<IssueStatus, string> = {
 export const COHORT_VISIBILITY = ["live", "hidden", "archived"] as const;
 export type CohortVisibility = (typeof COHORT_VISIBILITY)[number];
 
-export const ROLES = ["exco", "dap_editor"] as const;
+export const ROLES = ["exco", "dap_exco", "lodge_exco"] as const;
 export type Role = (typeof ROLES)[number];
 export const ROLE_LABEL: Record<Role, string> = {
   exco: "Exco admin",
-  dap_editor: "DAP editor",
+  dap_exco: "DAP exco",
+  lodge_exco: "AI Lodge exco",
+};
+/** The one programme a programme exco works on; exco admins have no limit. */
+export const ROLE_PROGRAMME: Record<Role, Programme | null> = {
+  exco: null,
+  dap_exco: "DAP",
+  lodge_exco: "AI Lodge",
 };
 
 

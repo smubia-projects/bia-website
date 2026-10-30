@@ -164,9 +164,11 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
 - Sign-in: Auth.js (`auth.ts`) with Google, `@smu.edu.sg` accounts only, plus the email must
   be on the People list (or in `CMS_BOOTSTRAP_ADMINS`). Roles are re-read from the database
   on every request. Local dev also has a dev sign-in with a role picker (never in production).
-- Roles: **exco** (everything) and **DAP editor** (newsletter, groups, sessions, DAP projects;
-  exco approves their projects). There is no lodge head role: lodge head profiles live on the
-  AI Lodge site (ailodge.smubia.com).
+- Roles: **Exco admin** (everything), **DAP exco** (DAP only: cohorts, groups, schedule,
+  newsletter, DAP projects) and **AI Lodge exco** (AI Lodge only: semesters, tracks, lodges,
+  Hack Day winners, AI Lodge projects). Programme exco can't publish projects (an exco admin
+  approves them), edit Site links or manage people. Permissions live in `can` (`actor.ts`),
+  the role → programme map in `ROLE_PROGRAMME` (`taxonomy.ts`). There is no lodge head role.
 - Project status: `draft` → `in_review` → `published` (replaces the Redis-era `hidden` flag;
   `Project.hidden` is now derived). Exco approves. A project needs a semester (AI Lodge) or
   cohort (DAP) before it can be published, because its page lives under it. Each AI Lodge

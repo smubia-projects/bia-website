@@ -36,6 +36,13 @@
       "when": 1793353601014,
       "tag": "0004_drop_session_group_text",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793380936554,
+      "tag": "0005_rename_cms_roles",
+      "breakpoints": true
     }
   ]
 }

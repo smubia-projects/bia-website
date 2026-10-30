@@ -11,6 +11,7 @@ import {
   PROGRAMMES,
   PROJECT_STATUSES,
   RESERVED_PROJECT_SLUGS,
+  ROLE_PROGRAMME,
   type Programme,
   type ProjectStatus,
 } from "./taxonomy";
@@ -261,7 +262,7 @@ export async function createProject(
   ensure(slug, "Project name needs at least one letter or number");
   ensure(!RESERVED_PROJECT_SLUGS.includes(slug), `"${title}" clashes with a site page; pick another name`);
 
-  const programme = input.programme ?? (actor.role === "dap_editor" ? "DAP" : "AI Lodge");
+  const programme = input.programme ?? ROLE_PROGRAMME[actor.role] ?? "AI Lodge";
   ensure((PROGRAMMES as readonly string[]).includes(programme), "Unknown programme");
   ensure(can.editProject(actor, { programme }), "You can't add projects here");
 

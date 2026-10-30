@@ -1,4 +1,4 @@
-import type { Programme, Role } from "./taxonomy";
+import { ROLE_PROGRAMME, type Programme, type Role } from "./taxonomy";
 
 /** Whoever is making a CMS change: a signed-in person or the MCP agent. */
 export interface Actor {
@@ -26,18 +26,20 @@ export function ensure(condition: unknown, message: string): asserts condition {
   if (!condition) throw new CmsError(message);
 }
 
+/** Exco admins work on every programme; DAP exco and AI Lodge exco on their own. */
+const onProgramme = (a: Actor, programme: Programme) => a.role === "exco" || ROLE_PROGRAMME[a.role] === programme;
+
 export const can = {
   publishProject: (a: Actor) => a.role === "exco",
-  setWinner: (a: Actor) => a.role === "exco",
+  /** Hack Day winners exist only in AI Lodge */
+  setWinner: (a: Actor) => onProgramme(a, "AI Lodge"),
   deleteProject: (a: Actor) => a.role === "exco",
   managePeople: (a: Actor) => a.role === "exco",
   editLinks: (a: Actor) => a.role === "exco",
-  editNewsletter: (a: Actor) => a.role === "exco" || a.role === "dap_editor",
-  editCohort: (a: Actor, programme: Programme) =>
-    a.role === "exco" || (a.role === "dap_editor" && programme === "DAP"),
-  editProject: (a: Actor, p: { programme: Programme }) =>
-    a.role === "exco" || (a.role === "dap_editor" && p.programme === "DAP"),
+  editNewsletter: (a: Actor) => onProgramme(a, "DAP"),
+  editCohort: (a: Actor, programme: Programme) => onProgramme(a, programme),
+  editProject: (a: Actor, p: { programme: Programme }) => onProgramme(a, p.programme),
   /** Which admin sections a role sees */
-  seeLodge: (a: Actor) => a.role === "exco",
-  seeDap: (a: Actor) => a.role === "exco" || a.role === "dap_editor",
+  seeLodge: (a: Actor) => onProgramme(a, "AI Lodge"),
+  seeDap: (a: Actor) => onProgramme(a, "DAP"),
 };

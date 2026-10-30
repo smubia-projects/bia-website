@@ -74,7 +74,7 @@ export default function AdminHome({ name, canApprove, review, recent, drafts, no
               <h2 className={styles.h2}>Waiting for review</h2>
               {review.length === 0 ? (
                 <p className={styles.hint} style={{ margin: 0, fontSize: 14 }}>
-                  Nothing to review. DAP editors&apos; submissions show up here.
+                  Nothing to review. Projects that DAP exco and AI Lodge exco submit show up here.
                 </p>
               ) : (
                 review.map((p) => (

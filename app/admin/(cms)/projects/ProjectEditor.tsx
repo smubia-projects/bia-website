@@ -13,6 +13,7 @@ import {
   MADE_FOR,
   PROGRAMMES,
   PROJECT_STATUS_LABEL,
+  ROLE_PROGRAMME,
   type Programme,
   type Role,
 } from "@/app/lib/cms/taxonomy";
@@ -59,7 +60,7 @@ function initialForm(
   return {
     title: p?.title ?? "",
     description: p?.description ?? "",
-    programme: (p?.badge ?? presetCohort?.programme ?? (role === "dap_editor" ? "DAP" : "AI Lodge")) as Programme,
+    programme: (p?.badge ?? presetCohort?.programme ?? (ROLE_PROGRAMME[role] ?? "AI Lodge")) as Programme,
     cohortId: p?.cohortId ?? presetCohort?.id ?? "",
     trackId: p?.trackId ?? (presetCohort ? preset?.trackId ?? null : null),
     lodgeId: p?.lodgeId ?? null,
@@ -90,7 +91,7 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
   const status = project?.status ?? "draft";
   const set = <K extends keyof typeof f>(key: K, value: (typeof f)[K]) => setF((s) => ({ ...s, [key]: value }));
 
-  const placementGroups = PROGRAMMES.filter((p) => role !== "dap_editor" || p === "DAP").map((p) => ({
+  const placementGroups = PROGRAMMES.filter((p) => !ROLE_PROGRAMME[role] || ROLE_PROGRAMME[role] === p).map((p) => ({
     programme: p,
     label: p === "AI Lodge" ? "AI Lodge semesters" : "DAP cohorts",
     none: p === "AI Lodge" ? "AI Lodge, no semester yet" : "DAP, no cohort yet",

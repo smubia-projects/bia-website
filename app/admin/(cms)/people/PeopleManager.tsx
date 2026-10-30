@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ROLE_LABEL, ROLES, type Role } from "@/app/lib/cms/taxonomy";
+import { ROLE_LABEL, ROLE_PROGRAMME, ROLES, type Role } from "@/app/lib/cms/taxonomy";
 import { removePersonAction, savePersonAction } from "../../actions";
 import { useActionToast } from "../../_components/ui";
 import styles from "../../cms.module.css";
@@ -19,13 +19,18 @@ type PersonInput = { email: string; name: string; role: Role };
 const ROLE_INFO: { role: Role; can: string; who: string }[] = [
   {
     role: "exco",
-    can: "Everything: semesters, all projects, approvals, Hack Day winners, the DAP newsletter, groups and sessions, site links, and people and roles.",
+    can: "Everything: AI Lodge and DAP, all projects, approvals, site links, and people and roles.",
     who: "Exco members",
   },
   {
-    role: "dap_editor",
-    can: "Write and publish DAP newsletter issues, keep groups and the co-learning schedule up to date, and edit DAP projects (exco approves them).",
+    role: "dap_exco",
+    can: "DAP only: cohorts, groups, the co-learning schedule and newsletter, and DAP projects (an exco admin approves them).",
     who: "DAP leads",
+  },
+  {
+    role: "lodge_exco",
+    can: "AI Lodge only: semesters, Hack Day tracks and winners, lodges, and AI Lodge projects (an exco admin approves them).",
+    who: "AI Lodge leads",
   },
 ];
 
@@ -40,7 +45,7 @@ export default function PeopleManager({
 }) {
   const router = useRouter();
   const { handle, node } = useActionToast();
-  const [form, setForm] = useState<PersonInput>({ email: "", name: "", role: "dap_editor" });
+  const [form, setForm] = useState<PersonInput>({ email: "", name: "", role: "dap_exco" });
   const [editing, setEditing] = useState<string | null>(null);
 
   async function save(input = form) {
@@ -178,7 +183,7 @@ function EditRow({
         </select>
       </td>
       <td>
-        {f.role === "dap_editor" ? "DAP" : "Everything"}
+        {ROLE_PROGRAMME[f.role] ?? "Everything"}
       </td>
       <td className={styles.actionsCell}>
         <button type="button" className={styles.lnk} onClick={() => onSave(f)}>

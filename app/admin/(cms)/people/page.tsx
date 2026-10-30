@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { can } from "@/app/lib/cms/actor";
 import { listPeople } from "@/app/lib/cms/people";
 import { requireActorPage } from "@/app/lib/cms/session";
+import { ROLE_PROGRAMME } from "@/app/lib/cms/taxonomy";
 import PeopleManager from "./PeopleManager";
 
 export default async function PeoplePage() {
@@ -23,7 +24,7 @@ export default async function PeoplePage() {
           email: p.email,
           name: p.name,
           role: p.role,
-          scope: p.role === "dap_editor" ? "DAP" : "Everything",
+          scope: ROLE_PROGRAMME[p.role] ?? "Everything",
         }))}
     />
   );

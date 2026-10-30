@@ -200,7 +200,7 @@ export async function saveTrack(actor: Actor, input: TrackInput): Promise<TrackR
 
 /** Moves a track one place up or down; positions are renumbered 0..n-1 as it goes. */
 export async function moveTrack(actor: Actor, id: number, direction: "up" | "down") {
-  ensure(actor.role === "exco", "Only exco can reorder tracks");
+  ensure(can.editCohort(actor, "AI Lodge"), "You can't reorder tracks");
   const db = await getDb();
   const [row] = await db.select().from(tracks).where(eq(tracks.id, id));
   ensure(row, "Track not found");
@@ -217,7 +217,7 @@ export async function moveTrack(actor: Actor, id: number, direction: "up" | "dow
 }
 
 export async function deleteTrack(actor: Actor, id: number) {
-  ensure(actor.role === "exco", "Only exco can remove tracks");
+  ensure(can.editCohort(actor, "AI Lodge"), "You can't remove tracks");
   const db = await getDb();
   const [row] = await db.select().from(tracks).where(eq(tracks.id, id));
   ensure(row, "Track not found");
@@ -273,7 +273,7 @@ export async function saveLodge(actor: Actor, input: LodgeInput): Promise<Lodge>
 
 /** Projects in a removed lodge keep everything else; only the lodge link goes. */
 export async function deleteLodge(actor: Actor, id: number) {
-  ensure(actor.role === "exco", "Only exco can remove lodges");
+  ensure(can.editCohort(actor, "AI Lodge"), "You can't remove lodges");
   const db = await getDb();
   await db.delete(lodges).where(eq(lodges.id, id));
   revalidateCms("cohorts", "projects");
