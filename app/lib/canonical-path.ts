@@ -8,13 +8,11 @@ export function canonicalPath(pathname: string, badge: string | null) {
   const segments = pathname.toLowerCase().split("/");
   if (segments[1] && RENAMED_TOP[segments[1]]) segments[1] = RENAMED_TOP[segments[1]];
   let target = segments.join("/").replace(/\/+$/, "") || "/";
-  target = target
-    .replace(/^\/projects\/ai-lodge(?=\/|$)/, "/projects/ailodge")
-    .replace(/^\/projects\/dap(?=\/|$)/, "/dap/projects");
+  target = target.replace(/^\/projects\/ai-lodge(?=\/|$)/, "/projects/ailodge");
   if (target === "/projects" && badge !== null) {
     const b = badge.toLowerCase();
     if (b === "ai lodge" || b === "ai-lodge") target = "/projects/ailodge";
-    else if (b === "dap") target = "/dap/projects";
+    else if (b === "dap") target = "/projects/dap";
   }
   return target;
 }

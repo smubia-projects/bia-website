@@ -165,7 +165,7 @@ const handler = createMcpHandler(
       {
         title: "Set project status",
         description:
-          "draft, in_review or published. Published projects appear on smubia.com immediately, at /projects/ailodge/<semester>/<slug> or /dap/projects/<cohort>/<slug>, so a project needs a cohortId before it can be published.",
+          "draft, in_review or published. Published projects appear on smubia.com immediately, at /projects/ailodge/<semester>/<slug> or /projects/dap/<cohort>/<slug>, so a project needs a cohortId before it can be published.",
         inputSchema: z.object({ slug: z.string(), status: z.enum(PROJECT_STATUSES) }),
       },
       ({ slug, status }) => tool(async () => (await projects.setProjectStatus(AGENT_ACTOR, slug, status), { slug, status }))

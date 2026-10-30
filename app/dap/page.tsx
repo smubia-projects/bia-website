@@ -7,7 +7,8 @@ import { getSiteLinks } from "@/app/lib/cms/links";
 import { getPublicCohorts, pickCurrentCohort } from "@/app/lib/cms/cohorts";
 import PeopleList from "@/app/components/cms/PeopleList";
 import { joinLink } from "@/app/lib/links";
-import { MotionAnchor, MotionNextLink } from "../components/ui/MotionElements";
+import { MotionAnchor } from "../components/ui/MotionElements";
+import { dapRunPath, yearbookPath } from "@/app/lib/cms/paths";
 import RotatingHeadline from "../components/ui/RotatingHeadline";
 import {
   CURRICULUM,
@@ -26,6 +27,7 @@ export default async function DAPPage() {
   const join = joinLink(links, "DAP");
   const cohort = pickCurrentCohort(cohorts);
   const groups = (cohort?.groups ?? []).filter((g) => g.members.length + g.mentors.length > 0);
+  const runHref = cohort ? dapRunPath(cohort.slug) : null;
   return (
     <main className={styles.page}>
       {/* ── Hero — typographic, deep pine ───────────────────────── */}
@@ -49,6 +51,11 @@ export default async function DAPPage() {
             <Button href={join.href} variant="onDark" external>
               {join.open ? "Apply to the programme →" : "Get notified when applications open →"}
             </Button>
+            {runHref && (
+              <Button href={runHref} variant="outlineOnDark">
+                This week in DAP →
+              </Button>
+            )}
             <MotionAnchor
               href="#curriculum"
               className={styles.heroScrollLink}
@@ -56,13 +63,6 @@ export default async function DAPPage() {
             >
               See the curriculum ↓
             </MotionAnchor>
-            <MotionNextLink
-              href="/dap/newsletter"
-              className={styles.heroScrollLink}
-              hover={{ y: -2, color: "var(--mint)" }}
-            >
-              This week in DAP →
-            </MotionNextLink>
           </div>
         </div>
       </section>
@@ -208,6 +208,13 @@ export default async function DAPPage() {
                 </article>
               ))}
             </div>
+            {runHref && (
+              <div className={styles.groupsFoot}>
+                <Button href={`${runHref}#groups`} variant="outlineOnDark">
+                  {cohort.name}: schedule and newsletter →
+                </Button>
+              </div>
+            )}
           </div>
         </section>
       )}
@@ -230,23 +237,15 @@ export default async function DAPPage() {
               >
                 {join.open ? "Apply to the programme →" : "Get notified when applications open →"}
               </Button>
+              <Button href={yearbookPath("DAP")} variant="outlineOnDark">
+                See what associates built →
+              </Button>
+              {runHref && (
+                <Button href={runHref} variant="outlineOnDark">
+                  This week in DAP →
+                </Button>
+              )}
             </div>
-            <br/>
-            <MotionNextLink
-              href="/dap/projects"
-              className={styles.closingLink}
-              hover={{ x: 3, color: "var(--mint)" }}
-            >
-              See what associates built →
-            </MotionNextLink>
-            <br />
-            <MotionNextLink
-              href="/dap/newsletter"
-              className={styles.closingLink}
-              hover={{ x: 3, color: "var(--mint)" }}
-            >
-              Read this week in DAP →
-            </MotionNextLink>
           </ScrollReveal>
         </div>
       </section>

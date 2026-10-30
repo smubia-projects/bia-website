@@ -379,17 +379,11 @@
 }
 
 .closingActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem 1rem;
   margin-top: 1rem;
-}
-
-.closingLink {
-  margin-top: 1.5rem;
-  font-family: var(--font-roboto-mono), monospace;
-  font-size: 0.8125rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--pine-text-soft);
-  text-decoration: none;
 }
 
 /* ============ Groups (CMS: DAP › Groups) ============ */
@@ -417,6 +411,12 @@
   font-weight: 600;
   color: var(--pine-text);
   margin: 0;
+}
+
+.groupsFoot {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
 }
 
 .groupLabel {

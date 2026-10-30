@@ -44,8 +44,14 @@ export default function LodgeYearbook({
   return (
     <main id="main-content" className={ui.page}>
       <section className={`${ui.hero} ${ui.onDark}`}>
-        <div className={ui.heroInner}>
-          <div className={ui.eyebrowLine}>AI Lodge yearbook</div>
+        <div className={ui.heroInner} style={{ paddingTop: 32 }}>
+          <Link href="/projects" className={`${ui.pill} ${ui.pillOnDark} ${ui.pillSmall}`}>
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            All projects
+          </Link>
+          <div className={ui.eyebrowLine} style={{ marginTop: 24 }}>AI Lodge yearbook</div>
           <h1 className={ui.heroTitle}>{cohort?.name ?? "Coming soon"}</h1>
           {cohorts.length > 1 && (
             <div role="group" aria-label="Semester" className={ui.row} style={{ marginTop: 22 }}>
@@ -150,11 +156,6 @@ export default function LodgeYearbook({
           </div>
         )}
 
-        <div className={ui.yearbookFoot}>
-          <Link href="/projects?programme=AI%20Lodge" className={ui.pill}>
-            View all AI Lodge projects →
-          </Link>
-        </div>
       </div>
 
       <JoinCta

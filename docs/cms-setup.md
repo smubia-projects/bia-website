@@ -104,7 +104,7 @@ Keep `ADMIN_PASSWORD` and `UPSTASH_REDIS_REST_*` until step 9.
 2. Open the **branch URL** (Vercel → Deployments → the feat/cms deployment → Domains). Add it
    to the Google OAuth client from step 3 if you haven't yet.
 3. Check: `/projects`, `/projects/ailodge`, a project page (e.g. `/projects/ailodge/ay2627-s1/scamsense`),
-   `/dap/newsletter`, `/dap/projects`, `/work-with-us`, and `/admin` sign-in. Then the old links, which
+   `/projects/dap`, `/dap` and its current cohort page (`/dap/ay2627`), `/work-with-us`, and `/admin` sign-in. Then the old links, which
    should all redirect: `/Projects`, `/DAP`, `/WorkWithUs`, `/ContactUs`, `/Projects?badge=DAP`,
    `/Projects?badge=AI%20Lodge`. An old project link (`/Projects/scamsense`) should show "Projects have moved".
 4. Edits made on the preview stay on its database branch and never reach production.
@@ -113,14 +113,13 @@ Keep `ADMIN_PASSWORD` and `UPSTASH_REDIS_REST_*` until step 9.
 
 1. Merge `feat/cms` into `main`. Production deploys against the Neon production branch.
 2. In production `/admin`, sign in with the bootstrap email, then:
-   - **AI Lodge › Semesters**: create the Hack Day tracks and the lodges (each with a link to its
-     page on ailodge.smubia.com), add the write-up and Hack Day details, and set visibility. In
-     **Projects in this semester**, move each project into its track, set its lodge, and mark one
-     winner per track.
-   - **DAP › Groups**: add each group's members and mentors, then pick each week's group on
-     **Co-learning sessions**.
-   - **Projects**: fill in the Made for / Built with facets.
-   - **DAP › Cohorts**: check the AY26/27 cohort is current. Fill in **Co-learning sessions**.
+   - Pick the AI Lodge semester in the sidebar switcher. On **Overview**, create the Hack Day
+     tracks and the lodges (each with a link to its page on ailodge.smubia.com), add the write-up
+     and Hack Day details, and set visibility. On **Projects**, move each project into its track,
+     set its lodge, and mark one winner per track.
+   - Switch to the DAP cohort. On **Overview**, check it is current. On **Groups**, add each
+     group's members and mentors, then fill in the **Schedule** and pick each week's group.
+   - **All projects**: fill in the Made for / Built with facets.
    - **Settings › Site links**: check the application forms, the "applications open" switches, the
      emails, and add the prospectus PDF link if you have one. Every join button uses these.
    - **People and roles**: add exco and DAP editors.

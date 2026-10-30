@@ -30,7 +30,7 @@ export default async function ProjectPreviewPage({ params }: { params: { slug: s
           <ProjectDetailContent
             project={project}
             cohortHref={project.cohortSlug ? cohortPath(project.badge, project.cohortSlug) : yearbookPath(project.badge)}
-            cohortLabel={`${project.badge} ${project.cohortName ?? ""}`.trim()}
+            cohortLabel={project.cohortName ?? "No semester or cohort"}
           />
         </div>
       </main>

@@ -12,7 +12,7 @@ import ProjectDetailContent from "./ProjectDetailContent";
 import styles from "./ProjectDetail.module.css";
 
 /*
- * Shared by /projects/ailodge/<semester>/<slug> and /dap/projects/<cohort>/<slug>.
+ * Shared by /projects/ailodge/<semester>/<slug> and /projects/dap/<cohort>/<slug>.
  */
 
 export interface ProjectParams {
@@ -51,7 +51,8 @@ export async function ProjectPage({ programme, params }: { programme: Programme;
   if (project.badge !== programme || project.cohortSlug !== params.cohort) redirect(projectPath(project));
 
   const cohortHref = cohortPath(programme, params.cohort);
-  const cohortLabel = `${programme} ${project.cohortName ?? params.cohort}`;
+  const cohortName = project.cohortName ?? params.cohort;
+  const cohortLabel = `${programme} ${cohortName}`;
   const sameCohort = all.filter((p) => p.cohortId === project.cohortId && p.slug !== project.slug);
   // Same track first, then the rest of the semester, in yearbook order.
   const related: Project[] = [
@@ -62,7 +63,7 @@ export async function ProjectPage({ programme, params }: { programme: Programme;
   return (
     <main id="main-content" className={styles.page} style={{ paddingBottom: 0 }}>
       <div className={styles.container}>
-        <ProjectDetailContent project={project} cohortHref={cohortHref} cohortLabel={cohortLabel} />
+        <ProjectDetailContent project={project} cohortHref={cohortHref} cohortLabel={cohortName} />
 
         {related.length > 0 && (
           <section className={styles.related} aria-labelledby="more-from">

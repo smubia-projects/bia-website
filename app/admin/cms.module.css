@@ -92,6 +92,131 @@
   font-size: 11px;
   color: var(--sand);
 }
+/* Run switcher (Vercel-style) */
+.switcher {
+  position: relative;
+  margin: 2px 0 4px;
+}
+.switcherBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  text-align: left;
+  color: var(--pine-text);
+  background: var(--pine-surface);
+  border: 1px solid var(--pine-border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.switcherBtn:hover,
+.switcherBtn[aria-expanded="true"] {
+  border-color: var(--mint);
+}
+.switcherText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.switcherProgramme {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--mint);
+}
+.switcherName {
+  font: 600 14px var(--font-inter), sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.switcherPanel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  width: max(100%, 260px);
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  padding: 6px;
+  box-sizing: border-box;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg, 0 18px 40px rgba(12, 33, 28, 0.22));
+}
+.switcherGroup + .switcherGroup {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--hair);
+}
+.switcherGroupLabel {
+  padding: 8px 10px 4px;
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--meta);
+}
+.switcherList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.switcherItem,
+.switcherNew {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font: 500 14px var(--font-inter), sans-serif;
+  color: var(--ink);
+  text-decoration: none;
+}
+.switcherItem:hover,
+.switcherNew:hover {
+  background: var(--surface-muted, #f1f7f4);
+}
+.switcherItemOn {
+  font-weight: 600;
+}
+.switcherCheck {
+  width: 14px;
+  color: var(--emerald);
+  font-weight: 700;
+}
+.switcherItemName {
+  flex: 1;
+  min-width: 0;
+}
+.switcherTag,
+.switcherTagMuted {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+.switcherTag {
+  color: var(--emerald-strong);
+  background: #e3f4ed;
+}
+.switcherTagMuted {
+  color: var(--meta);
+  background: #eef2f0;
+}
+.switcherNew {
+  color: var(--emerald);
+  font-weight: 600;
+}
+
 .signedIn {
   margin-top: auto;
   padding: 16px 12px 0;

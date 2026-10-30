@@ -1,50 +1,68 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { Programme } from "@/app/lib/cms/taxonomy";
+import { cohortPath, dapRunPath } from "@/app/lib/cms/paths";
 import { signOutAction } from "../actions";
+import RunSwitcher from "./RunSwitcher";
+import { RUN_COOKIE, RUN_SECTIONS, RUN_SEGMENT, parseRunPath, runHref, type RunOption } from "./runs";
 import styles from "../cms.module.css";
 
 interface Props {
   email: string;
   roleLabel: string;
-  seeLodge: boolean;
-  seeDap: boolean;
   seeSettings: boolean;
   reviewCount: number;
+  /** Every semester and cohort this person can open */
+  runs: RunOption[];
+  /** The run the switcher shows outside a run's pages: the last one opened, else the current one */
+  defaultRun: RunOption | null;
+  canCreate: Record<Programme, boolean>;
   notice?: string;
   children: React.ReactNode;
 }
 
-const CRUMBS: [RegExp, string][] = [
-  [/^\/admin\/semester/, "AI Lodge › Semesters"],
+const TOP_CRUMBS: [RegExp, string][] = [
   [/^\/admin\/projects\/new/, "Projects › New project"],
   [/^\/admin\/projects\/.+/, "Projects › Edit project"],
-  [/^\/admin\/projects/, "Projects"],
-  [/^\/admin\/newsletter\/.+/, "DAP › Newsletter › Issue"],
-  [/^\/admin\/newsletter/, "DAP › Newsletter"],
-  [/^\/admin\/sessions/, "DAP › Co-learning sessions"],
-  [/^\/admin\/dap-cohort/, "DAP › Cohorts"],
-  [/^\/admin\/groups/, "DAP › Groups"],
+  [/^\/admin\/projects/, "All projects"],
+  [/^\/admin\/(ailodge|dap)\/new/, "New run"],
   [/^\/admin\/links/, "Settings › Site links"],
   [/^\/admin\/people/, "Settings › People and roles"],
   [/^\/admin$/, "Home"],
 ];
 
-const PUBLIC_FOR: [RegExp, string][] = [
-  [/^\/admin\/projects/, "/projects"],
-  [/^\/admin\/semester/, "/projects/ailodge"],
-  [/^\/admin\/(newsletter|sessions)/, "/dap/newsletter"],
-  [/^\/admin\/groups/, "/dap"],
-  [/^\/admin\/dap-cohort/, "/dap/projects"],
-];
+/** The public page that matches the CMS page, for "View public site". */
+function publicHrefFor(pathname: string, run: RunOption | null) {
+  const inRun = parseRunPath(pathname);
+  if (inRun && run) {
+    if (run.programme === "DAP" && inRun.section !== "projects") return dapRunPath(run.slug);
+    return cohortPath(run.programme, run.slug);
+  }
+  return "/projects";
+}
 
 export default function Shell(props: Props) {
   const pathname = usePathname() ?? "/admin";
-  const crumb = CRUMBS.find(([re]) => re.test(pathname))?.[1] ?? "CMS";
-  const publicHref = PUBLIC_FOR.find(([re]) => re.test(pathname))?.[1] ?? "/projects";
-  const item = (href: string, label: string, badge?: number) => (
-    <Link href={href} className={`${styles.side} ${(href === "/admin" ? pathname === href : pathname.startsWith(href)) ? styles.sideOn : ""}`}>
+  const inRun = parseRunPath(pathname);
+  const pathRun = inRun ? props.runs.find((r) => r.programme === inRun.programme && r.slug === inRun.slug) ?? null : null;
+  const run = pathRun ?? props.defaultRun;
+  const section = inRun?.section ?? "";
+
+  // Remember the run, so the switcher keeps showing it on Home and Settings.
+  useEffect(() => {
+    if (!pathRun) return;
+    document.cookie = `${RUN_COOKIE}=${RUN_SEGMENT[pathRun.programme]}/${pathRun.slug}; path=/admin; max-age=${60 * 60 * 24 * 180}; samesite=lax`;
+  }, [pathRun]);
+
+  const crumb = pathRun
+    ? `${pathRun.programme} · ${pathRun.name}${section ? ` › ${RUN_SECTIONS[pathRun.programme].find((s) => s.key === section)?.label ?? ""}` : ""}`
+    : TOP_CRUMBS.find(([re]) => re.test(pathname))?.[1] ?? "CMS";
+
+  const item = (href: string, label: string, on: boolean, badge?: number) => (
+    <Link href={href} className={`${styles.side} ${on ? styles.sideOn : ""}`} aria-current={on ? "page" : undefined}>
       {label}
       {badge ? <span className={styles.sideBadge}>{badge} to review</span> : null}
     </Link>
@@ -60,29 +78,30 @@ export default function Shell(props: Props) {
           </svg>
           SMUBIA <span className={styles.brandTag}>CMS</span>
         </Link>
-        <div className={styles.sideGroup}>Content</div>
-        {item("/admin", "Home")}
-        {item("/admin/projects", "Projects", props.reviewCount)}
-        {props.seeLodge && (
+        <div className={styles.sideGroup}>Site</div>
+        {item("/admin", "Home", pathname === "/admin")}
+        {item("/admin/projects", "All projects", pathname.startsWith("/admin/projects"), props.reviewCount)}
+
+        {(props.runs.length > 0 || props.canCreate["AI Lodge"] || props.canCreate.DAP) && (
           <>
-            <div className={styles.sideGroup}>AI Lodge</div>
-            {item("/admin/semester", "Semesters")}
+            <div className={styles.sideGroup}>Semester or cohort</div>
+            <RunSwitcher runs={props.runs} current={run} section={section} canCreate={props.canCreate} />
+            {run &&
+              RUN_SECTIONS[run.programme].map((s) =>
+                item(
+                  runHref(run.programme, run.slug, s.key),
+                  s.label,
+                  Boolean(pathRun) && pathRun === run && (s.key ? section === s.key : section === "")
+                )
+              )}
           </>
         )}
-        {props.seeDap && (
-          <>
-            <div className={styles.sideGroup}>DAP</div>
-            {item("/admin/dap-cohort", "Cohorts")}
-            {item("/admin/groups", "Groups")}
-            {item("/admin/newsletter", "Newsletter")}
-            {item("/admin/sessions", "Co-learning sessions")}
-          </>
-        )}
+
         {props.seeSettings && (
           <>
             <div className={styles.sideGroup}>Settings</div>
-            {item("/admin/links", "Site links")}
-            {item("/admin/people", "People and roles")}
+            {item("/admin/links", "Site links", pathname.startsWith("/admin/links"))}
+            {item("/admin/people", "People and roles", pathname.startsWith("/admin/people"))}
           </>
         )}
         <div className={styles.signedIn}>
@@ -99,7 +118,7 @@ export default function Shell(props: Props) {
       <div className={styles.work}>
         <div className={styles.topbar}>
           <span className={styles.crumb}>{crumb}</span>
-          <a className={styles.pill} href={publicHref} target="_blank" rel="noopener noreferrer">
+          <a className={styles.pill} href={publicHrefFor(pathname, pathRun)} target="_blank" rel="noopener noreferrer">
             View public site
           </a>
         </div>

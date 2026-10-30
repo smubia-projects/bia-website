@@ -117,6 +117,8 @@ export async function createCohort(
   ensure(can.editCohort(actor, input.programme), "You can't add cohorts");
   const slug = input.slug.trim().toLowerCase();
   ensure(/^[a-z0-9-]+$/.test(slug), 'Use a short URL name like "ay2627-s2"');
+  // "new" is the CMS's new-run page (/admin/dap/new).
+  ensure(slug !== "new", '"new" is reserved; pick another URL name');
   const name = input.name.trim();
   ensure(name, "Name is required");
   const db = await getDb();

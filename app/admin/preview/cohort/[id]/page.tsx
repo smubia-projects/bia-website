@@ -3,9 +3,10 @@ import { can } from "@/app/lib/cms/actor";
 import { getCohort, listCohorts, listGroups, listLodges, listTracks } from "@/app/lib/cms/cohorts";
 import { listProjects } from "@/app/lib/cms/projects";
 import { requireActorPage } from "@/app/lib/cms/session";
-import DapYearbookPage from "@/app/dap/projects/DapYearbookPage";
+import DapYearbookPage from "@/app/projects/dap/DapYearbookPage";
 import LodgeYearbook from "@/app/projects/ailodge/LodgeYearbook";
 import PreviewBar from "../../../_components/PreviewBar";
+import { runHref } from "../../../_components/runs";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Preview | SMUBIA CMS", robots: { index: false, follow: false } };
@@ -39,8 +40,8 @@ export default async function CohortPreviewPage({ params }: { params: { id: stri
         note={`${cohort.visibility === "hidden" ? `This ${noun} is hidden from the site.` : `This ${noun} is live.`}${
           drafts ? ` Includes ${drafts} unpublished ${drafts === 1 ? "project" : "projects"}.` : ""
         }`}
-        backHref={`${isLodge ? "/admin/semester" : "/admin/dap-cohort"}?cohort=${cohort.id}`}
-        backLabel={`Back to ${isLodge ? "Semesters" : "Cohorts"}`}
+        backHref={runHref(cohort.programme, cohort.slug)}
+        backLabel={`Back to ${cohort.name}`}
       />
       {isLodge ? (
         <LodgeYearbook cohort={current} cohorts={[current]} projects={projects} />

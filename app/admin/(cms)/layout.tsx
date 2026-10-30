@@ -1,7 +1,10 @@
+import { cookies } from "next/headers";
 import { can } from "@/app/lib/cms/actor";
+import { listCohorts, pickCurrentCohort } from "@/app/lib/cms/cohorts";
 import { listProjects } from "@/app/lib/cms/projects";
 import { requireActorPage } from "@/app/lib/cms/session";
 import { ROLE_LABEL } from "@/app/lib/cms/taxonomy";
+import { RUN_COOKIE, RUN_SEGMENT, type RunOption } from "../_components/runs";
 import Shell from "../_components/Shell";
 
 export const dynamic = "force-dynamic";
@@ -13,17 +16,27 @@ export const metadata = {
 
 export default async function CmsLayout({ children }: { children: React.ReactNode }) {
   const actor = await requireActorPage();
-  const reviewCount = can.publishProject(actor)
-    ? (await listProjects()).filter((p) => p.status === "in_review").length
-    : 0;
+  const [projects, cohorts] = await Promise.all([can.publishProject(actor) ? listProjects() : Promise.resolve([]), listCohorts()]);
+  const reviewCount = projects.filter((p) => p.status === "in_review").length;
+
+  const visible = cohorts.filter((c) => (c.programme === "AI Lodge" ? can.seeLodge(actor) : can.seeDap(actor)));
+  const runs: RunOption[] = visible.map((c) => ({ programme: c.programme, slug: c.slug, name: c.name, visibility: c.visibility }));
+  const remembered = cookies().get(RUN_COOKIE)?.value;
+  const current = pickCurrentCohort(visible.filter((c) => c.programme === "AI Lodge")) ?? pickCurrentCohort(visible);
+  const defaultRun =
+    runs.find((r) => `${RUN_SEGMENT[r.programme]}/${r.slug}` === remembered) ??
+    runs.find((r) => r.programme === current?.programme && r.slug === current.slug) ??
+    null;
+
   return (
     <Shell
       email={actor.email}
       roleLabel={ROLE_LABEL[actor.role]}
-      seeLodge={can.seeLodge(actor)}
-      seeDap={can.seeDap(actor)}
       seeSettings={can.managePeople(actor)}
       reviewCount={reviewCount}
+      runs={runs}
+      defaultRun={defaultRun}
+      canCreate={{ "AI Lodge": can.editCohort(actor, "AI Lodge"), DAP: can.editCohort(actor, "DAP") }}
     >
       {children}
     </Shell>

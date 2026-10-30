@@ -10,6 +10,7 @@ import { Project, TeamMember, HighlightCard } from "@/app/projects/data/types";
 import { getCardIcon } from "@/app/projects/data/cardIcons";
 import Markdown from "@/app/components/ui/Markdown";
 import { MOTION_EASE, motionTransition } from "@/app/components/ui/motion";
+import { yearbookPath } from "@/app/lib/cms/paths";
 
 const MotionLink = motion.create(Link);
 
@@ -17,6 +18,7 @@ interface Props {
   project: Project;
   /** The project's semester (AI Lodge) or cohort (DAP) yearbook page */
   cohortHref: string;
+  /** The semester or cohort name, e.g. "AY26/27 Semester 1" */
   cohortLabel: string;
 }
 
@@ -126,7 +128,7 @@ export default function ProjectDetailContent({ project, cohortHref, cohortLabel 
   return (
     <>
       {/* Breadcrumb */}
-      <nav className={styles.breadcrumb}>
+      <nav className={styles.breadcrumb} aria-label="Breadcrumb">
         <MotionLink
           href="/projects"
           className={styles.breadcrumbLink}
@@ -134,6 +136,15 @@ export default function ProjectDetailContent({ project, cohortHref, cohortLabel 
           transition={motionTransition.quick}
         >
           Projects
+        </MotionLink>
+        <span className={styles.breadcrumbSep}>›</span>
+        <MotionLink
+          href={yearbookPath(project.badge)}
+          className={styles.breadcrumbLink}
+          whileHover={{ color: "var(--emerald)" }}
+          transition={motionTransition.quick}
+        >
+          {project.badge}
         </MotionLink>
         <span className={styles.breadcrumbSep}>›</span>
         <MotionLink

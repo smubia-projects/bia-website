@@ -58,6 +58,70 @@
   font-weight: 600;
 }
 
+.dropdown {
+  position: relative;
+}
+
+.dropdownToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.chevron {
+  transition: transform 0.18s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.dropdownPanel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 50%;
+  translate: -50% 0;
+  min-width: 13rem;
+  margin: 0;
+  padding: 0.375rem;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+/* Bridges the gap to the toggle so moving the mouse down keeps it open */
+.dropdownPanel::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -0.5rem;
+  height: 0.5rem;
+}
+
+.dropdownLink {
+  display: block;
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.dropdownLink:hover,
+.dropdownLink:focus-visible {
+  color: var(--emerald-strong);
+  background: rgba(125, 215, 194, 0.12);
+}
+
 .joinButton {
   margin-left: 0.75rem;
   padding: 0.5625rem 1.25rem;
@@ -107,6 +171,18 @@
   font-weight: 500;
   color: var(--ink-soft);
   text-decoration: none;
+}
+
+.mobileGroupLabel {
+  padding: 0.75rem 0.5rem 0.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.mobileSubLink {
+  padding-left: 1.5rem;
+  font-size: 0.9375rem;
 }
 
 .mobileLinkActive {

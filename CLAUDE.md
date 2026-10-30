@@ -41,7 +41,7 @@ SMUBIA (Singapore Management University Business Intelligence & Analytics Club) 
 app/
 ├── components/          # Reusable React components
 │   ├── ui/             # Shared primitives: Button, SectionHeading, ScrollReveal, CountUp, RotatingWord
-│   ├── nav.tsx         # Fixed glassy navbar (custom mobile menu, active links)
+│   ├── nav.tsx         # Fixed glassy navbar (Projects dropdown, custom mobile menu, active links)
 │   ├── footer.tsx      # Dark pine footer (links, contact, socials)
 │   ├── loadingscreen.tsx
 │   ├── ProjectCard.tsx # Project card for showcase grid
@@ -59,9 +59,10 @@ app/
 │   ├── data/types.ts   # Project & TeamMember interfaces
 │   ├── page.tsx        # All projects (ISR 1h) + ProjectsExplorer (search, filter sidebar, wall/cards)
 │   ├── ailodge/        # AI Lodge yearbook: [cohort]/ semester pages, [cohort]/[slug]/ project pages
+│   ├── dap/            # DAP yearbook: [cohort]/ cohort pages, [cohort]/[slug]/ project pages
 │   ├── _detail/        # Shared project detail page (used by AI Lodge and DAP project routes)
 │   └── [slug]/         # Old /projects/<slug> links: "projects have moved" page
-├── dap/                # DAP recruitment page (data.ts) + newsletter/ + projects/ (yearbook, [cohort]/[slug] project pages)
+├── dap/                # DAP recruitment page (data.ts) + [cohort]/ run page (newsletter, schedule, groups) + [cohort]/[issue]/ issues
 ├── work-with-us/       # Sponsorship page (tiers/benefits/events in data.ts, from prospectus)
 ├── curriculum/         # Curriculum page — workshops roadmap (Monopoly-themed SVG board)
 │   └── datathonData.ts # Datathon stats/copy (retained, unused since Wave 3)
@@ -172,11 +173,16 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
   track has at most one **Hack Day winner** (gold glow + medal, shown in the yearbook only).
 - AI Lodge has two separate groupings per semester: **Hack Day tracks** (yearbook shelves, one
   winner each) and **lodges** (who taught the team; each links to its page on the AI Lodge
-  site). A project has one of each. Both are managed on **AI Lodge › Semesters**, where projects
-  are also added, moved between tracks, given a lodge and marked as winners.
-- DAP **Groups** (DAP › Groups): each cohort's teaching groups, with members and 1–3 mentors
-  (name, optional photo, LinkedIn, email, Telegram). Sessions pick the group teaching that week;
-  groups show on the newsletter pages and in a Groups section on `/dap`.
+  site). A project has one of each. Tracks and lodges are set on the semester's **Overview**;
+  its **Projects** page adds projects, moves them between tracks, sets lodges and marks winners.
+- The CMS is organised by run, like Vercel projects: a switcher at the top of the sidebar picks an
+  AI Lodge semester or DAP cohort, and the run is in the path (`/admin/ailodge/<semester>[/projects]`,
+  `/admin/dap/<cohort>[/groups|/schedule|/newsletter|/projects]`; new runs at `/admin/<programme>/new`).
+  Home, All projects, Site links and People stay outside the switcher. Path helpers:
+  `app/admin/_components/runs.ts`. The cohort slug `new` is reserved.
+- DAP **Groups** (a cohort's Groups page): its teaching groups, with members and 1–3 mentors
+  (name, optional photo, LinkedIn, email, Telegram). The schedule picks the group teaching each
+  week; groups show on the cohort's run page, the newsletter issues and `/dap`.
 - Newsletter: publish now, or schedule a date; the daily Vercel Cron
   (`vercel.json`, 01:00 UTC = 09:00 SGT, ±1 h on Hobby) publishes due issues. Publishing can
   post once to the DAP Telegram channel; "Send test" sends to one Telegram user ID (they must
@@ -188,12 +194,14 @@ All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder
 `app/` match. Old forms (capitals, `/WorkWithUs`, `/workwithus`) redirect in `middleware.ts`.
 
 - `/projects` (all projects), `/projects/ailodge` (current semester), `/projects/ailodge/<semester>`
-- Project pages: `/projects/ailodge/<semester>/<slug>` and `/dap/projects/<cohort>/<slug>`.
-  Build links with `projectPath()` / `cohortPath()` from `app/lib/cms/paths.ts`. A project
-  moved to another semester redirects from its old address.
-- `/dap` (recruitment page), `/dap/newsletter[/<cohort>-week-<n>]`, `/dap/projects[/<cohort>]`
+- `/projects/dap` (current cohort's yearbook), `/projects/dap/<cohort>`
+- Project pages: `/projects/ailodge/<semester>/<slug>` and `/projects/dap/<cohort>/<slug>`.
+  Build links with `projectPath()` / `cohortPath()` / `dapRunPath()` / `issuePath()` from
+  `app/lib/cms/paths.ts`. A project moved to another semester redirects from its old address.
+- `/dap` (recruitment page), `/dap/<cohort>` (the run: latest issue, schedule, groups),
+  `/dap/<cohort>/week-<n>` (an issue)
 - `/work-with-us`, `/contact-us`, `/curriculum`
-- Legacy `/Projects?badge=…`, `/projects/dap`, `/projects/ai-lodge` and any path with capitals
+- Legacy `/Projects?badge=…`, `/projects/ai-lodge` and any path with capitals
   redirect in `middleware.ts` (mapping in `app/lib/canonical-path.ts`). Old project links
   (`/projects/<slug>`) show a "projects have moved" page.
 - Project slugs `ailodge`, `ai-lodge`, `dap`, `new` stay reserved.

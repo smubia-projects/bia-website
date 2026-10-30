@@ -40,7 +40,7 @@ export default async function ProjectsMovedPage({ params }: { params: { slug: st
           <Link href="/projects/ailodge" className={project ? ui.pill : ui.btn}>
             AI Lodge projects
           </Link>
-          <Link href="/dap/projects" className={ui.pill}>
+          <Link href="/projects/dap" className={ui.pill}>
             DAP projects
           </Link>
           <Link href="/projects" className={ui.pill}>

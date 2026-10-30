@@ -3,24 +3,24 @@ import { unstable_cache } from "next/cache";
 import { getDb } from "@/app/lib/db";
 import { cohorts, dapGroups, issues, sessions, type DapGroupRow, type IssueBlock, type IssueRow, type SessionRow } from "@/app/lib/db/schema";
 import { AGENT_ACTOR, can, CmsError, ensure, type Actor } from "./actor";
-import { getCohort, listCohorts, pickCurrentCohort, type Cohort } from "./cohorts";
+import { getCohort, type Cohort } from "./cohorts";
+import { issuePath } from "./paths";
 import { revalidateCms, TAGS } from "./revalidate";
 import { sendIssueToTelegram, SITE_URL } from "./telegram";
 import { BLOCK_DEFAULT_HEADING, BLOCK_TYPES, type BlockType } from "./taxonomy";
 
 /** A schedule row with the DAP group teaching it (members and mentors included). */
 export type Session = SessionRow & { group: DapGroupRow | null };
-export type Issue = IssueRow & { slug: string; cohortSlug: string };
+/** `path` is the issue's public address (it only resolves once published). */
+export type Issue = IssueRow & { cohortSlug: string; path: string };
 
 /** Scheduled issues go out at 09:00 SGT (01:00 UTC) on their date. */
 export const PUBLISH_HOUR_UTC = 1;
 
-export const issueSlug = (cohortSlug: string, week: number) => `${cohortSlug}-week-${week}`;
-export const issuePath = (cohortSlug: string, week: number) => `/dap/newsletter/${issueSlug(cohortSlug, week)}`;
-
-export function parseIssueSlug(slug: string) {
-  const m = slug.match(/^([a-z0-9-]+)-week-(\d+)$/);
-  return m ? { cohortSlug: m[1], week: Number(m[2]) } : null;
+/** "week-3" → 3, the issue segment of /dap/<cohort>/week-<n>. */
+export function parseIssueWeek(segment: string) {
+  const m = segment.match(/^week-(\d{1,2})$/);
+  return m ? Number(m[1]) : null;
 }
 
 /** "12 Oct 2026" in Singapore time. */
@@ -34,8 +34,8 @@ export function formatIssueDate(iso: string | null | undefined) {
   }).format(new Date(iso));
 }
 
-function withSlug(row: IssueRow, cohortSlug: string): Issue {
-  return { ...row, slug: issueSlug(cohortSlug, row.week), cohortSlug };
+function withPath(row: IssueRow, cohortSlug: string): Issue {
+  return { ...row, cohortSlug, path: issuePath(cohortSlug, row.week) };
 }
 
 async function requireDapCohort(cohortId: string): Promise<Cohort> {
@@ -94,7 +94,7 @@ export async function listIssues(cohortId: string): Promise<Issue[]> {
   const cohort = await requireDapCohort(cohortId);
   const db = await getDb();
   const rows = await db.select().from(issues).where(eq(issues.cohortId, cohortId)).orderBy(desc(issues.week));
-  return rows.map((r) => withSlug(r, cohort.slug));
+  return rows.map((r) => withPath(r, cohort.slug));
 }
 
 export async function getIssue(id: number): Promise<Issue | null> {
@@ -104,7 +104,7 @@ export async function getIssue(id: number): Promise<Issue | null> {
     .from(issues)
     .innerJoin(cohorts, eq(issues.cohortId, cohorts.id))
     .where(eq(issues.id, id));
-  return row ? withSlug(row.i, row.cohortSlug) : null;
+  return row ? withPath(row.i, row.cohortSlug) : null;
 }
 
 function defaultBlocks(): IssueBlock[] {
@@ -147,7 +147,7 @@ export async function createIssue(actor: Actor, cohortId: string, week?: number)
       updatedBy: actor.email,
     })
     .returning();
-  return withSlug(row, cohort.slug);
+  return withPath(row, cohort.slug);
 }
 
 export interface IssueInput {
@@ -194,7 +194,7 @@ async function telegramPayload(issue: Issue) {
     title: issue.title,
     summary: issue.summary,
     coverImage: issue.coverImage,
-    url: `${SITE_URL}${issuePath(issue.cohortSlug, issue.week)}`,
+    url: `${SITE_URL}${issue.path}`,
     sessionTopic: session?.topic || undefined,
     sessionGroup: session?.group?.name || undefined,
   };
@@ -306,19 +306,22 @@ export async function publishDueIssues() {
 
 // ── Public (cached) ──────────────────────────────────────────────────────
 
-export interface PublicNewsletter {
-  cohort: Cohort | null;
+/** One DAP cohort's run: its schedule and published issues. */
+export interface PublicRun {
+  cohort: Cohort;
   sessions: Session[];
   /** Published issues, newest week first */
   issues: Issue[];
 }
 
-const readNewsletter = unstable_cache(
-  async (): Promise<PublicNewsletter> => {
-    const all = (await listCohorts("DAP")).filter((c) => c.visibility !== "hidden");
-    const cohort = pickCurrentCohort(all);
-    if (!cohort) return { cohort: null, sessions: [], issues: [] };
+const readRun = unstable_cache(
+  async (cohortSlug: string): Promise<PublicRun | null> => {
     const db = await getDb();
+    const [cohort] = await db
+      .select()
+      .from(cohorts)
+      .where(and(eq(cohorts.programme, "DAP"), eq(cohorts.slug, cohortSlug)));
+    if (!cohort || cohort.visibility === "hidden") return null;
     const rows = await db
       .select()
       .from(issues)
@@ -327,56 +330,18 @@ const readNewsletter = unstable_cache(
     return {
       cohort,
       sessions: await listSessions(cohort.id),
-      issues: rows.map((r) => withSlug(r, cohort.slug)),
+      issues: rows.map((r) => withPath(r, cohort.slug)),
     };
   },
-  ["cms-public-newsletter"],
+  ["cms-public-dap-run"],
   { revalidate: 3600, tags: [TAGS.newsletter, TAGS.cohorts] }
 );
 
-export async function getPublicNewsletter(): Promise<PublicNewsletter> {
+export async function getPublicRun(cohortSlug: string): Promise<PublicRun | null> {
   try {
-    return await readNewsletter();
+    return await readRun(cohortSlug);
   } catch (error) {
-    console.error("[cms] newsletter read failed", error);
-    return { cohort: null, sessions: [], issues: [] };
-  }
-}
-
-const readIssueBySlug = unstable_cache(
-  async (slug: string) => {
-    const parsed = parseIssueSlug(slug);
-    if (!parsed) return null;
-    const db = await getDb();
-    const [cohort] = await db
-      .select()
-      .from(cohorts)
-      .where(and(eq(cohorts.programme, "DAP"), eq(cohorts.slug, parsed.cohortSlug)));
-    if (!cohort || cohort.visibility === "hidden") return null;
-    const rows = await db
-      .select()
-      .from(issues)
-      .where(and(eq(issues.cohortId, cohort.id), eq(issues.status, "published")))
-      .orderBy(asc(issues.week));
-    const issue = rows.find((r) => r.week === parsed.week);
-    if (!issue) return null;
-    return {
-      cohort,
-      issue: withSlug(issue, cohort.slug),
-      siblings: rows.map((r) => withSlug(r, cohort.slug)),
-      sessions: await listSessions(cohort.id),
-    };
-  },
-  ["cms-public-issue"],
-  { revalidate: 3600, tags: [TAGS.newsletter, TAGS.cohorts] }
-);
-
-export async function getPublicIssue(slug: string) {
-  try {
-    return await readIssueBySlug(slug);
-  } catch (error) {
-    console.error(`[cms] issue read failed for "${slug}"`, error);
+    console.error(`[cms] DAP run read failed for "${cohortSlug}"`, error);
     return null;
   }
 }
-

@@ -9,6 +9,7 @@ import ProjectCover from "@/app/components/cms/ProjectCover";
 import { PROJECT_STATUS_LABEL } from "@/app/lib/cms/taxonomy";
 import { approveProjectAction } from "../actions";
 import { StatusChip, formatEdited, useActionToast } from "../_components/ui";
+import { runHref } from "../_components/runs";
 import styles from "../cms.module.css";
 
 interface Props {
@@ -18,8 +19,8 @@ interface Props {
   recent: Project[];
   drafts: number;
   noCohort: number;
-  semester: { id: string; name: string; projects: number } | null;
-  newsletter: { cohortName: string; latest: Issue | null; scheduled: Issue | null; drafts: number } | null;
+  semester: { slug: string; name: string; projects: number } | null;
+  newsletter: { cohortSlug: string; cohortName: string; latest: Issue | null; scheduled: Issue | null; drafts: number } | null;
 }
 
 const fmtDate = (iso: string | null) =>
@@ -127,7 +128,7 @@ export default function AdminHome({ name, canApprove, review, recent, drafts, no
               <span className={styles.hint}>
                 {semester.projects} {semester.projects === 1 ? "project" : "projects"}
               </span>
-              <Link href={`/admin/semester?cohort=${semester.id}`} className={styles.pill}>
+              <Link href={runHref("AI Lodge", semester.slug)} className={styles.pill}>
                 Open semester
               </Link>
             </section>
@@ -148,7 +149,7 @@ export default function AdminHome({ name, canApprove, review, recent, drafts, no
                   {newsletter.drafts} {newsletter.drafts === 1 ? "draft" : "drafts"}
                 </span>
               )}
-              <Link href="/admin/newsletter" className={styles.pill}>
+              <Link href={runHref("DAP", newsletter.cohortSlug, "newsletter")} className={styles.pill}>
                 Open newsletter
               </Link>
             </section>

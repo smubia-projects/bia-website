@@ -14,9 +14,8 @@ import { canonicalPath } from "@/app/lib/canonical-path";
  * - Any path with capitals    -> lower-cased      (/DAP/newsletter, /Projects/ScamSense)
  * - /workwithus, /contactus   -> /work-with-us, /contact-us
  * - /projects/ai-lodge/...    -> /projects/ailodge/...
- * - /projects/dap             -> /dap/projects
  * - /projects?badge=AI Lodge  -> /projects/ailodge   (old programme filter links)
- * - /projects?badge=DAP       -> /dap/projects
+ * - /projects?badge=DAP       -> /projects/dap
  *
  * Old project pages (/projects/<slug>) are not redirected: app/projects/[slug]
  * shows a "projects have moved" page that links to the new address.
@@ -41,8 +40,6 @@ export const config = {
     "/contactus",
     "/projects/ai-lodge",
     "/projects/ai-lodge/:path*",
-    "/projects/dap",
-    "/projects/dap/:path*",
     { source: "/projects", has: [{ type: "query", key: "badge" }] },
   ],
 };

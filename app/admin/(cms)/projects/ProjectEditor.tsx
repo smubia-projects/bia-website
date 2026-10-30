@@ -19,10 +19,12 @@ import {
 import { projectPath } from "@/app/lib/cms/paths";
 import { deleteProjectAction, saveProjectAction, setWinnerAction, type SaveIntent } from "../../actions";
 import { StatusChip, useActionToast, useImageUpload, useUnsavedChanges } from "../../_components/ui";
+import { runHref } from "../../_components/runs";
 import styles from "../../cms.module.css";
 
 export interface CohortOption {
   id: string;
+  slug: string;
   name: string;
   programme: Programme;
 }
@@ -39,7 +41,7 @@ interface Props {
   tracks: TrackOption[];
   lodges: LodgeOption[];
   role: Role;
-  /** New projects started from the Semesters / Cohorts page */
+  /** New projects started from a semester's or cohort's Projects page */
   preset?: { cohortId: string; trackId: number | null } | null;
 }
 
@@ -242,7 +244,7 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
                     <Link
                       className={styles.lnk}
                       style={{ padding: 0, minHeight: 0, fontSize: "inherit" }}
-                      href={`${f.programme === "AI Lodge" ? "/admin/semester" : "/admin/dap-cohort"}?cohort=${f.cohortId}`}
+                      href={runHref(f.programme, cohorts.find((c) => c.id === f.cohortId)?.slug ?? "", "projects")}
                     >
                       Open its page
                     </Link>

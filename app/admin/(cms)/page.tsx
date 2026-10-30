@@ -21,10 +21,11 @@ export default async function AdminHomePage() {
       recent={[...mine].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")).slice(0, 5)}
       drafts={mine.filter((p) => p.status === "draft").length}
       noCohort={mine.filter((p) => !p.cohortId).length}
-      semester={semester ? { id: semester.id, name: semester.name, projects: all.filter((p) => p.cohortId === semester.id).length } : null}
+      semester={semester ? { slug: semester.slug, name: semester.name, projects: all.filter((p) => p.cohortId === semester.id).length } : null}
       newsletter={
         dapCohort
           ? {
+              cohortSlug: dapCohort.slug,
               cohortName: dapCohort.name,
               latest: issues.filter((i) => i.status === "published").sort((a, b) => b.week - a.week)[0] ?? null,
               scheduled: issues.filter((i) => i.status === "scheduled").sort((a, b) => a.week - b.week)[0] ?? null,

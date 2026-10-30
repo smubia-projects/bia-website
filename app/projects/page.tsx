@@ -26,7 +26,7 @@ export default async function ProjectsPage() {
           <Link href="/projects/ailodge" className={ui.pill}>
             AI Lodge yearbook →
           </Link>
-          <Link href="/dap/projects" className={ui.pill}>
+          <Link href="/projects/dap" className={ui.pill}>
             DAP yearbook →
           </Link>
         </div>
