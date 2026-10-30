@@ -4,23 +4,24 @@ import { getDb } from "@/app/lib/db";
 import {
   cohorts,
   dapGroups,
-  lodges,
   projects,
   sessions,
   tracks,
   type CohortRow,
   type DapGroupRow,
-  type LodgeRow,
   type Profile,
+  type TimelineStep,
   type TrackRow,
 } from "@/app/lib/db/schema";
 import { can, ensure, type Actor } from "./actor";
+import { listLodges, lodgePaths } from "./lodges";
 import { revalidateCms, TAGS } from "./revalidate";
 import { COHORT_VISIBILITY, DAP_WEEKS, PROGRAMMES, type CohortVisibility, type Programme } from "./taxonomy";
 
 export type Cohort = CohortRow;
 export type Track = TrackRow & { projectCount: number };
-export type Lodge = LodgeRow;
+import type { Lodge } from "./lodges";
+export type { Lodge };
 export type DapGroup = DapGroupRow;
 
 export const cohortIdFor = (programme: Programme, slug: string) =>
@@ -66,17 +67,19 @@ export async function listAllTracks(): Promise<(TrackRow & { cohortName: string 
 
 export interface PublicCohort extends Cohort {
   tracks: Track[];
-  lodges: Lodge[];
+  /** With each lodge's path on the AI Lodge site, e.g. /lodges/mit */
+  lodges: (Lodge & { path: string })[];
   groups: DapGroup[];
 }
 
 const readPublicCohorts = unstable_cache(
   async (programme: Programme): Promise<PublicCohort[]> => {
     const all = (await listCohorts(programme)).filter((c) => c.visibility !== "hidden");
+    const paths = await lodgePaths();
     return Promise.all(
       all.map(async (c) => {
         const [t, l, g] = await Promise.all([listTracks(c.id), listLodges(c.id), listGroups(c.id)]);
-        return { ...c, tracks: t, lodges: l, groups: g };
+        return { ...c, tracks: t, lodges: l.map((x) => ({ ...x, path: paths.get(x.id) ?? `/lodges/${x.slug}` })), groups: g };
       })
     );
   },
@@ -103,6 +106,8 @@ export function pickCurrentCohort<T extends Cohort>(list: T[]): T | null {
 
 export interface CohortInput {
   name?: string;
+  /** AI Lodge applications timeline */
+  timeline?: TimelineStep[];
   visibility?: CohortVisibility;
   headline?: string;
   writeup?: string;
@@ -150,6 +155,15 @@ export async function updateCohort(actor: Actor, id: string, input: CohortInput)
   }
   for (const key of ["visibility", "headline", "writeup", "hackDay"] as const) {
     if (input[key] !== undefined) (values as Record<string, unknown>)[key] = input[key];
+  }
+  if (input.timeline !== undefined) {
+    values.timeline = input.timeline
+      .map((t) => ({ label: (t.label ?? "").trim(), date: (t.date ?? "").trim(), ...(t.note?.trim() ? { note: t.note.trim() } : {}) }))
+      .filter((t) => t.label || t.date);
+    for (const t of values.timeline) {
+      ensure(t.label, "Every timeline step needs a label");
+      ensure(/^\d{4}-\d{2}-\d{2}$/.test(t.date), `Pick a date for "${t.label}"`);
+    }
   }
   if (input.visibility === "live") {
     // Only one live cohort per programme: the previous one is archived.
@@ -226,58 +240,9 @@ export async function deleteTrack(actor: Actor, id: number) {
   revalidateCms("cohorts", "projects");
 }
 
-// ── Lodges (AI Lodge) ────────────────────────────────────────────────────
+// ── Lodges (AI Lodge): see ./lodges ─────────────────────────────────────
 
-export async function listLodges(cohortId: string): Promise<Lodge[]> {
-  const db = await getDb();
-  return db.select().from(lodges).where(eq(lodges.cohortId, cohortId)).orderBy(asc(lodges.position), asc(lodges.id));
-}
-
-export async function listAllLodges(): Promise<Lodge[]> {
-  const db = await getDb();
-  return db.select().from(lodges).orderBy(asc(lodges.position), asc(lodges.id));
-}
-
-export interface LodgeInput {
-  id?: number;
-  cohortId: string;
-  name: string;
-  url?: string;
-}
-
-export async function saveLodge(actor: Actor, input: LodgeInput): Promise<Lodge> {
-  const cohort = await getCohort(input.cohortId);
-  ensure(cohort, "Semester not found");
-  ensure(cohort.programme === "AI Lodge", "Only AI Lodge semesters have lodges");
-  ensure(can.editCohort(actor, cohort.programme), "Only exco can edit lodges");
-  const name = input.name.trim();
-  ensure(name, "Lodge name is required");
-  const url = (input.url ?? "").trim();
-  ensure(!url || /^https:\/\/\S+$/i.test(url), "The lodge page must be a full https:// link");
-  const db = await getDb();
-  let row: Lodge | undefined;
-  if (input.id) {
-    [row] = await db
-      .update(lodges)
-      .set({ name, url })
-      .where(and(eq(lodges.id, input.id), eq(lodges.cohortId, input.cohortId)))
-      .returning();
-    ensure(row, "Lodge not found");
-  } else {
-    const existing = await listLodges(input.cohortId);
-    [row] = await db.insert(lodges).values({ cohortId: input.cohortId, name, url, position: existing.length }).returning();
-  }
-  revalidateCms("cohorts", "projects");
-  return row!;
-}
-
-/** Projects in a removed lodge keep everything else; only the lodge link goes. */
-export async function deleteLodge(actor: Actor, id: number) {
-  ensure(can.editCohort(actor, "AI Lodge"), "You can't remove lodges");
-  const db = await getDb();
-  await db.delete(lodges).where(eq(lodges.id, id));
-  revalidateCms("cohorts", "projects");
-}
+export { listAllLodges, listLodges } from "./lodges";
 
 // ── DAP groups ───────────────────────────────────────────────────────────
 

@@ -3,10 +3,13 @@ import path from "path";
 import { put } from "@vercel/blob";
 import { CmsError } from "./actor";
 
-export type UploadFolder = "projects" | "newsletter" | "team";
+export const UPLOAD_FOLDERS = ["projects", "newsletter", "team", "lodges"] as const;
+export type UploadFolder = (typeof UPLOAD_FOLDERS)[number];
 
 const MAX_BYTES = 8 * 1024 * 1024;
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif", "image/avif"];
+/** Lodge logos and animated art may be SVG. They are served from Vercel Blob's own domain. */
+const SVG_FOLDERS: UploadFolder[] = ["lodges"];
 
 function safeName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80) || "image";
@@ -24,8 +27,9 @@ export async function uploadImage(
 ): Promise<string> {
   if (file.size === 0) throw new CmsError("The image is empty");
   if (file.size > MAX_BYTES) throw new CmsError("Images must be 8 MB or smaller");
-  if (file.type && !IMAGE_TYPES.includes(file.type)) {
-    throw new CmsError("Only PNG, JPEG, WebP, GIF or AVIF images can be uploaded");
+  const svgOk = SVG_FOLDERS.includes(folder);
+  if (file.type && !IMAGE_TYPES.includes(file.type) && !(svgOk && file.type === "image/svg+xml")) {
+    throw new CmsError(`Only PNG, JPEG, WebP, GIF${svgOk ? ", SVG" : ""} or AVIF images can be uploaded`);
   }
 
   const pathname = `images/${folder}/${Date.now()}-${safeName(filename)}`;
@@ -78,7 +82,7 @@ export async function uploadImageFromBase64(
 function guessMime(filename: string) {
   const ext = path.extname(filename).toLowerCase();
   return (
-    { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif", ".avif": "image/avif" }[ext] ??
+    { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif", ".avif": "image/avif", ".svg": "image/svg+xml" }[ext] ??
     "image/png"
   );
 }

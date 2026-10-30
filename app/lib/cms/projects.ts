@@ -4,6 +4,7 @@ import { getDb } from "@/app/lib/db";
 import { cohorts, lodges, projects, tracks, type ProjectRow } from "@/app/lib/db/schema";
 import type { HighlightCard, Project, TeamMember } from "@/app/projects/data/types";
 import { can, CmsError, ensure, type Actor } from "./actor";
+import { lodgePaths } from "./lodges";
 import { revalidateCms, TAGS } from "./revalidate";
 import {
   BUILT_WITH,
@@ -55,7 +56,6 @@ const projectSelect = {
   trackName: tracks.name,
   trackPosition: tracks.position,
   lodgeName: lodges.name,
-  lodgeUrl: lodges.url,
 };
 
 type JoinedRow = {
@@ -65,10 +65,9 @@ type JoinedRow = {
   trackName: string | null;
   trackPosition: number | null;
   lodgeName: string | null;
-  lodgeUrl: string | null;
 };
 
-function toProject(r: JoinedRow): Project {
+function toProject(r: JoinedRow, lodgePath: Map<number, string>): Project {
   const p = r.p;
   return {
     slug: p.slug,
@@ -97,7 +96,7 @@ function toProject(r: JoinedRow): Project {
     trackPosition: r.trackPosition ?? undefined,
     lodgeId: p.lodgeId,
     lodgeName: r.lodgeName ?? undefined,
-    lodgeUrl: r.lodgeUrl || undefined,
+    lodgePath: (r.p.lodgeId && lodgePath.get(r.p.lodgeId)) || undefined,
     madeFor: p.madeFor,
     builtWith: p.builtWith,
     winner: p.winner,
@@ -118,7 +117,8 @@ async function selectProjects(where?: ReturnType<typeof eq>) {
     asc(projects.position),
     asc(projects.createdAt)
   );
-  return (rows as JoinedRow[]).map(toProject);
+  const paths = await lodgePaths();
+  return (rows as JoinedRow[]).map((r) => toProject(r, paths));
 }
 
 // ── Reads ────────────────────────────────────────────────────────────────

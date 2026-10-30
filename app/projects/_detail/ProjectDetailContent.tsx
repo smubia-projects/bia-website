@@ -11,6 +11,7 @@ import { getCardIcon } from "@/app/projects/data/cardIcons";
 import Markdown from "@/app/components/ui/Markdown";
 import { MOTION_EASE, motionTransition } from "@/app/components/ui/motion";
 import { yearbookPath } from "@/app/lib/cms/paths";
+import { useSiteLinks } from "@/app/components/SiteLinksProvider";
 
 const MotionLink = motion.create(Link);
 
@@ -97,6 +98,7 @@ function TeamSocials({ member }: { member: TeamMember }) {
 
 export default function ProjectDetailContent({ project, cohortHref, cohortLabel }: Props) {
   const carouselRef = useRef<HTMLDivElement>(null);
+  const links = useSiteLinks();
 
   const images = project.images.filter(Boolean);
   const hasImages = images.length > 0;
@@ -387,8 +389,8 @@ export default function ProjectDetailContent({ project, cohortHref, cohortLabel 
               {isAILodge && project.lodgeName && (
                 <div className={styles.metaRow}>
                   <span className={styles.metaLabel}>Lodge</span>
-                  {project.lodgeUrl ? (
-                    <a href={project.lodgeUrl} target="_blank" rel="noopener noreferrer" className={styles.metaLink}>
+                  {project.lodgePath ? (
+                    <a href={`${links.aiLodgeInfosite.replace(/\/$/, "")}${project.lodgePath}`} target="_blank" rel="noopener noreferrer" className={styles.metaLink}>
                       {project.lodgeName} ↗
                     </a>
                   ) : (

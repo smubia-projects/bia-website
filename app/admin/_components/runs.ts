@@ -28,6 +28,7 @@ export const RUN_NOUN: Record<Programme, string> = { "AI Lodge": "semester", DAP
 export const RUN_SECTIONS: Record<Programme, RunSection[]> = {
   "AI Lodge": [
     { key: "", label: "Overview" },
+    { key: "lodges", label: "Lodges" },
     { key: "projects", label: "Projects" },
   ],
   DAP: [

@@ -3,6 +3,7 @@ import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
 import { AGENT_ACTOR, CmsError } from "@/app/lib/cms/actor";
 import * as cohorts from "@/app/lib/cms/cohorts";
+import * as lodgesCms from "@/app/lib/cms/lodges";
 import * as newsletter from "@/app/lib/cms/newsletter";
 import * as projects from "@/app/lib/cms/projects";
 import { listSiteLinks, saveSiteLinks } from "@/app/lib/cms/links";
@@ -104,7 +105,7 @@ const handler = createMcpHandler(
               name: c.name,
               visibility: c.visibility,
               tracks: c.programme === "AI Lodge" ? (await cohorts.listTracks(c.id)).map((t) => ({ id: t.id, name: t.name, projects: t.projectCount })) : undefined,
-              lodges: c.programme === "AI Lodge" ? (await cohorts.listLodges(c.id)).map((l) => ({ id: l.id, name: l.name, url: l.url })) : undefined,
+              lodges: c.programme === "AI Lodge" ? (await cohorts.listLodges(c.id)).map((l) => ({ id: l.id, slug: l.slug, name: l.name, status: l.status })) : undefined,
               groups: c.programme === "DAP" ? (await cohorts.listGroups(c.id)).map((g) => ({ id: g.id, name: g.name, members: g.members.length, mentors: g.mentors.length })) : undefined,
             }))
           );
@@ -190,7 +191,7 @@ const handler = createMcpHandler(
           url: z.string().optional(),
           base64: z.string().optional(),
           filename: z.string().default("image.png"),
-          folder: z.enum(["projects", "newsletter", "team"]).default("projects"),
+          folder: z.enum(["projects", "newsletter", "team", "lodges"]).default("projects").describe("lodges also accepts SVG (logos, animated art)"),
         }),
       },
       ({ url, base64, filename, folder }) =>
@@ -256,6 +257,10 @@ const handler = createMcpHandler(
           headline: z.string().optional(),
           writeup: z.string().optional().describe("Markdown"),
           hackDay: z.string().optional().describe("'Date · Venue'"),
+          timeline: z
+            .array(z.object({ label: z.string(), date: z.string().describe("YYYY-MM-DD"), note: z.string().optional() }))
+            .optional()
+            .describe("AI Lodge applications timeline shown on the AI Lodge site, e.g. Applications open, Deadline, Interviews"),
         }),
       },
       ({ id, ...input }) => tool(() => cohorts.updateCohort(AGENT_ACTOR, id, input))
@@ -272,13 +277,74 @@ const handler = createMcpHandler(
     );
 
     server.registerTool(
+      "get_lodge",
+      { title: "Get lodge", description: "Everything about one AI Lodge lodge: copy, captains, weekly trail and art.", inputSchema: z.object({ id: z.number().int() }) },
+      ({ id }) => tool(async () => (await lodgesCms.getLodge(id)) ?? Promise.reject(new CmsError("Lodge not found")))
+    );
+
+    const captain = z.object({
+      name: z.string(),
+      detail: z.string().default("").describe('School and year, e.g. "SCIS (IS) / Year 2"'),
+      telegram: z.string().default("").describe("Handle without @"),
+      image: z.string().default("").describe("URL from upload_image (square works best)"),
+    });
+    const week = z.object({
+      label: z.string().describe('"Week 1", "Recess", "Weeks 5–8"'),
+      topic: z.string(),
+      tag: z.enum(["mandatory", "optional"]).optional(),
+      note: z.string().optional(),
+    });
+
+    server.registerTool(
       "save_lodge",
       {
         title: "Create or edit a lodge",
-        description: "A lodge in an AI Lodge semester: its name and the link to its page on ailodge.smubia.com (lodge head profiles live there). Pass id to edit.",
-        inputSchema: z.object({ id: z.number().int().optional(), cohortId: z.string(), name: z.string(), url: z.string().optional() }),
+        description:
+          "A lodge in an AI Lodge semester, with everything the AI Lodge site (ailodge.smubia.com) shows: copy, captains (lodge heads), weekly trail, application status and art. Lodges are per semester: to reuse one, use copy_lodge. Pass id to edit; omitted fields stay as they are. The page lives at ailodge.smubia.com/lodges/<slug>.",
+        inputSchema: z.object({
+          id: z.number().int().optional(),
+          cohortId: z.string().describe("The AI Lodge semester, e.g. ai-lodge-ay2627-s1"),
+          name: z.string(),
+          slug: z.string().optional().describe("URL name; defaults to the name without 'Lodge'"),
+          motto: z.string().optional().describe('Quoted line under the name, e.g. "Mostly Intelligent Together"'),
+          tagline: z.string().optional(),
+          level: z.string().optional().describe('Badge, e.g. "Open to all", "Beginner", "Intermediate"'),
+          whoCanJoin: z.string().optional().describe('e.g. "Anyone"'),
+          forWho: z.string().optional(),
+          forWhoCard: z.string().optional().describe("Short version for the lodge card"),
+          why: z.string().optional(),
+          topics: z.array(z.string()).optional(),
+          cardTags: z.array(z.string()).optional().describe("Up to 3 tags for the card; defaults to the first 3 topics"),
+          goals: z.array(z.string()).optional(),
+          schedule: z.string().optional().describe('"Tue or Wed evenings · 7–10pm"'),
+          scheduleShort: z.string().optional().describe('For the card, e.g. "Tue · 7–10pm"'),
+          scheduleTentative: z.boolean().optional(),
+          sessionLength: z.string().optional(),
+          weeks: z.array(week).optional(),
+          weeksNote: z.string().optional(),
+          captains: z.array(captain).optional(),
+          status: z.enum(["open", "closed"]).optional().describe("Whether this lodge takes applications"),
+          logo: z.string().optional().describe("Logo URL (PNG, SVG or WebP on a transparent background)"),
+          accent: z.string().optional().describe("Hex colour, e.g. #3BB9AF"),
+          neonColor: z.string().optional().describe("Hex glow colour; empty uses the accent"),
+          ambient: z.enum(["none", "pointed", "teardrop", "lance", "heart", "round", "maple", "oval", "bat"]).optional(),
+          ambientImage: z.string().optional().describe("Custom drifting particle image URL; replaces the ambient preset"),
+          ambientGlow: z.boolean().optional(),
+          neonSign: z.enum(["none", "bat", "guitar", "ship"]).optional(),
+          animatedArt: z.string().optional().describe("Animated SVG URL shown in the hero instead of the logo"),
+        }),
       },
-      (input) => tool(() => cohorts.saveLodge(AGENT_ACTOR, input))
+      (input) => tool(() => lodgesCms.saveLodge(AGENT_ACTOR, input))
+    );
+
+    server.registerTool(
+      "copy_lodge",
+      {
+        title: "Copy a lodge into another semester",
+        description: "Copies a lodge (copy, captains, trail and art) into another AI Lodge semester, e.g. when a lodge runs again.",
+        inputSchema: z.object({ id: z.number().int(), toCohortId: z.string() }),
+      },
+      ({ id, toCohortId }) => tool(() => lodgesCms.copyLodge(AGENT_ACTOR, id, toCohortId))
     );
 
     const profile = z.object({

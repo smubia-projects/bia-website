@@ -6,11 +6,12 @@ import { CmsError, type Actor } from "@/app/lib/cms/actor";
 import { requireActor } from "@/app/lib/cms/session";
 import * as projects from "@/app/lib/cms/projects";
 import * as cohorts from "@/app/lib/cms/cohorts";
+import * as lodgesCms from "@/app/lib/cms/lodges";
 import * as newsletter from "@/app/lib/cms/newsletter";
 import * as people from "@/app/lib/cms/people";
 import { saveSiteLinks, type SiteLinksInput } from "@/app/lib/cms/links";
-import { uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
-import type { CohortVisibility, Programme, ProjectStatus, Role } from "@/app/lib/cms/taxonomy";
+import { UPLOAD_FOLDERS, uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
+import type { Programme, ProjectStatus, Role } from "@/app/lib/cms/taxonomy";
 
 export type ActionResult<T = null> = { ok: true; data: T; message?: string } | { ok: false; error: string };
 
@@ -84,6 +85,7 @@ export async function uploadImageAction(formData: FormData): Promise<ActionResul
   return run(async () => {
     const file = formData.get("file");
     const folder = (formData.get("folder") as UploadFolder) || "projects";
+    if (!UPLOAD_FOLDERS.includes(folder)) throw new CmsError("Unknown upload folder");
     if (!(file instanceof Blob)) throw new CmsError("No image received");
     const name = (formData.get("name") as string) || (file instanceof File ? file.name : "image.jpg");
     return uploadImage(file, name, folder);
@@ -102,7 +104,7 @@ export async function createCohortAction(programme: Programme, slug: string, nam
 
 export async function saveCohortAction(
   id: string,
-  input: { name?: string; visibility?: CohortVisibility; headline?: string; writeup?: string; hackDay?: string }
+  input: cohorts.CohortInput
 ) {
   return run(async (actor) => {
     await cohorts.updateCohort(actor, id, input);
@@ -142,9 +144,25 @@ export async function moveTrackAction(id: number, direction: "up" | "down") {
   });
 }
 
-export async function saveLodgeAction(input: cohorts.LodgeInput) {
+export async function saveLodgeAction(input: lodgesCms.LodgeInput) {
   return run(async (actor) => {
-    const l = await cohorts.saveLodge(actor, input);
+    const l = await lodgesCms.saveLodge(actor, input);
+    refreshAdmin();
+    return l.id;
+  });
+}
+
+export async function moveLodgeAction(id: number, direction: "up" | "down") {
+  return run(async (actor) => {
+    await lodgesCms.moveLodge(actor, id, direction);
+    refreshAdmin();
+    return null;
+  });
+}
+
+export async function copyLodgeAction(id: number, toCohortId: string) {
+  return run(async (actor) => {
+    const l = await lodgesCms.copyLodge(actor, id, toCohortId);
     refreshAdmin();
     return l.id;
   });
@@ -152,7 +170,7 @@ export async function saveLodgeAction(input: cohorts.LodgeInput) {
 
 export async function deleteLodgeAction(id: number) {
   return run(async (actor) => {
-    await cohorts.deleteLodge(actor, id);
+    await lodgesCms.deleteLodge(actor, id);
     refreshAdmin();
     return null;
   });

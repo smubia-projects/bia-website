@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { can } from "@/app/lib/cms/actor";
 import { getCohort, listCohorts, listGroups, listLodges, listTracks } from "@/app/lib/cms/cohorts";
+import { lodgePaths } from "@/app/lib/cms/lodges";
 import { listProjects } from "@/app/lib/cms/projects";
 import { requireActorPage } from "@/app/lib/cms/session";
 import DapYearbookPage from "@/app/projects/dap/DapYearbookPage";
@@ -19,13 +20,15 @@ export default async function CohortPreviewPage({ params }: { params: { id: stri
   const isLodge = cohort.programme === "AI Lodge";
   if (isLodge ? !can.seeLodge(actor) : !can.seeDap(actor)) notFound();
 
-  const [all, cohorts, tracks, lodges, groups] = await Promise.all([
+  const [all, cohorts, tracks, lodgeRows, groups, paths] = await Promise.all([
     listProjects(),
     listCohorts(cohort.programme),
     listTracks(cohort.id),
     listLodges(cohort.id),
     listGroups(cohort.id),
+    lodgePaths(),
   ]);
+  const lodges = lodgeRows.map((l) => ({ ...l, path: paths.get(l.id) ?? `/lodges/${l.slug}` }));
   const projects = all.filter((p) => p.badge === cohort.programme);
   const drafts = projects.filter((p) => p.cohortId === cohort.id && p.status !== "published").length;
   const withTracks = cohorts.map((c) =>

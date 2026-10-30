@@ -83,7 +83,7 @@ type CropJob = { src: string; name: string; resolve: (blob: Blob | null) => void
  * Pick → crop → upload. Returns the hosted URL (Vercel Blob, or /uploads on
  * localhost). `aspect` null skips cropping (e.g. newsletter images).
  */
-export function useImageUpload(folder: "projects" | "newsletter" | "team" = "projects") {
+export function useImageUpload(folder: "projects" | "newsletter" | "team" | "lodges" = "projects") {
   const [job, setJob] = useState<CropJob | null>(null);
   const [busy, setBusy] = useState(false);
   const [aspect, setAspect] = useState<{ ratio: number; label: string } | null>(null);
@@ -93,7 +93,7 @@ export function useImageUpload(folder: "projects" | "newsletter" | "team" = "pro
       new Promise((resolve, reject) => {
         const input = document.createElement("input");
         input.type = "file";
-        input.accept = "image/png,image/jpeg,image/webp,image/gif,image/avif";
+        input.accept = `image/png,image/jpeg,image/webp,image/gif,image/avif${folder === "lodges" && !crop ? ",image/svg+xml" : ""}`;
         input.onchange = async () => {
           const file = input.files?.[0];
           if (!file) return resolve(null);

@@ -5,11 +5,12 @@ import YearbookShelves, { type Shelf } from "@/app/components/cms/YearbookShelve
 import { trackAccent } from "@/app/components/cms/visuals";
 import ui from "@/app/components/cms/public.module.css";
 import type { PublicCohort } from "@/app/lib/cms/cohorts";
+import { getSiteLinks } from "@/app/lib/cms/links";
 import { cohortPath } from "@/app/lib/cms/paths";
 import type { Project } from "@/app/projects/data/types";
 
 /** AI Lodge yearbook for one semester: dark header, write-up, one shelf per track. */
-export default function LodgeYearbook({
+export default async function LodgeYearbook({
   cohort,
   cohorts,
   projects,
@@ -18,6 +19,7 @@ export default function LodgeYearbook({
   cohorts: PublicCohort[];
   projects: Project[];
 }) {
+  const lodgeSite = (await getSiteLinks()).aiLodgeInfosite.replace(/\/$/, "");
   const mine = cohort ? projects.filter((p) => p.cohortId === cohort.id) : [];
   const shelves: Shelf[] = (cohort?.tracks ?? [])
     .map((t) => ({
@@ -129,18 +131,12 @@ export default function LodgeYearbook({
                 {lodges.length > 0 && (
                   <div className={ui.glanceItem} style={{ gap: 6 }}>
                     <span className={ui.glanceKey}>Lodges</span>
-                    {lodges.map((l) =>
-                      l.url ? (
-                        <a key={l.id} href={l.url} target="_blank" rel="noopener noreferrer" className={ui.glanceTrack}>
-                          <strong>{l.name}</strong>
-                          <span aria-hidden="true">↗</span>
-                        </a>
-                      ) : (
-                        <span key={l.id} className={ui.glanceTrack}>
-                          <strong>{l.name}</strong>
-                        </span>
-                      )
-                    )}
+                    {lodges.map((l) => (
+                      <a key={l.id} href={`${lodgeSite}${l.path}`} target="_blank" rel="noopener noreferrer" className={ui.glanceTrack}>
+                        <strong>{l.name}</strong>
+                        <span aria-hidden="true">↗</span>
+                      </a>
+                    ))}
                   </div>
                 )}
               </div>

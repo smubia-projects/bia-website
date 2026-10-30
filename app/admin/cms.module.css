@@ -1064,3 +1064,115 @@ textarea.inp {
   color: #5c4a00;
   font-weight: 600;
 }
+
+/* ── Lodges (AI Lodge) ─────────────────────────────────────────────── */
+
+.lodgeLogo {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--pine-deep);
+  color: #fff;
+  font-weight: 700;
+}
+.lodgeLogo img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+}
+.lodgeArtThumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  background: var(--pine-deep);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.lodgeArtThumb img {
+  width: 84%;
+  height: 84%;
+  object-fit: contain;
+}
+.colorSwatch {
+  width: 44px;
+  height: 40px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+/* Live preview of the lodge card on the AI Lodge site */
+.lodgeCard {
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fbf6ec;
+  border: 1px solid #eadfca;
+  box-shadow: var(--shadow-sm);
+}
+.lodgeCardArt {
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--glow) 22%, transparent), transparent 70%), #10261f;
+}
+.lodgeCardMark {
+  width: 110px;
+  height: 110px;
+  background: var(--glow);
+  -webkit-mask: var(--mk) center / contain no-repeat;
+  mask: var(--mk) center / contain no-repeat;
+  filter: drop-shadow(0 0 10px var(--glow)) drop-shadow(0 0 22px var(--glow));
+}
+.lodgeCardAnimated {
+  max-width: 70%;
+  max-height: 120px;
+}
+.lodgeCardInitial {
+  font-family: var(--font-display), sans-serif;
+  font-size: 56px;
+  font-weight: 800;
+  color: var(--glow);
+  text-shadow: 0 0 18px var(--glow);
+}
+.lodgeCardBody {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lodgeCardName {
+  font-family: var(--font-display), sans-serif;
+  font-size: 20px;
+  color: #12352c;
+}
+.lodgeBadge,
+.lodgeBadgeMuted,
+.lodgeTag {
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+.lodgeBadgeMuted {
+  background: #ece6da;
+  color: #5c5546;
+}
+.lodgeTag {
+  background: #efe7d6;
+  color: #3d3a30;
+}
+.lodgeCardTagline {
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: #12352c;
+}

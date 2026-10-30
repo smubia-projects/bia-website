@@ -10,7 +10,6 @@ export default async function CohortOverviewPage({ params }: { params: { run: st
       key={`${cohort.id}-${cohort.updatedAt}`}
       cohort={cohort}
       tracks={[]}
-      lodges={[]}
       canEdit={can.editCohort(actor, "DAP")}
       publicHref={dapRunPath(cohort.slug)}
     />

@@ -141,7 +141,7 @@ The home page (`app/page.tsx`) demonstrates a custom `ScrollReveal` component us
 
 ### Where content lives
 - **Neon Postgres** (Drizzle ORM) holds all CMS content: `projects`, `cohorts` (AI Lodge
-  semesters + DAP cohorts), `tracks` (Hack Day tracks), `lodges` (AI Lodge lodges, linking to
+  semesters + DAP cohorts), `tracks` (Hack Day tracks), `lodges` (AI Lodge lodges, served to
   ailodge.smubia.com), `dap_groups` (DAP teaching groups with members and mentors), `people`
   (CMS access + roles), `sessions` (DAP co-learning schedule, each linked to a group), `issues` ("This week in DAP"), `site_links` (club links) and `site_settings` (switches such as applications open). Schema: `app/lib/db/schema.ts`;
   SQL migrations in `drizzle/` (generate with `npm run db:generate` after editing the schema).
@@ -174,9 +174,19 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
   cohort (DAP) before it can be published, because its page lives under it. Each AI Lodge
   track has at most one **Hack Day winner** (gold glow + medal, shown in the yearbook only).
 - AI Lodge has two separate groupings per semester: **Hack Day tracks** (yearbook shelves, one
-  winner each) and **lodges** (who taught the team; each links to its page on the AI Lodge
-  site). A project has one of each. Tracks and lodges are set on the semester's **Overview**;
-  its **Projects** page adds projects, moves them between tracks, sets lodges and marks winners.
+  winner each) and **lodges** (who taught the team). A project has one of each. Tracks and the
+  applications timeline are on the semester's **Overview**; its **Projects** page adds projects,
+  moves them between tracks, sets lodges and marks winners.
+- **Lodges** (a semester's Lodges page) hold everything ailodge.smubia.com shows: copy, captains
+  (lodge heads), weekly trail, schedule, per-lodge application status and art (logo, colours,
+  particles, neon sign, animated SVG). They are a new record each semester (copy one forward);
+  a past semester's lodges stay as they ran. Service: `app/lib/cms/lodges.ts`.
+- **Public AI Lodge feed**: `GET /api/public/ailodge[?semester=<slug>]`, unauthenticated and
+  read-only, built in `app/lib/cms/ailodge-feed.ts`. The AI Lodge site reads it; the contract
+  and migration notes for that site are in [docs/ailodge-site-handoff.md](docs/ailodge-site-handoff.md).
+  Bump `FEED_VERSION` before renaming or removing a field. Lodge links on smubia.com use each
+  lodge's `path` from `lodgePaths()` (`/lodges/<slug>`, or `/lodges/past/<semester>/<slug>` when a
+  later semester reuses the slug).
 - The CMS is organised by run, like Vercel projects: a switcher at the top of the sidebar picks an
   AI Lodge semester or DAP cohort, and the run is in the path (`/admin/ailodge/<semester>[/projects]`,
   `/admin/dap/<cohort>[/groups|/schedule|/newsletter|/projects]`; new runs at `/admin/<programme>/new`).

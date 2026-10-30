@@ -43,6 +43,20 @@
       "when": 1793380936554,
       "tag": "0005_rename_cms_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793381465420,
+      "tag": "0006_lodge_details",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793381752362,
+      "tag": "0007_drop_lodge_url",
+      "breakpoints": true
     }
   ]
 }

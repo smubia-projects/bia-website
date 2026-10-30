@@ -39,6 +39,36 @@ export const ISSUE_STATUS_LABEL: Record<IssueStatus, string> = {
   published: "Published",
 };
 
+export const LODGE_STATUSES = ["open", "closed"] as const;
+export type LodgeStatus = (typeof LODGE_STATUSES)[number];
+
+/** Drifting particle shapes the AI Lodge site can draw behind a lodge. */
+export const LODGE_AMBIENTS = ["none", "pointed", "teardrop", "lance", "heart", "round", "maple", "oval", "bat"] as const;
+export type LodgeAmbient = (typeof LODGE_AMBIENTS)[number];
+export const LODGE_AMBIENT_LABEL: Record<LodgeAmbient, string> = {
+  none: "None",
+  pointed: "Pointed leaves",
+  teardrop: "Teardrop leaves",
+  lance: "Lance leaves",
+  heart: "Heart leaves",
+  round: "Round leaves",
+  maple: "Maple leaves",
+  oval: "Oval leaves",
+  bat: "Bats",
+};
+
+/** Neon signs coded on the AI Lodge site. */
+export const LODGE_NEON_SIGNS = ["none", "bat", "guitar", "ship"] as const;
+export type LodgeNeonSign = (typeof LODGE_NEON_SIGNS)[number];
+export const LODGE_NEON_SIGN_LABEL: Record<LodgeNeonSign, string> = {
+  none: "None (logo glow)",
+  bat: "Bat",
+  guitar: "Guitar",
+  ship: "Ship",
+};
+
+export const LODGE_LEVELS = ["Open to all", "Beginner", "Beginner–Intermediate", "Intermediate", "Advanced"];
+
 export const COHORT_VISIBILITY = ["live", "hidden", "archived"] as const;
 export type CohortVisibility = (typeof COHORT_VISIBILITY)[number];
 

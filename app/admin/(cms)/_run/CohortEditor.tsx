@@ -2,18 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Cohort, Lodge, Track } from "@/app/lib/cms/cohorts";
+import type { Cohort, Track } from "@/app/lib/cms/cohorts";
+import type { TimelineStep } from "@/app/lib/db/schema";
 import { trackAccent } from "@/app/components/cms/visuals";
 import type { CohortVisibility } from "@/app/lib/cms/taxonomy";
 import { deleteTrackAction, moveTrackAction, saveCohortAction, saveTrackAction } from "../../actions";
 import { useActionToast, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
-import LodgesPanel from "./LodgesPanel";
 
 interface Props {
   cohort: Cohort;
   tracks: Track[];
-  lodges: Lodge[];
   canEdit: boolean;
   /** The run's public page */
   publicHref: string;
@@ -25,8 +24,15 @@ const VISIBILITY: { value: CohortVisibility; label: string }[] = [
   { value: "hidden", label: "Hidden: not on the site" },
 ];
 
-/** A run's overview: name, visibility and write-up, plus Hack Day tracks and lodges for AI Lodge. */
-export default function CohortEditor({ cohort, tracks, lodges, canEdit, publicHref }: Props) {
+const DEFAULT_TIMELINE: TimelineStep[] = [
+  { label: "Applications open", date: "" },
+  { label: "Applications close", date: "" },
+  { label: "Interviews begin", date: "" },
+  { label: "Interviews end", date: "" },
+];
+
+/** A run's overview: name, visibility and write-up, plus Hack Day tracks and the applications timeline for AI Lodge. */
+export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Props) {
   const router = useRouter();
   const { handle, node } = useActionToast();
   const isLodge = cohort.programme === "AI Lodge";
@@ -38,6 +44,8 @@ export default function CohortEditor({ cohort, tracks, lodges, canEdit, publicHr
     writeup: cohort.writeup,
     hackDay: cohort.hackDay,
   });
+  const [timeline, setTimeline] = useState<TimelineStep[]>(cohort.timeline);
+  const setStep = (i: number, p: Partial<TimelineStep>) => setTimeline((t) => t.map((s, j) => (j === i ? { ...s, ...p } : s)));
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<Record<number, { name: string }>>({});
   const [newTrack, setNewTrack] = useState<{ name: string } | null>(null);
@@ -45,12 +53,19 @@ export default function CohortEditor({ cohort, tracks, lodges, canEdit, publicHr
   const set = (k: keyof typeof form, v: string) => setForm((s) => ({ ...s, [k]: v }));
   useUnsavedChanges(
     !saving &&
-      (form.name !== cohort.name || form.visibility !== cohort.visibility || form.headline !== cohort.headline || form.writeup !== cohort.writeup || form.hackDay !== cohort.hackDay)
+      (form.name !== cohort.name ||
+        form.visibility !== cohort.visibility ||
+        form.headline !== cohort.headline ||
+        form.writeup !== cohort.writeup ||
+        form.hackDay !== cohort.hackDay ||
+        JSON.stringify(timeline) !== JSON.stringify(cohort.timeline))
   );
 
   async function save() {
     setSaving(true);
-    const ok = handle(await saveCohortAction(cohort.id, { ...form, visibility: form.visibility as CohortVisibility }));
+    const ok = handle(
+      await saveCohortAction(cohort.id, { ...form, visibility: form.visibility as CohortVisibility, ...(isLodge ? { timeline } : {}) })
+    );
     setSaving(false);
     if (ok !== undefined) router.refresh();
   }
@@ -84,7 +99,7 @@ export default function CohortEditor({ cohort, tracks, lodges, canEdit, publicHr
           <h1 className={styles.h1}>{cohort.name}</h1>
           <p className={styles.sub}>
             {isLodge
-              ? "The semester's yearbook page: its write-up, Hack Day tracks and lodges. Add and arrange its projects under Projects."
+              ? "The semester's yearbook page and its Hack Day tracks, plus the applications timeline on the AI Lodge site. Lodges and projects have their own pages."
               : "The cohort's details and write-up, shown on its yearbook page. Groups, the schedule and the newsletter each have their own page."}
           </p>
         </div>
@@ -146,6 +161,34 @@ export default function CohortEditor({ cohort, tracks, lodges, canEdit, publicHr
               </label>
             )}
             <span className={styles.hint}>Only one {noun} is current at a time: making this one current moves the previous one to past.</span>
+            {isLodge && (
+              <fieldset className={styles.fieldset} style={{ gap: 8, marginTop: 8 }}>
+                <legend className={styles.legend}>Applications timeline</legend>
+                <span className={styles.hint}>The &quot;Save the dates&quot; steps on the AI Lodge site.</span>
+                {timeline.map((t, i) => (
+                  <div key={i} className={styles.row}>
+                    <input className={`${styles.inp} ${styles.inpSmall}`} style={{ flex: "1 1 160px", width: "auto" }} value={t.label} placeholder="Deadline" aria-label="Step" disabled={!canEdit} onChange={(e) => setStep(i, { label: e.target.value })} />
+                    <input className={`${styles.inp} ${styles.inpSmall}`} style={{ maxWidth: 170 }} type="date" value={t.date} aria-label={`${t.label || "Step"} date`} disabled={!canEdit} onChange={(e) => setStep(i, { date: e.target.value })} />
+                    <input className={`${styles.inp} ${styles.inpSmall}`} style={{ flex: "2 1 220px", width: "auto" }} value={t.note ?? ""} placeholder="Note (optional)" aria-label="Note" disabled={!canEdit} onChange={(e) => setStep(i, { note: e.target.value })} />
+                    {canEdit && (
+                      <button type="button" className={styles.ico} aria-label={`Remove ${t.label || "step"}`} onClick={() => setTimeline((s) => s.filter((_, j) => j !== i))}>
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {canEdit && (
+                  <button
+                    type="button"
+                    className={styles.add}
+                    style={{ alignSelf: "flex-start" }}
+                    onClick={() => setTimeline((s) => (s.length ? [...s, { label: "", date: "" }] : DEFAULT_TIMELINE))}
+                  >
+                    + Step
+                  </button>
+                )}
+              </fieldset>
+            )}
           </section>
 
           {isLodge && (
@@ -224,7 +267,6 @@ export default function CohortEditor({ cohort, tracks, lodges, canEdit, publicHr
                   </button>
                 ))}
             </section>
-            <LodgesPanel cohortId={cohort.id} lodges={lodges} canEdit={canEdit} />
             </div>
           )}
       </div>

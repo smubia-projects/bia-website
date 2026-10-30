@@ -73,7 +73,8 @@ export interface Project {
   /** AI Lodge lodge the team was in; its page lives on ailodge.smubia.com */
   lodgeId?: number | null;
   lodgeName?: string;
-  lodgeUrl?: string;
+  /** The lodge's page on the AI Lodge site, e.g. /lodges/mit */
+  lodgePath?: string;
   /** Audience facet ("Made for") */
   madeFor?: string;
   /** Technique facet ("Built with") */

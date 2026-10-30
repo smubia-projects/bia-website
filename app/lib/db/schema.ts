@@ -14,6 +14,9 @@ import type {
   BlockType,
   CohortVisibility,
   IssueStatus,
+  LodgeAmbient,
+  LodgeNeonSign,
+  LodgeStatus,
   Programme,
   ProjectStatus,
   Role,
@@ -25,6 +28,33 @@ const createdAt = () =>
   timestamp("created_at", { withTimezone: true, mode: "string" }).notNull().defaultNow();
 const updatedAt = () =>
   timestamp("updated_at", { withTimezone: true, mode: "string" }).notNull().defaultNow();
+
+/** One step of a semester's applications timeline, e.g. { label: "Deadline", date: "2026-11-02" }. */
+export interface TimelineStep {
+  label: string;
+  /** YYYY-MM-DD */
+  date: string;
+  note?: string;
+}
+
+/** A lodge head, shown on the lodge's page on the AI Lodge site. */
+export interface Captain {
+  name: string;
+  /** School and year, e.g. "SCIS (IS) / Year 2" */
+  detail: string;
+  /** Telegram handle without the @ */
+  telegram: string;
+  image: string;
+}
+
+/** One stop on a lodge's week-by-week trail. */
+export interface LodgeWeek {
+  /** "Week 1", "Recess", "Weeks 5–8" */
+  label: string;
+  topic: string;
+  tag?: "mandatory" | "optional";
+  note?: string;
+}
 
 /** A programme intake: an AI Lodge semester or a DAP cohort. */
 export const cohorts = pgTable(
@@ -41,6 +71,8 @@ export const cohorts = pgTable(
     writeup: text("writeup").notNull().default(""),
     /** "Date · Venue" (AI Lodge only) */
     hackDay: text("hack_day").notNull().default(""),
+    /** AI Lodge applications timeline shown on the AI Lodge site */
+    timeline: jsonb("timeline").$type<TimelineStep[]>().notNull().default([]),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -77,11 +109,52 @@ export const lodges = pgTable(
       .notNull()
       .references(() => cohorts.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    /** The lodge's page on the AI Lodge site */
-    url: text("url").notNull().default(""),
     position: integer("position").notNull().default(0),
+    /** URL segment on the AI Lodge site: ailodge.smubia.com/lodges/<slug> */
+    slug: text("slug").notNull().default(""),
+    /** Quoted line under the name, e.g. "Mostly Intelligent Together" */
+    motto: text("motto").notNull().default(""),
+    tagline: text("tagline").notNull().default(""),
+    /** Badge, e.g. "Open to all" or "Beginner" */
+    level: text("level").notNull().default(""),
+    /** "Who can join", e.g. "Anyone" */
+    whoCanJoin: text("who_can_join").notNull().default(""),
+    forWho: text("for_who").notNull().default(""),
+    /** Short "who it's for" on the lodge card; falls back to forWho */
+    forWhoCard: text("for_who_card").notNull().default(""),
+    why: text("why").notNull().default(""),
+    topics: jsonb("topics").$type<string[]>().notNull().default([]),
+    /** Card tags; fall back to the first three topics */
+    cardTags: jsonb("card_tags").$type<string[]>().notNull().default([]),
+    goals: jsonb("goals").$type<string[]>().notNull().default([]),
+    /** "Tue or Wed evenings · 7–10pm" */
+    schedule: text("schedule").notNull().default(""),
+    /** For the lodge card, e.g. "Tue · 7–10pm" */
+    scheduleShort: text("schedule_short").notNull().default(""),
+    scheduleTentative: boolean("schedule_tentative").notNull().default(true),
+    sessionLength: text("session_length").notNull().default(""),
+    weeks: jsonb("weeks").$type<LodgeWeek[]>().notNull().default([]),
+    /** Shown under the trail, e.g. "Weekly topics are indicative and may shift." */
+    weeksNote: text("weeks_note").notNull().default(""),
+    captains: jsonb("captains").$type<Captain[]>().notNull().default([]),
+    /** Whether this lodge takes applications (the AI Lodge switch in Site links also applies) */
+    status: text("status").$type<LodgeStatus>().notNull().default("open"),
+    // Art: everything the AI Lodge site needs to draw the lodge
+    logo: text("logo").notNull().default(""),
+    accent: text("accent").notNull().default("#7DD7C2"),
+    /** Glow colour for the logo and neon sign; empty = accent */
+    neonColor: text("neon_color").notNull().default(""),
+    ambient: text("ambient").$type<LodgeAmbient>().notNull().default("pointed"),
+    /** Custom drifting particle image; replaces the ambient preset when set */
+    ambientImage: text("ambient_image").notNull().default(""),
+    ambientGlow: boolean("ambient_glow").notNull().default(false),
+    /** Coded neon sign on the AI Lodge site */
+    neonSign: text("neon_sign").$type<LodgeNeonSign>().notNull().default("none"),
+    /** Optional animated SVG shown in the hero instead of the logo */
+    animatedArt: text("animated_art").notNull().default(""),
+    updatedAt: updatedAt(),
   },
-  (t) => [index("lodges_cohort").on(t.cohortId)]
+  (t) => [index("lodges_cohort").on(t.cohortId), uniqueIndex("lodges_cohort_slug").on(t.cohortId, t.slug)]
 );
 
 export const projects = pgTable(
