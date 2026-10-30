@@ -23,6 +23,38 @@ export function useToast() {
   return { show, node };
 }
 
+const LEAVE_MESSAGE = "You have unsaved changes. Leave this page and lose them?";
+
+/**
+ * Warns before unsaved edits are lost: on reload or closing the tab, and on
+ * clicking a link elsewhere in the CMS (the App Router has no navigation guard).
+ */
+export function useUnsavedChanges(dirty: boolean) {
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement | null)?.closest?.("a");
+      if (!a || a.target === "_blank" || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      const href = a.getAttribute("href");
+      if (!href || href.startsWith("#")) return;
+      if (!window.confirm(LEAVE_MESSAGE)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    document.addEventListener("click", onClick, true);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      document.removeEventListener("click", onClick, true);
+    };
+  }, [dirty]);
+}
+
 /** Shows an action's error (or its message) and returns the data on success. */
 export function useActionToast() {
   const toast = useToast();

@@ -1,19 +1,32 @@
-import { inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/app/lib/db";
-import { siteLinks } from "@/app/lib/db/schema";
-import { DEFAULT_LINKS, EDITABLE_LINKS, type LinkKey, type SiteLinks } from "@/app/lib/links";
+import { siteLinks, siteSettings } from "@/app/lib/db/schema";
+import {
+  DEFAULT_APPLICATIONS,
+  DEFAULT_LINKS,
+  DEFAULT_SITE_LINKS,
+  EDITABLE_LINKS,
+  type Applications,
+  type LinkKey,
+  type SiteLinks,
+} from "@/app/lib/links";
 import { can, ensure, type Actor } from "./actor";
 import { revalidateCms, TAGS } from "./revalidate";
 
-const KEYS = EDITABLE_LINKS.map((l) => l.key);
+const KEYS = EDITABLE_LINKS.map((l) => l.key) as string[];
 
-/** Saved links over the defaults in app/lib/links.ts. */
+/** Saved links and switches over the defaults in app/lib/links.ts. */
 export async function listSiteLinks(): Promise<SiteLinks> {
   const db = await getDb();
-  const rows = await db.select().from(siteLinks);
-  const links: SiteLinks = { ...DEFAULT_LINKS };
-  for (const r of rows) if ((KEYS as string[]).includes(r.key) && r.url) links[r.key as LinkKey] = r.url;
+  const [rows, [apps]] = await Promise.all([
+    db.select().from(siteLinks),
+    db.select().from(siteSettings).where(eq(siteSettings.key, "applications")),
+  ]);
+  const links: SiteLinks = { ...DEFAULT_LINKS, applications: { ...DEFAULT_APPLICATIONS } };
+  // An optional link saved as "" means "hide the button", so empty values count too.
+  for (const r of rows) if (KEYS.includes(r.key)) links[r.key as LinkKey] = r.url;
+  if (apps) links.applications = { ...DEFAULT_APPLICATIONS, ...(apps.value as Partial<Applications>) };
   return links;
 }
 
@@ -28,29 +41,49 @@ export async function getSiteLinks(): Promise<SiteLinks> {
     return await readCached();
   } catch (error) {
     console.error("[cms] site links read failed", error);
-    return { ...DEFAULT_LINKS };
+    return { ...DEFAULT_SITE_LINKS };
   }
 }
 
-/** Saves the given links; an empty value restores the default. */
-export async function saveSiteLinks(actor: Actor, input: Partial<Record<string, string>>): Promise<SiteLinks> {
+export interface SiteLinksInput {
+  links?: Partial<Record<string, string>>;
+  applications?: Partial<Applications>;
+}
+
+/** Saves links (a value equal to the default clears the override) and the applications switches. */
+export async function saveSiteLinks(actor: Actor, input: SiteLinksInput): Promise<SiteLinks> {
   ensure(can.editLinks(actor), "Only exco can change site links");
   const db = await getDb();
-  const entries = Object.entries(input).filter(([key]) => (KEYS as string[]).includes(key));
-  ensure(entries.length > 0, "Nothing to save");
+  const now = new Date().toISOString();
+  const entries = Object.entries(input.links ?? {}).filter(([key]) => KEYS.includes(key));
   const clear: string[] = [];
   for (const [key, raw] of entries) {
-    const url = (raw ?? "").trim();
-    const label = EDITABLE_LINKS.find((l) => l.key === key)!.label;
-    if (!url || url === DEFAULT_LINKS[key as LinkKey]) {
+    const field = EDITABLE_LINKS.find((l) => l.key === key)!;
+    const value = (raw ?? "").trim();
+    // Back to the default: the same value, or a required link left empty.
+    if (value === DEFAULT_LINKS[key as LinkKey] || (!value && !field.optional)) {
       clear.push(key);
       continue;
     }
-    ensure(/^https:\/\/\S+$/i.test(url), `${label} must be a full https:// link`);
-    const values = { key, url, updatedAt: new Date().toISOString(), updatedBy: actor.email };
-    await db.insert(siteLinks).values(values).onConflictDoUpdate({ target: siteLinks.key, set: values });
+    if (field.type === "email") {
+      ensure(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value), `${field.label} must be an email address`);
+    } else if (value || !field.optional) {
+      ensure(/^https:\/\/\S+$/i.test(value), `${field.label} must be a full https:// link`);
+    }
+    const row = { key, url: value, updatedAt: now, updatedBy: actor.email };
+    await db.insert(siteLinks).values(row).onConflictDoUpdate({ target: siteLinks.key, set: row });
   }
   if (clear.length) await db.delete(siteLinks).where(inArray(siteLinks.key, clear));
+
+  if (input.applications) {
+    const current = (await listSiteLinks()).applications;
+    const value: Applications = {
+      dap: input.applications.dap ?? current.dap,
+      aiLodge: input.applications.aiLodge ?? current.aiLodge,
+    };
+    const row = { key: "applications", value, updatedAt: now, updatedBy: actor.email };
+    await db.insert(siteSettings).values(row).onConflictDoUpdate({ target: siteSettings.key, set: row });
+  }
   revalidateCms("links");
   return listSiteLinks();
 }

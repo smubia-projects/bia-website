@@ -15,6 +15,8 @@ export interface IssueRowView {
   status: IssueStatus;
   session: string;
   goesOut: string;
+  /** Public address, once published */
+  path: string | null;
 }
 
 export default function IssueList({
@@ -85,6 +87,11 @@ export default function IssueList({
                 </td>
                 <td className={styles.editedCell}>{r.goesOut}</td>
                 <td className={styles.actionsCell}>
+                  {r.path && (
+                    <a className={styles.lnk} href={r.path} target="_blank" rel="noopener noreferrer">
+                      View
+                    </a>
+                  )}
                   <Link className={styles.lnk} href={`/admin/newsletter/${r.id}`}>
                     Edit
                   </Link>

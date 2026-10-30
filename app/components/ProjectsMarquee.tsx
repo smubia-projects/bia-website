@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useReducedMotion } from "framer-motion";
 import { Pause, Play } from "lucide-react";
 import styles from "./ProjectsMarquee.module.css";
-import { Project } from "@/app/Projects/data/types";
+import { Project } from "@/app/projects/data/types";
 import { projectPath } from "@/app/lib/cms/paths";
 
 interface Props {
@@ -87,7 +87,12 @@ export default function ProjectsMarquee({
   mobileFocused = false,
 }: Props) {
   const viewportRef = useRef<HTMLDivElement>(null);
-  const reduceMotion = useReducedMotion();
+  // The server can't know the visitor's motion preference, so it's applied after
+  // mount; reading it during the first render made server and client HTML differ.
+  const prefersReduced = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const reduceMotion = mounted && Boolean(prefersReduced);
   // WCAG 2.2.2: moving content needs a way to pause it
   const [userPaused, setUserPaused] = useState(false);
 

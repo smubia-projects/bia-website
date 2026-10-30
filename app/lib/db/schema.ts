@@ -18,7 +18,7 @@ import type {
   ProjectStatus,
   Role,
 } from "@/app/lib/cms/taxonomy";
-import type { HighlightCard, TeamMember } from "@/app/Projects/data/types";
+import type { HighlightCard, TeamMember } from "@/app/projects/data/types";
 
 // Timestamps use string mode so rows survive unstable_cache (JSON) unchanged.
 const createdAt = () =>
@@ -169,6 +169,14 @@ export const issues = pgTable(
 export const siteLinks = pgTable("site_links", {
   key: text("key").primaryKey(),
   url: text("url").notNull(),
+  updatedAt: updatedAt(),
+  updatedBy: text("updated_by").notNull().default(""),
+});
+
+/** Site-wide switches edited in the CMS, e.g. { key: "applications", value: { dap: true, aiLodge: false } }. */
+export const siteSettings = pgTable("site_settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
   updatedAt: updatedAt(),
   updatedBy: text("updated_by").notNull().default(""),
 });

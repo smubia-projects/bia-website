@@ -103,9 +103,10 @@ Keep `ADMIN_PASSWORD` and `UPSTASH_REDIS_REST_*` until step 9.
    runs migrations first, so a failed build usually means `DATABASE_URL` is missing.
 2. Open the **branch URL** (Vercel → Deployments → the feat/cms deployment → Domains). Add it
    to the Google OAuth client from step 3 if you haven't yet.
-3. Check: `/Projects`, `/Projects/ai-lodge`, a project page (e.g. `/Projects/ai-lodge/ay2627-s1/scamsense`),
-   an old project link (`/Projects/scamsense` should show "Projects have moved"), `/DAP/newsletter`,
-   `/DAP/projects`, the old links `/Projects?badge=DAP` and `/Projects?badge=AI%20Lodge`, and `/admin` sign-in.
+3. Check: `/projects`, `/projects/ailodge`, a project page (e.g. `/projects/ailodge/ay2627-s1/scamsense`),
+   `/dap/newsletter`, `/dap/projects`, `/work-with-us`, and `/admin` sign-in. Then the old links, which
+   should all redirect: `/Projects`, `/DAP`, `/WorkWithUs`, `/ContactUs`, `/Projects?badge=DAP`,
+   `/Projects?badge=AI%20Lodge`. An old project link (`/Projects/scamsense`) should show "Projects have moved".
 4. Edits made on the preview stay on its database branch and never reach production.
 
 ## 7. Merge
@@ -117,7 +118,8 @@ Keep `ADMIN_PASSWORD` and `UPSTASH_REDIS_REST_*` until step 9.
      winner per track.
    - **Projects**: fill in the Made for / Built with facets.
    - **DAP › Cohorts**: check the AY26/27 cohort is current. Fill in **Co-learning sessions**.
-   - **Settings › Site links**: check the Join DAP and Join AI Lodge links. Every join button uses these.
+   - **Settings › Site links**: check the application forms, the "applications open" switches, the
+     emails, and add the prospectus PDF link if you have one. Every join button uses these.
    - **People and roles**: add exco, lodge heads (with their track) and DAP editors.
      After that you can clear `CMS_BOOTSTRAP_ADMINS`.
 

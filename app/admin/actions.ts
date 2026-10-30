@@ -8,7 +8,7 @@ import * as projects from "@/app/lib/cms/projects";
 import * as cohorts from "@/app/lib/cms/cohorts";
 import * as newsletter from "@/app/lib/cms/newsletter";
 import * as people from "@/app/lib/cms/people";
-import { saveSiteLinks } from "@/app/lib/cms/links";
+import { saveSiteLinks, type SiteLinksInput } from "@/app/lib/cms/links";
 import { uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
 import type { CohortVisibility, Programme, ProjectStatus, Role } from "@/app/lib/cms/taxonomy";
 
@@ -134,6 +134,14 @@ export async function placeProjectAction(slug: string, cohortId: string | null, 
   });
 }
 
+export async function moveTrackAction(id: number, direction: "up" | "down") {
+  return run(async (actor) => {
+    await cohorts.moveTrack(actor, id, direction);
+    refreshAdmin();
+    return null;
+  });
+}
+
 export async function deleteTrackAction(id: number) {
   return run(async (actor) => {
     await cohorts.deleteTrack(actor, id);
@@ -144,12 +152,12 @@ export async function deleteTrackAction(id: number) {
 
 // ── Site links ───────────────────────────────────────────────────────────
 
-export async function saveSiteLinksAction(input: Record<string, string>) {
+export async function saveSiteLinksAction(input: SiteLinksInput) {
   return run(async (actor) => {
     await saveSiteLinks(actor, input);
     refreshAdmin();
     return null;
-  }, "Links saved");
+  }, "Saved");
 }
 
 // ── Newsletter ───────────────────────────────────────────────────────────

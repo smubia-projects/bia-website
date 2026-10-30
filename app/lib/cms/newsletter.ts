@@ -15,7 +15,7 @@ export type Issue = IssueRow & { slug: string; cohortSlug: string };
 export const PUBLISH_HOUR_UTC = 1;
 
 export const issueSlug = (cohortSlug: string, week: number) => `${cohortSlug}-week-${week}`;
-export const issuePath = (cohortSlug: string, week: number) => `/DAP/newsletter/${issueSlug(cohortSlug, week)}`;
+export const issuePath = (cohortSlug: string, week: number) => `/dap/newsletter/${issueSlug(cohortSlug, week)}`;
 
 export function parseIssueSlug(slug: string) {
   const m = slug.match(/^([a-z0-9-]+)-week-(\d+)$/);

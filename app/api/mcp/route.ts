@@ -161,7 +161,7 @@ const handler = createMcpHandler(
       {
         title: "Set project status",
         description:
-          "draft, in_review or published. Published projects appear on smubia.com immediately, at /Projects/ai-lodge/<semester>/<slug> or /DAP/projects/<cohort>/<slug>, so a project needs a cohortId before it can be published.",
+          "draft, in_review or published. Published projects appear on smubia.com immediately, at /projects/ailodge/<semester>/<slug> or /dap/projects/<cohort>/<slug>, so a project needs a cohortId before it can be published.",
         inputSchema: z.object({ slug: z.string(), status: z.enum(PROJECT_STATUSES) }),
       },
       ({ slug, status }) => tool(async () => (await projects.setProjectStatus(AGENT_ACTOR, slug, status), { slug, status }))
@@ -202,13 +202,16 @@ const handler = createMcpHandler(
       "list_site_links",
       {
         title: "List site links",
-        description: "The club links every page uses (Join DAP, Join AI Lodge, Telegram, socials), with what each one is for.",
+        description: "The club links every page uses (application forms, Telegram, emails, prospectus, socials) and whether DAP / AI Lodge applications are open.",
         inputSchema: z.object({}),
       },
       () =>
         tool(async () => {
           const links = await listSiteLinks();
-          return EDITABLE_LINKS.map((l) => ({ key: l.key, label: l.label, usedFor: l.hint, url: links[l.key] }));
+          return {
+            links: EDITABLE_LINKS.map((l) => ({ key: l.key, label: l.label, group: l.group, usedFor: l.hint, value: links[l.key] })),
+            applicationsOpen: links.applications,
+          };
         })
     );
 
@@ -216,10 +219,14 @@ const handler = createMcpHandler(
       "update_site_links",
       {
         title: "Update site links",
-        description: "Changes one or more club links site-wide, keyed as in list_site_links. An empty string restores the default.",
-        inputSchema: z.object({ links: z.record(z.string(), z.string()) }),
+        description:
+          "Changes club links site-wide, keyed as in list_site_links (an empty string restores the default, or hides an optional button). applicationsOpen switches each programme's join buttons between its application form (open) and its Telegram (closed).",
+        inputSchema: z.object({
+          links: z.record(z.string(), z.string()).optional(),
+          applicationsOpen: z.object({ dap: z.boolean().optional(), aiLodge: z.boolean().optional() }).optional(),
+        }),
       },
-      ({ links }) => tool(() => saveSiteLinks(AGENT_ACTOR, links))
+      ({ links, applicationsOpen }) => tool(() => saveSiteLinks(AGENT_ACTOR, { links, applications: applicationsOpen }))
     );
 
     // ── Cohorts ──

@@ -1,6 +1,7 @@
 import { MotionNextLink } from "@/app/components/ui/MotionElements";
 import { getSiteLinks } from "@/app/lib/cms/links";
 import type { Programme } from "@/app/lib/cms/taxonomy";
+import { joinLink } from "@/app/lib/links";
 import styles from "./JoinCta.module.css";
 
 const GLOW = {
@@ -10,7 +11,8 @@ const GLOW = {
 
 /**
  * "Want your project showcased?" band. The join buttons always use the links set
- * in the CMS (Settings › Site links), so every page points at the same form.
+ * in the CMS (Settings › Site links), so every page points at the same form; when a
+ * programme's applications are closed they point at its Telegram instead.
  */
 export default async function JoinCta({
   programmes,
@@ -22,11 +24,16 @@ export default async function JoinCta({
   text: string;
 }) {
   const links = await getSiteLinks();
-  const buttons = programmes.map((p) =>
-    p === "DAP"
-      ? { key: p, href: links.dapTelegram, label: "Join DAP", className: styles.ctaBtnDap }
-      : { key: p, href: links.aiLodgeSignup, label: "Join AI Lodge", className: styles.ctaBtnLodge }
-  );
+  const buttons = programmes.map((p) => {
+    const { href, open } = joinLink(links, p);
+    const name = p === "DAP" ? "DAP" : "AI Lodge";
+    return {
+      key: p,
+      href,
+      label: open ? `Join ${name}` : `Get ${name} updates`,
+      className: p === "DAP" ? styles.ctaBtnDap : styles.ctaBtnLodge,
+    };
+  });
 
   return (
     <section className={styles.ctaBand}>

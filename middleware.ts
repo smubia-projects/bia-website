@@ -1,70 +1,48 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { canonicalPath } from "@/app/lib/canonical-path";
 
 /**
- * URL canonicalisation and legacy redirects. Old paths are never removed,
+ * Canonical URLs are lower-case and kebab-case (/projects, /dap, /work-with-us).
+ * Every older form redirects here in one 308 hop. Old paths are never removed,
  * only redirected (see CLAUDE.md → URL Paths).
  *
  * These live here rather than in `next.config.mjs` because redirect `source`
- * matching there is case-INsensitive: a "/dap" -> "/DAP" rule also matches
- * "/DAP" itself and 308-redirects it back to "/DAP" forever. Comparisons here
- * are exact and case-sensitive, so canonical URLs pass straight through.
+ * matching there is case-INsensitive: a "/DAP" -> "/dap" rule also matches
+ * "/dap" itself and redirects it to itself forever. Matching here is exact.
  *
- * - /dap, /Dap/...           -> /DAP/...        (top segment upper-cased, rest lower-case)
- * - /projects, /PROJECTS/... -> /Projects/...
- * - /Projects?badge=AI Lodge -> /Projects/ai-lodge   (old programme filter links)
- * - /Projects?badge=DAP      -> /DAP/projects
- * - /Projects/dap, /DAP      -> /DAP/projects
- * - /Projects/ailodge/...    -> /Projects/ai-lodge/...
+ * - Any path with capitals    -> lower-cased      (/DAP/newsletter, /Projects/ScamSense)
+ * - /workwithus, /contactus   -> /work-with-us, /contact-us
+ * - /projects/ai-lodge/...    -> /projects/ailodge/...
+ * - /projects/dap             -> /dap/projects
+ * - /projects?badge=AI Lodge  -> /projects/ailodge   (old programme filter links)
+ * - /projects?badge=DAP       -> /dap/projects
  *
- * Old project pages (/Projects/<slug>) are not redirected: app/Projects/[slug]
+ * Old project pages (/projects/<slug>) are not redirected: app/projects/[slug]
  * shows a "projects have moved" page that links to the new address.
  */
-const CANONICAL_TOP: Record<string, string> = { dap: "DAP", projects: "Projects" };
-
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
-  const [, top = "", ...rest] = pathname.split("/");
-  const canonicalTop = CANONICAL_TOP[top.toLowerCase()];
-  if (!canonicalTop) return NextResponse.next();
-
-  const restPath = rest.map((s) => s.toLowerCase()).join("/");
-  let target = `/${canonicalTop}${restPath ? `/${restPath}` : ""}`.replace(/\/+$/, "");
-
-  if (target === "/Projects/dap") target = "/DAP/projects";
-  target = target.replace(/^\/Projects\/ailodge(?=\/|$)/, "/Projects/ai-lodge");
-
+  const target = canonicalPath(pathname, searchParams.get("badge"));
   const url = request.nextUrl.clone();
-  if (target === "/Projects" && searchParams.has("badge")) {
-    const badge = (searchParams.get("badge") ?? "").toLowerCase();
-    url.searchParams.delete("badge");
-    if (badge === "ai lodge" || badge === "ai-lodge") target = "/Projects/ai-lodge";
-    else if (badge === "dap") target = "/DAP/projects";
-  }
-
-  if (target === pathname && url.search === request.nextUrl.search) {
-    return NextResponse.next();
-  }
+  url.searchParams.delete("badge");
+  if (target === pathname && url.search === request.nextUrl.search) return NextResponse.next();
   url.pathname = target;
   return NextResponse.redirect(url, 308);
 }
 
 export const config = {
   // Matchers are case-sensitive and every match costs a middleware run, so
-  // canonical pages (/DAP, /Projects/...) are only matched where a redirect
-  // can apply: lower/title-case variants, the old ?badge= links and /Projects/dap.
+  // canonical lower-case pages never match. The first entry catches any page
+  // path containing a capital letter (not _next, api or files with a dot).
   matcher: [
-    "/dap",
-    "/dap/:path*",
-    "/Dap",
-    "/Dap/:path*",
-    "/projects",
-    "/projects/:path*",
-    "/Projects/dap",
-    "/Projects/DAP",
-    "/Projects/Dap",
-    "/Projects/ailodge",
-    "/Projects/ailodge/:path*",
-    { source: "/Projects", has: [{ type: "query", key: "badge" }] },
+    "/((?!_next/|api/)(?!.*\\.)(?=.*[A-Z]).*)",
+    "/workwithus",
+    "/contactus",
+    "/projects/ai-lodge",
+    "/projects/ai-lodge/:path*",
+    "/projects/dap",
+    "/projects/dap/:path*",
+    { source: "/projects", has: [{ type: "query", key: "badge" }] },
   ],
 };

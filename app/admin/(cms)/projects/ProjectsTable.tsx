@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { Project } from "@/app/Projects/data/types";
+import type { Project } from "@/app/projects/data/types";
 import ProjectCover from "@/app/components/cms/ProjectCover";
 import Medal from "@/app/components/cms/Medal";
 import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/app/lib/cms/taxonomy";

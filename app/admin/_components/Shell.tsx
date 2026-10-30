@@ -27,21 +27,22 @@ const CRUMBS: [RegExp, string][] = [
   [/^\/admin\/dap-cohort/, "DAP › Cohorts"],
   [/^\/admin\/links/, "Settings › Site links"],
   [/^\/admin\/people/, "Settings › People and roles"],
+  [/^\/admin$/, "Home"],
 ];
 
 const PUBLIC_FOR: [RegExp, string][] = [
-  [/^\/admin\/projects/, "/Projects"],
-  [/^\/admin\/semester/, "/Projects/ai-lodge"],
-  [/^\/admin\/(newsletter|sessions)/, "/DAP/newsletter"],
-  [/^\/admin\/dap-cohort/, "/DAP/projects"],
+  [/^\/admin\/projects/, "/projects"],
+  [/^\/admin\/semester/, "/projects/ailodge"],
+  [/^\/admin\/(newsletter|sessions)/, "/dap/newsletter"],
+  [/^\/admin\/dap-cohort/, "/dap/projects"],
 ];
 
 export default function Shell(props: Props) {
   const pathname = usePathname() ?? "/admin";
   const crumb = CRUMBS.find(([re]) => re.test(pathname))?.[1] ?? "CMS";
-  const publicHref = PUBLIC_FOR.find(([re]) => re.test(pathname))?.[1] ?? "/Projects";
+  const publicHref = PUBLIC_FOR.find(([re]) => re.test(pathname))?.[1] ?? "/projects";
   const item = (href: string, label: string, badge?: number) => (
-    <Link href={href} className={`${styles.side} ${pathname.startsWith(href) ? styles.sideOn : ""}`}>
+    <Link href={href} className={`${styles.side} ${(href === "/admin" ? pathname === href : pathname.startsWith(href)) ? styles.sideOn : ""}`}>
       {label}
       {badge ? <span className={styles.sideBadge}>{badge} to review</span> : null}
     </Link>
@@ -58,6 +59,7 @@ export default function Shell(props: Props) {
           SMUBIA <span className={styles.brandTag}>CMS</span>
         </Link>
         <div className={styles.sideGroup}>Content</div>
+        {item("/admin", "Home")}
         {item("/admin/projects", "Projects", props.reviewCount)}
         {props.seeLodge && (
           <>

@@ -2,7 +2,7 @@ import { and, asc, eq, ne, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/app/lib/db";
 import { cohorts, projects, tracks, type ProjectRow } from "@/app/lib/db/schema";
-import type { HighlightCard, Project, TeamMember } from "@/app/Projects/data/types";
+import type { HighlightCard, Project, TeamMember } from "@/app/projects/data/types";
 import { can, CmsError, ensure, type Actor } from "./actor";
 import { revalidateCms, TAGS } from "./revalidate";
 import {
@@ -217,7 +217,7 @@ function buildValues(input: ProjectInput) {
   return v;
 }
 
-// Project pages live under their semester or cohort (/Projects/ai-lodge/<semester>/<slug>),
+// Project pages live under their semester or cohort (/projects/ailodge/<semester>/<slug>),
 // so nothing goes public without one.
 const NEEDS_COHORT = "Pick a semester (AI Lodge) or cohort (DAP) before publishing";
 

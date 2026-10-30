@@ -12,13 +12,13 @@ import { MOTION_EASE, motionTransition } from "./ui/motion";
 const MotionLink = motion.create(Link);
 
 const navLinks = (aiLodgeSite: string) => [
-  { href: "/Curriculum", label: "Curriculum" },
-  { href: "/DAP", label: "DAP" },
+  { href: "/curriculum", label: "Curriculum" },
+  { href: "/dap", label: "DAP" },
   // AI Lodge lives on its own site — the internal /AILodge page is kept but unlinked.
   { href: aiLodgeSite, label: "AI Lodge" },
-  { href: "/Projects", label: "Projects" },
-  { href: "/WorkWithUs", label: "Partners" },
-  { href: "/ContactUs", label: "Contact" },
+  { href: "/projects", label: "Projects" },
+  { href: "/work-with-us", label: "Partners" },
+  { href: "/contact-us", label: "Contact" },
 ];
 
 const Navbar = () => {

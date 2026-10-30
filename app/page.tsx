@@ -11,7 +11,7 @@ import { getPublicProjects } from "./lib/projects";
 import HomeHeroCluster from "./components/HomeHeroCluster";
 import { getSiteLinks } from "@/app/lib/cms/links";
 
-// Keep the live projects rail fresh via ISR (matches the /Projects page).
+// Keep the live projects rail fresh via ISR (matches the /projects page).
 export const revalidate = 3600;
 
 export default async function Home() {
@@ -44,7 +44,7 @@ export default async function Home() {
               <Button href={LINKS.telegram} variant="onDark" external>
                 Join us →
               </Button>
-              <Button href="/Projects" variant="outlineOnDark">
+              <Button href="/projects" variant="outlineOnDark">
                 See our projects
               </Button>
             </div>
@@ -69,7 +69,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Projects rail — the same live showcase marquee as /Projects */}
+      {/* Projects rail — the same live showcase marquee as /projects */}
       <section className={styles.section}>
         <div className={styles.sectionInner}>
           <ScrollReveal>
@@ -80,7 +80,7 @@ export default async function Home() {
                 lede="Explore what DAP and AI Lodge members have built."
               />
               <MotionNextLink
-                href="/Projects"
+                href="/projects"
                 className={styles.seeAll}
                 whileHover={{ x: 4 }}
                 whileTap={{ scale: 0.98 }}

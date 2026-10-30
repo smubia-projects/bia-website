@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { can } from "@/app/lib/cms/actor";
 import { listCohorts, pickCurrentCohort } from "@/app/lib/cms/cohorts";
-import { formatIssueDate, listIssues, listSessions } from "@/app/lib/cms/newsletter";
+import { formatIssueDate, issuePath, listIssues, listSessions } from "@/app/lib/cms/newsletter";
 import { requireActorPage } from "@/app/lib/cms/session";
 import styles from "../../cms.module.css";
 import IssueList from "./IssueList";
@@ -35,7 +35,8 @@ export default async function NewsletterAdminPage({ searchParams }: { searchPara
       week: i.week,
       title: i.title,
       status: i.status,
-      session: `Week ${i.week}${s?.group ? ` · ${s.group}` : ""}`,
+      session: s?.topic ? `${s.topic}${s.group ? ` · ${s.group}` : ""}` : "No session set",
+      path: i.status === "published" ? issuePath(cohort.slug, i.week) : null,
       goesOut:
         i.status === "published"
           ? formatIssueDate(i.publishedAt)

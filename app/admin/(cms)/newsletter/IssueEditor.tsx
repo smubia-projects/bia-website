@@ -23,7 +23,7 @@ import {
   sendIssueTestAction,
   type ActionResult,
 } from "../../actions";
-import { StatusChip, useActionToast, useImageUpload } from "../../_components/ui";
+import { StatusChip, useActionToast, useImageUpload, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
 
 export interface IssueEditorProps {
@@ -57,13 +57,23 @@ export default function IssueEditor({ issue, sessions, takenWeeks, botUsername, 
   const { handle, node, show } = useActionToast();
   const uploader = useImageUpload("newsletter");
   const [mode, setMode] = useState<"write" | "preview">("write");
-  const [ed, setEd] = useState({
-    week: issue.week,
-    title: issue.title,
-    summary: issue.summary,
-    coverImage: issue.coverImage,
-    blocks: issue.blocks,
-    postToTelegram: issue.postToTelegram,
+  const [saved] = useState(() =>
+    JSON.stringify({
+      week: issue.week,
+      title: issue.title,
+      summary: issue.summary,
+      coverImage: issue.coverImage,
+      blocks: issue.blocks,
+      postToTelegram: issue.postToTelegram,
+    })
+  );
+  const [ed, setEd] = useState(() => JSON.parse(saved) as {
+    week: number;
+    title: string;
+    summary: string;
+    coverImage: string;
+    blocks: IssueBlock[];
+    postToTelegram: boolean;
   });
   const [when, setWhen] = useState<"now" | "sched">(issue.status === "scheduled" ? "sched" : "now");
   const [date, setDate] = useState(sgDate(issue.publishAt) || today());
@@ -82,6 +92,7 @@ export default function IssueEditor({ issue, sessions, takenWeeks, botUsername, 
   const linked = sessions.find((s) => s.week === ed.week);
   const input = { ...ed };
   const published = issue.status === "published";
+  useUnsavedChanges(!busy && JSON.stringify(ed) !== saved);
 
   const setBlocks = (blocks: IssueBlock[]) => setEd((s) => ({ ...s, blocks }));
   const patchBlock = (id: string, patch: Partial<IssueBlock>) => setBlocks(ed.blocks.map((b) => (b.id === id ? { ...b, ...patch } : b)));
@@ -110,6 +121,13 @@ export default function IssueEditor({ issue, sessions, takenWeeks, botUsername, 
     }
     if (published) {
       await act(() => saveIssueAction(issue.id, input), "Changes saved");
+      return;
+    }
+    if (
+      ed.postToTelegram &&
+      !issue.telegramPostedAt &&
+      !confirm(`Publish week ${ed.week} now and post it to the DAP Telegram channel? A Telegram post can't be taken back from here.`)
+    ) {
       return;
     }
     setBusy(true);
@@ -365,7 +383,10 @@ export default function IssueEditor({ issue, sessions, takenWeeks, botUsername, 
               {busy ? "Working…" : primaryLabel}
             </button>
             {published || issue.status === "scheduled" ? (
-              <button type="button" className={styles.pill} disabled={busy} onClick={() => act(() => revertIssueAction(issue.id), published ? "Unpublished" : "Schedule cancelled")}>
+              <button type="button" className={styles.pill} disabled={busy} onClick={() => {
+                if (published && !confirm(`Unpublish week ${issue.week}? It disappears from the newsletter page. A Telegram post stays up.`)) return;
+                act(() => revertIssueAction(issue.id), published ? "Unpublished" : "Schedule cancelled");
+              }}>
                 {published ? "Unpublish" : "Cancel schedule"}
               </button>
             ) : (

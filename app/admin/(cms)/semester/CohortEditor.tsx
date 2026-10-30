@@ -4,11 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Cohort, Track } from "@/app/lib/cms/cohorts";
-import type { Project } from "@/app/Projects/data/types";
+import type { Project } from "@/app/projects/data/types";
 import { trackAccent } from "@/app/components/cms/visuals";
 import type { CohortVisibility, Programme } from "@/app/lib/cms/taxonomy";
-import { createCohortAction, deleteTrackAction, saveCohortAction, saveTrackAction } from "../../actions";
-import { useActionToast } from "../../_components/ui";
+import { createCohortAction, deleteTrackAction, moveTrackAction, saveCohortAction, saveTrackAction } from "../../actions";
+import { useActionToast, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
 import CohortProjects from "./CohortProjects";
 
@@ -58,6 +58,11 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
   const [newTrack, setNewTrack] = useState<{ name: string; heads: string } | null>(null);
 
   const set = (k: keyof typeof form, v: string) => setForm((s) => ({ ...s, [k]: v }));
+  useUnsavedChanges(
+    !saving &&
+      Boolean(cohort) &&
+      (form.name !== cohort?.name || form.visibility !== cohort?.visibility || form.headline !== cohort?.headline || form.writeup !== cohort?.writeup || form.hackDay !== cohort?.hackDay)
+  );
 
   async function save() {
     if (!cohort) return;
@@ -90,6 +95,10 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
     }
   }
 
+  async function moveTrack(t: Track, direction: "up" | "down") {
+    if (handle(await moveTrackAction(t.id, direction)) !== undefined) router.refresh();
+  }
+
   async function removeTrack(t: Track) {
     if (!confirm(`Remove ${t.name}?`)) return;
     if (handle(await deleteTrackAction(t.id), "Track removed") !== undefined) router.refresh();
@@ -108,9 +117,10 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
         </div>
         {cohort && (
           <div className={styles.row}>
-            {cohort.visibility === "hidden" ? (
-              <span className={styles.hint}>Hidden {noun}s aren&apos;t on the site</span>
-            ) : (
+            <a className={styles.pill} href={`/admin/preview/cohort/${cohort.id}`} target="_blank" rel="noopener noreferrer">
+              Preview
+            </a>
+            {cohort.visibility !== "hidden" && (
               <a className={styles.pill} href={previewHref} target="_blank" rel="noopener noreferrer">
                 View on site
               </a>
@@ -148,7 +158,7 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
               URL name
               <input className={styles.inp} value={draft.slug} placeholder={isLodge ? "ay2627-s2" : "ay2627"} onChange={(e) => setDraft((d) => ({ ...d, slug: e.target.value.toLowerCase(), slugEdited: true }))} />
               <span className={styles.hint}>
-                Used in the address, e.g. {isLodge ? "/Projects/ai-lodge/" : "/DAP/projects/"}
+                Used in the address, e.g. {isLodge ? "/projects/ailodge/" : "/dap/projects/"}
                 {draft.slug || (isLodge ? "ay2627-s2" : "ay2627")}
               </span>
             </label>
@@ -217,9 +227,9 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
             <section className={`${styles.colSide} ${styles.panel}`} style={{ position: "static", gap: 0 }}>
               <h2 className={styles.h2}>Tracks</h2>
               <p className={styles.hint} style={{ margin: "4px 0 14px", fontSize: 13 }}>
-                Each track becomes a shelf. The public page shuffles their order.
+                Each track becomes a shelf. This order is used here and for the track colours; the public page shuffles it per visitor.
               </p>
-              {tracks.map((t) => {
+              {tracks.map((t, index) => {
                 const edit = editing[t.id];
                 return (
                   <div key={t.id} className={styles.trackRow}>
@@ -253,9 +263,19 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, proje
                       </span>
                     )}
                     {!edit && canEdit && (
-                      <button type="button" className={styles.lnk} onClick={() => setEditing((s) => ({ ...s, [t.id]: { name: t.name, heads: t.heads } }))}>
-                        Edit
-                      </button>
+                      <>
+                        <span className={styles.trackOrder}>
+                          <button type="button" className={styles.ico} aria-label={`Move ${t.name} up`} disabled={index === 0} onClick={() => moveTrack(t, "up")}>
+                            ↑
+                          </button>
+                          <button type="button" className={styles.ico} aria-label={`Move ${t.name} down`} disabled={index === tracks.length - 1} onClick={() => moveTrack(t, "down")}>
+                            ↓
+                          </button>
+                        </span>
+                        <button type="button" className={styles.lnk} onClick={() => setEditing((s) => ({ ...s, [t.id]: { name: t.name, heads: t.heads } }))}>
+                          Edit
+                        </button>
+                      </>
                     )}
                   </div>
                 );

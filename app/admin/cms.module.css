@@ -903,3 +903,39 @@ textarea.inp {
   background: #fff8e1;
   color: #7a5b00;
 }
+.trackOrder {
+  display: inline-flex;
+  gap: 2px;
+}
+.trackOrder .ico {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.trackOrder .ico:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ── Preview banner ────────────────────────────────────────────────── */
+
+.previewBar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  background: #fff3cd;
+  border-bottom: 1px solid #e9d38a;
+  color: #5c4a00;
+  font: 500 14px var(--font-inter), sans-serif;
+}
+.previewBar a {
+  color: #5c4a00;
+  font-weight: 600;
+}

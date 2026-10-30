@@ -19,17 +19,17 @@ const nextConfig = {
       },
       {
         source: "/Events",
-        destination: "/Curriculum",
+        destination: "/curriculum",
         permanent: true,
       },
       {
         source: "/WhatWeDo",
-        destination: "/Curriculum",
+        destination: "/curriculum",
         permanent: true,
       },
       {
         source: "/Datathon",
-        destination: "/Curriculum",
+        destination: "/curriculum",
         permanent: true,
       },
     ];

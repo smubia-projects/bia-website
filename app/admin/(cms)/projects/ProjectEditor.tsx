@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { HighlightCard, Project, TeamMember } from "@/app/Projects/data/types";
-import { CARD_ICONS } from "@/app/Projects/data/cardIcons";
+import type { HighlightCard, Project, TeamMember } from "@/app/projects/data/types";
+import { CARD_ICONS } from "@/app/projects/data/cardIcons";
 import ProjectCover from "@/app/components/cms/ProjectCover";
 import Medal from "@/app/components/cms/Medal";
 import {
@@ -18,7 +18,7 @@ import {
 } from "@/app/lib/cms/taxonomy";
 import { projectPath } from "@/app/lib/cms/paths";
 import { deleteProjectAction, saveProjectAction, setWinnerAction, type SaveIntent } from "../../actions";
-import { StatusChip, useActionToast, useImageUpload } from "../../_components/ui";
+import { StatusChip, useActionToast, useImageUpload, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
 
 export interface CohortOption {
@@ -80,8 +80,10 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
   const { handle, node, show } = useActionToast();
   const cover = useImageUpload("projects");
   const team = useImageUpload("team");
-  const [f, setF] = useState(() => initialForm(project, role, ownTrackId, tracks, cohorts, preset));
+  const [initial] = useState(() => initialForm(project, role, ownTrackId, tracks, cohorts, preset));
+  const [f, setF] = useState(initial);
   const [saving, setSaving] = useState(false);
+  useUnsavedChanges(!saving && JSON.stringify(f) !== JSON.stringify(initial));
   const [winner, setWinner] = useState(Boolean(project?.winner));
   const isExco = role === "exco";
   // Lodge heads' projects stay in their track; DAP editors can only pick DAP cohorts.
@@ -507,6 +509,9 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
 
           {project && (
             <div className={styles.row}>
+              <a className={styles.lnk} href={`/admin/preview/project/${project.slug}`} target="_blank" rel="noopener noreferrer">
+                Preview
+              </a>
               {project.status === "published" && (
                 <a className={styles.lnk} href={projectPath(project)} target="_blank" rel="noopener noreferrer">
                   View on site

@@ -31,7 +31,7 @@ SMUBIA (Singapore Management University Business Intelligence & Analytics Club) 
 - Dark anchor sections (home hero, DAP bands, footer): `--pine-deep #0C211C` — never pure black
 - Brand mint `--mint #7DD7C2` is used on dark backgrounds only (fails contrast on white); on light backgrounds use `--emerald #0E7C5B`
 - Shadows/radius scales are tokens (`--shadow-*`, `--radius-*`); all mapped into Tailwind via `tailwind.config.ts`
-- Club URLs (Join DAP, Join AI Lodge, Telegram, socials) are edited in the CMS under **Settings › Site links**. Read them with `getSiteLinks()` (server) or `useSiteLinks()` (client); `app/lib/links.ts` holds the defaults. Never hard-code a join link.
+- Club URLs (application forms, Telegram, emails, prospectus, socials) and the "applications open" switches are edited in the CMS under **Settings › Site links**. Join buttons use `joinLink()`. Read them with `getSiteLinks()` (server) or `useSiteLinks()` (client); `app/lib/links.ts` holds the defaults. Never hard-code a join link.
 
 ## Project Architecture
 
@@ -55,21 +55,19 @@ app/
 │   └── projects.ts     # Re-exports the public project reads from lib/cms
 ├── admin/              # CMS: (cms)/ route group behind Google sign-in, login/, actions.ts
 ├── api/                # auth (Auth.js), mcp (Claude tools), cron/publish
-├── Projects/
+├── projects/
 │   ├── data/types.ts   # Project & TeamMember interfaces
-│   ├── page.tsx        # All projects (ISR 1h) + ProjectsExplorer (search, facets, wall/cards)
-│   ├── ai-lodge/       # AI Lodge yearbook: [cohort]/ semester pages, [cohort]/[slug]/ project pages
+│   ├── page.tsx        # All projects (ISR 1h) + ProjectsExplorer (search, filter sidebar, wall/cards)
+│   ├── ailodge/        # AI Lodge yearbook: [cohort]/ semester pages, [cohort]/[slug]/ project pages
 │   ├── _detail/        # Shared project detail page (used by AI Lodge and DAP project routes)
-│   └── [slug]/         # Old /Projects/<slug> links: "projects have moved" page
-├── DAP/                # DAP recruitment page (data.ts) + newsletter/ + projects/ (yearbook, [cohort]/[slug] project pages)
-├── WorkWithUs/         # Sponsorship page (tiers/benefits/events in data.ts, from prospectus)
-├── Curriculum/         # Curriculum page — workshops roadmap (Monopoly-themed SVG board)
+│   └── [slug]/         # Old /projects/<slug> links: "projects have moved" page
+├── dap/                # DAP recruitment page (data.ts) + newsletter/ + projects/ (yearbook, [cohort]/[slug] project pages)
+├── work-with-us/       # Sponsorship page (tiers/benefits/events in data.ts, from prospectus)
+├── curriculum/         # Curriculum page — workshops roadmap (Monopoly-themed SVG board)
 │   └── datathonData.ts # Datathon stats/copy (retained, unused since Wave 3)
-├── Events/page.tsx     # Redirects to /Curriculum (route kept for old links)
-├── WhatWeDo/page.tsx   # Redirects to /Curriculum (route kept for old links)
-├── Datathon/page.tsx   # Redirects to /Curriculum (route kept for old links)
-├── ContactUs/page.tsx  # Join CTAs (#join anchor), channels, address
-├── Merchandise/page.tsx # Placeholder (not in nav)
+├── contact-us/         # Join CTAs (#join anchor), channels, address
+├── merchandise/        # Placeholder (not in nav)
+├── ailodge/            # Old internal AI Lodge page; unreachable (/ailodge redirects to the infosite)
 ├── layout.tsx          # Root layout: fonts, metadata, Navbar/Footer/LoadingScreen
 ├── page.tsx            # Home: dark hero, offerings, stats, DAP band, testimonials, join CTA
 └── globals.css         # Tailwind + design tokens (CSS variables)
@@ -143,7 +141,7 @@ The home page (`app/page.tsx`) demonstrates a custom `ScrollReveal` component us
 ### Where content lives
 - **Neon Postgres** (Drizzle ORM) holds all CMS content: `projects`, `cohorts` (AI Lodge
   semesters + DAP cohorts), `tracks`, `people` (CMS access + roles), `sessions` (DAP
-  co-learning schedule), `issues` ("This week in DAP") and `site_links` (club links). Schema: `app/lib/db/schema.ts`;
+  co-learning schedule), `issues` ("This week in DAP"), `site_links` (club links) and `site_settings` (switches such as applications open). Schema: `app/lib/db/schema.ts`;
   SQL migrations in `drizzle/` (generate with `npm run db:generate` after editing the schema).
 - **Local development needs no database account**: without `DATABASE_URL`, `app/lib/db`
   uses an embedded PGlite database in `.data/pglite`, migrated on first use. It is
@@ -179,15 +177,20 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
 - MCP: `/api/mcp` exposes the CMS as tools for Claude (bearer `CMS_MCP_TOKEN`).
 
 ### URLs
-- `/Projects` (all projects), `/Projects/ai-lodge` (current semester), `/Projects/ai-lodge/<semester>`
-- Project pages: `/Projects/ai-lodge/<semester>/<slug>` and `/DAP/projects/<cohort>/<slug>`.
+All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder names under
+`app/` match. Old forms (capitals, `/WorkWithUs`, `/workwithus`) redirect in `middleware.ts`.
+
+- `/projects` (all projects), `/projects/ailodge` (current semester), `/projects/ailodge/<semester>`
+- Project pages: `/projects/ailodge/<semester>/<slug>` and `/dap/projects/<cohort>/<slug>`.
   Build links with `projectPath()` / `cohortPath()` from `app/lib/cms/paths.ts`. A project
   moved to another semester redirects from its old address.
-- `/DAP` (recruitment page, unchanged), `/DAP/newsletter[/<cohort>-week-<n>]`,
-  `/DAP/projects[/<cohort>]`
-- Legacy `/Projects?badge=…`, `/Projects/dap`, `/Projects/ailodge` and case variants redirect
-  in `middleware.ts`. Old `/Projects/<slug>` links show a "projects have moved" page.
-- Project slugs `ai-lodge`, `dap`, `new` stay reserved.
+- `/dap` (recruitment page), `/dap/newsletter[/<cohort>-week-<n>]`, `/dap/projects[/<cohort>]`
+- `/work-with-us`, `/contact-us`, `/curriculum`
+- Legacy `/Projects?badge=…`, `/projects/dap`, `/projects/ai-lodge` and any path with capitals
+  redirect in `middleware.ts` (mapping in `app/lib/canonical-path.ts`). Old project links
+  (`/projects/<slug>`) show a "projects have moved" page.
+- Project slugs `ailodge`, `ai-lodge`, `dap`, `new` stay reserved.
+- CMS previews (any status, signed in): `/admin/preview/project/<slug>`, `/admin/preview/cohort/<id>`.
 
 ### Environment variables
 | Variable | Purpose |
@@ -226,7 +229,7 @@ Full setup and cutover checklist: [docs/cms-setup.md](docs/cms-setup.md).
 3. Import in page or other components
 
 ### Working with Forms and Modals
-- Look at `ContactUs/page.tsx` for form patterns
+- Look at `contact-us/page.tsx` for form patterns
 - Use `CustomModal.tsx` for modal content
 - Use `react-modal` library for modal structure
 
@@ -249,14 +252,17 @@ The `Timelines/` folder contains multiple timeline variants:
 
 **Never remove a public URL path. Redirect it instead.** Old links live on in Telegram posts, the
 AI Lodge infosite, Instagram and sponsor decks. This covers query deep links
-(`/Projects?badge=DAP`, `/Projects?badge=AI%20Lodge`) and case variants (`/dap`, `/ailodge`).
+(`/Projects?badge=DAP`, `/Projects?badge=AI%20Lodge`) and the pre-2026 capitalised paths
+(`/DAP`, `/Projects`, `/WorkWithUs`, `/ContactUs`, `/Curriculum`).
 When a page moves or is retired, add its redirect in the same change.
 
-One agreed exception: the pre-CMS project pages (`/Projects/<slug>`) are not redirected. They
-show a "projects have moved" page (`app/Projects/[slug]`) with links to the new locations.
+One agreed exception: the pre-CMS project pages (`/Projects/<slug>`) are not redirected to the
+project. They show a "projects have moved" page (`app/projects/[slug]`) with links to the new locations.
 
-- Case-variant redirects go in `middleware.ts`. `next.config.mjs` redirect sources match
-  case-insensitively, so a `/dap` → `/DAP` rule there loops forever.
+- Case and renamed-path redirects go in `middleware.ts` / `app/lib/canonical-path.ts`. Its
+  matcher only fires on paths with a capital letter (plus a few listed old forms), so normal
+  visits never run middleware. `next.config.mjs` redirect sources match case-insensitively, so
+  a `/DAP` → `/dap` rule there loops forever.
 - Cross-domain and other simple redirects can live in `next.config.mjs`.
 
 ## Notes for Future Development

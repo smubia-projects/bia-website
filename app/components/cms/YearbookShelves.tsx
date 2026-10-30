@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LayoutGrid, Rows3 } from "lucide-react";
-import type { Project } from "@/app/Projects/data/types";
+import type { Project } from "@/app/projects/data/types";
 import ProjectTile from "./ProjectTile";
 import ViewToggle from "./ViewToggle";
 import { shuffle, visitSeed } from "./visuals";

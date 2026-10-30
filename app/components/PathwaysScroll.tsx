@@ -26,7 +26,7 @@ const PATHWAYS = [
   {
     title: "Data Associate Programme",
     body: "An intensive cohort for students who want to build a stronger foundation in AI and machine learning through guided learning and project work.",
-    href: "/DAP",
+    href: "/dap",
     image: "/images/dap/dap-presentation-1.webp",
     alt: "A Data Associate Programme member presenting their project",
     accent: "dap",
@@ -42,7 +42,7 @@ const PATHWAYS = [
   {
     title: "Curriculum",
     body: "Explore SQL, Python, data analysis, and visualisation through our structured hands-on workshops.",
-    href: "/Curriculum",
+    href: "/curriculum",
     image: "/images/excelWorkshop.jpg",
     alt: "Members at a hands-on data workshop",
     accent: "curriculum",

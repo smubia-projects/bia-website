@@ -78,8 +78,8 @@ export const BLOCK_DEFAULT_HEADING: Record<BlockType, string> = {
 /** Number of co-learning weeks a new DAP cohort starts with. */
 export const DAP_WEEKS = 10;
 
-/** Project slugs that would shadow a static route under /Projects. */
-export const RESERVED_PROJECT_SLUGS = ["ai-lodge", "dap", "new"];
+/** Project slugs that would shadow a static route under /projects. */
+export const RESERVED_PROJECT_SLUGS = ["ailodge", "ai-lodge", "dap", "new"];
 
 /** Shelf accent per track position (from the approved yearbook design). */
 export const TRACK_ACCENTS = ["#0e7c5b", "#1e7a70", "#8a6a00", "#0b5d82", "#12352c"];

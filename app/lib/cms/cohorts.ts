@@ -176,6 +176,24 @@ export async function saveTrack(actor: Actor, input: TrackInput): Promise<TrackR
   return row;
 }
 
+/** Moves a track one place up or down; positions are renumbered 0..n-1 as it goes. */
+export async function moveTrack(actor: Actor, id: number, direction: "up" | "down") {
+  ensure(actor.role === "exco", "Only exco can reorder tracks");
+  const db = await getDb();
+  const [row] = await db.select().from(tracks).where(eq(tracks.id, id));
+  ensure(row, "Track not found");
+  const list = await listTracks(row.cohortId);
+  const from = list.findIndex((t) => t.id === id);
+  const to = direction === "up" ? from - 1 : from + 1;
+  if (to < 0 || to >= list.length) return;
+  [list[from], list[to]] = [list[to], list[from]];
+  for (let position = 0; position < list.length; position++) {
+    const t = list[position];
+    if (t.position !== position) await db.update(tracks).set({ position }).where(eq(tracks.id, t.id));
+  }
+  revalidateCms("cohorts", "projects");
+}
+
 export async function deleteTrack(actor: Actor, id: number) {
   ensure(actor.role === "exco", "Only exco can remove tracks");
   const db = await getDb();

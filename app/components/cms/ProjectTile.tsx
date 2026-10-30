@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Project } from "@/app/Projects/data/types";
+import type { Project } from "@/app/projects/data/types";
 import { projectPath } from "@/app/lib/cms/paths";
 import Medal from "./Medal";
 import ProjectCover from "./ProjectCover";

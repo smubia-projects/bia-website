@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ISSUE_STATUS_LABEL, TEACHING_GROUPS, type IssueStatus } from "@/app/lib/cms/taxonomy";
 import { saveSessionsAction } from "../../actions";
-import { StatusChip, useActionToast } from "../../_components/ui";
+import { StatusChip, useActionToast, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
 
 interface Row {
@@ -29,6 +29,7 @@ export default function SessionsEditor({
   const { handle, node } = useActionToast();
   const [rows, setRows] = useState(initial);
   const [saving, setSaving] = useState(false);
+  useUnsavedChanges(!saving && JSON.stringify(rows) !== JSON.stringify(initial));
   const patch = (week: number, p: Partial<Row>) => setRows((rs) => rs.map((r) => (r.week === week ? { ...r, ...p } : r)));
 
   async function save() {
