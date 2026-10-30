@@ -57,10 +57,8 @@ export const CURRICULUM: CurriculumTopic[] = [
 
 /* ── Cohort photo — the wide moment ─────────────────────────────────── */
 
-export const COHORT_PHOTO = {
-  src: "/images/dap/dap-cohort.webp",
-  caption: "The AY 25/26 cohort",
-};
+/** Photo slot (app/lib/photos.ts); its alt text is also the caption. */
+export const COHORT_PHOTO = "dap.cohort";
 
 /* ── Programme structure — two movements ────────────────────────────── */
 
@@ -68,7 +66,8 @@ export interface Movement {
   label: string;
   title: string;
   blurb: string;
-  photos: { src: string; alt: string }[];
+  /** Photo slots (app/lib/photos.ts) */
+  photos: string[];
 }
 
 export const STRUCTURE: Movement[] = [
@@ -77,20 +76,13 @@ export const STRUCTURE: Movement[] = [
     title: "Learn a topic by teaching it",
     blurb:
       "The surest way to learn something is to teach it. Teams of four are assigned a topic from the curriculum. Mentors then teach them the mathematics and intuition, then they teach it back to the cohort. Week by week, all associates build the machine learning core together.",
-    photos: [
-      { src: "/images/dap/dap-colearning-1.webp", alt: "Associates presenting a co-learning session" },
-      { src: "/images/dap/dap-colearning-2.webp", alt: "A co-learning team leading a topic" },
-    ],
+    photos: ["dap.colearning1", "dap.colearning2"],
   },
   {
     label: "The project",
     title: "Build something, from end to end",
     blurb:
       "Application first. Alongside the theory, every team proposes and builds a data project of their own. They will be mentored from proposal to working demo, and presented to the DAP community at the end of the semester.",
-    photos: [
-      { src: "/images/dap/dap-presentation-1.webp", alt: "A project team presenting their findings" },
-      { src: "/images/dap/dap-presentation-2.webp", alt: "Associates sharing a final project" },
-      { src: "/images/dap/dap-presentation-3.webp", alt: "A project showcase presentation" },
-    ],
+    photos: ["dap.project1", "dap.project2", "dap.project3"],
   },
 ];

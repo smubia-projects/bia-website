@@ -10,6 +10,8 @@ import MotionProvider from "./components/ui/MotionProvider";
 import SiteChrome from "./components/SiteChrome";
 import { SiteLinksProvider } from "./components/SiteLinksProvider";
 import { getSiteLinks } from "./lib/cms/links";
+import { getSitePhotos } from "./lib/cms/photos";
+import { SitePhotosProvider } from "./components/SitePhotosProvider";
 
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -40,11 +42,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const links = await getSiteLinks();
+  const [links, photos] = await Promise.all([getSiteLinks(), getSitePhotos()]);
   return (
     <html lang="en">
       <body className={`${display.variable} ${inter.variable} ${mono.variable}`}>
         <SiteLinksProvider links={links}>
+        <SitePhotosProvider photos={photos}>
         <MotionProvider>
           <a href="#main-content" className="skip-link">
             Skip to content
@@ -61,6 +64,7 @@ export default async function RootLayout({
             <FooterBar />
           </SiteChrome>
         </MotionProvider>
+        </SitePhotosProvider>
         </SiteLinksProvider>
       </body>
     </html>

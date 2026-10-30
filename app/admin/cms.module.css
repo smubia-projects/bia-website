@@ -1176,3 +1176,90 @@ textarea.inp {
   line-height: 1.45;
   color: #12352c;
 }
+
+/* ── Photos (Settings › Photos) ────────────────────────────────────── */
+
+.photoSlot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.photoSlotOn {
+  border-color: var(--emerald);
+  box-shadow: 0 0 0 3px rgba(14, 124, 91, 0.12);
+}
+.photoRow {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.photoThumb {
+  flex: 0 0 auto;
+  width: 96px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-muted, #eef4f1);
+}
+.photoThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.photoFields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.photoGallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.photoGalleryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.photoGalleryItem .photoThumb {
+  width: 100%;
+  height: 96px;
+}
+.photoPreview {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.photoPreview iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.photoPreviewStatic {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.photoPreviewStatic img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.photoPreviewStatic img:only-child {
+  grid-column: 1 / -1;
+  aspect-ratio: auto;
+}

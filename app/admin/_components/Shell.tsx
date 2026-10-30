@@ -30,6 +30,7 @@ const TOP_CRUMBS: [RegExp, string][] = [
   [/^\/admin\/projects/, "All projects"],
   [/^\/admin\/(ailodge|dap)\/new/, "New run"],
   [/^\/admin\/links/, "Settings › Site links"],
+  [/^\/admin\/photos/, "Settings › Photos"],
   [/^\/admin\/people/, "Settings › People and roles"],
   [/^\/admin$/, "Home"],
 ];
@@ -101,6 +102,7 @@ export default function Shell(props: Props) {
           <>
             <div className={styles.sideGroup}>Settings</div>
             {item("/admin/links", "Site links", pathname.startsWith("/admin/links"))}
+            {item("/admin/photos", "Photos", pathname.startsWith("/admin/photos"))}
             {item("/admin/people", "People and roles", pathname.startsWith("/admin/people"))}
           </>
         )}

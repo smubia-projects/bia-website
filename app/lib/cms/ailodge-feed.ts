@@ -3,6 +3,7 @@ import type { TimelineStep } from "@/app/lib/db/schema";
 import { joinLink } from "@/app/lib/links";
 import { listCohorts, type Cohort } from "./cohorts";
 import { getSiteLinks } from "./links";
+import { getSitePhotos } from "./photos";
 import { listLodges, lodgePaths, type Lodge } from "./lodges";
 import { cohortPath, yearbookPath } from "./paths";
 import { TAGS } from "./revalidate";
@@ -94,6 +95,16 @@ export interface AILodgeFeed {
   semester: FeedSemester | null;
   /** Past semesters, newest first, with their lodges as they ran */
   past: FeedSemester[];
+  /**
+   * Photos replaced in the CMS (Settings › Photos). null = not replaced: keep the
+   * site's own file. Images are absolute URLs.
+   */
+  photos: {
+    entry: { src: string; alt: string } | null;
+    entryPortrait: { src: string; alt: string } | null;
+    lodgeHero: { src: string; alt: string } | null;
+    moments: { src: string; alt: string }[] | null;
+  };
 }
 
 const abs = (url: string) => (!url ? null : url.startsWith("/") ? `${SITE_URL}${url}` : url);
@@ -153,7 +164,12 @@ const readFeedData = unstable_cache(
 
 /** The feed; `semesterSlug` picks which semester is returned as `semester`. */
 export async function getAILodgeFeed(semesterSlug?: string): Promise<AILodgeFeed> {
-  const [{ semesters, lodges, paths }, links] = await Promise.all([readFeedData(), getSiteLinks()]);
+  const [{ semesters, lodges, paths }, links, sitePhotos] = await Promise.all([readFeedData(), getSiteLinks(), getSitePhotos()]);
+  const replaced = (key: string) => sitePhotos.custom.includes(`ailodge.${key}`);
+  const photo = (key: string) => {
+    const p = sitePhotos.single[`ailodge.${key}`];
+    return replaced(key) && p ? { src: abs(p.src)!, alt: p.alt } : null;
+  };
   const join = joinLink(links, "AI Lodge");
   const live = semesters.find((c) => c.visibility === "live") ?? semesters[0] ?? null;
   const chosen = semesterSlug ? semesters.find((c) => c.slug === semesterSlug) ?? null : live;
@@ -185,5 +201,11 @@ export async function getAILodgeFeed(semesterSlug?: string): Promise<AILodgeFeed
     },
     semester: chosen ? toSemester(chosen) : null,
     past: semesters.filter((c) => c.id !== live?.id && c.visibility === "archived").map(toSemester),
+    photos: {
+      entry: photo("entry"),
+      entryPortrait: photo("entryPortrait"),
+      lodgeHero: photo("lodgeHero"),
+      moments: replaced("moments") ? (sitePhotos.gallery["ailodge.moments"] ?? []).map((p) => ({ src: abs(p.src)!, alt: p.alt })) : null,
+    },
   };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { usePhoto } from "./SitePhotosProvider";
 import { motion } from "framer-motion";
 import styles from "./carousel.module.css";
 import SectionHeading from "./ui/SectionHeading";
@@ -12,22 +13,22 @@ const AlumniTestimonials = () => {
       name: "Jowett",
       title: "Cloud Native Architect",
       text: "Hands-on data science experience, and a vibrant community of professionals and industry experts.",
-      imgSrc:
-        "https://ssvs8thfuktvqsqk.public.blob.vercel-storage.com/jowett-Afv3kaIlSii6rjl5hBj3u2pm5uAy09.jpg",
+      photo: usePhoto("home.alumni1"),
+      slot: "home.alumni1",
     },
     {
       name: "Gigi Teo",
       title: "ML Quant",
       text: "DAP is a wonderful chance to get your hands dirty with data and ML, guided by industry experts and seniors.",
-      imgSrc:
-        "https://ssvs8thfuktvqsqk.public.blob.vercel-storage.com/gigi3-DYIV83HGA7dhcL3KNN70Azz9stUjbA.jpg",
+      photo: usePhoto("home.alumni2"),
+      slot: "home.alumni2",
     },
     {
       name: "Aryan Khera",
       title: "Assurance Associate",
       text: "The perfect blend of theory and practice — applying data science to real-world problems.",
-      imgSrc:
-        "https://ssvs8thfuktvqsqk.public.blob.vercel-storage.com/aryan3-FmkPn0Ey0i2lt1QVPbbbW4eNFusXn5.jpg",
+      photo: usePhoto("home.alumni3"),
+      slot: "home.alumni3",
     },
   ];
 
@@ -52,8 +53,9 @@ const AlumniTestimonials = () => {
             <figcaption className={styles.person}>
               <Image
                 className={styles.avatar}
-                src={testimonial.imgSrc}
-                alt={testimonial.name}
+                src={testimonial.photo.src}
+                alt={testimonial.photo.alt || testimonial.name}
+                data-photo-slot={testimonial.slot}
                 width={96}
                 height={96}
               />

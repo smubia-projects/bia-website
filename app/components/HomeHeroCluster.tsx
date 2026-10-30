@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { usePhoto } from "./SitePhotosProvider";
 import { motion } from "framer-motion";
 import styles from "../page.module.css";
 import { MOTION_EASE } from "./ui/motion";
@@ -8,6 +9,9 @@ import { MOTION_EASE } from "./ui/motion";
 const photoTransition = { duration: 0.35, ease: MOTION_EASE } as const;
 
 export default function HomeHeroCluster() {
+  const cohort = usePhoto("home.heroCohort");
+  const demoDay = usePhoto("home.heroDemoDay");
+  const aiLodge = usePhoto("home.heroAiLodge");
   return (
     <motion.div
       className={styles.heroCluster}
@@ -24,8 +28,9 @@ export default function HomeHeroCluster() {
         transition={photoTransition}
       >
         <Image
-          src="/images/home/hero-cohort.webp"
-          alt="SMUBIA Data Associate Programme cohort"
+          src={cohort.src}
+          alt={cohort.alt}
+          data-photo-slot="home.heroCohort"
           fill
           sizes="(min-width: 1024px) 30vw, 60vw"
           className={styles.clusterImg}
@@ -41,8 +46,9 @@ export default function HomeHeroCluster() {
         transition={photoTransition}
       >
         <Image
-          src="/images/home/hero-demoday.webp"
-          alt="Members presenting at an AI Lodge demo day"
+          src={demoDay.src}
+          alt={demoDay.alt}
+          data-photo-slot="home.heroDemoDay"
           fill
           sizes="(min-width: 1024px) 22vw, 45vw"
           className={styles.clusterImg}
@@ -57,8 +63,9 @@ export default function HomeHeroCluster() {
         transition={photoTransition}
       >
         <Image
-          src="/images/home/hero-ailodge.webp"
-          alt="An AI Lodge team hanging out"
+          src={aiLodge.src}
+          alt={aiLodge.alt}
+          data-photo-slot="home.heroAiLodge"
           fill
           sizes="(min-width: 1024px) 28vw, 55vw"
           className={styles.clusterImg}

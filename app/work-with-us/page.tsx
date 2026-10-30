@@ -8,6 +8,8 @@ import CountUp from "../components/ui/CountUp";
 import { MotionImage, MotionSurface } from "../components/ui/MotionElements";
 import { partnershipMailto } from "@/app/lib/links";
 import { getSiteLinks } from "@/app/lib/cms/links";
+import { getSitePhotos } from "@/app/lib/cms/photos";
+import { pickPhoto } from "@/app/lib/photos";
 import { STAT_FOCAL, INVOLVEMENT, SHOW_PARTNERS, PARTNERS } from "./data";
 
 export const metadata = {
@@ -16,12 +18,9 @@ export const metadata = {
     "Partner with SMU's Business Intelligence & Analytics Club. Run an event or sponsor a programme challenge and reach 2,000+ analytics-minded students at SMU.",
 };
 
-// Existing site image (Vercel Blob) — reused per Wave 3 spec.
-const HERO_IMAGE =
-  "https://ssvs8thfuktvqsqk.public.blob.vercel-storage.com/biapic2-CKSujqIfzxfHoHCdrWlUtHD3XftCgu.jpg";
-
 export default async function WorkWithUsPage() {
-  const links = await getSiteLinks();
+  const [links, photos] = await Promise.all([getSiteLinks(), getSitePhotos()]);
+  const hero = pickPhoto(photos, "partners.hero");
   return (
     <main className={styles.page}>
       {/* Split hero: copy left, photo right */}
@@ -47,8 +46,9 @@ export default async function WorkWithUsPage() {
           </div>
           <div className={styles.heroImageWrap}>
             <Image
-              src={HERO_IMAGE}
-              alt="The SMUBIA community"
+              src={hero.src}
+              alt={hero.alt}
+              data-photo-slot="partners.hero"
               fill
               sizes="(min-width: 900px) 40vw, 100vw"
               className={styles.heroImage}

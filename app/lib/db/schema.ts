@@ -303,6 +303,14 @@ export const siteSettings = pgTable("site_settings", {
   updatedBy: text("updated_by").notNull().default(""),
 });
 
+/** A replaced site photo (see app/lib/photos.ts): { src, alt } for one photo, or a list for a gallery. */
+export const sitePhotos = pgTable("site_photos", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").$type<{ src: string; alt: string } | { src: string; alt: string }[]>().notNull(),
+  updatedAt: updatedAt(),
+  updatedBy: text("updated_by").notNull().default(""),
+});
+
 export type CohortRow = typeof cohorts.$inferSelect;
 export type TrackRow = typeof tracks.$inferSelect;
 export type LodgeRow = typeof lodges.$inferSelect;

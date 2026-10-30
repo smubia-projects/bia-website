@@ -31,6 +31,7 @@ SMUBIA (Singapore Management University Business Intelligence & Analytics Club) 
 - Dark anchor sections (home hero, DAP bands, footer): `--pine-deep #0C211C` — never pure black
 - Brand mint `--mint #7DD7C2` is used on dark backgrounds only (fails contrast on white); on light backgrounds use `--emerald #0E7C5B`
 - Shadows/radius scales are tokens (`--shadow-*`, `--radius-*`); all mapped into Tailwind via `tailwind.config.ts`
+- Photos are edited in the CMS under **Settings › Photos**. Every static photo is a slot in `app/lib/photos.ts` (the shipped file is the default); read it with `getSitePhotos()` + `pickPhoto()` (server) or `usePhoto()` (client) and put `data-photo-slot="<key>"` on the `<Image>` so the CMS preview can swap it. Never hard-code a new site photo: add a slot.
 - Club URLs (application forms, Telegram, emails, prospectus, socials) and the "applications open" switches are edited in the CMS under **Settings › Site links**. Join buttons use `joinLink()`. Read them with `getSiteLinks()` (server) or `useSiteLinks()` (client); `app/lib/links.ts` holds the defaults. Never hard-code a join link.
 
 ## Project Architecture
@@ -143,7 +144,7 @@ The home page (`app/page.tsx`) demonstrates a custom `ScrollReveal` component us
 - **Neon Postgres** (Drizzle ORM) holds all CMS content: `projects`, `cohorts` (AI Lodge
   semesters + DAP cohorts), `tracks` (Hack Day tracks), `lodges` (AI Lodge lodges, served to
   ailodge.smubia.com), `dap_groups` (DAP teaching groups with members and mentors), `people`
-  (CMS access + roles), `sessions` (DAP co-learning schedule, each linked to a group), `issues` ("This week in DAP"), `site_links` (club links) and `site_settings` (switches such as applications open). Schema: `app/lib/db/schema.ts`;
+  (CMS access + roles), `sessions` (DAP co-learning schedule, each linked to a group), `issues` ("This week in DAP"), `site_links` (club links), `site_settings` (switches such as applications open) and `site_photos` (replaced photos). Schema: `app/lib/db/schema.ts`;
   SQL migrations in `drizzle/` (generate with `npm run db:generate` after editing the schema).
 - **Local development needs no database account**: without `DATABASE_URL`, `app/lib/db`
   uses an embedded PGlite database in `.data/pglite`, migrated on first use. It is

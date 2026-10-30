@@ -10,6 +10,8 @@ import * as lodgesCms from "@/app/lib/cms/lodges";
 import * as newsletter from "@/app/lib/cms/newsletter";
 import * as people from "@/app/lib/cms/people";
 import { saveSiteLinks, type SiteLinksInput } from "@/app/lib/cms/links";
+import { saveSitePhoto } from "@/app/lib/cms/photos";
+import type { Photo } from "@/app/lib/photos";
 import { UPLOAD_FOLDERS, uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
 import type { Programme, ProjectStatus, Role } from "@/app/lib/cms/taxonomy";
 
@@ -89,6 +91,15 @@ export async function uploadImageAction(formData: FormData): Promise<ActionResul
     if (!(file instanceof Blob)) throw new CmsError("No image received");
     const name = (formData.get("name") as string) || (file instanceof File ? file.name : "image.jpg");
     return uploadImage(file, name, folder);
+  });
+}
+
+/** Replaces a site photo (or a gallery's list); null puts the original back. */
+export async function saveSitePhotoAction(key: string, value: Photo | Photo[] | null) {
+  return run(async (actor) => {
+    await saveSitePhoto(actor, key, value);
+    refreshAdmin();
+    return null;
   });
 }
 

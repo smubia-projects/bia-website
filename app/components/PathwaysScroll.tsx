@@ -13,6 +13,7 @@ import {
 import styles from "./PathwaysScroll.module.css";
 import { DEFAULT_LINKS } from "@/app/lib/links";
 import { useSiteLinks } from "./SiteLinksProvider";
+import { usePhoto } from "./SitePhotosProvider";
 import { MOTION_EASE, motionTransition } from "./ui/motion";
 
 const MotionLink = motion.create(Link);
@@ -27,24 +28,21 @@ const PATHWAYS = [
     title: "Data Associate Programme",
     body: "An intensive cohort for students who want to build a stronger foundation in AI and machine learning through guided learning and project work.",
     href: "/dap",
-    image: "/images/dap/dap-presentation-1.webp",
-    alt: "A Data Associate Programme member presenting their project",
+    photo: "home.pathwayDap",
     accent: "dap",
   },
   {
     title: "AI Lodge",
     body: "Explore applied AI in a small group through hands-on learning and a personal project.",
     href: DEFAULT_LINKS.aiLodgeInfosite, // replaced with the CMS link at render
-    image: "/images/ailodge/hero-1.webp",
-    alt: "AI Lodge builders working together",
+    photo: "home.pathwayAiLodge",
     accent: "lodge",
   },
   {
     title: "Curriculum",
     body: "Explore SQL, Python, data analysis, and visualisation through our structured hands-on workshops.",
     href: "/curriculum",
-    image: "/images/excelWorkshop.jpg",
-    alt: "Members at a hands-on data workshop",
+    photo: "home.pathwayWorkshops",
     accent: "curriculum",
   },
 ] as const;
@@ -63,6 +61,7 @@ function PathwayPanel({
   onActive: (index: number) => void;
 }) {
   const ref = useRef<HTMLElement | null>(null);
+  const photo = usePhoto(pathway.photo);
   const inView = useInView(ref, { margin: "-45% 0px -45% 0px" });
 
   useEffect(() => {
@@ -93,8 +92,9 @@ function PathwayPanel({
         transition={motionTransition.standard}
       >
         <Image
-          src={pathway.image}
-          alt={pathway.alt}
+          src={photo.src}
+          alt={photo.alt}
+          data-photo-slot={pathway.photo}
           fill
           sizes="(min-width: 900px) 46vw, 100vw"
           className={styles.panelImg}

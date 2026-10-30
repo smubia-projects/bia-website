@@ -36,6 +36,7 @@ export const can = {
   deleteProject: (a: Actor) => a.role === "exco",
   managePeople: (a: Actor) => a.role === "exco",
   editLinks: (a: Actor) => a.role === "exco",
+  editPhotos: (a: Actor) => a.role === "exco",
   editNewsletter: (a: Actor) => onProgramme(a, "DAP"),
   editCohort: (a: Actor, programme: Programme) => onProgramme(a, programme),
   editProject: (a: Actor, p: { programme: Programme }) => onProgramme(a, p.programme),

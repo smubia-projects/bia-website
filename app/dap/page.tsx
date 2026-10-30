@@ -4,6 +4,8 @@ import styles from "./DAP.module.css";
 import ScrollReveal from "../components/ui/ScrollReveal";
 import Button from "../components/ui/Button";
 import { getSiteLinks } from "@/app/lib/cms/links";
+import { getSitePhotos } from "@/app/lib/cms/photos";
+import { pickPhoto } from "@/app/lib/photos";
 import { getPublicCohorts, pickCurrentCohort } from "@/app/lib/cms/cohorts";
 import PeopleList from "@/app/components/cms/PeopleList";
 import { joinLink } from "@/app/lib/links";
@@ -23,7 +25,9 @@ export const metadata = {
 };
 
 export default async function DAPPage() {
-  const [links, cohorts] = await Promise.all([getSiteLinks(), getPublicCohorts("DAP")]);
+  const [links, cohorts, photos] = await Promise.all([getSiteLinks(), getPublicCohorts("DAP"), getSitePhotos()]);
+  const photoOf = (slot: string) => ({ slot, ...pickPhoto(photos, slot) });
+  const cohortPhoto = photoOf(COHORT_PHOTO);
   const join = joinLink(links, "DAP");
   const cohort = pickCurrentCohort(cohorts);
   const groups = (cohort?.groups ?? []).filter((g) => g.members.length + g.mentors.length > 0);
@@ -125,15 +129,16 @@ export default async function DAPPage() {
             <figure className={styles.cohortFigure}>
               <div className={styles.cohortFrame}>
                 <Image
-                  src={COHORT_PHOTO.src}
-                  alt={COHORT_PHOTO.caption}
+                  src={cohortPhoto.src}
+                  alt={cohortPhoto.alt}
+                  data-photo-slot={COHORT_PHOTO}
                   fill
                   sizes="(min-width: 1024px) 72rem, 100vw"
                   className={styles.cohortImage}
                 />
               </div>
               <figcaption className={styles.cohortCaption}>
-                {COHORT_PHOTO.caption}
+                {cohortPhoto.alt}
               </figcaption>
             </figure>
           </ScrollReveal>
@@ -162,11 +167,12 @@ export default async function DAPPage() {
                     <p className={styles.movementBlurb}>{movement.blurb}</p>
                   </div>
                   <div className={styles.movementPhotos}>
-                    {movement.photos.map((photo) => (
-                      <div key={photo.src} className={styles.exhibit}>
+                    {movement.photos.map((slot) => photoOf(slot)).map((photo) => (
+                      <div key={photo.slot} className={styles.exhibit}>
                         <Image
                           src={photo.src}
                           alt={photo.alt}
+                          data-photo-slot={photo.slot}
                           fill
                           sizes="(min-width: 1024px) 24rem, 45vw"
                           className={styles.exhibitImage}

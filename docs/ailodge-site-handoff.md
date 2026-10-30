@@ -51,6 +51,14 @@ type AILodgeFeed = {
 
   semester: Semester | null; // the current semester, or ?semester=
   past: Semester[];          // past semesters, newest first, lodges as they ran
+
+  // Photos replaced in the CMS (Settings › Photos). null = not replaced: keep your own file.
+  photos: {
+    entry: { src: string; alt: string } | null;         // entry scene, desktop (entry-hd.jpg)
+    entryPortrait: { src: string; alt: string } | null; // entry scene, phone (entry-hd-portrait.jpg)
+    lodgeHero: { src: string; alt: string } | null;     // lodge page backdrop (close-desktop.jpg)
+    moments: { src: string; alt: string }[] | null;     // the "Past moments" belt, in order
+  };
 };
 
 type Semester = {
@@ -125,10 +133,13 @@ idea to whatever the current files are.
 | `lodge.level` union + `LEVEL_STYLES[lodge.level]` | `level` is free text now ("Open to all" is common). Style known values, and give unknown ones a default style; or tint with `art.accent` |
 | `forWhoCard ?? forWho`, `cardTags ?? topics.slice(0, 3)` | use the fields directly (already resolved) |
 | Session time on cards / lodge hero ("Tue · 7–10pm", "Tentative") | `schedule.short` (card), `schedule.text` (hero and trail), `schedule.tentative` |
+| `MOMENTS` in `MomentsBelt.tsx` | `feed.photos.moments ?? MOMENTS` (the CMS gives no width/height: size the belt items by CSS, e.g. a fixed height with `width: auto`) |
+| `/entry/entry-hd.jpg`, `/entry/entry-hd-portrait.jpg` (entry scene, layout preload) | `feed.photos.entry?.src` / `feed.photos.entryPortrait?.src`, else the files. One image replaces both the `-web` and `-hd` variants |
+| `/entry/close-desktop.jpg` in `LodgeHero.tsx` | `feed.photos.lodgeHero?.src`, else the file |
 
 Programme-wide copy stays in the site for now: hero stats, Why join, How a lodge works,
-the programme trail (weeks 1–7, industry workshops, recess hack day, finals), the
-three-stage application process and the "Past moments" photos.
+the programme trail (weeks 1–7, industry workshops, recess hack day, finals) and the
+three-stage application process.
 
 ## 3. Suggested implementation
 
@@ -175,6 +186,6 @@ three-stage application process and the "Past moments" photos.
 
 ## 5. Asking for changes
 
-Need a field that isn't there (e.g. programme copy or the moments photos)? Ask on the
+Need a field that isn't there (e.g. programme copy)? Ask on the
 smubia.com side: new fields are added to `app/lib/cms/ailodge-feed.ts` without breaking
 this version.

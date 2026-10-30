@@ -3,7 +3,7 @@ import path from "path";
 import { put } from "@vercel/blob";
 import { CmsError } from "./actor";
 
-export const UPLOAD_FOLDERS = ["projects", "newsletter", "team", "lodges"] as const;
+export const UPLOAD_FOLDERS = ["projects", "newsletter", "team", "lodges", "site"] as const;
 export type UploadFolder = (typeof UPLOAD_FOLDERS)[number];
 
 const MAX_BYTES = 8 * 1024 * 1024;

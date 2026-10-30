@@ -83,7 +83,7 @@ type CropJob = { src: string; name: string; resolve: (blob: Blob | null) => void
  * Pick → crop → upload. Returns the hosted URL (Vercel Blob, or /uploads on
  * localhost). `aspect` null skips cropping (e.g. newsletter images).
  */
-export function useImageUpload(folder: "projects" | "newsletter" | "team" | "lodges" = "projects") {
+export function useImageUpload(folder: "projects" | "newsletter" | "team" | "lodges" | "site" = "projects") {
   const [job, setJob] = useState<CropJob | null>(null);
   const [busy, setBusy] = useState(false);
   const [aspect, setAspect] = useState<{ ratio: number; label: string } | null>(null);
