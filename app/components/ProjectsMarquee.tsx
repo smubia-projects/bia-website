@@ -7,6 +7,7 @@ import { useReducedMotion } from "framer-motion";
 import { Pause, Play } from "lucide-react";
 import styles from "./ProjectsMarquee.module.css";
 import { Project } from "@/app/Projects/data/types";
+import { projectPath } from "@/app/lib/cms/paths";
 
 interface Props {
   projects: Project[];
@@ -35,7 +36,7 @@ function MarqueeSlide({
 
   return (
     <Link
-      href={`/Projects/${project.slug}`}
+      href={projectPath(project)}
       className={styles.slide}
       aria-label={`${project.title} — ${project.badge}`}
       aria-hidden={duplicate || undefined}

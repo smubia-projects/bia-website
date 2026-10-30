@@ -6,16 +6,16 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { LINKS } from "@/app/lib/links";
+import { useSiteLinks } from "./SiteLinksProvider";
 import { MOTION_EASE, motionTransition } from "./ui/motion";
 
 const MotionLink = motion.create(Link);
 
-const NAV_LINKS = [
+const navLinks = (aiLodgeSite: string) => [
   { href: "/Curriculum", label: "Curriculum" },
   { href: "/DAP", label: "DAP" },
   // AI Lodge lives on its own site — the internal /AILodge page is kept but unlinked.
-  { href: LINKS.aiLodgeInfosite, label: "AI Lodge" },
+  { href: aiLodgeSite, label: "AI Lodge" },
   { href: "/Projects", label: "Projects" },
   { href: "/WorkWithUs", label: "Partners" },
   { href: "/ContactUs", label: "Contact" },
@@ -23,6 +23,8 @@ const NAV_LINKS = [
 
 const Navbar = () => {
   const pathname = usePathname();
+  const LINKS = useSiteLinks();
+  const NAV_LINKS = navLinks(LINKS.aiLodgeInfosite);
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Close the mobile panel whenever the route changes

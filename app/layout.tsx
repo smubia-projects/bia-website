@@ -8,6 +8,8 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import MotionProvider from "./components/ui/MotionProvider";
 import SiteChrome from "./components/SiteChrome";
+import { SiteLinksProvider } from "./components/SiteLinksProvider";
+import { getSiteLinks } from "./lib/cms/links";
 
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -33,14 +35,16 @@ export const metadata: Metadata = {
     "SMU's home for data analytics, AI and machine learning. Workshops, the Data Associate Programme, and the annual BIA Datathon — open to all backgrounds since 2015.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const links = await getSiteLinks();
   return (
     <html lang="en">
       <body className={`${display.variable} ${inter.variable} ${mono.variable}`}>
+        <SiteLinksProvider links={links}>
         <MotionProvider>
           <a href="#main-content" className="skip-link">
             Skip to content
@@ -57,6 +61,7 @@ export default function RootLayout({
             <FooterBar />
           </SiteChrome>
         </MotionProvider>
+        </SiteLinksProvider>
       </body>
     </html>
   );

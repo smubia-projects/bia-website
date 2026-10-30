@@ -1,13 +1,16 @@
 import { notFound } from "next/navigation";
 import { can } from "@/app/lib/cms/actor";
 import { listCohorts, listTracks, pickCurrentCohort } from "@/app/lib/cms/cohorts";
+import { listProjects } from "@/app/lib/cms/projects";
+import { cohortPath, yearbookPath } from "@/app/lib/cms/paths";
 import { requireActorPage } from "@/app/lib/cms/session";
 import CohortEditor from "./CohortEditor";
 
 export default async function SemesterPage({ searchParams }: { searchParams: { cohort?: string } }) {
   const actor = await requireActorPage();
   if (!can.seeLodge(actor)) notFound();
-  const cohorts = await listCohorts("AI Lodge");
+  const [cohorts, all] = await Promise.all([listCohorts("AI Lodge"), listProjects()]);
+  const projects = all.filter((p) => p.badge === "AI Lodge");
   const cohort = cohorts.find((c) => c.id === searchParams.cohort) ?? pickCurrentCohort(cohorts);
   const tracks = cohort ? await listTracks(cohort.id) : [];
   return (
@@ -17,9 +20,11 @@ export default async function SemesterPage({ searchParams }: { searchParams: { c
       cohorts={cohorts}
       cohort={cohort}
       tracks={tracks}
+      projects={projects}
       canEdit={can.editCohort(actor, "AI Lodge")}
+      canSetWinner={can.setWinner(actor)}
       basePath="/admin/semester"
-      previewHref={cohort && cohort.visibility !== "live" ? `/Projects/ai-lodge/${cohort.slug}` : "/Projects/ai-lodge"}
+      previewHref={cohort ? cohortPath("AI Lodge", cohort.slug) : yearbookPath("AI Lodge")}
     />
   );
 }

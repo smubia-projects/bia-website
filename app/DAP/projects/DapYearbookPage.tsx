@@ -1,13 +1,12 @@
 import Link from "next/link";
 import Markdown from "@/app/components/ui/Markdown";
+import JoinCta from "@/app/components/cms/JoinCta";
 import ui from "@/app/components/cms/public.module.css";
 import type { PublicCohort } from "@/app/lib/cms/cohorts";
+import { cohortPath } from "@/app/lib/cms/paths";
 import { BUILT_WITH } from "@/app/lib/cms/taxonomy";
 import type { Project } from "@/app/Projects/data/types";
 import DapYearbook, { type DapShelf } from "./DapYearbook";
-
-const cohortHref = (c: PublicCohort, canonical: PublicCohort | null) =>
-  c.id === canonical?.id ? "/DAP/projects" : `/DAP/projects/${c.slug}`;
 
 /** The cohort /DAP/projects shows: the live one if it has projects, else the newest that does. */
 export function defaultDapCohort(cohorts: PublicCohort[], projects: Project[]) {
@@ -25,7 +24,6 @@ export default function DapYearbookPage({
   cohorts: PublicCohort[];
   projects: Project[];
 }) {
-  const canonical = defaultDapCohort(cohorts, projects);
   const mine = cohort ? projects.filter((p) => p.cohortId === cohort.id) : projects.filter((p) => !p.cohortId);
   const areas = [...BUILT_WITH, ""];
   const shelves: DapShelf[] = areas
@@ -49,7 +47,7 @@ export default function DapYearbookPage({
               {listed.map((c) => (
                 <Link
                   key={c.id}
-                  href={cohortHref(c, canonical)}
+                  href={cohortPath("DAP", c.slug)}
                   aria-current={c.id === cohort?.id ? "page" : undefined}
                   className={`${ui.cohortPill} ${c.id === cohort?.id ? ui.cohortPillOn : ""}`}
                 >
@@ -58,26 +56,33 @@ export default function DapYearbookPage({
               ))}
             </div>
           )}
-          <div className={ui.row} style={{ marginTop: 22 }}>
-            <Link href="/DAP/newsletter" className={`${ui.pill} ${ui.pillOnDark}`}>
-              This week in DAP
-            </Link>
-            <Link href="/Projects?programme=DAP" className={`${ui.pill} ${ui.pillOnDark}`}>
-              Search all projects
-            </Link>
-          </div>
         </div>
       </section>
 
-      <div className={ui.main} style={{ paddingTop: 8 }}>
+      <div className={ui.main} style={{ paddingTop: 8, paddingBottom: 24 }}>
         {shelves.length > 0 ? (
           <DapYearbook shelves={shelves} />
         ) : (
           <div className={ui.empty} style={{ marginTop: 48 }}>
-            Projects from this cohort will appear here after Demo Day.
+            Projects from this cohort will appear here at the end of the semester.
           </div>
         )}
+
+        <div className={ui.yearbookFoot} style={{ gap: 10, flexWrap: "wrap" }}>
+          <Link href="/Projects?programme=DAP" className={ui.pill}>
+            View all DAP projects →
+          </Link>
+          <Link href="/DAP/newsletter" className={ui.pill}>
+            This week in DAP →
+          </Link>
+        </div>
       </div>
+
+      <JoinCta
+        programmes={["DAP"]}
+        heading="Build your own ML project"
+        text="Join the Data Associate Programme to learn machine learning with a cohort, build a project as a team, and present it to the DAP community at the end of the semester."
+      />
     </main>
   );
 }

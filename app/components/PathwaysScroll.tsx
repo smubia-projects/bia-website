@@ -11,7 +11,8 @@ import {
   useReducedMotion,
 } from "framer-motion";
 import styles from "./PathwaysScroll.module.css";
-import { LINKS } from "@/app/lib/links";
+import { DEFAULT_LINKS } from "@/app/lib/links";
+import { useSiteLinks } from "./SiteLinksProvider";
 import { MOTION_EASE, motionTransition } from "./ui/motion";
 
 const MotionLink = motion.create(Link);
@@ -33,7 +34,7 @@ const PATHWAYS = [
   {
     title: "AI Lodge",
     body: "Explore applied AI in a small group through hands-on learning and a personal project.",
-    href: LINKS.aiLodgeInfosite,
+    href: DEFAULT_LINKS.aiLodgeInfosite, // replaced with the CMS link at render
     image: "/images/ailodge/hero-1.webp",
     alt: "AI Lodge builders working together",
     accent: "lodge",
@@ -48,7 +49,7 @@ const PATHWAYS = [
   },
 ] as const;
 
-type Pathway = (typeof PATHWAYS)[number];
+type Pathway = Omit<(typeof PATHWAYS)[number], "href"> & { href: string };
 
 function PathwayPanel({
   pathway,
@@ -116,6 +117,10 @@ function PathwayPanel({
 }
 
 export default function PathwaysScroll() {
+  const links = useSiteLinks();
+  const pathways: Pathway[] = PATHWAYS.map((p) =>
+    p.accent === "lodge" ? { ...p, href: links.aiLodgeInfosite } : p
+  );
   const [active, setActive] = useState(0);
   const panelRefs = useRef<(HTMLElement | null)[]>([]);
   const reduceMotion = useReducedMotion();
@@ -155,7 +160,7 @@ export default function PathwaysScroll() {
       {/* Sticky rail — accordion of the three pathways. */}
       <div className={styles.rail}>
         <ol className={styles.tabs}>
-          {PATHWAYS.map((p, i) => (
+          {pathways.map((p, i) => (
             <motion.li
               key={p.title}
               className={`${styles.tab} ${styles[p.accent]}`}
@@ -241,7 +246,7 @@ export default function PathwaysScroll() {
 
       {/* Media stack — one tall image panel per pathway */}
       <div className={styles.stack}>
-        {PATHWAYS.map((p, i) => (
+        {pathways.map((p, i) => (
           <PathwayPanel
             key={p.title}
             pathway={p}

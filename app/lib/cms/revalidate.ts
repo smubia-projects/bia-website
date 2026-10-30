@@ -5,6 +5,7 @@ export const TAGS = {
   projects: "projects",
   cohorts: "cohorts",
   newsletter: "newsletter",
+  links: "links",
 } as const;
 
 type Tag = keyof typeof TAGS;
@@ -16,7 +17,10 @@ type Tag = keyof typeof TAGS;
 export function revalidateCms(...tags: Tag[]) {
   try {
     for (const tag of tags) revalidateTag(TAGS[tag]);
-    if (tags.includes("projects")) {
+    if (tags.includes("links")) {
+      // The navbar and footer read links, so every page changes.
+      revalidatePath("/", "layout");
+    } else if (tags.includes("projects")) {
       // The home page rail reads projects too.
       revalidatePath("/");
     }

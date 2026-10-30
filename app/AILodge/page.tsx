@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import ScrollReveal from "@/app/components/ui/ScrollReveal";
 import CountUp from "@/app/components/ui/CountUp";
-import { LINKS } from "@/app/lib/links";
+import { getSiteLinks } from "@/app/lib/cms/links";
 import styles from "./page.module.css";
 import AILodgeReel from "./AILodgeReel";
 import { MotionNextLink, MotionSurface } from "@/app/components/ui/MotionElements";
@@ -80,7 +80,8 @@ const reel = [
   { src: "/images/ailodge/hero-3.webp", alt: "AWSome Lodge group photo" },
 ];
 
-export default function AILodgePage() {
+export default async function AILodgePage() {
+  const LINKS = await getSiteLinks();
   return (
     <main className={styles.page}>
       {/* 1 — HERO · deepest warm dusk, firelight glows, photo cluster */}

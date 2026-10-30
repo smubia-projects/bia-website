@@ -3,7 +3,8 @@ import styles from "./page.module.css";
 import SectionHeading from "../components/ui/SectionHeading";
 import Button from "../components/ui/Button";
 import ScrollReveal from "../components/ui/ScrollReveal";
-import { LINKS } from "../lib/links";
+import { CONTACT } from "@/app/lib/links";
+import { getSiteLinks } from "@/app/lib/cms/links";
 import { MotionAnchor, MotionSurface } from "../components/ui/MotionElements";
 
 export const metadata = {
@@ -12,7 +13,8 @@ export const metadata = {
     "Join SMU's Business Intelligence & Analytics Club, or get in touch about partnerships, workshops and the Data Associate Programme.",
 };
 
-const ContactUs = () => {
+const ContactUs = async () => {
+  const LINKS = { ...(await getSiteLinks()), ...CONTACT };
   return (
     <main className={styles.page}>
       <section className={styles.headerSection}>

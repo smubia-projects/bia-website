@@ -165,6 +165,14 @@ export const issues = pgTable(
   (t) => [uniqueIndex("issues_cohort_week").on(t.cohortId, t.week)]
 );
 
+/** Club links editable in the CMS (join forms, socials). Unset keys fall back to app/lib/links.ts. */
+export const siteLinks = pgTable("site_links", {
+  key: text("key").primaryKey(),
+  url: text("url").notNull(),
+  updatedAt: updatedAt(),
+  updatedBy: text("updated_by").notNull().default(""),
+});
+
 export type CohortRow = typeof cohorts.$inferSelect;
 export type TrackRow = typeof tracks.$inferSelect;
 export type ProjectRow = typeof projects.$inferSelect;

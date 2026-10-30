@@ -34,6 +34,7 @@ export const can = {
   setWinner: (a: Actor) => a.role === "exco",
   deleteProject: (a: Actor) => a.role === "exco",
   managePeople: (a: Actor) => a.role === "exco",
+  editLinks: (a: Actor) => a.role === "exco",
   editNewsletter: (a: Actor) => a.role === "exco" || a.role === "dap_editor",
   editCohort: (a: Actor, programme: Programme) =>
     a.role === "exco" || (a.role === "dap_editor" && programme === "DAP"),

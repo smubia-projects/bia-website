@@ -14,7 +14,11 @@ import type { NextRequest } from "next/server";
  * - /projects, /PROJECTS/... -> /Projects/...
  * - /Projects?badge=AI Lodge -> /Projects/ai-lodge   (old programme filter links)
  * - /Projects?badge=DAP      -> /DAP/projects
- * - /Projects/dap            -> /DAP/projects
+ * - /Projects/dap, /DAP      -> /DAP/projects
+ * - /Projects/ailodge/...    -> /Projects/ai-lodge/...
+ *
+ * Old project pages (/Projects/<slug>) are not redirected: app/Projects/[slug]
+ * shows a "projects have moved" page that links to the new address.
  */
 const CANONICAL_TOP: Record<string, string> = { dap: "DAP", projects: "Projects" };
 
@@ -28,6 +32,7 @@ export function middleware(request: NextRequest) {
   let target = `/${canonicalTop}${restPath ? `/${restPath}` : ""}`.replace(/\/+$/, "");
 
   if (target === "/Projects/dap") target = "/DAP/projects";
+  target = target.replace(/^\/Projects\/ailodge(?=\/|$)/, "/Projects/ai-lodge");
 
   const url = request.nextUrl.clone();
   if (target === "/Projects" && searchParams.has("badge")) {
@@ -56,6 +61,10 @@ export const config = {
     "/projects",
     "/projects/:path*",
     "/Projects/dap",
+    "/Projects/DAP",
+    "/Projects/Dap",
+    "/Projects/ailodge",
+    "/Projects/ailodge/:path*",
     { source: "/Projects", has: [{ type: "query", key: "badge" }] },
   ],
 };

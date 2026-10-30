@@ -9,12 +9,13 @@ import PathwaysScroll from "./components/PathwaysScroll";
 import ProjectsMarquee from "./components/ProjectsMarquee";
 import { getPublicProjects } from "./lib/projects";
 import HomeHeroCluster from "./components/HomeHeroCluster";
-import { LINKS } from "./lib/links";
+import { getSiteLinks } from "@/app/lib/cms/links";
 
 // Keep the live projects rail fresh via ISR (matches the /Projects page).
 export const revalidate = 3600;
 
 export default async function Home() {
+  const LINKS = await getSiteLinks();
   const projects = (await getPublicProjects()).filter((p) => !p.hidden);
 
   return (

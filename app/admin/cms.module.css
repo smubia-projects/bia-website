@@ -839,3 +839,67 @@ textarea.inp {
     padding: 22px;
   }
 }
+
+/* ── Semester / cohort projects ────────────────────────────────────── */
+
+.groupBox {
+  border-top: 1px solid var(--hair);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.groupHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.projRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 10px;
+}
+.projRow:hover {
+  background: var(--surface-muted);
+}
+.projRowTitle {
+  flex: 1 1 160px;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+.projRowTitle:hover {
+  color: var(--emerald);
+  text-decoration: underline;
+}
+.projRowMove {
+  width: auto;
+  max-width: 190px;
+}
+.winnerBtn {
+  font: 600 12.5px var(--font-inter), sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--meta);
+  cursor: pointer;
+}
+.winnerBtn:not(.winnerBtnOn) svg {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+.winnerBtnOn {
+  border-color: #e3bd52;
+  background: #fff8e1;
+  color: #7a5b00;
+}

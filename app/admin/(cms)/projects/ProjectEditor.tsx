@@ -16,6 +16,7 @@ import {
   type Programme,
   type Role,
 } from "@/app/lib/cms/taxonomy";
+import { projectPath } from "@/app/lib/cms/paths";
 import { deleteProjectAction, saveProjectAction, setWinnerAction, type SaveIntent } from "../../actions";
 import { StatusChip, useActionToast, useImageUpload } from "../../_components/ui";
 import styles from "../../cms.module.css";
@@ -37,20 +38,30 @@ interface Props {
   tracks: TrackOption[];
   role: Role;
   ownTrackId: number | null;
+  /** New projects started from the Semesters / Cohorts page */
+  preset?: { cohortId: string; trackId: number | null } | null;
 }
 
 const COVER_CROP = { ratio: 16 / 10, label: "16:10 · card cover" };
 const SHOT_CROP = { ratio: 16 / 9, label: "16:9 · screenshot" };
 const AVATAR_CROP = { ratio: 1, label: "1:1 · avatar" };
 
-function initialForm(p: Project | null, role: Role, ownTrackId: number | null, tracks: TrackOption[]) {
+function initialForm(
+  p: Project | null,
+  role: Role,
+  ownTrackId: number | null,
+  tracks: TrackOption[],
+  cohorts: CohortOption[],
+  preset: Props["preset"]
+) {
   const ownTrack = tracks.find((t) => t.id === ownTrackId);
+  const presetCohort = cohorts.find((c) => c.id === preset?.cohortId);
   return {
     title: p?.title ?? "",
     description: p?.description ?? "",
-    programme: (p?.badge ?? (role === "dap_editor" ? "DAP" : "AI Lodge")) as Programme,
-    cohortId: p?.cohortId ?? (role === "lodge_head" ? ownTrack?.cohortId ?? "" : ""),
-    trackId: p?.trackId ?? (role === "lodge_head" ? ownTrackId : null),
+    programme: (p?.badge ?? presetCohort?.programme ?? (role === "dap_editor" ? "DAP" : "AI Lodge")) as Programme,
+    cohortId: p?.cohortId ?? (role === "lodge_head" ? ownTrack?.cohortId ?? "" : presetCohort?.id ?? ""),
+    trackId: p?.trackId ?? (role === "lodge_head" ? ownTrackId : presetCohort ? preset?.trackId ?? null : null),
     madeFor: p?.madeFor ?? "",
     builtWith: p?.builtWith ?? "",
     liveUrl: p?.liveUrl || p?.demoUrl || "",
@@ -64,20 +75,27 @@ function initialForm(p: Project | null, role: Role, ownTrackId: number | null, t
   };
 }
 
-export default function ProjectEditor({ project, cohorts, tracks, role, ownTrackId }: Props) {
+export default function ProjectEditor({ project, cohorts, tracks, role, ownTrackId, preset }: Props) {
   const router = useRouter();
   const { handle, node, show } = useActionToast();
   const cover = useImageUpload("projects");
   const team = useImageUpload("team");
-  const [f, setF] = useState(() => initialForm(project, role, ownTrackId, tracks));
+  const [f, setF] = useState(() => initialForm(project, role, ownTrackId, tracks, cohorts, preset));
   const [saving, setSaving] = useState(false);
   const [winner, setWinner] = useState(Boolean(project?.winner));
   const isExco = role === "exco";
-  const locked = role !== "exco"; // programme / cohort / track are fixed for non-exco
+  // Lodge heads' projects stay in their track; DAP editors can only pick DAP cohorts.
+  const lockPlacement = role === "lodge_head";
+  const lockTrack = role !== "exco";
   const status = project?.status ?? "draft";
   const set = <K extends keyof typeof f>(key: K, value: (typeof f)[K]) => setF((s) => ({ ...s, [key]: value }));
 
-  const cohortOptions = cohorts.filter((c) => c.programme === f.programme);
+  const placementGroups = PROGRAMMES.filter((p) => role !== "dap_editor" || p === "DAP").map((p) => ({
+    programme: p,
+    label: p === "AI Lodge" ? "AI Lodge semesters" : "DAP cohorts",
+    none: p === "AI Lodge" ? "AI Lodge, no semester yet" : "DAP, no cohort yet",
+    cohorts: cohorts.filter((c) => c.programme === p),
+  }));
   const trackOptions = tracks.filter((t) => t.cohortId === f.cohortId);
   const trackName = useMemo(() => tracks.find((t) => t.id === f.trackId)?.name, [tracks, f.trackId]);
 
@@ -160,6 +178,7 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
       ? "Changes go live on Projects straight away."
       : "Publishing makes it visible on Projects straight away.";
   const cantSave = saving || !f.title.trim();
+  const needsCohort = (primary.intent === "publish" || status === "published") && !f.cohortId;
 
   return (
     <>
@@ -195,34 +214,44 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
           </label>
 
           <div className={styles.grid2} style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-            <label className={styles.fld}>
-              Programme
+            <label className={styles.fld} style={{ gridColumn: "1 / -1" }}>
+              Semester or cohort
               <select
                 className={styles.inp}
-                value={f.programme}
-                disabled={locked}
-                onChange={(e) => setF((s) => ({ ...s, programme: e.target.value as Programme, cohortId: "", trackId: null }))}
+                value={`${f.programme}|${f.cohortId}`}
+                disabled={lockPlacement}
+                onChange={(e) => {
+                  const [programme, cohortId] = e.target.value.split("|");
+                  setF((s) => ({ ...s, programme: programme as Programme, cohortId, trackId: null }));
+                }}
               >
-                {PROGRAMMES.map((p) => (
-                  <option key={p}>{p}</option>
+                {placementGroups.map((g) => (
+                  <optgroup key={g.programme} label={g.label}>
+                    {g.cohorts.map((c) => (
+                      <option key={c.id} value={`${g.programme}|${c.id}`}>
+                        {c.name}
+                      </option>
+                    ))}
+                    <option value={`${g.programme}|`}>{g.none}</option>
+                  </optgroup>
                 ))}
               </select>
-            </label>
-            <label className={styles.fld}>
-              {f.programme === "AI Lodge" ? "Semester" : "Cohort"}
-              <select
-                className={styles.inp}
-                value={f.cohortId}
-                disabled={locked}
-                onChange={(e) => setF((s) => ({ ...s, cohortId: e.target.value, trackId: null }))}
-              >
-                <option value="">Not set</option>
-                {cohortOptions.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <span className={styles.hint}>
+                {f.cohortId ? (
+                  <>
+                    The project page lives under this {f.programme === "AI Lodge" ? "semester" : "cohort"}.{" "}
+                    <Link
+                      className={styles.lnk}
+                      style={{ padding: 0, minHeight: 0, fontSize: "inherit" }}
+                      href={`${f.programme === "AI Lodge" ? "/admin/semester" : "/admin/dap-cohort"}?cohort=${f.cohortId}`}
+                    >
+                      Open its page
+                    </Link>
+                  </>
+                ) : (
+                  "Needed before the project can be published."
+                )}
+              </span>
             </label>
             {f.programme === "AI Lodge" && (
               <label className={styles.fld}>
@@ -230,7 +259,7 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
                 <select
                   className={styles.inp}
                   value={f.trackId ?? ""}
-                  disabled={locked || trackOptions.length === 0}
+                  disabled={lockTrack || trackOptions.length === 0}
                   onChange={(e) => set("trackId", e.target.value ? Number(e.target.value) : null)}
                 >
                   <option value="">{trackOptions.length ? "Not set" : "No tracks yet"}</option>
@@ -330,7 +359,7 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
           <label className={styles.fld}>
             Full write-up
             <textarea className={styles.inp} rows={8} value={f.overview} onChange={(e) => set("overview", e.target.value)} placeholder="The problem, how it was built, what the team learned" />
-            <span className={styles.hint}>Markdown supported. Shown as &ldquo;How it works&rdquo; on the project page.</span>
+            <span className={styles.hint}>Markdown supported. Shown as &ldquo;Project details&rdquo; on the project page.</span>
           </label>
 
           <div className={styles.fld}>
@@ -432,7 +461,7 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
               </span>
               <StatusChip status={status} label={PROJECT_STATUS_LABEL[status]} />
             </div>
-            <button type="button" className={styles.btn} disabled={cantSave} onClick={() => save(primary.intent)}>
+            <button type="button" className={styles.btn} disabled={cantSave || needsCohort} onClick={() => save(primary.intent)}>
               {saving ? "Saving…" : primary.label}
             </button>
             {secondary && (
@@ -440,7 +469,7 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
                 {secondary}
               </button>
             )}
-            <span className={styles.hint}>{help}</span>
+            <span className={styles.hint}>{needsCohort ? "Pick a semester or cohort first: the project page lives under it." : help}</span>
           </div>
 
           {isExco && project && f.programme === "AI Lodge" && (
@@ -479,7 +508,7 @@ export default function ProjectEditor({ project, cohorts, tracks, role, ownTrack
           {project && (
             <div className={styles.row}>
               {project.status === "published" && (
-                <a className={styles.lnk} href={`/Projects/${project.slug}`} target="_blank" rel="noopener noreferrer">
+                <a className={styles.lnk} href={projectPath(project)} target="_blank" rel="noopener noreferrer">
                   View on site
                 </a>
               )}

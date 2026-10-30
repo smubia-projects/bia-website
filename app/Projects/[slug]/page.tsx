@@ -1,53 +1,53 @@
-import { notFound } from "next/navigation";
+import Link from "next/link";
 import ui from "@/app/components/cms/public.module.css";
-import { usingLocalDb } from "@/app/lib/db";
+import { projectPath } from "@/app/lib/cms/paths";
 import { getPublicProjects } from "@/app/lib/projects";
-import ProjectDetailContent from "./ProjectDetailContent";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
 
-export async function generateStaticParams() {
-  // Next runs this in a separate worker; the local PGlite database can only be
-  // opened by one process, so local dev renders project pages on demand.
-  if (usingLocalDb()) return [];
-  const projects = await getPublicProjects();
-  return projects.map((p) => ({ slug: p.slug }));
+export function generateStaticParams() {
+  return [];
 }
 
-interface Props {
-  params: { slug: string };
-}
+export const metadata = {
+  title: "Projects have moved | SMUBIA",
+  robots: { index: false, follow: true },
+};
 
-export async function generateMetadata({ params }: Props) {
-  const project = (await getPublicProjects()).find((p) => p.slug === params.slug);
-  if (!project) return { title: "Project not found | SMUBIA" };
-  return {
-    title: `${project.title} | SMUBIA Projects`,
-    description: project.description,
-    openGraph: project.coverImage ? { images: [project.coverImage] } : undefined,
-  };
-}
-
-export default async function ProjectDetailPage({ params }: Props) {
-  const all = await getPublicProjects();
-  const project = all.find((p) => p.slug === params.slug);
-  if (!project) notFound();
-
-  // "More from": same track, else same cohort, else same programme.
-  const others = all.filter((p) => p.slug !== project.slug);
-  const pools: [Project[], string | undefined][] = [
-    [project.trackId ? others.filter((p) => p.trackId === project.trackId) : [], project.trackName],
-    [project.cohortId ? others.filter((p) => p.cohortId === project.cohortId) : [], project.cohortName && `${project.badge} ${project.cohortName}`],
-    [others.filter((p) => p.badge === project.badge), project.badge],
-  ];
-  const [related, relatedLabel] = pools.find(([list, label]) => list.length > 0 && label) ?? [[], ""];
+/**
+ * Old project addresses (/Projects/<slug>). Project pages now live under their
+ * semester or cohort, so this page points visitors to the new places instead.
+ */
+export default async function ProjectsMovedPage({ params }: { params: { slug: string } }) {
+  const project = (await getPublicProjects()).find((p) => p.slug === params.slug.toLowerCase());
 
   return (
     <main id="main-content" className={ui.page}>
-      <ProjectDetailContent project={project} related={related.slice(0, 4)} relatedLabel={relatedLabel ?? ""} />
+      <div className={ui.moved}>
+        <div className={ui.eyebrowLine}>Projects</div>
+        <h1 className={ui.h1}>Projects have moved</h1>
+        <p className={ui.lede}>
+          Project pages now live under the AI Lodge semester or DAP cohort they were built in.
+          {project ? ` You can find ${project.title} at its new address.` : " Browse them by programme below."}
+        </p>
+        <div className={ui.row} style={{ marginTop: 28, gap: 10 }}>
+          {project && (
+            <Link href={projectPath(project)} className={ui.btn}>
+              Go to {project.title}
+            </Link>
+          )}
+          <Link href="/Projects/ai-lodge" className={project ? ui.pill : ui.btn}>
+            AI Lodge projects
+          </Link>
+          <Link href="/DAP/projects" className={ui.pill}>
+            DAP projects
+          </Link>
+          <Link href="/Projects" className={ui.pill}>
+            All projects
+          </Link>
+        </div>
+      </div>
     </main>
   );
 }
-
-type Project = Awaited<ReturnType<typeof getPublicProjects>>[number];

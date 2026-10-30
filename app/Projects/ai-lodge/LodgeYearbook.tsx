@@ -1,13 +1,12 @@
 import Link from "next/link";
 import Markdown from "@/app/components/ui/Markdown";
+import JoinCta from "@/app/components/cms/JoinCta";
 import YearbookShelves, { type Shelf } from "@/app/components/cms/YearbookShelves";
 import { trackAccent } from "@/app/components/cms/visuals";
 import ui from "@/app/components/cms/public.module.css";
 import type { PublicCohort } from "@/app/lib/cms/cohorts";
+import { cohortPath } from "@/app/lib/cms/paths";
 import type { Project } from "@/app/Projects/data/types";
-
-const cohortHref = (c: PublicCohort) =>
-  c.visibility === "live" ? "/Projects/ai-lodge" : `/Projects/ai-lodge/${c.slug}`;
 
 /** AI Lodge yearbook for one semester: dark header, write-up, one shelf per track. */
 export default function LodgeYearbook({
@@ -51,7 +50,7 @@ export default function LodgeYearbook({
               {cohorts.map((c) => (
                 <Link
                   key={c.id}
-                  href={cohortHref(c)}
+                  href={cohortPath("AI Lodge", c.slug)}
                   aria-current={c.id === cohort?.id ? "page" : undefined}
                   className={`${ui.cohortPill} ${c.id === cohort?.id ? ui.cohortPillOn : ""}`}
                 >
@@ -83,7 +82,7 @@ export default function LodgeYearbook({
         </div>
       </section>
 
-      <div className={ui.main}>
+      <div className={ui.main} style={{ paddingBottom: 24 }}>
         {hasAbout && cohort && (
           <section aria-label="About this semester" className={ui.about}>
             <div className={ui.aboutMain}>
@@ -121,13 +120,25 @@ export default function LodgeYearbook({
         )}
 
         {shelves.length > 0 ? (
-          <YearbookShelves shelves={shelves} searchHref="/Projects?programme=AI%20Lodge" />
+          <YearbookShelves shelves={shelves} />
         ) : (
           <div className={ui.empty} style={{ marginTop: 48 }}>
             Projects for this semester will appear here after Hack Day.
           </div>
         )}
+
+        <div className={ui.yearbookFoot}>
+          <Link href="/Projects?programme=AI%20Lodge" className={ui.pill}>
+            View all AI Lodge projects →
+          </Link>
+        </div>
       </div>
+
+      <JoinCta
+        programmes={["AI Lodge"]}
+        heading="Build at the next Hack Day"
+        text="Join AI Lodge to learn applied AI in a small track, build your own project through the semester, and present it at Hack Day."
+      />
     </main>
   );
 }

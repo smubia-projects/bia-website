@@ -6,22 +6,25 @@ import Image from "next/image";
 import Link from "next/link";
 import { Linkedin, Instagram, Send, Mail } from "lucide-react";
 import { motion } from "framer-motion";
-import { LINKS } from "@/app/lib/links";
+import { CONTACT } from "@/app/lib/links";
+import { useSiteLinks } from "./SiteLinksProvider";
 import { motionTransition } from "./ui/motion";
 
 const MotionLink = motion.create(Link);
 
-const EXPLORE_LINKS = [
+const exploreLinks = (aiLodgeSite: string) => [
   { href: "/", label: "Home" },
   { href: "/Curriculum", label: "Curriculum" },
   { href: "/DAP", label: "Data Associate Programme" },
-  { href: LINKS.aiLodgeInfosite, label: "AI Lodge" },
+  { href: aiLodgeSite, label: "AI Lodge" },
   { href: "/Projects", label: "Projects" },
   { href: "/WorkWithUs", label: "Work With Us" },
   { href: "/ContactUs", label: "Contact" },
 ];
 
 function FooterBar() {
+  const LINKS = useSiteLinks();
+  const EXPLORE_LINKS = exploreLinks(LINKS.aiLodgeInfosite);
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
@@ -70,7 +73,7 @@ function FooterBar() {
               Singapore 178908
             </p>
             <motion.a
-              href={LINKS.email}
+              href={CONTACT.email}
               className={styles.footerLink}
               whileHover={{ color: "var(--mint)", x: 3 }}
               transition={motionTransition.quick}
@@ -131,7 +134,7 @@ function FooterBar() {
                 <Send size={18} strokeWidth={1.75} />
               </motion.a>
               <motion.a
-                href={LINKS.email}
+                href={CONTACT.email}
                 aria-label="Email"
                 className={styles.socialIcon}
                 whileHover={{

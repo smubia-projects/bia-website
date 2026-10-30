@@ -8,6 +8,7 @@ import * as projects from "@/app/lib/cms/projects";
 import * as cohorts from "@/app/lib/cms/cohorts";
 import * as newsletter from "@/app/lib/cms/newsletter";
 import * as people from "@/app/lib/cms/people";
+import { saveSiteLinks } from "@/app/lib/cms/links";
 import { uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
 import type { CohortVisibility, Programme, ProjectStatus, Role } from "@/app/lib/cms/taxonomy";
 
@@ -40,6 +41,9 @@ export async function saveProjectAction(
   return run(async (actor) => {
     const target: ProjectStatus | null =
       intent === "draft" ? "draft" : intent === "submit" ? "in_review" : intent === "publish" ? "published" : null;
+    if (target === "published" && !input.cohortId) {
+      throw new CmsError("Pick a semester (AI Lodge) or cohort (DAP) before publishing");
+    }
     let project = slug
       ? await projects.updateProject(actor, slug, input)
       : await projects.createProject(actor, { ...input, status: target ?? "draft" });
@@ -115,12 +119,37 @@ export async function saveTrackAction(input: cohorts.TrackInput) {
   });
 }
 
+/** Moves a project into a semester/cohort and track (the Semesters and Cohorts pages). */
+export async function placeProjectAction(slug: string, cohortId: string | null, trackId: number | null) {
+  return run(async (actor) => {
+    const cohort = cohortId ? await cohorts.getCohort(cohortId) : null;
+    if (cohortId && !cohort) throw new CmsError("That semester no longer exists");
+    const project = await projects.updateProject(actor, slug, {
+      ...(cohort ? { programme: cohort.programme } : {}),
+      cohortId,
+      trackId,
+    });
+    refreshAdmin();
+    return project.slug;
+  });
+}
+
 export async function deleteTrackAction(id: number) {
   return run(async (actor) => {
     await cohorts.deleteTrack(actor, id);
     refreshAdmin();
     return null;
   });
+}
+
+// ── Site links ───────────────────────────────────────────────────────────
+
+export async function saveSiteLinksAction(input: Record<string, string>) {
+  return run(async (actor) => {
+    await saveSiteLinks(actor, input);
+    refreshAdmin();
+    return null;
+  }, "Links saved");
 }
 
 // ── Newsletter ───────────────────────────────────────────────────────────

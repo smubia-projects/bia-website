@@ -3,7 +3,7 @@ import Image from "next/image";
 import styles from "./DAP.module.css";
 import ScrollReveal from "../components/ui/ScrollReveal";
 import Button from "../components/ui/Button";
-import { LINKS } from "../lib/links";
+import { getSiteLinks } from "@/app/lib/cms/links";
 import { MotionAnchor, MotionNextLink } from "../components/ui/MotionElements";
 import RotatingHeadline from "../components/ui/RotatingHeadline";
 import {
@@ -18,7 +18,8 @@ export const metadata = {
     "SMUBIA's flagship programme. A selective cohort spends a semester learning the machine learning core and shipping a real project, mentored throughout.",
 };
 
-export default function DAPPage() {
+export default async function DAPPage() {
+  const LINKS = await getSiteLinks();
   return (
     <main className={styles.page}>
       {/* ── Hero — typographic, deep pine ───────────────────────── */}

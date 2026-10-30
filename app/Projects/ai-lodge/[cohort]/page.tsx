@@ -1,4 +1,4 @@
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getPublicCohorts } from "@/app/lib/cms/cohorts";
 import { getPublicProjects } from "@/app/lib/projects";
 import LodgeYearbook from "../LodgeYearbook";
@@ -12,14 +12,13 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: { cohort: string } }) {
   const cohort = (await getPublicCohorts("AI Lodge")).find((c) => c.slug === params.cohort);
-  return { title: cohort ? `AI Lodge ${cohort.name} | SMUBIA` : "AI Lodge projects | SMUBIA" };
+  if (!cohort) return { title: "AI Lodge projects | SMUBIA" };
+  return { title: `AI Lodge ${cohort.name} | SMUBIA`, alternates: { canonical: `/Projects/ai-lodge/${cohort.slug}` } };
 }
 
 export default async function AILodgeCohortPage({ params }: { params: { cohort: string } }) {
   const [cohorts, projects] = await Promise.all([getPublicCohorts("AI Lodge"), getPublicProjects()]);
   const cohort = cohorts.find((c) => c.slug === params.cohort);
   if (!cohort) notFound();
-  // The live semester's canonical address is /Projects/ai-lodge.
-  if (cohort.visibility === "live") permanentRedirect("/Projects/ai-lodge");
   return <LodgeYearbook cohort={cohort} cohorts={cohorts} projects={projects} />;
 }

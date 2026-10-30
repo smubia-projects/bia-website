@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Project } from "@/app/Projects/data/types";
+import { projectPath } from "@/app/lib/cms/paths";
 import Medal from "./Medal";
 import ProjectCover from "./ProjectCover";
 import styles from "./public.module.css";
@@ -11,6 +12,8 @@ interface Props {
   variant?: Variant;
   /** DAP yearbook opens a dialog instead of navigating */
   onOpen?: () => void;
+  /** Hack Day winners get the gold glow and medal only in the yearbook */
+  showWinner?: boolean;
 }
 
 const COVER = {
@@ -21,9 +24,9 @@ const COVER = {
 };
 
 /** Project card used by the explorer, yearbook shelves and "More from" rows. */
-export default function ProjectTile({ project, variant = "explorer", onOpen }: Props) {
+export default function ProjectTile({ project, variant = "explorer", onOpen, showWinner = false }: Props) {
   const isDap = project.badge === "DAP";
-  const winner = Boolean(project.winner) && !isDap;
+  const winner = showWinner && Boolean(project.winner) && !isDap;
   const className = [
     styles.card,
     isDap ? styles.cardDap : styles.cardLodge,
@@ -75,7 +78,7 @@ export default function ProjectTile({ project, variant = "explorer", onOpen }: P
     );
   }
   return (
-    <Link href={`/Projects/${project.slug}`} className={className} aria-label={label}>
+    <Link href={projectPath(project)} className={className} aria-label={label}>
       {content}
     </Link>
   );

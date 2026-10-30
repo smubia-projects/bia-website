@@ -5,6 +5,9 @@ import { AGENT_ACTOR, CmsError } from "@/app/lib/cms/actor";
 import * as cohorts from "@/app/lib/cms/cohorts";
 import * as newsletter from "@/app/lib/cms/newsletter";
 import * as projects from "@/app/lib/cms/projects";
+import { listSiteLinks, saveSiteLinks } from "@/app/lib/cms/links";
+import { projectPath } from "@/app/lib/cms/paths";
+import { EDITABLE_LINKS } from "@/app/lib/links";
 import { BLOCK_TYPES, BUILT_WITH, MADE_FOR, PROGRAMMES, PROJECT_STATUSES, TEACHING_GROUPS } from "@/app/lib/cms/taxonomy";
 import { uploadImageFromBase64, uploadImageFromUrl } from "@/app/lib/cms/uploads";
 
@@ -123,7 +126,7 @@ const handler = createMcpHandler(
           return (await projects.listProjects())
             .filter((p) => (!programme || p.badge === programme) && (!cohortId || p.cohortId === cohortId) && (!status || p.status === status))
             .filter((p) => !q || `${p.title} ${p.description}`.toLowerCase().includes(q))
-            .map((p) => ({ slug: p.slug, title: p.title, programme: p.badge, cohort: p.cohortName, track: p.trackName, status: p.status, winner: p.winner, madeFor: p.madeFor, builtWith: p.builtWith }));
+            .map((p) => ({ slug: p.slug, title: p.title, programme: p.badge, cohort: p.cohortName, track: p.trackName, status: p.status, winner: p.winner, madeFor: p.madeFor, builtWith: p.builtWith, path: p.cohortSlug ? projectPath(p) : null }));
         })
     );
 
@@ -157,7 +160,8 @@ const handler = createMcpHandler(
       "set_project_status",
       {
         title: "Set project status",
-        description: "draft, in_review or published. Published projects appear on smubia.com immediately.",
+        description:
+          "draft, in_review or published. Published projects appear on smubia.com immediately, at /Projects/ai-lodge/<semester>/<slug> or /DAP/projects/<cohort>/<slug>, so a project needs a cohortId before it can be published.",
         inputSchema: z.object({ slug: z.string(), status: z.enum(PROJECT_STATUSES) }),
       },
       ({ slug, status }) => tool(async () => (await projects.setProjectStatus(AGENT_ACTOR, slug, status), { slug, status }))
@@ -191,6 +195,31 @@ const handler = createMcpHandler(
           if (base64) return { url: await uploadImageFromBase64(base64, filename, folder) };
           throw new CmsError("Pass url or base64");
         })
+    );
+
+    // ── Site links ──
+    server.registerTool(
+      "list_site_links",
+      {
+        title: "List site links",
+        description: "The club links every page uses (Join DAP, Join AI Lodge, Telegram, socials), with what each one is for.",
+        inputSchema: z.object({}),
+      },
+      () =>
+        tool(async () => {
+          const links = await listSiteLinks();
+          return EDITABLE_LINKS.map((l) => ({ key: l.key, label: l.label, usedFor: l.hint, url: links[l.key] }));
+        })
+    );
+
+    server.registerTool(
+      "update_site_links",
+      {
+        title: "Update site links",
+        description: "Changes one or more club links site-wide, keyed as in list_site_links. An empty string restores the default.",
+        inputSchema: z.object({ links: z.record(z.string(), z.string()) }),
+      },
+      ({ links }) => tool(() => saveSiteLinks(AGENT_ACTOR, links))
     );
 
     // ── Cohorts ──

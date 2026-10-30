@@ -10,26 +10,28 @@ interface Props {
   roleLabel: string;
   seeLodge: boolean;
   seeDap: boolean;
-  seePeople: boolean;
+  seeSettings: boolean;
   reviewCount: number;
   notice?: string;
   children: React.ReactNode;
 }
 
 const CRUMBS: [RegExp, string][] = [
-  [/^\/admin\/semester/, "AI Lodge › Semester page"],
+  [/^\/admin\/semester/, "AI Lodge › Semesters"],
   [/^\/admin\/projects\/new/, "Projects › New project"],
   [/^\/admin\/projects\/.+/, "Projects › Edit project"],
   [/^\/admin\/projects/, "Projects"],
   [/^\/admin\/newsletter\/.+/, "DAP › Newsletter › Issue"],
   [/^\/admin\/newsletter/, "DAP › Newsletter"],
   [/^\/admin\/sessions/, "DAP › Co-learning sessions"],
-  [/^\/admin\/dap-cohort/, "DAP › Cohort page"],
+  [/^\/admin\/dap-cohort/, "DAP › Cohorts"],
+  [/^\/admin\/links/, "Settings › Site links"],
   [/^\/admin\/people/, "Settings › People and roles"],
 ];
 
 const PUBLIC_FOR: [RegExp, string][] = [
-  [/^\/admin\/(semester|projects)/, "/Projects/ai-lodge"],
+  [/^\/admin\/projects/, "/Projects"],
+  [/^\/admin\/semester/, "/Projects/ai-lodge"],
   [/^\/admin\/(newsletter|sessions)/, "/DAP/newsletter"],
   [/^\/admin\/dap-cohort/, "/DAP/projects"],
 ];
@@ -55,24 +57,26 @@ export default function Shell(props: Props) {
           </svg>
           SMUBIA <span className={styles.brandTag}>CMS</span>
         </Link>
+        <div className={styles.sideGroup}>Content</div>
+        {item("/admin/projects", "Projects", props.reviewCount)}
         {props.seeLodge && (
           <>
             <div className={styles.sideGroup}>AI Lodge</div>
-            {item("/admin/semester", "Semester page")}
-            {item("/admin/projects", "Projects", props.reviewCount)}
+            {item("/admin/semester", "Semesters")}
           </>
         )}
         {props.seeDap && (
           <>
             <div className={styles.sideGroup}>DAP</div>
+            {item("/admin/dap-cohort", "Cohorts")}
             {item("/admin/newsletter", "Newsletter")}
             {item("/admin/sessions", "Co-learning sessions")}
-            {item("/admin/dap-cohort", "Cohort page")}
           </>
         )}
-        {props.seePeople && (
+        {props.seeSettings && (
           <>
             <div className={styles.sideGroup}>Settings</div>
+            {item("/admin/links", "Site links")}
             {item("/admin/people", "People and roles")}
           </>
         )}

@@ -24,22 +24,28 @@ export default function ProjectsTable({
   subtitle,
   canApprove,
   trackFilter,
+  cohorts,
+  initialCohort,
 }: {
   projects: Project[];
   subtitle: string;
   canApprove: boolean;
   trackFilter: { id: number; name: string } | null;
+  cohorts: { id: string; name: string; programme: string }[];
+  initialCohort: string;
 }) {
   const router = useRouter();
   const { handle, node } = useActionToast();
   const [tab, setTab] = useState<Tab>(canApprove && projects.some((p) => p.status === "in_review") ? "in_review" : "all");
   const [q, setQ] = useState("");
+  const [cohortId, setCohortId] = useState(initialCohort);
   const [busy, setBusy] = useState<string | null>(null);
 
   const query = q.trim().toLowerCase();
   const rows = projects.filter(
     (p) =>
       (tab === "all" || p.status === tab) &&
+      (!cohortId || (cohortId === "none" ? !p.cohortId : p.cohortId === cohortId)) &&
       (!query || `${p.title} ${p.trackName ?? ""} ${p.cohortName ?? ""}`.toLowerCase().includes(query))
   );
 
@@ -64,7 +70,7 @@ export default function ProjectsTable({
             )}
           </p>
         </div>
-        <Link href="/admin/projects/new" className={styles.btn}>
+        <Link href={cohortId && cohortId !== "none" ? `/admin/projects/new?cohort=${cohortId}` : "/admin/projects/new"} className={styles.btn}>
           New project
         </Link>
       </div>
@@ -84,6 +90,27 @@ export default function ProjectsTable({
             </button>
           );
         })}
+        <select
+          className={`${styles.inp} ${styles.inpPill}`}
+          value={cohortId}
+          onChange={(e) => setCohortId(e.target.value)}
+          aria-label="Semester or cohort"
+          style={{ marginLeft: "auto", width: "auto", maxWidth: 240 }}
+        >
+          <option value="">All semesters and cohorts</option>
+          {["AI Lodge", "DAP"].map((prog) => (
+            <optgroup key={prog} label={prog === "AI Lodge" ? "AI Lodge semesters" : "DAP cohorts"}>
+              {cohorts
+                .filter((c) => c.programme === prog)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+            </optgroup>
+          ))}
+          <option value="none">No semester or cohort yet</option>
+        </select>
         <input
           className={`${styles.inp} ${styles.inpPill}`}
           type="search"
@@ -91,7 +118,7 @@ export default function ProjectsTable({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           aria-label="Search projects"
-          style={{ marginLeft: "auto", maxWidth: 240 }}
+          style={{ maxWidth: 220 }}
         />
       </div>
 
@@ -101,7 +128,7 @@ export default function ProjectsTable({
             <tr>
               <th>Project</th>
               <th>Programme</th>
-              <th>Track</th>
+              <th>Semester / cohort</th>
               <th>Status</th>
               <th>Edited</th>
               <th style={{ textAlign: "right" }}>Actions</th>
@@ -120,7 +147,16 @@ export default function ProjectsTable({
                   </span>
                 </td>
                 <td>{p.badge}</td>
-                <td>{p.trackName ?? (p.cohortName ? <span className={styles.hint}>{p.cohortName}</span> : "—")}</td>
+                <td>
+                  {p.cohortName ? (
+                    <>
+                      {p.cohortName}
+                      {p.trackName && <span className={styles.hint}> · {p.trackName}</span>}
+                    </>
+                  ) : (
+                    <span className={styles.hint}>Not set</span>
+                  )}
+                </td>
                 <td>
                   <StatusChip status={p.status ?? "draft"} label={PROJECT_STATUS_LABEL[p.status ?? "draft"]} />
                 </td>

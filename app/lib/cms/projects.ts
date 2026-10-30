@@ -217,6 +217,10 @@ function buildValues(input: ProjectInput) {
   return v;
 }
 
+// Project pages live under their semester or cohort (/Projects/ai-lodge/<semester>/<slug>),
+// so nothing goes public without one.
+const NEEDS_COHORT = "Pick a semester (AI Lodge) or cohort (DAP) before publishing";
+
 // ── Mutations ────────────────────────────────────────────────────────────
 
 /** New projects always start as drafts (or in review, for lodge heads submitting). */
@@ -246,6 +250,7 @@ export async function createProject(
   const placement = await resolvePlacement(programme, input.cohortId, trackId);
   let status: ProjectStatus = input.status === "in_review" ? "in_review" : "draft";
   if (input.status === "published" && can.publishProject(actor)) status = "published";
+  ensure(status !== "published" || placement.cohortId, NEEDS_COHORT);
 
   const [{ max }] = await db
     .select({ max: sql<number>`coalesce(max(${projects.position}), 0)` })
@@ -278,12 +283,17 @@ export async function updateProject(actor: Actor, slug: string, input: ProjectIn
     ensure((PROGRAMMES as readonly string[]).includes(input.programme), "Unknown programme");
     programme = input.programme;
   }
-  if (actor.role !== "exco") {
-    // Programme and track are fixed for non-exco editors.
+  if (actor.role === "lodge_head") {
+    // A lodge head's projects stay in their own track.
     cohortId = row.cohortId;
     trackId = row.trackId;
   }
+  if (actor.role === "dap_editor") trackId = null; // DAP has no tracks; the cohort can change
   const placement = await resolvePlacement(programme, cohortId, trackId);
+  ensure(
+    row.status !== "published" || placement.cohortId,
+    "A published project needs a semester or cohort. Move it to draft first."
+  );
   const movedTrack = placement.trackId !== row.trackId;
 
   await db
@@ -311,6 +321,7 @@ export async function setProjectStatus(actor: Actor, slug: string, status: Proje
   if (status === "published" || row.status === "published") {
     ensure(can.publishProject(actor), "Publishing goes through an exco review");
   }
+  if (status === "published") ensure(row.cohortId, NEEDS_COHORT);
   await db
     .update(projects)
     .set({ status, updatedAt: new Date().toISOString(), updatedBy: actor.email })

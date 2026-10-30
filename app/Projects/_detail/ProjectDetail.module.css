@@ -1,0 +1,598 @@
+.page {
+  min-height: 100vh;
+  background-color: var(--bg);
+  padding-top: 8rem;
+  padding-bottom: 5rem;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Showcase header (above the carousel): title/description left, actions right */
+.showcaseHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.headerText {
+  flex: 1 1 28rem;
+  min-width: 0;
+  max-width: 44rem;
+}
+
+.showcaseEyebrow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.eyebrowDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background-color: var(--border);
+}
+
+/* Flat filled pill — solid tint, no border/gradient, monospace label */
+.badgeDAP,
+.badgeAI {
+  padding: 0.25rem 0.7rem;
+  border-radius: 9999px;
+  border: none;
+  font-family: var(--font-roboto-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.badgeDAP {
+  background-color: var(--mint-soft);
+  color: var(--emerald);
+}
+
+.badgeAI {
+  background-color: var(--amber-soft);
+  color: var(--gold-deep);
+}
+
+.category {
+  color: var(--ink-faint);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  font-family: var(--font-inter);
+}
+
+.actionBtnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--emerald);
+  border: 1px solid var(--emerald);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  font-family: var(--font-inter);
+}
+
+.teamCredit {
+  max-width: 44rem;
+  margin: 3.5rem auto 0;
+}
+
+.creditList {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 2.5rem;
+}
+
+/* Legacy header (kept for reference) */
+.header {
+  margin-bottom: 3rem;
+}
+
+.headerTop {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .headerTop {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+.headerLeft {
+  flex: 1;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--ink-faint);
+  margin-bottom: 1rem;
+  font-family: var(--font-inter);
+}
+
+.breadcrumbLink {
+  color: var(--ink-faint);
+  text-decoration: none;
+}
+
+.breadcrumbSep {
+  color: var(--border);
+}
+
+.breadcrumbCurrent {
+  color: var(--emerald);
+}
+
+.title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+  font-family: var(--font-display);
+}
+
+.description {
+  color: var(--ink-soft);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  max-width: 40rem;
+  font-family: var(--font-inter);
+}
+
+/* Action buttons */
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  margin-top: 0;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  font-family: var(--font-inter);
+}
+
+.actionIcon {
+  font-size: 1rem;
+}
+
+.githubIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Carousel */
+.carouselSection {
+  margin-bottom: 4rem;
+}
+
+.carouselWrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background-color: var(--surface-muted);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.carousel {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.carouselItem {
+  position: relative;
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  height: 100%;
+}
+
+.carouselImage {
+  object-fit: cover;
+}
+
+.carouselBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.carouselBtnLeft {
+  left: 1rem;
+}
+
+.carouselBtnRight {
+  right: 1rem;
+}
+
+/* Content Grid */
+.contentGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+}
+
+@media (min-width: 1024px) {
+  .contentGrid {
+    grid-template-columns: 2fr 1fr;
+    gap: 3rem;
+  }
+}
+
+/* Main Content */
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+
+/* Section divider */
+.sectionDivider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dividerLine {
+  height: 1px;
+  flex: 1;
+  background-color: var(--border);
+}
+
+.dividerLineShort {
+  height: 1px;
+  width: 3rem;
+  background-color: var(--border);
+}
+
+.sectionLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--emerald);
+  white-space: nowrap;
+  font-family: var(--font-roboto-mono);
+}
+
+/* Highlight cards */
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  background-color: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cardIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  color: var(--emerald);
+  background-color: var(--mint-soft);
+  border: 1px solid rgba(14, 124, 91, 0.18);
+}
+
+.cardTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  font-family: var(--font-inter);
+}
+
+/* Sidebar */
+.sidebar {
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .sidebar {
+    position: sticky;
+    top: 8rem;
+    align-self: start;
+  }
+}
+
+.sidebarCard {
+  background-color: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.sidebarLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--emerald);
+  margin-bottom: 2rem;
+  font-family: var(--font-roboto-mono);
+}
+
+/* Team */
+.teamList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.teamMember {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.memberInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.avatarWrapper {
+  position: relative;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  background-color: var(--surface-muted);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.avatar {
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--emerald);
+  background-color: var(--mint-soft);
+}
+
+.memberName {
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-family: var(--font-inter);
+}
+
+.memberRole {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  font-family: var(--font-inter);
+}
+
+.memberSocials {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.memberSocialLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  color: var(--ink-faint);
+  background-color: var(--surface-muted);
+  border: 1px solid var(--border);
+}
+
+/* Meta */
+.metaSection {
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* When there is no team above it, drop the divider so it isn't a stray line */
+.metaSection:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.metaRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  font-family: var(--font-inter);
+}
+
+.metaLabel {
+  color: var(--ink-faint);
+}
+
+.metaValue {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.sidebarTech {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.techTag {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background-color: rgba(123, 209, 250, 0.22);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-family: var(--font-inter);
+}
+
+.metaLink {
+  color: var(--emerald);
+  font-weight: 500;
+  text-align: right;
+  text-decoration: none;
+}
+
+.metaLink:hover {
+  text-decoration: underline;
+}
+
+/* "More from <programme> <semester>": the first few projects, then a link to the yearbook */
+.related {
+  --meta: #557067;
+  --hair: #edf5f1;
+  margin-top: 4rem;
+}
+
+.relatedHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.relatedTitle {
+  font-size: clamp(1.25rem, 2.2vw, 1.5rem);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.015em;
+  font-family: var(--font-display);
+}
+
+.relatedGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 560px) {
+  .relatedGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .relatedGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.viewAll {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  font-family: var(--font-inter);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.viewAll:hover {
+  border-color: var(--emerald);
+  color: var(--emerald);
+}

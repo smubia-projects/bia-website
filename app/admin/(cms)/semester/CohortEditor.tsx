@@ -4,29 +4,42 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Cohort, Track } from "@/app/lib/cms/cohorts";
+import type { Project } from "@/app/Projects/data/types";
 import { trackAccent } from "@/app/components/cms/visuals";
 import type { CohortVisibility, Programme } from "@/app/lib/cms/taxonomy";
 import { createCohortAction, deleteTrackAction, saveCohortAction, saveTrackAction } from "../../actions";
 import { useActionToast } from "../../_components/ui";
 import styles from "../../cms.module.css";
+import CohortProjects from "./CohortProjects";
 
 interface Props {
   programme: Programme;
   cohorts: Cohort[];
   cohort: Cohort | null;
   tracks: Track[];
+  /** Every project of this programme (for the projects panel) */
+  projects: Project[];
   canEdit: boolean;
+  canSetWinner: boolean;
   basePath: string;
   previewHref: string;
 }
 
 const VISIBILITY: { value: CohortVisibility; label: string }[] = [
-  { value: "live", label: "Live: shown as current" },
-  { value: "hidden", label: "Hidden" },
-  { value: "archived", label: "Archived" },
+  { value: "live", label: "Current: shown first on the site" },
+  { value: "archived", label: "Past: still public" },
+  { value: "hidden", label: "Hidden: not on the site" },
 ];
 
-export default function CohortEditor({ programme, cohorts, cohort, tracks, canEdit, basePath, previewHref }: Props) {
+/** "AY26/27 Semester 2" → "ay2627-s2", "AY26/27 cohort" → "ay2627" */
+function suggestSlug(name: string, isLodge: boolean) {
+  const ay = name.match(/AY\s*(\d{2})\s*\/?\s*(\d{2})/i);
+  const sem = name.match(/(?:semester|sem|s)\s*(\d)/i);
+  if (ay) return `ay${ay[1]}${ay[2]}${isLodge && sem ? `-s${sem[1]}` : ""}`;
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+export default function CohortEditor({ programme, cohorts, cohort, tracks, projects, canEdit, canSetWinner, basePath, previewHref }: Props) {
   const router = useRouter();
   const { handle, node } = useActionToast();
   const isLodge = programme === "AI Lodge";
@@ -40,7 +53,7 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, canEd
   });
   const [saving, setSaving] = useState(false);
   const [creating, setCreating] = useState(cohorts.length === 0);
-  const [draft, setDraft] = useState({ slug: "", name: "" });
+  const [draft, setDraft] = useState({ slug: "", name: "", slugEdited: false });
   const [editing, setEditing] = useState<Record<number, { name: string; heads: string }>>({});
   const [newTrack, setNewTrack] = useState<{ name: string; heads: string } | null>(null);
 
@@ -86,18 +99,22 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, canEd
     <>
       <div className={styles.pageHead}>
         <div>
-          <h1 className={styles.h1}>{isLodge ? "Semester page" : "Cohort page"}</h1>
+          <h1 className={styles.h1}>{isLodge ? "Semesters" : "Cohorts"}</h1>
           <p className={styles.sub}>
             {isLodge
-              ? "The header, write-up and tracks shown at the top of Projects › AI Lodge."
-              : "The cohort name and write-up shown on the DAP yearbook and newsletter."}
+              ? "Each semester's yearbook page: its write-up, tracks and projects."
+              : "Each cohort's yearbook page and newsletter: its write-up and projects."}
           </p>
         </div>
         {cohort && (
           <div className={styles.row}>
-            <a className={styles.pill} href={previewHref} target="_blank" rel="noopener noreferrer">
-              Preview
-            </a>
+            {cohort.visibility === "hidden" ? (
+              <span className={styles.hint}>Hidden {noun}s aren&apos;t on the site</span>
+            ) : (
+              <a className={styles.pill} href={previewHref} target="_blank" rel="noopener noreferrer">
+                View on site
+              </a>
+            )}
             <button type="button" className={styles.btn} onClick={save} disabled={!canEdit || saving}>
               {saving ? "Saving…" : "Save changes"}
             </button>
@@ -125,11 +142,11 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, canEd
           <div className={styles.grid2}>
             <label className={styles.fld}>
               Name
-              <input className={styles.inp} value={draft.name} placeholder={isLodge ? "AY26/27 Semester 2" : "AY26/27 cohort"} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} />
+              <input className={styles.inp} value={draft.name} placeholder={isLodge ? "AY26/27 Semester 2" : "AY26/27 cohort"} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value, slug: d.slugEdited ? d.slug : suggestSlug(e.target.value, isLodge) }))} />
             </label>
             <label className={styles.fld}>
               URL name
-              <input className={styles.inp} value={draft.slug} placeholder={isLodge ? "ay2627-s2" : "ay2627"} onChange={(e) => setDraft((d) => ({ ...d, slug: e.target.value.toLowerCase() }))} />
+              <input className={styles.inp} value={draft.slug} placeholder={isLodge ? "ay2627-s2" : "ay2627"} onChange={(e) => setDraft((d) => ({ ...d, slug: e.target.value.toLowerCase(), slugEdited: true }))} />
               <span className={styles.hint}>
                 Used in the address, e.g. {isLodge ? "/Projects/ai-lodge/" : "/DAP/projects/"}
                 {draft.slug || (isLodge ? "ay2627-s2" : "ay2627")}
@@ -182,7 +199,7 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, canEd
                 rows={7}
                 value={form.writeup}
                 onChange={(e) => set("writeup", e.target.value)}
-                placeholder={isLodge ? "What the tracks explored, Hack Day highlights, anything that stood out" : "The kinds of models teams built and Demo Day highlights"}
+                placeholder={isLodge ? "What the tracks explored, Hack Day highlights, anything that stood out" : "The kinds of models teams built and highlights from the final presentations"}
                 disabled={!canEdit}
               />
               <span className={styles.hint}>Markdown supported. Shown under the yearbook header.</span>
@@ -193,7 +210,7 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, canEd
                 <input className={styles.inp} value={form.hackDay} onChange={(e) => set("hackDay", e.target.value)} placeholder="Date · Venue" disabled={!canEdit} />
               </label>
             )}
-            <span className={styles.hint}>Setting a {noun} live archives the one that was live before.</span>
+            <span className={styles.hint}>Only one {noun} is current at a time: making this one current moves the previous one to past.</span>
           </section>
 
           {isLodge && (
@@ -235,17 +252,10 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, canEd
                         </span>
                       </span>
                     )}
-                    {!edit && (
-                      <>
-                        {canEdit && (
-                          <button type="button" className={styles.lnk} onClick={() => setEditing((s) => ({ ...s, [t.id]: { name: t.name, heads: t.heads } }))}>
-                            Edit
-                          </button>
-                        )}
-                        <Link className={styles.lnk} href={`/admin/projects?track=${t.id}`}>
-                          Projects
-                        </Link>
-                      </>
+                    {!edit && canEdit && (
+                      <button type="button" className={styles.lnk} onClick={() => setEditing((s) => ({ ...s, [t.id]: { name: t.name, heads: t.heads } }))}>
+                        Edit
+                      </button>
                     )}
                   </div>
                 );
@@ -272,6 +282,16 @@ export default function CohortEditor({ programme, cohorts, cohort, tracks, canEd
             </section>
           )}
         </div>
+      )}
+      {cohort && (
+        <CohortProjects
+          cohort={cohort}
+          cohorts={cohorts}
+          tracks={tracks}
+          projects={projects}
+          canEdit={canEdit}
+          canSetWinner={canSetWinner}
+        />
       )}
       {node}
     </>

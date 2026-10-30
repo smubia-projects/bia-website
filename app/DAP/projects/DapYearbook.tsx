@@ -6,6 +6,7 @@ import type { Project } from "@/app/Projects/data/types";
 import ProjectCover from "@/app/components/cms/ProjectCover";
 import ProjectTile from "@/app/components/cms/ProjectTile";
 import ui from "@/app/components/cms/public.module.css";
+import { projectPath } from "@/app/lib/cms/paths";
 
 export interface DapShelf {
   name: string;
@@ -61,7 +62,7 @@ export default function DapYearbook({ shelves }: { shelves: DapShelf[] }) {
                     Try it live
                   </a>
                 )}
-                <Link className={ui.pill} href={`/Projects/${selected.slug}`}>
+                <Link className={ui.pill} href={projectPath(selected)}>
                   View project
                 </Link>
                 <button type="button" className={ui.pill} onClick={() => setSelected(null)} autoFocus>

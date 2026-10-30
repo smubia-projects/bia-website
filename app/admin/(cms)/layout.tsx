@@ -22,11 +22,11 @@ export default async function CmsLayout({ children }: { children: React.ReactNod
       roleLabel={ROLE_LABEL[actor.role]}
       seeLodge={can.seeLodge(actor)}
       seeDap={can.seeDap(actor)}
-      seePeople={can.managePeople(actor)}
+      seeSettings={can.managePeople(actor)}
       reviewCount={reviewCount}
       notice={
         actor.role === "lodge_head"
-          ? "Lodge heads can add and edit projects in their own track. Publishing goes through an exco review, and the semester page is exco-only."
+          ? "You can add and edit projects in your own track. An exco admin reviews them before they go live."
           : undefined
       }
     >

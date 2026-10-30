@@ -6,7 +6,7 @@ import SectionHeading from "../components/ui/SectionHeading";
 import Button from "../components/ui/Button";
 import CountUp from "../components/ui/CountUp";
 import { MotionImage, MotionSurface } from "../components/ui/MotionElements";
-import { LINKS } from "../lib/links";
+import { CONTACT } from "@/app/lib/links";
 import { STAT_FOCAL, INVOLVEMENT, SHOW_PARTNERS, PARTNERS } from "./data";
 
 export const metadata = {
@@ -33,7 +33,7 @@ export default function WorkWithUsPage() {
               lede="Reach 2,000+ analytics-minded students at SMU."
             />
             <div className={styles.heroCtas}>
-              <Button href={LINKS.partnershipEmail} variant="primary">
+              <Button href={CONTACT.partnershipEmail} variant="primary">
                 Get in touch
               </Button>
             </div>
@@ -141,7 +141,7 @@ export default function WorkWithUsPage() {
           <ScrollReveal>
             <h2 className={styles.contactTitle}>Let&apos;s talk partnership</h2>
             <div className={styles.contactCtas}>
-              <Button href={LINKS.partnershipEmail} variant="onDark">
+              <Button href={CONTACT.partnershipEmail} variant="onDark">
                 Get in touch →
               </Button>
             </div>
