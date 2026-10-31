@@ -206,7 +206,8 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
 All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder names under
 `app/` match. Old forms (capitals, `/WorkWithUs`, `/workwithus`) redirect in `middleware.ts`.
 
-- `/projects` (all projects), `/projects/ailodge` (current semester), `/projects/ailodge/<semester>`
+- `/projects` (all projects), `/projects/ailodge` (the live semester once it has projects, until then the
+  newest semester that has some), `/projects/ailodge/<semester>`
 - `/projects/dap` (current cohort's yearbook), `/projects/dap/<cohort>`
 - Project pages: `/projects/ailodge/<semester>/<slug>` and `/projects/dap/<cohort>/<slug>`.
   Build links with `projectPath()` / `cohortPath()` / `dapRunPath()` / `issuePath()` from

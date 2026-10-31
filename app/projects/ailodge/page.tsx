@@ -11,5 +11,10 @@ export const metadata = {
 
 export default async function AILodgeYearbookPage() {
   const [cohorts, projects] = await Promise.all([getPublicCohorts("AI Lodge"), getPublicProjects()]);
-  return <LodgeYearbook cohort={pickCurrentCohort(cohorts)} cohorts={cohorts} projects={projects} />;
+  // The live semester is the one recruiting or running; until its Hack Day has
+  // projects, the yearbook keeps showing the newest semester that has some.
+  const live = pickCurrentCohort(cohorts);
+  const withProjects = cohorts.find((c) => projects.some((p) => p.cohortId === c.id));
+  const cohort = live && projects.some((p) => p.cohortId === live.id) ? live : withProjects ?? live;
+  return <LodgeYearbook cohort={cohort} cohorts={cohorts} projects={projects} />;
 }
