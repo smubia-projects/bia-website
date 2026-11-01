@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/app/lib/db";
 import { sitePhotos } from "@/app/lib/db/schema";
-import { DEFAULT_SITE_PHOTOS, photoSlot, type Photo, type SitePhotos } from "@/app/lib/photos";
+import { DEFAULT_SITE_PHOTOS, photoSite, photoSlot, type Photo, type SitePhotos } from "@/app/lib/photos";
 import { can, ensure, type Actor } from "./actor";
 import { revalidateCms, TAGS } from "./revalidate";
 
@@ -47,9 +47,9 @@ function cleanPhoto(p: Photo, label: string): Photo {
 
 /** Replaces a slot's photo (or a gallery's list). `null` puts the shipped photo back. */
 export async function saveSitePhoto(actor: Actor, key: string, value: Photo | Photo[] | null) {
-  ensure(can.editPhotos(actor), "Only exco can change site photos");
   const slot = photoSlot(key);
   ensure(slot, "Unknown photo");
+  ensure(can.editPhotos(actor, photoSite(key)), "You can't change this photo");
   const db = await getDb();
   if (value === null) {
     await db.delete(sitePhotos).where(eq(sitePhotos.key, key));

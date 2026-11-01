@@ -112,6 +112,10 @@ export interface CohortInput {
   headline?: string;
   writeup?: string;
   hackDay?: string;
+  /** AI Lodge site's name for the intake, e.g. "Fall 2026" */
+  shortName?: string;
+  /** "Details drop {revealNote}" on the AI Lodge site, e.g. "soon" or "26 Oct" */
+  revealNote?: string;
 }
 
 export async function createCohort(
@@ -156,9 +160,16 @@ export async function updateCohort(actor: Actor, id: string, input: CohortInput)
   for (const key of ["visibility", "headline", "writeup", "hackDay"] as const) {
     if (input[key] !== undefined) (values as Record<string, unknown>)[key] = input[key];
   }
+  if (input.shortName !== undefined) values.shortName = input.shortName.trim();
+  if (input.revealNote !== undefined) values.revealNote = input.revealNote.trim();
   if (input.timeline !== undefined) {
     values.timeline = input.timeline
-      .map((t) => ({ label: (t.label ?? "").trim(), date: (t.date ?? "").trim(), ...(t.note?.trim() ? { note: t.note.trim() } : {}) }))
+      .map((t) => ({
+        label: (t.label ?? "").trim(),
+        date: (t.date ?? "").trim(),
+        ...(t.note?.trim() ? { note: t.note.trim() } : {}),
+        ...(t.deadline ? { deadline: true } : {}),
+      }))
       .filter((t) => t.label || t.date);
     for (const t of values.timeline) {
       ensure(t.label, "Every timeline step needs a label");

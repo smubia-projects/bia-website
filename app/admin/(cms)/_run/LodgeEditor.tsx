@@ -4,15 +4,30 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { Captain, LodgeWeek } from "@/app/lib/db/schema";
+import type { Captain, LodgeBelt, LodgeHero, LodgeWeek } from "@/app/lib/db/schema";
 import type { Lodge } from "@/app/lib/cms/lodges";
 import {
   LODGE_AMBIENTS,
   LODGE_AMBIENT_LABEL,
+  LODGE_BELT_MODES,
+  LODGE_BELT_MODE_LABEL,
+  LODGE_BELT_SIZES,
+  LODGE_BELT_SPEEDS,
+  LODGE_EMBLEMS,
+  LODGE_HERO_KINDS,
+  LODGE_HERO_KIND_LABEL,
   LODGE_LEVELS,
+  LODGE_LOGO_STYLES,
+  LODGE_LOGO_STYLE_LABEL,
   LODGE_NEON_SIGNS,
   LODGE_NEON_SIGN_LABEL,
+  LODGE_PARTICLES,
+  LODGE_PARTICLES_LABEL,
+  LODGE_SHOWPIECES,
+  LODGE_SHOWPIECE_LABEL,
   type LodgeAmbient,
+  type LodgeEmblem,
+  type LodgeLogoStyle,
   type LodgeNeonSign,
 } from "@/app/lib/cms/taxonomy";
 import { deleteLodgeAction, saveLodgeAction } from "../../actions";
@@ -20,17 +35,18 @@ import { useActionToast, useImageUpload, useUnsavedChanges } from "../../_compon
 import { runHref } from "../../_components/runs";
 import styles from "../../cms.module.css";
 
-type Draft = Omit<Lodge, "id" | "cohortId" | "position" | "updatedAt" | "topics" | "cardTags" | "goals"> & {
+type Draft = Omit<Lodge, "id" | "cohortId" | "position" | "updatedAt" | "topics" | "cardTags" | "goals" | "oldSlugs"> & {
   topics: string;
   cardTags: string;
   goals: string;
+  oldSlugs: string;
 };
 
 const lines = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean);
 const toDraft = (l: Lodge): Draft => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { id, cohortId, position, updatedAt, ...rest } = l;
-  return { ...rest, topics: l.topics.join("\n"), cardTags: l.cardTags.join("\n"), goals: l.goals.join("\n") };
+  return { ...rest, topics: l.topics.join("\n"), cardTags: l.cardTags.join("\n"), goals: l.goals.join("\n"), oldSlugs: l.oldSlugs.join("\n") };
 };
 
 const STANDARD_TRAIL: LodgeWeek[] = [
@@ -39,6 +55,7 @@ const STANDARD_TRAIL: LodgeWeek[] = [
   { label: "Week 10", topic: "Hackathon finals & project exhibition" },
 ];
 const PHOTO_CROP = { ratio: 1, label: "1:1 · photo" };
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Black or white text, whichever reads better on the accent. */
 function readableOn(hex: string) {
@@ -76,7 +93,15 @@ export default function LodgeEditor({
   async function save() {
     setSaving(true);
     const ok = handle(
-      await saveLodgeAction({ ...f, id: lodge.id, cohortId: lodge.cohortId, topics: lines(f.topics), cardTags: lines(f.cardTags), goals: lines(f.goals) }),
+      await saveLodgeAction({
+        ...f,
+        id: lodge.id,
+        cohortId: lodge.cohortId,
+        topics: lines(f.topics),
+        cardTags: lines(f.cardTags),
+        goals: lines(f.goals),
+        oldSlugs: lines(f.oldSlugs),
+      }),
       `${f.name} saved`
     );
     setSaving(false);
@@ -109,30 +134,45 @@ export default function LodgeEditor({
     </label>
   );
 
-  const imageField = (k: "logo" | "ambientImage" | "animatedArt", label: string, hint: string) => (
+  const imageField = (value: string, onChange: (url: string) => void, label: string, hint: string, wide = false) => (
     <div className={styles.fld}>
       {label}
       <span className={styles.hint}>{hint}</span>
       <div className={styles.row}>
-        {f[k] && (
-          <span className={styles.lodgeArtThumb}>
+        {value && (
+          <span className={styles.lodgeArtThumb} style={wide ? { width: 220 } : undefined}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={f[k]} alt="" />
+            <img src={value} alt="" />
           </span>
         )}
         {canEdit && (
-          <button type="button" className={styles.pill} disabled={art.busy} onClick={() => upload("art", (url) => set(k, url))}>
-            {f[k] ? "Replace" : "Upload"}
+          <button type="button" className={styles.pill} disabled={art.busy} onClick={() => upload("art", onChange)}>
+            {value ? "Replace" : "Upload"}
           </button>
         )}
-        {f[k] && canEdit && (
-          <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} onClick={() => set(k, "")}>
+        {value && canEdit && (
+          <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} onClick={() => onChange("")}>
             Remove
           </button>
         )}
       </div>
     </div>
   );
+  const select = <T extends string>(label: string, value: T, options: readonly T[], labelOf: (v: T) => string, onChange: (v: T) => void, hint?: string) => (
+    <label className={styles.fld}>
+      {label}
+      <select className={styles.inp} value={value} disabled={!canEdit} onChange={(e) => onChange(e.target.value as T)}>
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {labelOf(o)}
+          </option>
+        ))}
+      </select>
+      {hint && <span className={styles.hint}>{hint}</span>}
+    </label>
+  );
+  const setHero = (p: Partial<LodgeHero>) => set("hero", { ...f.hero, ...p });
+  const setBelt = (p: Partial<LodgeBelt>) => set("belt", { ...f.belt, ...p });
 
   const color = (k: "accent" | "neonColor", label: string, hint: string) => (
     <label className={styles.fld}>
@@ -198,6 +238,14 @@ export default function LodgeEditor({
               {text("name", "Name")}
               {text("slug", "URL name", { hint: `ailodge.smubia.com/lodges/${f.slug || "…"}` })}
             </div>
+            {text("oldSlugs", "Old URL names", { rows: 2, hint: "One per line. Links to ailodge.smubia.com/lodges/<old name> redirect here, e.g. after a rename." })}
+            <label className={styles.radio}>
+              <input type="checkbox" checked={f.placeholder} disabled={!canEdit} onChange={(e) => set("placeholder", e.target.checked)} />
+              Details not released yet
+            </label>
+            <span className={styles.hint}>
+              The card says &quot;Reveals …&quot; with the semester&apos;s &quot;Lodge details drop&quot; text, and the lodge takes no applications until you untick this.
+            </span>
             <div className={styles.grid2}>
               <label className={styles.fld}>
                 Level badge
@@ -291,6 +339,10 @@ export default function LodgeEditor({
                 + Week
               </button>
             )}
+            <label className={styles.radio}>
+              <input type="checkbox" checked={f.trailTentative} disabled={!canEdit} onChange={(e) => set("trailTentative", e.target.checked)} />
+              The weekly topics are a draft
+            </label>
             {text("weeksNote", "Note under the trail", { placeholder: "Weekly topics are indicative and may shift to fit the lodge." })}
           </section>
 
@@ -329,41 +381,83 @@ export default function LodgeEditor({
           </section>
 
           <section className={styles.panel}>
-            <h2 className={styles.h2}>Art</h2>
-            {imageField("logo", "Logo", "PNG, SVG or WebP on a transparent background. The AI Lodge site paints it in the glow colour.")}
+            <h2 className={styles.h2}>Logo and colours</h2>
+            {imageField(f.logo, (url) => set("logo", url), "Logo", "PNG, SVG or WebP on a transparent background. Used on the lodge card, in the strip and in the header.")}
+            <div className={styles.grid2}>
+              {select("Draw the logo", f.logoStyle, LODGE_LOGO_STYLES, (v) => LODGE_LOGO_STYLE_LABEL[v], (v) => set("logoStyle", v as LodgeLogoStyle), "Painting suits one-colour logos; multi-colour art keeps its own colours.")}
+              {select("Stand-in emblem", f.emblem, LODGE_EMBLEMS, cap, (v) => set("emblem", v as LodgeEmblem), "Shown while there's no logo.")}
+            </div>
             <div className={styles.grid2}>
               {color("accent", "Accent", "Badges, bullets and tints.")}
               {color("neonColor", "Glow colour", "The lit logo and neon sign. Empty uses the accent.")}
             </div>
-            <div className={styles.grid2}>
-              <label className={styles.fld}>
-                Neon sign
-                <select className={styles.inp} value={f.neonSign} disabled={!canEdit} onChange={(e) => set("neonSign", e.target.value as LodgeNeonSign)}>
-                  {LODGE_NEON_SIGNS.map((n) => (
-                    <option key={n} value={n}>
-                      {LODGE_NEON_SIGN_LABEL[n]}
-                    </option>
-                  ))}
-                </select>
-                <span className={styles.hint}>Animated signs drawn by the AI Lodge site.</span>
-              </label>
-              <label className={styles.fld}>
-                Drifting particles
-                <select className={styles.inp} value={f.ambient} disabled={!canEdit} onChange={(e) => set("ambient", e.target.value as LodgeAmbient)}>
-                  {LODGE_AMBIENTS.map((a) => (
-                    <option key={a} value={a}>
-                      {LODGE_AMBIENT_LABEL[a]}
-                    </option>
-                  ))}
-                </select>
+            {select(
+              "Neon sign",
+              f.neonSign,
+              LODGE_NEON_SIGNS,
+              (v) => LODGE_NEON_SIGN_LABEL[v],
+              (v) => set("neonSign", v as LodgeNeonSign),
+              "Animated glass-tube signs coded on the AI Lodge site. When set, it replaces the logo on the card and in the strip."
+            )}
+          </section>
+
+          <section className={styles.panel}>
+            <h2 className={styles.h2}>Page header</h2>
+            {select("Art beside the name", f.hero.kind, LODGE_HERO_KINDS, (v) => LODGE_HERO_KIND_LABEL[v], (kind) =>
+              set("hero", kind === "showpiece" ? { kind, showpiece: f.hero.showpiece ?? "despacito" } : kind === "custom" ? { glow: "", particles: "none", float: true, ...f.hero, kind } : { ...f.hero, kind })
+            )}
+            {f.hero.kind === "neon" && f.neonSign === "none" && <span className={styles.hint}>Pick a neon sign under Logo and colours.</span>}
+            {f.hero.kind === "showpiece" &&
+              select("Showpiece", f.hero.showpiece ?? "despacito", LODGE_SHOWPIECES, (v) => LODGE_SHOWPIECE_LABEL[v], (v) => setHero({ showpiece: v }), "Layered, animated art coded on the AI Lodge site for one lodge. Any lodge can reuse one.")}
+            {f.hero.kind === "custom" && (
+              <>
+                {imageField(f.hero.image ?? "", (url) => setHero({ image: url }), "Showpiece image", "The main lodge picture, shown in its own colours. A transparent PNG or WebP works best.")}
+                <div className={styles.grid2}>
+                  <label className={styles.fld}>
+                    Glow behind it
+                    <span className={styles.row}>
+                      <input type="color" className={styles.colorSwatch} value={f.hero.glow || glow} aria-label="Glow colour picker" disabled={!canEdit} onChange={(e) => setHero({ glow: e.target.value.toUpperCase() })} />
+                      <input className={`${styles.inp} ${styles.inpSmall}`} style={{ maxWidth: 130 }} value={f.hero.glow ?? ""} placeholder="No glow" disabled={!canEdit} onChange={(e) => setHero({ glow: e.target.value })} />
+                    </span>
+                  </label>
+                  {select("Particles", f.hero.particles ?? "none", LODGE_PARTICLES, (v) => LODGE_PARTICLES_LABEL[v], (v) => setHero({ particles: v }))}
+                </div>
                 <label className={styles.radio}>
-                  <input type="checkbox" checked={f.ambientGlow} disabled={!canEdit} onChange={(e) => set("ambientGlow", e.target.checked)} />
-                  Glowing halo on the particles
+                  <input type="checkbox" checked={f.hero.float !== false} disabled={!canEdit} onChange={(e) => setHero({ float: e.target.checked })} />
+                  Float gently and follow the pointer
                 </label>
+              </>
+            )}
+            {f.hero.kind === "animated" &&
+              imageField(f.hero.image ?? "", (url) => setHero({ image: url }), "Animated SVG", "Shown in the header as uploaded, animations included.")}
+            <span className={styles.hint}>The logo and neon sign also draw a faint oversized copy of the logo behind the header; showpieces bring their own backdrop.</span>
+          </section>
+
+          <section className={styles.panel}>
+            <h2 className={styles.h2}>Strip under the header</h2>
+            {select("Strip", f.belt.mode, LODGE_BELT_MODES, (v) => LODGE_BELT_MODE_LABEL[v], (mode) => setBelt({ mode }))}
+            {f.belt.mode === "tile" &&
+              imageField(f.belt.image ?? "", (url) => setBelt({ image: url }), "Image to repeat", "A small transparent image, repeated in a line in its own colours.")}
+            {f.belt.mode === "banner" &&
+              imageField(f.belt.image ?? "", (url) => setBelt({ image: url }), "Long strip image", "One wide image whose left and right edges join up; it scrolls in a loop. About 3000 × 160 px works well.", true)}
+            {f.belt.mode !== "none" && (
+              <div className={styles.grid2}>
+                {select("Speed", f.belt.speed, LODGE_BELT_SPEEDS, cap, (speed) => setBelt({ speed }))}
+                {select("Size", f.belt.size, LODGE_BELT_SIZES, cap, (size) => setBelt({ size }))}
+              </div>
+            )}
+          </section>
+
+          <section className={styles.panel}>
+            <h2 className={styles.h2}>Drifting particles</h2>
+            <div className={styles.grid2}>
+              {select("Particles behind the page", f.ambient, LODGE_AMBIENTS, (v) => LODGE_AMBIENT_LABEL[v], (v) => set("ambient", v as LodgeAmbient))}
+              <label className={styles.radio} style={{ alignSelf: "end" }}>
+                <input type="checkbox" checked={f.ambientGlow} disabled={!canEdit} onChange={(e) => set("ambientGlow", e.target.checked)} />
+                Glowing halo on the particles
               </label>
             </div>
-            {imageField("ambientImage", "Custom particle", "Optional small image that drifts behind the lodge instead of the preset, e.g. a hand-drawn leaf.")}
-            {imageField("animatedArt", "Animated art", "Optional animated SVG shown in the lodge's hero instead of the logo.")}
+            {imageField(f.ambientImage, (url) => set("ambientImage", url), "Custom particle", "Optional small image that drifts instead of the preset, e.g. a hand-drawn leaf.")}
           </section>
 
           {canEdit && (
@@ -382,9 +476,9 @@ export default function LodgeEditor({
           <span className={styles.monoLabel}>Card preview</span>
           <div className={styles.lodgeCard} style={{ ["--glow" as string]: glow }}>
             <div className={styles.lodgeCardArt}>
-              {f.animatedArt ? (
+              {f.logo && f.logoStyle === "original" ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={f.animatedArt} alt="" className={styles.lodgeCardAnimated} />
+                <img src={f.logo} alt="" className={styles.lodgeCardAnimated} />
               ) : f.logo ? (
                 <span className={styles.lodgeCardMark} style={{ ["--mk" as string]: `url("${f.logo}")` }} />
               ) : (
@@ -416,8 +510,10 @@ export default function LodgeEditor({
             </div>
           </div>
           <span className={styles.hint}>
-            Particles: {f.ambientImage ? "custom image" : LODGE_AMBIENT_LABEL[f.ambient]}
-            {f.ambientGlow ? ", glowing" : ""}. Neon sign: {LODGE_NEON_SIGN_LABEL[f.neonSign]}. The AI Lodge site draws the motion.
+            Header: {f.hero.kind === "showpiece" && f.hero.showpiece ? LODGE_SHOWPIECE_LABEL[f.hero.showpiece] : LODGE_HERO_KIND_LABEL[f.hero.kind]}. Strip:{" "}
+            {LODGE_BELT_MODE_LABEL[f.belt.mode].toLowerCase()}. Neon sign: {LODGE_NEON_SIGN_LABEL[f.neonSign]}. Particles:{" "}
+            {f.ambientImage ? "custom image" : LODGE_AMBIENT_LABEL[f.ambient]}
+            {f.ambientGlow ? ", glowing" : ""}. The AI Lodge site draws the motion; open the lodge there to see it.
           </span>
         </aside>
       </div>

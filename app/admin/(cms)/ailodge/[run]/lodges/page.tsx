@@ -4,7 +4,8 @@ import { listAllLodges, listLodges, lodgePaths } from "@/app/lib/cms/lodges";
 import LodgeList from "../../../_run/LodgeList";
 import { loadRun } from "../../../_run/load";
 
-export default async function LodgesPage({ params }: { params: { run: string } }) {
+export default async function LodgesPage(props: { params: Promise<{ run: string }> }) {
+  const params = await props.params;
   const { actor, cohorts, cohort } = await loadRun("AI Lodge", params.run);
   const [lodges, all, paths, links] = await Promise.all([listLodges(cohort.id), listAllLodges(), lodgePaths(), getSiteLinks()]);
   const site = links.aiLodgeInfosite.replace(/\/$/, "");
@@ -22,6 +23,7 @@ export default async function LodgesPage({ params }: { params: { run: string } }
         name: l.name,
         slug: l.slug,
         status: l.status,
+        placeholder: l.placeholder,
         captains: l.captains.length,
         logo: l.logo,
         accent: l.accent,
@@ -29,6 +31,7 @@ export default async function LodgesPage({ params }: { params: { run: string } }
       }))}
       others={others}
       canEdit={can.editCohort(actor, "AI Lodge")}
+      applications={cohort.visibility === "live" ? { open: links.applications.aiLodge, canSwitch: can.setApplications(actor, "AI Lodge") } : null}
     />
   );
 }

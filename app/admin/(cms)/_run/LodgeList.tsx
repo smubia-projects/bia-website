@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { copyLodgeAction, deleteLodgeAction, moveLodgeAction, saveLodgeAction } from "../../actions";
+import { copyLodgeAction, deleteLodgeAction, moveLodgeAction, saveLodgeAction, setApplicationsOpenAction } from "../../actions";
 import { useActionToast } from "../../_components/ui";
 import { runHref } from "../../_components/runs";
 import styles from "../../cms.module.css";
@@ -13,6 +13,7 @@ export interface LodgeRowView {
   name: string;
   slug: string;
   status: "open" | "closed";
+  placeholder: boolean;
   captains: number;
   logo: string;
   accent: string;
@@ -31,6 +32,7 @@ export default function LodgeList({
   lodges,
   others,
   canEdit,
+  applications,
 }: {
   cohortId: string;
   cohortSlug: string;
@@ -40,6 +42,8 @@ export default function LodgeList({
   /** Lodges from other semesters that can be copied in */
   others: { semester: string; lodges: { id: number; name: string }[] }[];
   canEdit: boolean;
+  /** The AI Lodge applications switch; shown on the current semester only */
+  applications: { open: boolean; canSwitch: boolean } | null;
 }) {
   const router = useRouter();
   const { handle, node } = useActionToast();
@@ -65,6 +69,13 @@ export default function LodgeList({
     if (handle(await moveLodgeAction(id, direction)) !== undefined) router.refresh();
   }
 
+  async function switchApplications(open: boolean) {
+    setBusy(true);
+    const ok = handle(await setApplicationsOpenAction("AI Lodge", open));
+    setBusy(false);
+    if (ok !== undefined) router.refresh();
+  }
+
   async function remove(l: LodgeRowView) {
     if (!confirm(`Delete ${l.name}? Its projects keep everything except the lodge link.`)) return;
     if (handle(await deleteLodgeAction(l.id), "Lodge deleted") !== undefined) router.refresh();
@@ -82,6 +93,26 @@ export default function LodgeList({
           </p>
         </div>
       </div>
+
+      {applications && (
+        <section className={styles.panel} style={{ marginTop: 22 }}>
+          <div className={styles.between} style={{ flexWrap: "wrap", gap: 12 }}>
+            <span>
+              <strong>AI Lodge applications are {applications.open ? "open" : "closed"}</strong>
+              <span className={styles.hint} style={{ display: "block" }}>
+                {applications.open
+                  ? "Apply buttons on smubia.com and the AI Lodge site go to the sign-up form. Lodges set to not taking applications stay closed."
+                  : "Every lodge shows as closed and apply buttons go to the club Telegram."}
+              </span>
+            </span>
+            {applications.canSwitch && (
+              <button type="button" className={applications.open ? styles.pill : styles.btn} disabled={busy} onClick={() => switchApplications(!applications.open)}>
+                {applications.open ? "Close applications" : "Open applications"}
+              </button>
+            )}
+          </div>
+        </section>
+      )}
 
       <section className={styles.panel} style={{ marginTop: 22, gap: 0 }}>
         {lodges.length === 0 && (
@@ -104,6 +135,7 @@ export default function LodgeList({
                 {l.name}
               </Link>
               <span className={styles.hint}>
+                {l.placeholder ? "Details not released · " : ""}
                 {l.status === "closed" ? "Not taking applications" : "Taking applications"} · {l.captains} {l.captains === 1 ? "captain" : "captains"} ·{" "}
                 <a href={l.href} target="_blank" rel="noopener noreferrer">
                   {l.href.replace(/^https?:\/\//, "")}

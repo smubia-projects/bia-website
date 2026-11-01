@@ -9,7 +9,7 @@ import * as cohorts from "@/app/lib/cms/cohorts";
 import * as lodgesCms from "@/app/lib/cms/lodges";
 import * as newsletter from "@/app/lib/cms/newsletter";
 import * as people from "@/app/lib/cms/people";
-import { saveSiteLinks, type SiteLinksInput } from "@/app/lib/cms/links";
+import { saveSiteLinks, setApplicationsOpen, type SiteLinksInput } from "@/app/lib/cms/links";
 import { saveSitePhoto } from "@/app/lib/cms/photos";
 import type { Photo } from "@/app/lib/photos";
 import { UPLOAD_FOLDERS, uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
@@ -220,6 +220,14 @@ export async function deleteTrackAction(id: number) {
 }
 
 // ── Site links ───────────────────────────────────────────────────────────
+
+export async function setApplicationsOpenAction(programme: Programme, open: boolean) {
+  return run(async (actor) => {
+    await setApplicationsOpen(actor, programme, open);
+    refreshAdmin();
+    return null;
+  }, open ? `${programme} applications are open` : `${programme} applications are closed`);
+}
 
 export async function saveSiteLinksAction(input: SiteLinksInput) {
   return run(async (actor) => {

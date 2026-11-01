@@ -43,6 +43,8 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
     headline: cohort.headline,
     writeup: cohort.writeup,
     hackDay: cohort.hackDay,
+    shortName: cohort.shortName,
+    revealNote: cohort.revealNote,
   });
   const [timeline, setTimeline] = useState<TimelineStep[]>(cohort.timeline);
   const setStep = (i: number, p: Partial<TimelineStep>) => setTimeline((t) => t.map((s, j) => (j === i ? { ...s, ...p } : s)));
@@ -58,6 +60,8 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
         form.headline !== cohort.headline ||
         form.writeup !== cohort.writeup ||
         form.hackDay !== cohort.hackDay ||
+        form.shortName !== cohort.shortName ||
+        form.revealNote !== cohort.revealNote ||
         JSON.stringify(timeline) !== JSON.stringify(cohort.timeline))
   );
 
@@ -160,6 +164,20 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
                 <input className={styles.inp} value={form.hackDay} onChange={(e) => set("hackDay", e.target.value)} placeholder="Date · Venue" disabled={!canEdit} />
               </label>
             )}
+            {isLodge && (
+              <div className={styles.grid2}>
+                <label className={styles.fld}>
+                  Name on the AI Lodge site
+                  <input className={styles.inp} value={form.shortName} onChange={(e) => set("shortName", e.target.value)} placeholder="Fall 2026" disabled={!canEdit} />
+                  <span className={styles.hint}>As in &quot;Fall 2026 cohort&quot;. Uses the {noun} name when empty.</span>
+                </label>
+                <label className={styles.fld}>
+                  Lodge details drop
+                  <input className={styles.inp} value={form.revealNote} onChange={(e) => set("revealNote", e.target.value)} placeholder="soon" disabled={!canEdit} />
+                  <span className={styles.hint}>For lodges marked &quot;details not released&quot;: read as &quot;Details drop soon&quot; or &quot;Details drop 26 Oct&quot;.</span>
+                </label>
+              </div>
+            )}
             <span className={styles.hint}>Only one {noun} is current at a time: making this one current moves the previous one to past.</span>
             {isLodge && (
               <fieldset className={styles.fieldset} style={{ gap: 8, marginTop: 8 }}>
@@ -170,6 +188,10 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
                     <input className={`${styles.inp} ${styles.inpSmall}`} style={{ flex: "1 1 160px", width: "auto" }} value={t.label} placeholder="Deadline" aria-label="Step" disabled={!canEdit} onChange={(e) => setStep(i, { label: e.target.value })} />
                     <input className={`${styles.inp} ${styles.inpSmall}`} style={{ maxWidth: 170 }} type="date" value={t.date} aria-label={`${t.label || "Step"} date`} disabled={!canEdit} onChange={(e) => setStep(i, { date: e.target.value })} />
                     <input className={`${styles.inp} ${styles.inpSmall}`} style={{ flex: "2 1 220px", width: "auto" }} value={t.note ?? ""} placeholder="Note (optional)" aria-label="Note" disabled={!canEdit} onChange={(e) => setStep(i, { note: e.target.value })} />
+                    <label className={styles.radio}>
+                      <input type="checkbox" checked={Boolean(t.deadline)} disabled={!canEdit} onChange={(e) => setStep(i, { deadline: e.target.checked || undefined })} />
+                      Deadline
+                    </label>
                     {canEdit && (
                       <button type="button" className={styles.ico} aria-label={`Remove ${t.label || "step"}`} onClick={() => setTimeline((s) => s.filter((_, j) => j !== i))}>
                         ×

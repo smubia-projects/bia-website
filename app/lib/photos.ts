@@ -36,6 +36,10 @@ export interface GallerySlot extends SlotBase {
 
 export type PhotoSlot = SingleSlot | GallerySlot;
 
+/** Which site a slot is on; AI Lodge exco may edit the AI Lodge site's photos. */
+export type PhotoSite = "smubia" | "ailodge";
+export const photoSite = (key: string): PhotoSite => (key.startsWith("ailodge.") ? "ailodge" : "smubia");
+
 const AILODGE = "https://ailodge.smubia.com";
 const BLOB = "https://ssvs8thfuktvqsqk.public.blob.vercel-storage.com";
 
@@ -66,6 +70,8 @@ export const PHOTO_SLOTS: PhotoSlot[] = [
   { kind: "single", key: "ailodge.entry", page: "AI Lodge site", path: AILODGE, label: "Entry scene (desktop)", hint: "The full-screen cabin scene when the site opens on a computer", ratio: 16 / 9, default: { src: `${AILODGE}/entry/entry-hd.jpg`, alt: "" } },
   { kind: "single", key: "ailodge.entryPortrait", page: "AI Lodge site", path: AILODGE, label: "Entry scene (phone)", hint: "The same scene, portrait", ratio: 9 / 16, default: { src: `${AILODGE}/entry/entry-hd-portrait.jpg`, alt: "" } },
   { kind: "single", key: "ailodge.lodgeHero", page: "AI Lodge site", path: `${AILODGE}/lodges/mit`, label: "Lodge page backdrop", hint: "Behind the top of every lodge page", ratio: 16 / 9, default: { src: `${AILODGE}/entry/close-desktop.jpg`, alt: "" } },
+  { kind: "single", key: "ailodge.hero", page: "AI Lodge site", path: AILODGE, label: "Home: framed photo", hint: "The framed group photo beside the headline", ratio: 4 / 3, default: { src: `${AILODGE}/moments/fall2026/OriPhoto.JPG`, alt: "A past AI Lodge group together after a session." } },
+  { kind: "single", key: "ailodge.whyJoin", page: "AI Lodge site", path: AILODGE, label: "Home: Why join photo", ratio: null, default: { src: `${AILODGE}/moments/fall2026/tencent-ai-safety-workshop.webp`, alt: "AI Lodge lodgers and captains together at the Tencent × SCOGA AI Safety Workshop" } },
   {
     kind: "gallery",
     key: "ailodge.moments",
@@ -75,20 +81,43 @@ export const PHOTO_SLOTS: PhotoSlot[] = [
     hint: "The scrolling strip of photos on the home page, in order",
     ratio: null,
     default: [
-      "awsome-group",
-      "demo-candid-action",
-      "jb-group-2",
-      "demo-project-1",
-      "lab-group",
-      "demo-candid-group",
-      "awsome-food",
-      "demo-project-2",
-      "jb-group",
-      "demo-project-3",
-      "demo-project-4",
-      "demo-project-5",
-      "demo-project-6",
-    ].map((f) => ({ src: `${AILODGE}/moments/${f}.webp`, alt: "" })),
+      { src: `${AILODGE}/moments/fall2026/CJBLodge.JPG`, alt: "The CJB lodge together" },
+      { src: `${AILODGE}/moments/fall2026/CJBSession.JPG`, alt: "A CJB lodge session" },
+      { src: `${AILODGE}/moments/fall2026/cjb2.JPG`, alt: "Lodgers in a CJB session" },
+      { src: `${AILODGE}/moments/fall2026/cjb3.JPG`, alt: "CJB lodgers working together" },
+      { src: `${AILODGE}/moments/fall2026/COMBINEDSession.JPG`, alt: "A combined session with multiple lodges" },
+      { src: `${AILODGE}/moments/fall2026/CurMax.JPG`, alt: "Curiositymaxxer lodgers together" },
+      { src: `${AILODGE}/moments/fall2026/CurMaxLodge.JPG`, alt: "The Curiositymaxxer lodge" },
+      { src: `${AILODGE}/moments/fall2026/HackstreetLodge.JPG`, alt: "The Hackstreet Boys lodge" },
+      { src: `${AILODGE}/moments/fall2026/PaisehLodge.JPG`, alt: "The Paiseh lodge" },
+      { src: `${AILODGE}/moments/fall2026/PaisehSession.JPG`, alt: "A Paiseh lodge session" },
+      { src: `${AILODGE}/moments/fall2026/Paiseh3.JPG`, alt: "Paiseh lodgers together" },
+      { src: `${AILODGE}/moments/fall2026/VampireLodge2.JPG`, alt: "The Vampire lodge" },
+      { src: `${AILODGE}/moments/fall2026/WSSLodge.JPG`, alt: "The WSS lodge" },
+      { src: `${AILODGE}/moments/fall2026/DinnerLodges.JPG`, alt: "Lodges gathered over dinner" },
+      { src: `${AILODGE}/moments/fall2026/Ori.JPG`, alt: "Orientation night" },
+      { src: `${AILODGE}/moments/fall2026/Ori2.JPG`, alt: "Orientation night" },
+      { src: `${AILODGE}/moments/fall2026/Ori3.JPG`, alt: "Orientation night" },
+      { src: `${AILODGE}/moments/fall2026/OriPhoto.JPG`, alt: "Orientation group photo" },
+      { src: `${AILODGE}/moments/fall2026/TencentWorkshop.JPG`, alt: "Industry workshop with Tencent" },
+      { src: `${AILODGE}/moments/fall2026/Tencent2.JPG`, alt: "Lodgers at the Tencent workshop" },
+      { src: `${AILODGE}/moments/fall2026/TencentPhoto.JPG`, alt: "Group photo at the Tencent workshop" },
+      { src: `${AILODGE}/moments/fall2026/IMG_9007.JPG`, alt: "Lodgers at an AI Lodge event" },
+      { src: `${AILODGE}/moments/fall2026/IMG_9106.JPG`, alt: "Lodgers at an AI Lodge event" },
+      { src: `${AILODGE}/moments/spring2026/awsome-group.webp`, alt: "A lodge gathered together for a group photo" },
+      { src: `${AILODGE}/moments/spring2026/demo-candid-action.webp`, alt: "Lodgers heads-down building during a session" },
+      { src: `${AILODGE}/moments/spring2026/jb-group-2.webp`, alt: "A lodge posing together after a session" },
+      { src: `${AILODGE}/moments/spring2026/demo-project-1.webp`, alt: "A team presenting their project on demo day" },
+      { src: `${AILODGE}/moments/spring2026/lab-group.webp`, alt: "Lodge members together at the lab" },
+      { src: `${AILODGE}/moments/spring2026/demo-candid-group.webp`, alt: "The cohort together on demo day" },
+      { src: `${AILODGE}/moments/spring2026/awsome-food.webp`, alt: "A lodge hanging out over food" },
+      { src: `${AILODGE}/moments/spring2026/demo-project-2.webp`, alt: "A team showing off what they built" },
+      { src: `${AILODGE}/moments/spring2026/jb-group.webp`, alt: "A lodge group photo" },
+      { src: `${AILODGE}/moments/spring2026/demo-project-3.webp`, alt: "Lodgers presenting their demo-day project" },
+      { src: `${AILODGE}/moments/spring2026/demo-project-4.webp`, alt: "A project demo in front of the room" },
+      { src: `${AILODGE}/moments/spring2026/demo-project-5.webp`, alt: "A team at the project exhibition" },
+      { src: `${AILODGE}/moments/spring2026/demo-project-6.webp`, alt: "Lodgers demoing their final build" },
+    ],
   },
 ];
 

@@ -57,15 +57,78 @@ export const LODGE_AMBIENT_LABEL: Record<LodgeAmbient, string> = {
   bat: "Bats",
 };
 
-/** Neon signs coded on the AI Lodge site. */
-export const LODGE_NEON_SIGNS = ["none", "bat", "guitar", "ship"] as const;
+/**
+ * Neon signs coded on the AI Lodge site. A lodge's sign is its mark on the lodge
+ * card and in a "Repeat the mark" belt, and its hero when the hero is "Neon sign".
+ */
+export const LODGE_NEON_SIGNS = ["none", "bat", "guitar", "ship", "skull"] as const;
 export type LodgeNeonSign = (typeof LODGE_NEON_SIGNS)[number];
 export const LODGE_NEON_SIGN_LABEL: Record<LodgeNeonSign, string> = {
-  none: "None (logo glow)",
+  none: "None (the logo)",
   bat: "Bat",
   guitar: "Guitar",
   ship: "Ship",
+  skull: "Sugar skull",
 };
+
+/** How the logo is drawn: painted in the glow colour (one-colour art) or as uploaded. */
+export const LODGE_LOGO_STYLES = ["tint", "original"] as const;
+export type LodgeLogoStyle = (typeof LODGE_LOGO_STYLES)[number];
+export const LODGE_LOGO_STYLE_LABEL: Record<LodgeLogoStyle, string> = {
+  tint: "Painted in the glow colour",
+  original: "Its own colours",
+};
+
+/** Stand-in emblems for a lodge without a logo yet. */
+export const LODGE_EMBLEMS = ["campfire", "pine", "compass", "lantern", "axe"] as const;
+export type LodgeEmblem = (typeof LODGE_EMBLEMS)[number];
+
+/** What fills the right of a lodge page's header. */
+export const LODGE_HERO_KINDS = ["logo", "neon", "showpiece", "custom", "animated"] as const;
+export type LodgeHeroKind = (typeof LODGE_HERO_KINDS)[number];
+export const LODGE_HERO_KIND_LABEL: Record<LodgeHeroKind, string> = {
+  logo: "The logo",
+  neon: "The neon sign",
+  showpiece: "A coded showpiece",
+  custom: "A custom showpiece",
+  animated: "An animated SVG",
+};
+
+/** Layered, animated hero art coded on the AI Lodge site (one per lodge that commissioned it). */
+export const LODGE_SHOWPIECES = ["despacito", "bryan", "pandai", "spice"] as const;
+export type LodgeShowpiece = (typeof LODGE_SHOWPIECES)[number];
+export const LODGE_SHOWPIECE_LABEL: Record<LodgeShowpiece, string> = {
+  despacito: "Retro sunset poster (Despacito)",
+  bryan: "Night badge with fireflies (BRYan)",
+  pandai: "Panda in falling leaves (PandAI)",
+  spice: "Watercolour chilli with embers (S.P.I.C.E.)",
+};
+
+/** Particles a custom showpiece can scatter around its image. */
+export const LODGE_PARTICLES = ["none", "ember", "firefly", "petal", "leaf"] as const;
+export type LodgeParticles = (typeof LODGE_PARTICLES)[number];
+export const LODGE_PARTICLES_LABEL: Record<LodgeParticles, string> = {
+  none: "None",
+  ember: "Rising embers",
+  firefly: "Blinking fireflies",
+  petal: "Falling petals",
+  leaf: "Falling leaves",
+};
+
+/** The strip that scrolls under a lodge page's header. */
+export const LODGE_BELT_MODES = ["mark", "tile", "banner", "papel-picado", "none"] as const;
+export type LodgeBeltMode = (typeof LODGE_BELT_MODES)[number];
+export const LODGE_BELT_MODE_LABEL: Record<LodgeBeltMode, string> = {
+  mark: "Repeat the lodge's mark",
+  tile: "Repeat an uploaded image",
+  banner: "Scroll one long uploaded image",
+  "papel-picado": "Papel picado bunting",
+  none: "No strip",
+};
+export const LODGE_BELT_SPEEDS = ["slow", "normal", "fast"] as const;
+export type LodgeBeltSpeed = (typeof LODGE_BELT_SPEEDS)[number];
+export const LODGE_BELT_SIZES = ["small", "medium", "large"] as const;
+export type LodgeBeltSize = (typeof LODGE_BELT_SIZES)[number];
 
 export const LODGE_LEVELS = ["Open to all", "Beginner", "Beginner–Intermediate", "Intermediate", "Advanced"];
 

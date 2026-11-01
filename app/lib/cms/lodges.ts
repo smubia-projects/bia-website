@@ -1,9 +1,26 @@
 import { and, asc, desc, eq, ne } from "drizzle-orm";
 import { getDb } from "@/app/lib/db";
-import { cohorts, lodges, type Captain, type LodgeRow, type LodgeWeek } from "@/app/lib/db/schema";
+import { cohorts, lodges, type Captain, type LodgeBelt, type LodgeHero, type LodgeRow, type LodgeWeek } from "@/app/lib/db/schema";
 import { can, ensure, type Actor } from "./actor";
 import { revalidateCms } from "./revalidate";
-import { LODGE_AMBIENTS, LODGE_NEON_SIGNS, LODGE_STATUSES, type LodgeAmbient, type LodgeNeonSign, type LodgeStatus } from "./taxonomy";
+import {
+  LODGE_AMBIENTS,
+  LODGE_BELT_MODES,
+  LODGE_BELT_SIZES,
+  LODGE_BELT_SPEEDS,
+  LODGE_EMBLEMS,
+  LODGE_HERO_KINDS,
+  LODGE_LOGO_STYLES,
+  LODGE_NEON_SIGNS,
+  LODGE_PARTICLES,
+  LODGE_SHOWPIECES,
+  LODGE_STATUSES,
+  type LodgeAmbient,
+  type LodgeEmblem,
+  type LodgeLogoStyle,
+  type LodgeNeonSign,
+  type LodgeStatus,
+} from "./taxonomy";
 
 /*
  * AI Lodge lodges. Each semester has its own lodges (copy one forward to reuse it);
@@ -59,6 +76,9 @@ export interface LodgeInput {
   cohortId: string;
   name: string;
   slug?: string;
+  /** Earlier URL names that should redirect here */
+  oldSlugs?: string[];
+  placeholder?: boolean;
   motto?: string;
   tagline?: string;
   level?: string;
@@ -74,17 +94,21 @@ export interface LodgeInput {
   scheduleTentative?: boolean;
   sessionLength?: string;
   weeks?: LodgeWeek[];
+  trailTentative?: boolean;
   weeksNote?: string;
   captains?: Captain[];
   status?: LodgeStatus;
   logo?: string;
+  logoStyle?: LodgeLogoStyle;
+  emblem?: LodgeEmblem;
   accent?: string;
   neonColor?: string;
   ambient?: LodgeAmbient;
   ambientImage?: string;
   ambientGlow?: boolean;
   neonSign?: LodgeNeonSign;
-  animatedArt?: string;
+  hero?: LodgeHero;
+  belt?: Partial<LodgeBelt>;
 }
 
 export const lodgeSlug = (name: string) =>
@@ -95,6 +119,11 @@ export const lodgeSlug = (name: string) =>
     .replace(/^-|-$/g, "");
 
 const HEX = /^#[0-9a-f]{6}$/i;
+const SLUG = /^[a-z0-9-]+$/;
+const oneOf = <T extends string>(list: readonly T[], value: unknown, message: string): T => {
+  ensure((list as readonly unknown[]).includes(value), message);
+  return value as T;
+};
 const cleanList = (list: string[] | undefined) => (list ?? []).map((s) => s.trim()).filter(Boolean);
 const cleanImage = (url: string | undefined, label: string) => {
   const v = (url ?? "").trim();
@@ -117,6 +146,44 @@ function cleanCaptains(list: Captain[] | undefined): Captain[] {
     });
 }
 
+function cleanHero(h: LodgeHero): LodgeHero {
+  const kind = oneOf(LODGE_HERO_KINDS, h?.kind, "Unknown header art");
+  if (kind === "showpiece") return { kind, showpiece: oneOf(LODGE_SHOWPIECES, h.showpiece, "Pick a showpiece") };
+  if (kind === "animated") {
+    const image = cleanImage(h.image, "The animated art");
+    ensure(image, "Upload the animated SVG, or pick other header art");
+    return { kind, image };
+  }
+  if (kind === "custom") {
+    const image = cleanImage(h.image, "The showpiece image");
+    ensure(image, "Upload the showpiece image, or pick other header art");
+    const glow = (h.glow ?? "").trim();
+    ensure(!glow || HEX.test(glow), "The showpiece glow must be a colour like #FFB547, or empty for none");
+    return {
+      kind,
+      image,
+      glow: glow.toUpperCase(),
+      particles: oneOf(LODGE_PARTICLES, h.particles ?? "none", "Unknown particles"),
+      float: h.float !== false,
+    };
+  }
+  return { kind };
+}
+
+function cleanBelt(b: Partial<LodgeBelt>, current: LodgeBelt): LodgeBelt {
+  const next = { ...current, ...b };
+  const belt: LodgeBelt = {
+    mode: oneOf(LODGE_BELT_MODES, next.mode, "Unknown strip style"),
+    speed: oneOf(LODGE_BELT_SPEEDS, next.speed, "Unknown strip speed"),
+    size: oneOf(LODGE_BELT_SIZES, next.size, "Unknown strip size"),
+  };
+  if (belt.mode === "tile" || belt.mode === "banner") {
+    belt.image = cleanImage(next.image, "The strip image");
+    ensure(belt.image, belt.mode === "tile" ? "Upload the image to repeat in the strip" : "Upload the long strip image");
+  }
+  return belt;
+}
+
 function cleanWeeks(list: LodgeWeek[] | undefined): LodgeWeek[] {
   return (list ?? [])
     .map((w) => ({
@@ -129,17 +196,23 @@ function cleanWeeks(list: LodgeWeek[] | undefined): LodgeWeek[] {
 }
 
 /** Validates the editable fields; anything left undefined stays as it is. */
-function lodgeValues(input: LodgeInput) {
+function lodgeValues(input: LodgeInput, currentBelt: LodgeBelt) {
   const v: Partial<typeof lodges.$inferInsert> = { updatedAt: new Date().toISOString() };
   const name = input.name.trim();
   ensure(name, "Lodge name is required");
   v.name = name;
   if (input.slug !== undefined) {
     const slug = input.slug.trim().toLowerCase() || lodgeSlug(name);
-    ensure(/^[a-z0-9-]+$/.test(slug), 'Use a short URL name with letters, numbers and dashes, like "hackstreet-boys"');
+    ensure(SLUG.test(slug), 'Use a short URL name with letters, numbers and dashes, like "hackstreet-boys"');
     ensure(slug !== "past", '"past" is reserved on the AI Lodge site; pick another URL name');
     v.slug = slug;
   }
+  if (input.oldSlugs !== undefined) {
+    v.oldSlugs = Array.from(new Set(cleanList(input.oldSlugs).map((s) => s.toLowerCase().replace(/^\/?(lodges\/)?/, ""))));
+    for (const old of v.oldSlugs) ensure(SLUG.test(old) && old !== "past", `"${old}" isn't a URL name (letters, numbers and dashes)`);
+  }
+  if (input.placeholder !== undefined) v.placeholder = Boolean(input.placeholder);
+  if (input.trailTentative !== undefined) v.trailTentative = Boolean(input.trailTentative);
   for (const key of ["motto", "tagline", "level", "whoCanJoin", "forWho", "forWhoCard", "why", "schedule", "scheduleShort", "sessionLength", "weeksNote"] as const) {
     if (input[key] !== undefined) v[key] = (input[key] as string).trim();
   }
@@ -172,8 +245,11 @@ function lodgeValues(input: LodgeInput) {
     v.neonColor = c.toUpperCase();
   }
   if (input.logo !== undefined) v.logo = cleanImage(input.logo, "The logo");
+  if (input.logoStyle !== undefined) v.logoStyle = oneOf(LODGE_LOGO_STYLES, input.logoStyle, "Unknown logo style");
+  if (input.emblem !== undefined) v.emblem = oneOf(LODGE_EMBLEMS, input.emblem, "Unknown stand-in emblem");
   if (input.ambientImage !== undefined) v.ambientImage = cleanImage(input.ambientImage, "The particle image");
-  if (input.animatedArt !== undefined) v.animatedArt = cleanImage(input.animatedArt, "The animated art");
+  if (input.hero !== undefined) v.hero = cleanHero(input.hero);
+  if (input.belt !== undefined) v.belt = cleanBelt(input.belt, currentBelt);
   return v;
 }
 
@@ -197,7 +273,15 @@ async function ensureSlugFree(cohortId: string, slug: string, exceptId?: number)
 
 export async function saveLodge(actor: Actor, input: LodgeInput): Promise<Lodge> {
   await requireSemester(actor, input.cohortId);
-  const values = lodgeValues({ ...input, slug: input.slug ?? (input.id ? undefined : "") });
+  const existing = input.id ? await getLodge(input.id) : null;
+  ensure(!input.id || existing, "Lodge not found");
+  const values = lodgeValues(
+    { ...input, slug: input.slug ?? (input.id ? undefined : "") },
+    existing?.belt ?? { mode: "mark", speed: "normal", size: "medium" }
+  );
+  const hero = values.hero ?? existing?.hero;
+  const neonSign = values.neonSign ?? existing?.neonSign ?? "none";
+  ensure(hero?.kind !== "neon" || neonSign !== "none", "Pick a neon sign to show it in the header");
   if (values.slug) await ensureSlugFree(input.cohortId, values.slug, input.id);
   const db = await getDb();
   let row: Lodge | undefined;
@@ -209,10 +293,10 @@ export async function saveLodge(actor: Actor, input: LodgeInput): Promise<Lodge>
       .returning();
     ensure(row, "Lodge not found");
   } else {
-    const existing = await listLodges(input.cohortId);
+    const siblings = await listLodges(input.cohortId);
     [row] = await db
       .insert(lodges)
-      .values({ ...values, name: values.name!, slug: values.slug!, cohortId: input.cohortId, position: existing.length })
+      .values({ ...values, name: values.name!, slug: values.slug!, cohortId: input.cohortId, position: siblings.length })
       .returning();
   }
   revalidateCms("cohorts", "projects");

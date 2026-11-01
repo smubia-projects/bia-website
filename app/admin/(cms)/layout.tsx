@@ -21,7 +21,7 @@ export default async function CmsLayout({ children }: { children: React.ReactNod
 
   const visible = cohorts.filter((c) => (c.programme === "AI Lodge" ? can.seeLodge(actor) : can.seeDap(actor)));
   const runs: RunOption[] = visible.map((c) => ({ programme: c.programme, slug: c.slug, name: c.name, visibility: c.visibility }));
-  const remembered = cookies().get(RUN_COOKIE)?.value;
+  const remembered = (await cookies()).get(RUN_COOKIE)?.value;
   const current = pickCurrentCohort(visible.filter((c) => c.programme === "AI Lodge")) ?? pickCurrentCohort(visible);
   const defaultRun =
     runs.find((r) => `${RUN_SEGMENT[r.programme]}/${r.slug}` === remembered) ??
@@ -33,6 +33,7 @@ export default async function CmsLayout({ children }: { children: React.ReactNod
       email={actor.email}
       roleLabel={ROLE_LABEL[actor.role]}
       seeSettings={can.managePeople(actor)}
+      seePhotos={can.seePhotos(actor)}
       reviewCount={reviewCount}
       runs={runs}
       defaultRun={defaultRun}

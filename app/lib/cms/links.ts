@@ -13,6 +13,7 @@ import {
 } from "@/app/lib/links";
 import { can, ensure, type Actor } from "./actor";
 import { revalidateCms, TAGS } from "./revalidate";
+import type { Programme } from "./taxonomy";
 
 const KEYS = EDITABLE_LINKS.map((l) => l.key) as string[];
 
@@ -48,6 +49,18 @@ export async function getSiteLinks(): Promise<SiteLinks> {
 export interface SiteLinksInput {
   links?: Partial<Record<string, string>>;
   applications?: Partial<Applications>;
+}
+
+/** Opens or closes one programme's applications (every join button follows). */
+export async function setApplicationsOpen(actor: Actor, programme: Programme, open: boolean): Promise<SiteLinks> {
+  ensure(can.setApplications(actor, programme), `You can't open or close ${programme} applications`);
+  const db = await getDb();
+  const current = (await listSiteLinks()).applications;
+  const value: Applications = { ...current, [programme === "DAP" ? "dap" : "aiLodge"]: Boolean(open) };
+  const row = { key: "applications", value, updatedAt: new Date().toISOString(), updatedBy: actor.email };
+  await db.insert(siteSettings).values(row).onConflictDoUpdate({ target: siteSettings.key, set: row });
+  revalidateCms("links");
+  return listSiteLinks();
 }
 
 /** Saves links (a value equal to the default clears the override) and the applications switches. */

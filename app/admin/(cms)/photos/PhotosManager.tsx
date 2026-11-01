@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PHOTO_SLOTS, type Photo, type PhotoSlot, type SitePhotos } from "@/app/lib/photos";
+import type { Photo, PhotoSlot, SitePhotos } from "@/app/lib/photos";
 import { saveSitePhotoAction } from "../../actions";
 import { useActionToast, useImageUpload, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
@@ -20,19 +20,19 @@ const valueOf = (photos: SitePhotos, slot: PhotoSlot): Value =>
  * live preview of its page beside the list (same-origin pages are loaded in a
  * frame and the new photo is swapped into the [data-photo-slot] image).
  */
-export default function PhotosManager({ photos }: { photos: SitePhotos }) {
+export default function PhotosManager({ photos, slots }: { photos: SitePhotos; /** The slots this person may edit */ slots: PhotoSlot[] }) {
   const router = useRouter();
   const { handle, node, show } = useActionToast();
   const [drafts, setDrafts] = useState<Record<string, Value>>({});
-  const [selected, setSelected] = useState(PHOTO_SLOTS[0].key);
+  const [selected, setSelected] = useState(slots[0].key);
   const [busy, setBusy] = useState<string | null>(null);
-  const [uploadSlot, setUploadSlot] = useState<PhotoSlot>(PHOTO_SLOTS[0]);
+  const [uploadSlot, setUploadSlot] = useState<PhotoSlot>(slots[0]);
   const uploader = useImageUpload("site");
   useUnsavedChanges(busy === null && Object.keys(drafts).length > 0);
 
   const current = (slot: PhotoSlot) => drafts[slot.key] ?? valueOf(photos, slot);
-  const slot = PHOTO_SLOTS.find((s) => s.key === selected)!;
-  const pages = Array.from(new Set(PHOTO_SLOTS.map((s) => s.page)));
+  const slot = slots.find((s) => s.key === selected)!;
+  const pages = Array.from(new Set(slots.map((s) => s.page)));
   const setDraft = (key: string, v: Value) => setDrafts((d) => ({ ...d, [key]: v }));
   const dropDraft = (key: string) =>
     setDrafts((d) => {
@@ -80,7 +80,7 @@ export default function PhotosManager({ photos }: { photos: SitePhotos }) {
               {page === "AI Lodge site" && (
                 <span className={styles.hint}>The AI Lodge site shows these once it reads them from smubia.com (see docs/ailodge-site-handoff.md).</span>
               )}
-              {PHOTO_SLOTS.filter((s) => s.page === page).map((s) => {
+              {slots.filter((s) => s.page === page).map((s) => {
                 const value = current(s);
                 const dirty = s.key in drafts;
                 const custom = photos.custom.includes(s.key);

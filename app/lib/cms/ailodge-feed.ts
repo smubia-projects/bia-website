@@ -1,5 +1,4 @@
 import { unstable_cache } from "next/cache";
-import type { TimelineStep } from "@/app/lib/db/schema";
 import { joinLink } from "@/app/lib/links";
 import { listCohorts, type Cohort } from "./cohorts";
 import { getSiteLinks } from "./links";
@@ -8,7 +7,18 @@ import { listLodges, lodgePaths, type Lodge } from "./lodges";
 import { cohortPath, yearbookPath } from "./paths";
 import { TAGS } from "./revalidate";
 import { SITE_URL } from "./telegram";
-import type { LodgeAmbient, LodgeNeonSign } from "./taxonomy";
+import type {
+  LodgeAmbient,
+  LodgeBeltMode,
+  LodgeBeltSize,
+  LodgeBeltSpeed,
+  LodgeEmblem,
+  LodgeHeroKind,
+  LodgeLogoStyle,
+  LodgeNeonSign,
+  LodgeParticles,
+  LodgeShowpiece,
+} from "./taxonomy";
 
 /*
  * The public, read-only feed the AI Lodge site (ailodge.smubia.com) builds its
@@ -17,7 +27,8 @@ import type { LodgeAmbient, LodgeNeonSign } from "./taxonomy";
  * docs/ailodge-site-handoff.md documents it for the AI Lodge site.
  */
 
-export const FEED_VERSION = 1;
+/** 2: lodge art became hero + belt (art.animatedArt removed), placeholders and short names added */
+export const FEED_VERSION = 2;
 
 export interface FeedCaptain {
   name: string;
@@ -31,6 +42,10 @@ export interface FeedLodge {
   slug: string;
   /** Path on the AI Lodge site, e.g. /lodges/mit (see lodgePaths) */
   path: string;
+  /** Earlier URL names that should redirect to `path` */
+  oldSlugs: string[];
+  /** Details not released yet: show the "details drop" treatment */
+  placeholder: boolean;
   name: string;
   motto: string | null;
   tagline: string;
@@ -41,12 +56,14 @@ export interface FeedLodge {
   forWhoCard: string;
   why: string;
   topics: string[];
-  /** Up to three; already falls back to the first three topics */
+  /** Up to three; already falls back to the first three topics. Empty on a placeholder with none set. */
   cardTags: string[];
   goals: string[];
   schedule: { text: string | null; short: string | null; tentative: boolean };
   sessionLength: string | null;
   weeks: { label: string; topic: string; tag: "mandatory" | "optional" | null; note: string | null }[];
+  /** The weekly topics are a draft */
+  trailTentative: boolean;
   weeksNote: string | null;
   captains: FeedCaptain[];
   applications: {
@@ -56,28 +73,63 @@ export interface FeedLodge {
     applyUrl: string | null;
   };
   art: {
+    /** null: draw the stand-in `emblem` */
     logo: string | null;
+    /** tint: paint the logo's shape in neonColor; original: show it in its own colours */
+    logoStyle: LodgeLogoStyle;
+    emblem: LodgeEmblem;
     accent: string;
     /** Already falls back to accent */
     neonColor: string;
+    /** The lodge's coded neon sign: its card mark and belt mark when set */
+    neonSign: LodgeNeonSign;
     ambient: LodgeAmbient;
     ambientImage: string | null;
     ambientGlow: boolean;
-    neonSign: LodgeNeonSign;
-    animatedArt: string | null;
+    /** Right of the lodge page's header */
+    hero: {
+      kind: LodgeHeroKind;
+      /** kind "showpiece" */
+      showpiece: LodgeShowpiece | null;
+      /** kind "custom" or "animated" */
+      image: string | null;
+      /** kind "custom": glow colour behind the image, null = none */
+      glow: string | null;
+      particles: LodgeParticles;
+      float: boolean;
+    };
+    /** Whether to draw the faint oversized logo behind the header (logo and neon heroes) */
+    watermark: boolean;
+    /** The strip under the header */
+    belt: { mode: LodgeBeltMode; image: string | null; speed: LodgeBeltSpeed; size: LodgeBeltSize };
   };
+}
+
+export interface FeedTimelineStep {
+  label: string;
+  /** YYYY-MM-DD */
+  date: string;
+  note: string | null;
+  deadline: boolean;
 }
 
 export interface FeedSemester {
   slug: string;
   name: string;
+  /** The AI Lodge site's name for it, e.g. "Fall 2026"; already falls back to name */
+  shortName: string;
   status: "current" | "past";
+  /** "Details drop {revealNote}" for placeholder lodges, e.g. "soon" */
+  revealNote: string;
   hackDay: string | null;
-  timeline: TimelineStep[];
+  timeline: FeedTimelineStep[];
   /** The semester's yearbook on smubia.com */
   projectsUrl: string;
+  /** In the CMS's order */
   lodges: FeedLodge[];
 }
+
+type FeedPhoto = { src: string; alt: string };
 
 export interface AILodgeFeed {
   version: number;
@@ -100,21 +152,26 @@ export interface AILodgeFeed {
    * site's own file. Images are absolute URLs.
    */
   photos: {
-    entry: { src: string; alt: string } | null;
-    entryPortrait: { src: string; alt: string } | null;
-    lodgeHero: { src: string; alt: string } | null;
-    moments: { src: string; alt: string }[] | null;
+    entry: FeedPhoto | null;
+    entryPortrait: FeedPhoto | null;
+    lodgeHero: FeedPhoto | null;
+    hero: FeedPhoto | null;
+    whyJoin: FeedPhoto | null;
+    moments: FeedPhoto[] | null;
   };
 }
 
-const abs = (url: string) => (!url ? null : url.startsWith("/") ? `${SITE_URL}${url}` : url);
+const abs = (url: string | undefined) => (!url ? null : url.startsWith("/") ? `${SITE_URL}${url}` : url);
 const orNull = (s: string) => s.trim() || null;
 
 function feedLodge(l: Lodge, path: string, applyUrl: string | null): FeedLodge {
-  const open = l.status === "open" && applyUrl !== null;
+  const open = l.status === "open" && applyUrl !== null && !l.placeholder;
+  const tags = l.cardTags.length ? l.cardTags : l.placeholder ? [] : l.topics;
   return {
     slug: l.slug,
     path,
+    oldSlugs: l.oldSlugs,
+    placeholder: l.placeholder,
     name: l.name,
     motto: orNull(l.motto),
     tagline: l.tagline,
@@ -124,11 +181,12 @@ function feedLodge(l: Lodge, path: string, applyUrl: string | null): FeedLodge {
     forWhoCard: l.forWhoCard || l.forWho,
     why: l.why,
     topics: l.topics,
-    cardTags: (l.cardTags.length ? l.cardTags : l.topics).slice(0, 3),
+    cardTags: tags.slice(0, 3),
     goals: l.goals,
     schedule: { text: orNull(l.schedule), short: orNull(l.scheduleShort), tentative: l.scheduleTentative },
     sessionLength: orNull(l.sessionLength),
     weeks: l.weeks.map((w) => ({ label: w.label, topic: w.topic, tag: w.tag ?? null, note: w.note ?? null })),
+    trailTentative: l.trailTentative,
     weeksNote: orNull(l.weeksNote),
     captains: l.captains.map((c) => ({
       name: c.name,
@@ -140,13 +198,24 @@ function feedLodge(l: Lodge, path: string, applyUrl: string | null): FeedLodge {
     applications: { status: open ? "open" : "closed", applyUrl: open ? applyUrl : null },
     art: {
       logo: abs(l.logo),
+      logoStyle: l.logoStyle,
+      emblem: l.emblem,
       accent: l.accent,
       neonColor: l.neonColor || l.accent,
+      neonSign: l.neonSign,
       ambient: l.ambient,
       ambientImage: abs(l.ambientImage),
       ambientGlow: l.ambientGlow,
-      neonSign: l.neonSign,
-      animatedArt: abs(l.animatedArt),
+      hero: {
+        kind: l.hero.kind,
+        showpiece: l.hero.kind === "showpiece" ? l.hero.showpiece ?? null : null,
+        image: l.hero.kind === "custom" || l.hero.kind === "animated" ? abs(l.hero.image) : null,
+        glow: l.hero.kind === "custom" ? l.hero.glow || null : null,
+        particles: l.hero.kind === "custom" ? l.hero.particles ?? "none" : "none",
+        float: l.hero.kind === "custom" ? l.hero.float !== false : false,
+      },
+      watermark: l.hero.kind === "logo" || l.hero.kind === "neon",
+      belt: { mode: l.belt.mode, image: abs(l.belt.image), speed: l.belt.speed, size: l.belt.size },
     },
   };
 }
@@ -181,9 +250,11 @@ export async function getAILodgeFeed(semesterSlug?: string): Promise<AILodgeFeed
     return {
       slug: c.slug,
       name: c.name,
+      shortName: c.shortName || c.name,
       status: current ? "current" : "past",
+      revealNote: c.revealNote || "soon",
       hackDay: orNull(c.hackDay),
-      timeline: c.timeline,
+      timeline: c.timeline.map((t) => ({ label: t.label, date: t.date, note: t.note ?? null, deadline: Boolean(t.deadline) })),
       projectsUrl: `${SITE_URL}${cohortPath("AI Lodge", c.slug)}`,
       lodges: (lodges[c.id] ?? []).map((l) => feedLodge(l, paths[l.id] ?? `/lodges/${l.slug}`, applyUrl)),
     };
@@ -205,6 +276,8 @@ export async function getAILodgeFeed(semesterSlug?: string): Promise<AILodgeFeed
       entry: photo("entry"),
       entryPortrait: photo("entryPortrait"),
       lodgeHero: photo("lodgeHero"),
+      hero: photo("hero"),
+      whyJoin: photo("whyJoin"),
       moments: replaced("moments") ? (sitePhotos.gallery["ailodge.moments"] ?? []).map((p) => ({ src: abs(p.src)!, alt: p.alt })) : null,
     },
   };

@@ -1,0 +1,1 @@
+ALTER TABLE "lodges" DROP COLUMN "animated_art";

@@ -14,6 +14,8 @@ interface Props {
   email: string;
   roleLabel: string;
   seeSettings: boolean;
+  /** Photos alone (AI Lodge exco edit the AI Lodge site's photos) */
+  seePhotos: boolean;
   reviewCount: number;
   /** Every semester and cohort this person can open */
   runs: RunOption[];
@@ -32,6 +34,7 @@ const TOP_CRUMBS: [RegExp, string][] = [
   [/^\/admin\/links/, "Settings › Site links"],
   [/^\/admin\/photos/, "Settings › Photos"],
   [/^\/admin\/people/, "Settings › People and roles"],
+  [/^\/admin\/tokens/, "Settings › Access tokens"],
   [/^\/admin$/, "Home"],
 ];
 
@@ -98,14 +101,11 @@ export default function Shell(props: Props) {
           </>
         )}
 
-        {props.seeSettings && (
-          <>
-            <div className={styles.sideGroup}>Settings</div>
-            {item("/admin/links", "Site links", pathname.startsWith("/admin/links"))}
-            {item("/admin/photos", "Photos", pathname.startsWith("/admin/photos"))}
-            {item("/admin/people", "People and roles", pathname.startsWith("/admin/people"))}
-          </>
-        )}
+        <div className={styles.sideGroup}>Settings</div>
+        {props.seeSettings && item("/admin/links", "Site links", pathname.startsWith("/admin/links"))}
+        {props.seePhotos && item("/admin/photos", "Photos", pathname.startsWith("/admin/photos"))}
+        {props.seeSettings && item("/admin/people", "People and roles", pathname.startsWith("/admin/people"))}
+        {item("/admin/tokens", "Access tokens", pathname.startsWith("/admin/tokens"))}
         <div className={styles.signedIn}>
           Signed in as {props.roleLabel}
           <strong>{props.email}</strong>

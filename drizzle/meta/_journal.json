@@ -64,6 +64,20 @@
       "when": 1793382525246,
       "tag": "0008_site_photos",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793524540702,
+      "tag": "0009_lodge_art",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793524572911,
+      "tag": "0010_drop_lodge_animated_art",
+      "breakpoints": true
     }
   ]
 }

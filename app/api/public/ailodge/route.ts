@@ -23,9 +23,9 @@ export async function GET(request: Request) {
     if (semester && !feed.semester) {
       return NextResponse.json({ error: `No public AI Lodge semester "${semester}"` }, { status: 404, headers: CORS });
     }
-    return NextResponse.json(feed, {
-      headers: { ...CORS, "Cache-Control": "public, s-maxage=60, stale-while-revalidate=600" },
-    });
+    // Not cached at the CDN: the AI Lodge site refetches right after a CMS change,
+    // and the CMS reads behind this are cached and busted on every change already.
+    return NextResponse.json(feed, { headers: { ...CORS, "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("[api] AI Lodge feed failed", error);
     return NextResponse.json({ error: "The AI Lodge feed is unavailable" }, { status: 503, headers: CORS });
