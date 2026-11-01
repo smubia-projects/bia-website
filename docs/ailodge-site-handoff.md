@@ -1,191 +1,117 @@
-# AI Lodge site: switching to CMS data from smubia.com
+# AI Lodge site: reading everything from the smubia.com CMS
 
-This document is for whoever works on the AI Lodge site (ailodge.smubia.com, the
-`ailodge-infosite` repo: Next 16, React 19, Tailwind 4, GSAP). The lodges, captains,
-weekly trails, applications timeline, art and every Apply/Join link now live in the
-smubia.com CMS. The AI Lodge site should read them from one public endpoint instead of
-`src/data/lodges.ts` and hard-coded links.
+For whoever maintains the AI Lodge site (ailodge.smubia.com, repo
+`makilover3000/AI-LODGE-RECRUITMENT-WEBSITE`: Next 16, React 19, Tailwind 4, GSAP).
 
-The two sites will be merged into one repo later, after smubia.com moves to Next 16.
-Until then this endpoint is the contract between them.
+Lodges, captains, weekly trails, the applications timeline, every lodge's art, the
+Apply/Join links and the site's photos now live in the smubia.com CMS
+(smubia.com/admin). The AI Lodge site reads them from one public endpoint. That switch
+is built and tested on the branch **`cms-feed`** of the AI Lodge repo; this document
+explains it so it can be reviewed and merged.
 
-## 1. The endpoint
+The two sites will become one repo later. Until then this endpoint is the contract.
+
+## 1. What changed on `cms-feed`
+
+- `src/lib/cms.ts` fetches the feed on the server, maps it onto the site's `Lodge` shape
+  and exposes `getSite()`, `allLodges()`, `lodgeAt(path)` and `renamedLodge(slug)`.
+- `src/data/lodges.ts` and `src/data/programme.ts` are **deleted**. Nothing about lodges,
+  dates or links is hard-coded any more.
+- Lodge art is chosen in the CMS, not by slug:
+  - **Header art** (`art.hero.kind`): the logo, the lodge's neon sign, a coded showpiece
+    (Despacito, BRYan, PandAI, S.P.I.C.E. — any lodge can reuse one), a **custom
+    showpiece** built in the CMS (`components/lodge/CustomShowpiece.tsx`: uploaded image,
+    glow colour, particles, float and parallax), or an animated SVG.
+  - **Neon sign** (`art.neonSign`: guitar, ship, bat, skull) is the card mark and the strip
+    mark when set (`components/lodge/NeonMark.tsx` holds each sign's tuned sizes).
+  - **Strip under the header** (`art.belt`): repeat the mark, repeat an uploaded image,
+    scroll one long uploaded image, papel picado, or none; speed and size.
+  - **Logo style**: painted in the glow colour (the mask trick) or in its own colours
+    (`.ail-art` in `globals.css`).
+  - **Drifting particles** (`AmbientLayer`) now render when a lodge has them set,
+    including a custom particle image. Every lodge is set to none today, matching the
+    live site.
+- Placeholder lodges, "details drop …", the past cohort's name ("Fall 2026"), the
+  applications timeline (with its deadline flag) and the trail's tentative flag all come
+  from the CMS.
+- Photos replaced in the CMS (entry scene, lodge page backdrop, home photo, Why join
+  photo, moments belt) are used; otherwise the site's own files are.
+- Apply buttons follow the CMS switch: the form while applications are open, the club
+  Telegram ("Get notified") while closed.
+- Routes: `/lodges/[slug]`, plus `/lodges/past/[semester]/[slug]` for an older lodge whose
+  URL name a later semester reused. Old URL names set in the CMS redirect (308), e.g.
+  `/lodges/kag` → `/lodges/curiositymaxxer`.
+- `POST /api/revalidate` (Bearer `REVALIDATE_SECRET`) refreshes every page at once.
+- `next.config.ts`: Blob and smubia.com image hosts, and `turbopack.root` so a copy
+  checked out inside the smubia.com repo builds on its own.
+
+Checked locally against the CMS: all 16 lodge pages match the live site's structure
+(heading, badges, header art, watermark, strip, captains, weeks, closing band), the home
+page text is identical, a CMS edit shows on the site within 2 seconds, and every new art
+option renders.
+
+## 2. Deploying
+
+On the **AI Lodge** Vercel project:
+
+| Variable | Value |
+|---|---|
+| `REVALIDATE_SECRET` | A long random string (`openssl rand -hex 32`) |
+| `CMS_FEED_URL` | Optional; defaults to `https://www.smubia.com/api/public/ailodge` |
+
+On the **smubia.com** Vercel project:
+
+| Variable | Value |
+|---|---|
+| `AILODGE_REVALIDATE_URL` | `https://ailodge.smubia.com/api/revalidate` |
+| `AILODGE_REVALIDATE_SECRET` | The same value as `REVALIDATE_SECRET` above |
+
+Order: deploy the smubia.com CMS (feed version 2) first, then merge `cms-feed`. The AI
+Lodge build fetches the feed, so it fails if smubia.com isn't serving version 2 yet.
+After that, pages are static: they refresh at once when the CMS calls the revalidate
+route, and hourly regardless. If smubia.com is down during a refresh, the last good
+pages stay up.
+
+Local development: copy `.env.example` to `.env.local` and point `CMS_FEED_URL` at a local
+smubia.com (`http://localhost:3000/api/public/ailodge`).
+
+## 3. The endpoint
 
 ```
 GET https://www.smubia.com/api/public/ailodge
-GET https://www.smubia.com/api/public/ailodge?semester=ay2526-s2
+GET https://www.smubia.com/api/public/ailodge?semester=ay2627-s1
 ```
 
-- Public and read-only. No key, no auth, nothing private in it.
-- CORS: `Access-Control-Allow-Origin: *` (GET and OPTIONS).
-- Cached at Vercel's edge for 60 s (`s-maxage=60, stale-while-revalidate=600`). Edits in
-  the CMS show up within about a minute.
+- Public, read-only, CORS `*`. Not cached at the edge (`no-store`); the CMS caches its
+  own reads and busts them on every edit.
 - `?semester=<slug>` returns that semester as `semester` (404 if it isn't public).
-  Without it, `semester` is the current one.
-- 503 with `{ "error": "…" }` if the database is unreachable. Keep a fallback (see §4).
+- 503 with `{ "error": "…" }` if the database is unreachable.
+- `version` is bumped only when a field is renamed or removed. **Version 2** (this one)
+  replaced `art.animatedArt` with `art.hero`, and added `art.belt`, `art.logoStyle`,
+  `art.emblem`, `art.watermark`, `placeholder`, `trailTentative`, `oldSlugs`,
+  `applications.takesApplications`, `semester.shortName`, `semester.revealNote`, timeline
+  `deadline`, and the `hero` and `whyJoin` photos. The exact types are in
+  `app/lib/cms/ailodge-feed.ts` (smubia.com repo) and mirrored in `src/lib/cms.ts`.
 
-### Response shape (version 1)
+## 4. Things to watch
 
-`version` is bumped only when a field is renamed or removed; new fields can appear at any
-time, so ignore fields you don't know.
-
-```ts
-type AILodgeFeed = {
-  version: 1;
-  generatedAt: string; // ISO time
-
-  applications: {
-    open: boolean;       // the AI Lodge applications switch in the CMS
-    url: string;         // where site-wide "Apply now" / "Join us now" go:
-                         // the form when open, the club Telegram when closed
-    formUrl: string;     // the application form, regardless of the switch
-    telegramUrl: string; // the club Telegram
-  };
-
-  links: {
-    site: string;     // https://ailodge.smubia.com (as set in the CMS)
-    smubia: string;   // https://www.smubia.com
-    projects: string; // AI Lodge projects on smubia.com (https://www.smubia.com/projects/ailodge)
-    telegram: string;
-  };
-
-  semester: Semester | null; // the current semester, or ?semester=
-  past: Semester[];          // past semesters, newest first, lodges as they ran
-
-  // Photos replaced in the CMS (Settings › Photos). null = not replaced: keep your own file.
-  photos: {
-    entry: { src: string; alt: string } | null;         // entry scene, desktop (entry-hd.jpg)
-    entryPortrait: { src: string; alt: string } | null; // entry scene, phone (entry-hd-portrait.jpg)
-    lodgeHero: { src: string; alt: string } | null;     // lodge page backdrop (close-desktop.jpg)
-    moments: { src: string; alt: string }[] | null;     // the "Past moments" belt, in order
-  };
-};
-
-type Semester = {
-  slug: string;          // "ay2627-s1"
-  name: string;          // "AY26/27 Semester 1"
-  status: "current" | "past";
-  hackDay: string | null;   // "Date · Venue"
-  timeline: { label: string; date: string /* YYYY-MM-DD */; note?: string }[];
-  projectsUrl: string;   // that semester's yearbook on smubia.com
-  lodges: Lodge[];       // in the order to show them
-};
-
-type Lodge = {
-  slug: string;          // "mit"
-  path: string;          // ALWAYS link with this, e.g. "/lodges/mit" (see §4.5)
-  name: string;          // "MIT Lodge"
-  motto: string | null;  // "Mostly Intelligent Together" (shown in quotes)
-  tagline: string;
-  level: string;         // badge text, free text: "Open to all", "Beginner", …
-  whoCanJoin: string | null; // "Anyone"
-  forWho: string;
-  forWhoCard: string;    // already falls back to forWho
-  why: string;
-  topics: string[];      // "What you'll explore"
-  cardTags: string[];    // max 3, already falls back to topics.slice(0, 3)
-  goals: string[];       // may be empty
-  schedule: { text: string | null; short: string | null; tentative: boolean };
-                         // text: "Tue or Wed evenings · 7–10pm"; short (card): "Tue · 7–10pm"
-  sessionLength: string | null; // "~3 hours per session"
-  weeks: { label: string; topic: string; tag: "mandatory" | "optional" | null; note: string | null }[];
-  weeksNote: string | null;     // "Weekly topics are indicative and may shift to fit the lodge."
-  captains: { name: string; detail: string; telegram: string; telegramUrl: string | null; image: string | null }[];
-  applications: {
-    status: "open" | "closed"; // open only if the lodge, its semester AND the global switch are open
-    applyUrl: string | null;   // this lodge's Apply/Join target; null when closed
-  };
-  art: {
-    logo: string | null;       // absolute URL; PNG, SVG or WebP on transparency
-    accent: string;            // "#3BB9AF"
-    neonColor: string;         // already falls back to accent
-    ambient: "none" | "pointed" | "teardrop" | "lance" | "heart" | "round" | "maple" | "oval" | "bat";
-    ambientImage: string | null; // custom drifting particle; replaces `ambient` when set
-    ambientGlow: boolean;      // the pulsing halo (was Vampire-only)
-    neonSign: "none" | "bat" | "guitar" | "ship"; // which coded neon sign to draw
-    animatedArt: string | null; // animated SVG for the hero, replaces the logo when set
-  };
-};
-```
-
-All image URLs are absolute (usually `https://<id>.public.blob.vercel-storage.com/...`).
-
-## 2. What to replace
-
-File names are from the copy of the repo next to smubia.com, which is behind the live site
-(the live site has a `/lodges/past` page, more lodges and session times). Apply the same
-idea to whatever the current files are.
-
-| Today (hard-coded) | Replace with |
-|---|---|
-| `src/data/lodges.ts` → `lodges` array, `getLodge`, `isClosed` | `feed.semester.lodges`; find by `slug`; closed = `applications.status === "closed"` |
-| Previous lodges page (`/lodges/past`) data | `feed.past` (each has `name` for "Fall 2026 cohort"-style headings and its `lodges`) |
-| `app/lodges/[slug]/page.tsx` `generateStaticParams` + `getLodge` | lodges from the feed (current + past), matched on `path` |
-| `LODGE_SLUG_ALIASES` (`kag` → `curiositymaxxer`) | **Keep in the site.** Old shared links; the CMS doesn't track renamed slugs |
-| `https://forms.gle/ZU3dx3i3fioxkvjv8` in `ApplyCTA.tsx` ("Join us now"), `Hero.tsx` ("Apply now"), `NavBar.tsx` ("Apply", "Apply now") | `feed.applications.url`. On a lodge page, use `lodge.applications.applyUrl`, falling back to `feed.applications.url` if you want the button to stay (it then goes to Telegram when closed). Change the label when `!feed.applications.open`, e.g. "Get notified" |
-| `ApplicationsBanner.tsx` `DATES` | `feed.semester.timeline` (format `date` yourself, e.g. "05 OCT") |
-| `https://smubia.com/Projects?badge=AI%20Lodge` in `MomentsBelt.tsx`, `Footer.tsx` | `feed.links.projects` (old link still redirects, but it takes 2 hops) |
-| `Captain.image` `/captains/<name>.jpg` | `captain.image` (absolute URL, may be null: show initials) |
-| `LodgeMark.tsx` `url(/logos/<slug>.png)` | `art.logo` |
-| `lodge.neonColor ?? lodge.accent` | `art.neonColor` (already resolved) |
-| `lodge.slug === "hackstreet-boys" / "vampire" / "curiositymaxxer"` checks in `LodgeCard.tsx`, `LodgeHero.tsx`, `LodgeTicker.tsx` | `art.neonSign === "guitar" / "bat" / "ship"` |
-| `AmbientKind` from `lodge.ambient`, `ambientGlow` | `art.ambient` (`"none"` = no particles), `art.ambientImage` (draw this image instead of a preset when set), `art.ambientGlow` |
-| `lodge.level` union + `LEVEL_STYLES[lodge.level]` | `level` is free text now ("Open to all" is common). Style known values, and give unknown ones a default style; or tint with `art.accent` |
-| `forWhoCard ?? forWho`, `cardTags ?? topics.slice(0, 3)` | use the fields directly (already resolved) |
-| Session time on cards / lodge hero ("Tue · 7–10pm", "Tentative") | `schedule.short` (card), `schedule.text` (hero and trail), `schedule.tentative` |
-| `MOMENTS` in `MomentsBelt.tsx` | `feed.photos.moments ?? MOMENTS` (the CMS gives no width/height: size the belt items by CSS, e.g. a fixed height with `width: auto`) |
-| `/entry/entry-hd.jpg`, `/entry/entry-hd-portrait.jpg` (entry scene, layout preload) | `feed.photos.entry?.src` / `feed.photos.entryPortrait?.src`, else the files. One image replaces both the `-web` and `-hd` variants |
-| `/entry/close-desktop.jpg` in `LodgeHero.tsx` | `feed.photos.lodgeHero?.src`, else the file |
-
-Programme-wide copy stays in the site for now: hero stats, Why join, How a lodge works,
-the programme trail (weeks 1–7, industry workshops, recess hack day, finals) and the
-three-stage application process.
-
-## 3. Suggested implementation
-
-- Add one module, e.g. `src/lib/cms.ts`, with `getFeed(semester?)` and the types above.
-- Fetch **on the server** (server components / `generateStaticParams`), not in the browser:
-  ```ts
-  const res = await fetch("https://www.smubia.com/api/public/ailodge", { next: { revalidate: 60 } });
-  ```
-  Next 15+ does not cache `fetch` by default, so set `revalidate` (or the page's
-  `export const revalidate = 60`) or every visit hits smubia.com.
-- Turn `src/data/lodges.ts` into the fallback: if the fetch fails or returns no current
-  lodges, render from the static data so the site never goes blank.
-- Keep the visual components as they are; only their props change.
-
-## 4. Things to watch (flagged)
-
-1. **The CMS starts empty.** No lodges are entered yet. Switch the site over only after
-   the current semester's lodges (and ideally the past ones) are in the CMS at
-   smubia.com/admin (AI Lodge › semester › Lodges), or the fallback will be showing.
-   Ask the smubia.com side to confirm the data is in.
-2. **Logo masks across domains.** `LodgeMark` paints the logo with CSS `mask-image`.
-   Masks load in CORS mode, so a logo on Vercel Blob only works if Blob sends
-   `Access-Control-Allow-Origin` (it normally sends `*`; verify in the browser). If a
-   mask fails it renders as nothing: fall back to an `<img>` of the logo.
-3. **`next/image` hosts.** Add the Blob host to `images.remotePatterns` in
-   `next.config`: `{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }`.
-4. **Animated SVGs.** Render `art.animatedArt` with `<img>` (or `<object>`), never by
-   inlining the SVG markup: an `<img>` SVG can't run scripts.
-5. **Slugs can repeat across semesters.** Lodges keep their `/lodges/<slug>` address after
-   their semester ends (the previous-lodges page links to them). If a slug comes back in a
-   later semester, the newest lodge keeps `/lodges/<slug>` and the older one's `path`
-   becomes `/lodges/past/<semester>/<slug>`. Always link with `path`, and add a
-   `/lodges/past/[semester]/[slug]` route that renders the same lodge page (it is only
-   used once a slug repeats).
-6. **Applications closed.** When the switch is off, `applications.url` is the club
-   Telegram and every lodge is `"closed"` with `applyUrl: null`. Don't hide lodges; the
-   site already shows closed lodges "for transparency".
-7. **Hidden semesters** (being prepared in the CMS) never appear in the feed; a new
-   semester appears when exco makes it current, and the previous one moves to `past`.
-8. **Old smubia.com links.** `https://smubia.com/Projects?...` still redirects, but use
-   the URLs from `feed.links` so new links are canonical.
-9. **Images may be null.** Captains without photos and lodges without logos are allowed.
-10. **Don't hard-code the form URL anywhere again**; the club changes it each intake.
+1. **New header art or signs need code.** The four showpieces and four neon signs are
+   coded on this site. A new coded one needs a value added on both sides
+   (`LODGE_SHOWPIECES` / `LODGE_NEON_SIGNS` in the CMS taxonomy, then the component
+   here). For a one-off look without code, use the custom showpiece.
+2. **Logo masks across domains.** `LodgeMark` paints logos with CSS `mask-image`, which
+   loads in CORS mode. Vercel Blob sends `Access-Control-Allow-Origin: *` (checked), so
+   CMS-hosted logos work.
+3. **Moments belt sizes.** Photos replaced in the CMS come without dimensions, so they
+   show at 4:3, cropped to fill.
+4. **Entry scene.** A replaced entry painting keeps the window glow, smoke and sun
+   positions tuned to the original painting.
+5. **Applications closed.** Every Apply button goes to the club Telegram and lodges show
+   as not open; lodges are never hidden.
+6. **Hidden semesters** never appear; a semester appears when exco makes it current, and
+   the previous one moves to `past`.
 
 ## 5. Asking for changes
 
-Need a field that isn't there (e.g. programme copy)? Ask on the
-smubia.com side: new fields are added to `app/lib/cms/ailodge-feed.ts` without breaking
-this version.
+Need a field that isn't there (programme copy, hero stats, …)? Ask on the smubia.com
+side: new fields are added to `app/lib/cms/ailodge-feed.ts` without breaking version 2.

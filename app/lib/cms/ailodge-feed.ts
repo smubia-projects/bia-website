@@ -67,6 +67,8 @@ export interface FeedLodge {
   weeksNote: string | null;
   captains: FeedCaptain[];
   applications: {
+    /** The lodge's own setting in the CMS (show it as "not taking applications" when false) */
+    takesApplications: boolean;
     /** "open" only when the lodge, its semester and the AI Lodge switch are all open */
     status: "open" | "closed";
     /** Where "Apply"/"Join us now" goes for this lodge; null when closed */
@@ -195,7 +197,7 @@ function feedLodge(l: Lodge, path: string, applyUrl: string | null): FeedLodge {
       telegramUrl: c.telegram ? `https://t.me/${c.telegram}` : null,
       image: abs(c.image),
     })),
-    applications: { status: open ? "open" : "closed", applyUrl: open ? applyUrl : null },
+    applications: { takesApplications: l.status === "open", status: open ? "open" : "closed", applyUrl: open ? applyUrl : null },
     art: {
       logo: abs(l.logo),
       logoStyle: l.logoStyle,
