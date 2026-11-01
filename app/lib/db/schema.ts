@@ -257,6 +257,31 @@ export const people = pgTable("people", {
   createdAt: createdAt(),
 });
 
+/**
+ * A personal access token for the MCP endpoint. It acts as its owner with their
+ * current role (re-read on every call), so removing someone from People ends it
+ * too. Only a SHA-256 hash is stored; the token is shown once when created.
+ */
+export const accessTokens = pgTable(
+  "access_tokens",
+  {
+    id: serial("id").primaryKey(),
+    email: text("email").notNull(),
+    /** What it's for, e.g. "Claude Code on my laptop" */
+    name: text("name").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    /** First characters of the token, to tell tokens apart */
+    preview: text("preview").notNull(),
+    createdAt: createdAt(),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true, mode: "string" }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true, mode: "string" }),
+  },
+  (t) => [uniqueIndex("access_tokens_hash").on(t.tokenHash), index("access_tokens_email").on(t.email)]
+);
+
+export type AccessTokenRow = typeof accessTokens.$inferSelect;
+
 /** A person shown on the site: DAP group members and mentors. */
 export interface Profile {
   name: string;

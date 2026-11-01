@@ -66,7 +66,7 @@ export default function Shell(props: Props) {
     : TOP_CRUMBS.find(([re]) => re.test(pathname))?.[1] ?? "CMS";
 
   const item = (href: string, label: string, on: boolean, badge?: number) => (
-    <Link href={href} className={`${styles.side} ${on ? styles.sideOn : ""}`} aria-current={on ? "page" : undefined}>
+    <Link key={href} href={href} className={`${styles.side} ${on ? styles.sideOn : ""}`} aria-current={on ? "page" : undefined}>
       {label}
       {badge ? <span className={styles.sideBadge}>{badge} to review</span> : null}
     </Link>

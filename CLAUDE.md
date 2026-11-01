@@ -198,7 +198,12 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
   (`vercel.json`, 01:00 UTC = 09:00 SGT, ±1 h on Hobby) publishes due issues. Publishing can
   post once to the DAP Telegram channel; "Send test" sends to one Telegram user ID (they must
   have sent /start to the bot). The bot is outbound-only: no webhook.
-- MCP: `/api/mcp` exposes the CMS as tools for Claude (bearer `CMS_MCP_TOKEN`).
+- MCP: `/api/mcp` exposes the CMS as tools for Claude. Each person creates a personal access
+  token under **Settings › Access tokens** (`app/lib/cms/tokens.ts`, stored hashed); the MCP acts
+  as that person with their current role. Locally (dev sign-in on) it also works without a token, as exco.
+- AI Lodge site refresh: after any change to lodges, semesters, links or photos, the CMS calls
+  `AILODGE_REVALIDATE_URL` with `AILODGE_REVALIDATE_SECRET` (`app/lib/cms/revalidate.ts`), and the
+  AI Lodge site rebuilds from the feed at once (it also refreshes hourly).
 
 ### URLs
 All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder names under
@@ -230,7 +235,8 @@ All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_BOT_USERNAME` | Club bot (unset = messages are logged, not sent) |
 | `TELEGRAM_DAP_CHANNEL_ID` | Where published issues are posted (`@channel` or `-100…`) |
 | `CRON_SECRET` | Authenticates the Vercel Cron call to `/api/cron/publish` |
-| `CMS_MCP_TOKEN` | Bearer token for `/api/mcp` (unset locally = open on localhost only) |
+| `AILODGE_REVALIDATE_URL` | The AI Lodge site's revalidate route, e.g. `https://ailodge.smubia.com/api/revalidate` (unset = it refreshes hourly) |
+| `AILODGE_REVALIDATE_SECRET` | Shared secret for that route; the same value is set on the AI Lodge site |
 | `NEXT_PUBLIC_SITE_URL` | Absolute links in Telegram posts (default `https://www.smubia.com`) |
 
 ### Scripts

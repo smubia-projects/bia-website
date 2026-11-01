@@ -8,10 +8,20 @@ export interface Actor {
   role: Role;
 }
 
-/** The MCP endpoint acts with exco rights; its edits are attributed to it. */
-export const AGENT_ACTOR: Actor = {
-  email: "mcp-agent",
-  name: "Claude (MCP)",
+/** The daily cron publishing scheduled newsletter issues. */
+export const SCHEDULER_ACTOR: Actor = {
+  email: "scheduler",
+  name: "Scheduled publishing",
+  role: "exco",
+};
+
+/**
+ * The MCP endpoint's actor in local development when no token is sent (the
+ * deployed endpoint always acts as a personal access token's owner).
+ */
+export const DEV_MCP_ACTOR: Actor = {
+  email: "dev-mcp@localhost",
+  name: "Claude (local development)",
   role: "exco",
 };
 

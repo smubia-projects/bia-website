@@ -91,7 +91,8 @@ the stable branch URL you registered, e.g. `bia-website-git-feat-cms-<team>.verc
 | `TELEGRAM_BOT_USERNAME` | ✓ | ✓ | Bot username without `@` (shown in the editor) |
 | `TELEGRAM_DAP_CHANNEL_ID` | ✓ | optional | From step 4 |
 | `CRON_SECRET` | ✓ | | Any long random string (Vercel Cron sends it automatically) |
-| `CMS_MCP_TOKEN` | ✓ | ✓ | Long random string, e.g. `openssl rand -hex 32` |
+| `AILODGE_REVALIDATE_URL` | ✓ | | `https://ailodge.smubia.com/api/revalidate` |
+| `AILODGE_REVALIDATE_SECRET` | ✓ | | Long random string, e.g. `openssl rand -hex 32`. Set the same value as `REVALIDATE_SECRET` on the AI Lodge site's Vercel project |
 | `NEXT_PUBLIC_SITE_URL` | `https://www.smubia.com` | (leave unset) | Absolute links in Telegram posts |
 | `BLOB_READ_WRITE_TOKEN` | already set | already set | Unchanged |
 
@@ -128,16 +129,15 @@ Keep `ADMIN_PASSWORD` and `UPSTASH_REDIS_REST_*` until step 9.
 ## 8. Backups and Claude access
 
 - Backups: follow `ops/db-backup/README.md` (private repo, one secret, done).
-- Claude: connect the CMS once:
-  ```bash
-  claude mcp add --transport http smubia-cms https://www.smubia.com/api/mcp --header "Authorization: Bearer <CMS_MCP_TOKEN>"
-  ```
-  Then ask things like "add this project as a draft", "make Leash the Agents winner" or
-  "draft week 6's issue". The tools can create, edit, publish and schedule, but never delete.
+- Claude: each person opens **Settings › Access tokens** in `/admin`, creates a token and runs
+  the `claude mcp add …` command it shows. The token acts as them, with their role. Then ask
+  things like "add this project as a draft", "make Leash the Agents winner", "close PandAI
+  Lodge" or "draft week 6's issue". The tools can create, edit, publish and schedule, but
+  never delete. Revoke a token on the same page.
 
 ## 9. After a week of the new CMS running cleanly
 
-- Remove `ADMIN_PASSWORD` and `UPSTASH_REDIS_REST_*` from the bia-website Vercel env.
+- Remove `ADMIN_PASSWORD`, `UPSTASH_REDIS_REST_*` and the retired `CMS_MCP_TOKEN` from the bia-website Vercel env.
 - Hand `../bia-all-projects/NOTES-bia-website-cms.md` to the other agent: it covers repointing the
   writeup skill and deleting the website's old keys from the shared Redis.
 

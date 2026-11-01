@@ -2,7 +2,7 @@ import { and, asc, desc, eq, lte } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/app/lib/db";
 import { cohorts, dapGroups, issues, sessions, type DapGroupRow, type IssueBlock, type IssueRow, type SessionRow } from "@/app/lib/db/schema";
-import { AGENT_ACTOR, can, CmsError, ensure, type Actor } from "./actor";
+import { SCHEDULER_ACTOR, can, CmsError, ensure, type Actor } from "./actor";
 import { getCohort, type Cohort } from "./cohorts";
 import { issuePath } from "./paths";
 import { revalidateCms, TAGS } from "./revalidate";
@@ -299,7 +299,7 @@ export async function publishDueIssues() {
     .where(and(eq(issues.status, "scheduled"), lte(issues.publishAt, new Date().toISOString())));
   const results = [];
   for (const { id } of due) {
-    results.push({ id, ...(await publishIssue(AGENT_ACTOR, id)) });
+    results.push({ id, ...(await publishIssue(SCHEDULER_ACTOR, id)) });
   }
   return results.map((r) => ({ id: r.id, week: r.issue.week, telegram: r.telegram }));
 }

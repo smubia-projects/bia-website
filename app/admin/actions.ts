@@ -11,6 +11,7 @@ import * as newsletter from "@/app/lib/cms/newsletter";
 import * as people from "@/app/lib/cms/people";
 import { saveSiteLinks, setApplicationsOpen, type SiteLinksInput } from "@/app/lib/cms/links";
 import { saveSitePhoto } from "@/app/lib/cms/photos";
+import { createToken, revokeToken } from "@/app/lib/cms/tokens";
 import type { Photo } from "@/app/lib/photos";
 import { UPLOAD_FOLDERS, uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
 import type { Programme, ProjectStatus, Role } from "@/app/lib/cms/taxonomy";
@@ -220,6 +221,20 @@ export async function deleteTrackAction(id: number) {
 }
 
 // ── Site links ───────────────────────────────────────────────────────────
+
+// ── Access tokens ────────────────────────────────────────────────────────
+
+/** Returns the token itself, once. */
+export async function createTokenAction(name: string, days: number) {
+  return run(async (actor) => (await createToken(actor, { name, days })).token);
+}
+
+export async function revokeTokenAction(id: number) {
+  return run(async (actor) => {
+    await revokeToken(actor, id);
+    return null;
+  });
+}
 
 export async function setApplicationsOpenAction(programme: Programme, open: boolean) {
   return run(async (actor) => {

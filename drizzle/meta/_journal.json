@@ -78,6 +78,13 @@
       "when": 1793524572911,
       "tag": "0010_drop_lodge_animated_art",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793525201615,
+      "tag": "0011_access_tokens",
+      "breakpoints": true
     }
   ]
 }

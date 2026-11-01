@@ -19,7 +19,7 @@ type PersonInput = { email: string; name: string; role: Role };
 const ROLE_INFO: { role: Role; can: string; who: string }[] = [
   {
     role: "exco",
-    can: "Everything: AI Lodge and DAP, all projects, approvals, site links, and people and roles.",
+    can: "Everything: AI Lodge and DAP, all projects, approvals, site links, photos, and people and roles.",
     who: "Exco members",
   },
   {
@@ -29,7 +29,7 @@ const ROLE_INFO: { role: Role; can: string; who: string }[] = [
   },
   {
     role: "lodge_exco",
-    can: "AI Lodge only: semesters, Hack Day tracks and winners, lodges, and AI Lodge projects (an exco admin approves them).",
+    can: "AI Lodge only: semesters, Hack Day tracks and winners, lodges, the AI Lodge site's photos and applications switch, and AI Lodge projects (an exco admin approves them).",
     who: "AI Lodge leads",
   },
 ];
