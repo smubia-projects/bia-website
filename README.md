@@ -77,7 +77,6 @@ app/
 ├── ContactUs/        # Contact page
 ├── WhatWeDo/         # Activities page
 ├── Datathon/         # Datathon page (embedded iframe)
-├── Merchandise/      # Merchandise page
 ├── WorkWithUs/       # Sponsorship/partnership page
 └── layout.tsx        # Root layout (navbar, footer, analytics)
 

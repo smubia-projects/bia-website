@@ -66,7 +66,6 @@ app/
 ├── curriculum/         # Curriculum page — workshops roadmap (Monopoly-themed SVG board)
 │   └── datathonData.ts # Datathon stats/copy (retained, unused since Wave 3)
 ├── contact-us/         # Join CTAs (#join anchor), channels, address
-├── merchandise/        # Placeholder (not in nav)
 ├── ailodge/            # Old internal AI Lodge page; unreachable (/ailodge redirects to the infosite)
 ├── layout.tsx          # Root layout: fonts, metadata, Navbar/Footer/LoadingScreen
 ├── page.tsx            # Home: dark hero, offerings, stats, DAP band, testimonials, join CTA
