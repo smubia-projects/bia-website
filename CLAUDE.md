@@ -15,14 +15,14 @@ npm run lint     # Run ESLint
 
 ## Project Overview
 
-SMUBIA (Singapore Management University Business Intelligence & Analytics Club) website built with Next.js 14. The site showcases the club's mission, vision, curriculum, and community.
+SMUBIA (Singapore Management University Business Intelligence & Analytics Club) website built with Next.js 16. The site showcases the club's mission, vision, curriculum, and community.
 
 **Key Technologies:**
-- **Framework:** Next.js 14 with App Router
+- **Framework:** Next.js 16 (App Router, Turbopack) with React 19
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS + CSS Modules, design tokens as CSS variables in `app/globals.css`
 - **Fonts:** Bricolage Grotesque (display, `--font-display`), Inter (body, `--font-inter`), Roboto Mono (eyebrows/stats, `--font-roboto-mono`) via `next/font/google`
-- **UI Components:** NextUI (CustomModal only), React Icons, Lucide Icons, Swiper
+- **UI Components:** our own primitives in `app/components/ui/`, Lucide icons, Framer Motion
 - **Hosting:** Vercel (www.smubia.com)
 - **Analytics:** Vercel Analytics and Speed Insights
 
@@ -30,7 +30,7 @@ SMUBIA (Singapore Management University Business Intelligence & Analytics Club) 
 - Light sections: `--bg #F6FAF8`, white cards, ink text `--ink #12352C`
 - Dark anchor sections (home hero, DAP bands, footer): `--pine-deep #0C211C` — never pure black
 - Brand mint `--mint #7DD7C2` is used on dark backgrounds only (fails contrast on white); on light backgrounds use `--emerald #0E7C5B`
-- Shadows/radius scales are tokens (`--shadow-*`, `--radius-*`); all mapped into Tailwind via `tailwind.config.ts`
+- Shadows/radius scales are tokens (`--shadow-*`, `--radius-*`); all mapped into Tailwind in the `@theme` block of `app/globals.css`
 - Photos are edited in the CMS under **Settings › Photos**. Every static photo is a slot in `app/lib/photos.ts` (the shipped file is the default); read it with `getSitePhotos()` + `pickPhoto()` (server) or `usePhoto()` (client) and put `data-photo-slot="<key>"` on the `<Image>` so the CMS preview can swap it. Never hard-code a new site photo: add a slot.
 - Club URLs (application forms, Telegram, emails, prospectus, socials) and the "applications open" switches are edited in the CMS under **Settings › Site links**. Join buttons use `joinLink()`. Read them with `getSiteLinks()` (server) or `useSiteLinks()` (client); `app/lib/links.ts` holds the defaults. Never hard-code a join link.
 
@@ -47,8 +47,6 @@ app/
 │   ├── loadingscreen.tsx
 │   ├── ProjectCard.tsx # Project card for showcase grid
 │   ├── carousel.tsx    # Alumni testimonial cards (home page)
-│   ├── Wordcard.tsx + CustomModal.tsx  # Image card with modal details (workshops)
-│   └── Timelines/      # TimelineMain (event data) + Timeline (Swiper cards)
 ├── lib/
 │   ├── cms/            # CMS service layer (projects, cohorts, newsletter, people, telegram, uploads)
 │   ├── db/             # Drizzle schema + Neon/PGlite client
@@ -100,7 +98,7 @@ next.config.mjs         # Config for remote image domains
    - Use `className={styles.className}`
 
 2. **Tailwind CSS** (for utility classes):
-   - Tailwind config located in `tailwind.config.ts`
+   - Tailwind 4: the theme lives in the `@theme` block of `app/globals.css` (no `tailwind.config.ts`)
    - Content paths configured for `./app/**/*.{js,ts,jsx,tsx,mdx}`
    - Theme colors map to the CSS-variable tokens (`bg`, `surface`, `ink`, `pine`, `mint`, `emerald`, …)
 
@@ -127,9 +125,9 @@ import { useState } from "react";
 ### Scroll Reveal Pattern
 The home page (`app/page.tsx`) demonstrates a custom `ScrollReveal` component using IntersectionObserver for lazy animations. This pattern is used to animate sections as they enter the viewport.
 
-### Modal/Overlay Usage
-- `CustomModal.tsx` and `Overlay.tsx` exist for modal interactions
-- Modal content typically rendered into a `#portal` div defined in root layout
+### Client-only values
+Don't `setState` inside an effect to read browser-only values (React 19 lint forbids it).
+Use `useHydrated`, `useMediaQuery` or `useClientValue` from `app/components/ui/useClient.ts`.
 
 ## Image and Asset Management
 
@@ -204,7 +202,7 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
 
 ### URLs
 All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder names under
-`app/` match. Old forms (capitals, `/WorkWithUs`, `/workwithus`) redirect in `middleware.ts`.
+`app/` match. Old forms (capitals, `/WorkWithUs`, `/workwithus`) redirect in `proxy.ts`.
 
 - `/projects` (all projects), `/projects/ailodge` (the live semester once it has projects, until then the
   newest semester that has some), `/projects/ailodge/<semester>`
@@ -216,7 +214,7 @@ All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder
   `/dap/<cohort>/week-<n>` (an issue)
 - `/work-with-us`, `/contact-us`, `/curriculum`
 - Legacy `/Projects?badge=…`, `/projects/ai-lodge` and any path with capitals
-  redirect in `middleware.ts` (mapping in `app/lib/canonical-path.ts`). Old project links
+  redirect in `proxy.ts` (mapping in `app/lib/canonical-path.ts`). Old project links
   (`/projects/<slug>`) show a "projects have moved" page.
 - Project slugs `ailodge`, `ai-lodge`, `dap`, `new` stay reserved.
 - CMS previews (any status, signed in): `/admin/preview/project/<slug>`, `/admin/preview/cohort/<id>`.
@@ -257,16 +255,8 @@ Full setup and cutover checklist: [docs/cms-setup.md](docs/cms-setup.md).
 2. If using styled CSS, create `app/components/ComponentName.module.css`
 3. Import in page or other components
 
-### Working with Forms and Modals
+### Working with Forms
 - Look at `contact-us/page.tsx` for form patterns
-- Use `CustomModal.tsx` for modal content
-- Use `react-modal` library for modal structure
-
-### Timeline Components
-The `Timelines/` folder contains multiple timeline variants:
-- `TimelineMain.tsx` - Entry point
-- `TimelineDesktop.tsx` / `TimelineMobile.tsx` - Responsive variants
-- Use `react-responsive` to conditionally render based on screen size
 
 ## Vercel Integration
 
@@ -288,16 +278,16 @@ When a page moves or is retired, add its redirect in the same change.
 One agreed exception: the pre-CMS project pages (`/Projects/<slug>`) are not redirected to the
 project. They show a "projects have moved" page (`app/projects/[slug]`) with links to the new locations.
 
-- Case and renamed-path redirects go in `middleware.ts` / `app/lib/canonical-path.ts`. Its
+- Case and renamed-path redirects go in `proxy.ts` / `app/lib/canonical-path.ts`. Its
   matcher only fires on paths with a capital letter (plus a few listed old forms), so normal
-  visits never run middleware. `next.config.mjs` redirect sources match case-insensitively, so
+  visits never run the proxy. `next.config.mjs` redirect sources match case-insensitively, so
   a `/DAP` → `/dap` rule there loops forever.
 - Cross-domain and other simple redirects can live in `next.config.mjs`.
 
 ## Notes for Future Development
 
 - The project uses both CSS Modules and Tailwind CSS - maintain this duality for consistency
-- Build new UI with the shared primitives in `app/components/ui/` and the design tokens; NextUI remains only for `CustomModal`
+- Build new UI with the shared primitives in `app/components/ui/` and the design tokens
 - Remote image hosting (Vercel Blob/S3) allows for dynamic content without rebuilds
 - All pages use the root layout structure (Navbar, Footer, SocialDots) - keep this consistent
 - Path alias `@/*` maps to repository root, enabling cleaner imports

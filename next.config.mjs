@@ -34,10 +34,10 @@ const nextConfig = {
       },
     ];
   },
+  // Embedded Postgres for local development loads its WASM from disk at
+  // runtime, so it must not be bundled.
+  serverExternalPackages: ["@electric-sql/pglite"],
   experimental: {
-    // Embedded Postgres for local development loads its WASM from disk at
-    // runtime, so it must not be bundled.
-    serverComponentsExternalPackages: ["@electric-sql/pglite"],
     // CMS image uploads go through a server action; crops are capped at
     // 1920px JPEG, which stays under this (and Vercel's 4.5 MB body limit).
     serverActions: { bodySizeLimit: "4mb" },

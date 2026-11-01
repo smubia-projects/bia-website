@@ -5,7 +5,8 @@ import { requireActorPage } from "@/app/lib/cms/session";
 import ProjectEditor from "../ProjectEditor";
 import { editorOptions } from "../editorData";
 
-export default async function EditProjectPage({ params }: { params: { slug: string } }) {
+export default async function EditProjectPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const actor = await requireActorPage();
   const project = await getProject(params.slug);
   if (!project || !can.editProject(actor, { programme: project.badge })) notFound();

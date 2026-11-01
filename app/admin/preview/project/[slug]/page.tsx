@@ -12,7 +12,8 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Preview | SMUBIA CMS", robots: { index: false, follow: false } };
 
 /** A project page exactly as it will look, whatever its status. */
-export default async function ProjectPreviewPage({ params }: { params: { slug: string } }) {
+export default async function ProjectPreviewPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const actor = await requireActorPage();
   const project = await getProject(params.slug);
   if (!project || !can.editProject(actor, { programme: project.badge })) notFound();

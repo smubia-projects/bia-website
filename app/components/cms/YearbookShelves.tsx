@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { LayoutGrid, Rows3 } from "lucide-react";
 import type { Project } from "@/app/projects/data/types";
 import ProjectTile from "./ProjectTile";
 import ViewToggle from "./ViewToggle";
 import { shuffle, visitSeed } from "./visuals";
+import { useClientValue } from "@/app/components/ui/useClient";
 import styles from "./public.module.css";
 
 export interface Shelf {
@@ -34,9 +35,8 @@ const shelfBlurb = (projects: Project[]) => {
  * winner leads its shelf.
  */
 export default function YearbookShelves({ shelves }: { shelves: Shelf[] }) {
-  const [seed, setSeed] = useState<number | null>(null);
+  const seed = useClientValue<number | null>(visitSeed, null);
   const [layout, setLayout] = useState<Layout>("rows");
-  useEffect(() => setSeed(visitSeed()), []);
 
   const ordered = (seed === null ? shelves : shuffle(shelves, seed)).map((s) => {
     const mixed = seed === null ? s.projects : shuffle(s.projects, seed + 3);

@@ -3,7 +3,8 @@ import { listGroups } from "@/app/lib/cms/cohorts";
 import GroupsEditor from "../../../_run/GroupsEditor";
 import { loadRun } from "../../../_run/load";
 
-export default async function GroupsPage({ params }: { params: { run: string } }) {
+export default async function GroupsPage(props: { params: Promise<{ run: string }> }) {
+  const params = await props.params;
   const { actor, cohort } = await loadRun("DAP", params.run);
   const groups = await listGroups(cohort.id);
   return (

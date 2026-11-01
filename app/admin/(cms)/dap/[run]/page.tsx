@@ -3,7 +3,8 @@ import { dapRunPath } from "@/app/lib/cms/paths";
 import CohortEditor from "../../_run/CohortEditor";
 import { loadRun } from "../../_run/load";
 
-export default async function CohortOverviewPage({ params }: { params: { run: string } }) {
+export default async function CohortOverviewPage(props: { params: Promise<{ run: string }> }) {
+  const params = await props.params;
   const { actor, cohort } = await loadRun("DAP", params.run);
   return (
     <CohortEditor

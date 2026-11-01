@@ -13,7 +13,8 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Preview | SMUBIA CMS", robots: { index: false, follow: false } };
 
 /** A semester or cohort yearbook as it will look, including hidden cohorts and draft projects. */
-export default async function CohortPreviewPage({ params }: { params: { id: string } }) {
+export default async function CohortPreviewPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const actor = await requireActorPage();
   const cohort = await getCohort(params.id);
   if (!cohort) notFound();

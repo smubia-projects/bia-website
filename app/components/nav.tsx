@@ -45,10 +45,15 @@ function NavDropdown({ item, active }: { item: NavItem; active: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const closeTimer = useRef<ReturnType<typeof setTimeout>>();
+  const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const menuId = `nav-menu-${item.label.toLowerCase()}`;
 
-  useEffect(() => setOpen(false), [pathname]);
+  // Close on navigation (state adjusted during render, not in an effect)
+  const [shownPath, setShownPath] = useState(pathname);
+  if (shownPath !== pathname) {
+    setShownPath(pathname);
+    setOpen(false);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -152,9 +157,11 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Close the mobile panel whenever the route changes
-  useEffect(() => {
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
     setMenuOpen(false);
-  }, [pathname]);
+  }
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);

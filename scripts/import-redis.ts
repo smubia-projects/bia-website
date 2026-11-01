@@ -176,7 +176,8 @@ async function main() {
         await db.insert(projects).values(values);
       }
     }
-    exists ? updated++ : created++;
+    if (exists) updated++;
+    else created++;
   }
 
   console.log(`\n${commit ? "Done" : "Dry run"}: ${created} to create, ${updated} to update, ${skipped} already in Postgres (use --overwrite to refresh).`);

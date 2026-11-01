@@ -2,7 +2,8 @@ import { formatIssueDate, listIssues, listSessions } from "@/app/lib/cms/newslet
 import IssueList from "../../../_run/IssueList";
 import { loadRun } from "../../../_run/load";
 
-export default async function NewsletterAdminPage({ params }: { params: { run: string } }) {
+export default async function NewsletterAdminPage(props: { params: Promise<{ run: string }> }) {
+  const params = await props.params;
   const { cohort } = await loadRun("DAP", params.run);
   const [issues, sessions] = await Promise.all([listIssues(cohort.id), listSessions(cohort.id)]);
   const rows = issues.map((i) => {

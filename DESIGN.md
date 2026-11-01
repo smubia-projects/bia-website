@@ -3,7 +3,7 @@
 The design language for www.smubia.com (SMU Business Intelligence & Analytics Club).
 Established in the June 2026 redesign. Any new page, component or styling change
 must follow this document. All values below exist as CSS variables in
-`app/globals.css` and are mapped into Tailwind in `tailwind.config.ts`.
+`app/globals.css` and are mapped into Tailwind in the `@theme` block there.
 
 ## 1. Visual Theme & Atmosphere
 

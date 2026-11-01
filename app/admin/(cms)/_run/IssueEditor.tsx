@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Markdown from "@/app/components/ui/Markdown";
+import { useClientValue } from "@/app/components/ui/useClient";
 import type { IssueBlock } from "@/app/lib/db/schema";
 import {
   BLOCK_DEFAULT_HEADING,
@@ -51,6 +52,19 @@ export interface IssueEditorProps {
 
 const TG_KEY = "bia-cms-telegram-id";
 
+/** The last test-send ID; storage can be unavailable, then the field starts empty. */
+function storedTelegramId() {
+  try {
+    return localStorage.getItem(TG_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+/** Block ids only need to be unique within the issue. */
+const nextBlockId = (blocks: IssueBlock[]) =>
+  `b${Math.max(0, ...blocks.map((b) => Number(b.id.replace(/\D/g, "")) || 0)) + 1}`;
+
 const sgDate = (iso: string | null) =>
   iso ? new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Singapore" }).format(new Date(iso)) : "";
 const today = () => sgDate(new Date().toISOString());
@@ -80,16 +94,10 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
   });
   const [when, setWhen] = useState<"now" | "sched">(issue.status === "scheduled" ? "sched" : "now");
   const [date, setDate] = useState(sgDate(issue.publishAt) || today());
-  const [tgId, setTgId] = useState("");
+  const storedTgId = useClientValue(storedTelegramId, "");
+  const [typedTgId, setTgId] = useState<string | null>(null);
+  const tgId = typedTgId ?? storedTgId;
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    try {
-      setTgId(localStorage.getItem(TG_KEY) ?? "");
-    } catch {
-      // Storage unavailable; the field just starts empty.
-    }
-  }, []);
 
   const weeks = Math.max(10, ...sessions.map((s) => s.week));
   const linked = sessions.find((s) => s.week === ed.week);
@@ -107,7 +115,7 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
     setBlocks(next);
   };
   const addBlock = (type: BlockType) =>
-    setBlocks([...ed.blocks, { id: `b${Date.now()}`, type, heading: BLOCK_DEFAULT_HEADING[type], body: "", ...(type === "Image" ? { image: "" } : {}) }]);
+    setBlocks([...ed.blocks, { id: nextBlockId(ed.blocks), type, heading: BLOCK_DEFAULT_HEADING[type], body: "", ...(type === "Image" ? { image: "" } : {}) }]);
 
   async function act<T>(fn: () => Promise<ActionResult<T>>, success?: string) {
     setBusy(true);

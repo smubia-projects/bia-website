@@ -22,13 +22,8 @@ export default function CountUp({
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    if (!inView || started.current) return;
+    if (!inView || reduceMotion || started.current) return;
     started.current = true;
-
-    if (reduceMotion) {
-      setDisplay(value);
-      return;
-    }
 
     const controls = animate(0, value, {
       duration: duration / 1000,
@@ -41,7 +36,7 @@ export default function CountUp({
 
   return (
     <span ref={ref}>
-      {display.toLocaleString()}
+      {(inView && reduceMotion ? value : display).toLocaleString()}
       {suffix}
     </span>
   );

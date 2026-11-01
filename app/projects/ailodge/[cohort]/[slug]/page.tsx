@@ -5,8 +5,12 @@ export const dynamicParams = true;
 
 export const generateStaticParams = () => projectStaticParams("AI Lodge");
 
-export const generateMetadata = ({ params }: { params: ProjectParams }) => projectMetadata(params);
+export const generateMetadata = async (props: { params: Promise<ProjectParams> }) => {
+  const params = await props.params;
+  return projectMetadata(params);
+};
 
-export default function AILodgeProjectPage({ params }: { params: ProjectParams }) {
+export default async function AILodgeProjectPage(props: { params: Promise<ProjectParams> }) {
+  const params = await props.params;
   return <ProjectPage programme="AI Lodge" params={params} />;
 }

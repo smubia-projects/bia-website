@@ -19,7 +19,8 @@ const ERRORS: Record<string, string> = {
   Configuration: "Sign-in isn't configured correctly. Check the AUTH_* environment variables.",
 };
 
-export default async function LoginPage({ searchParams }: { searchParams: { error?: string } }) {
+export default async function LoginPage(props: { searchParams: Promise<{ error?: string }> }) {
+  const searchParams = await props.searchParams;
   if (await getCurrentActor()) redirect("/admin");
   const error = searchParams.error ? ERRORS[searchParams.error] ?? "Sign-in failed. Try again." : null;
 

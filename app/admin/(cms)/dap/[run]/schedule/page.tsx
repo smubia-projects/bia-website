@@ -3,7 +3,8 @@ import { listIssues, listSessions } from "@/app/lib/cms/newsletter";
 import SessionsEditor from "../../../_run/SessionsEditor";
 import { loadRun } from "../../../_run/load";
 
-export default async function SchedulePage({ params }: { params: { run: string } }) {
+export default async function SchedulePage(props: { params: Promise<{ run: string }> }) {
+  const params = await props.params;
   const { cohort } = await loadRun("DAP", params.run);
   const [sessions, issues, groups] = await Promise.all([listSessions(cohort.id), listIssues(cohort.id), listGroups(cohort.id)]);
   return (

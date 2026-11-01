@@ -15,11 +15,11 @@ export function generateStaticParams() {
 }
 
 interface Props {
-  params: { cohort: string; issue: string };
+  params: Promise<{ cohort: string; issue: string }>;
 }
 
 /** The issue at /dap/<cohort>/week-<n>, with its run's other issues and schedule. */
-async function getIssuePage({ cohort, issue }: Props["params"]) {
+async function getIssuePage({ cohort, issue }: Awaited<Props["params"]>) {
   const week = parseIssueWeek(issue);
   const run = week ? await getPublicRun(cohort) : null;
   const found = run?.issues.find((i) => i.week === week);
@@ -27,7 +27,8 @@ async function getIssuePage({ cohort, issue }: Props["params"]) {
   return { cohort: run.cohort, issue: found, siblings: [...run.issues].reverse(), sessions: run.sessions };
 }
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata(props: Props) {
+  const params = await props.params;
   const data = await getIssuePage(params);
   if (!data) return { title: "Issue not found | SMUBIA" };
   return {
@@ -38,7 +39,8 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-export default async function IssuePage({ params }: Props) {
+export default async function IssuePage(props: Props) {
+  const params = await props.params;
   const data = await getIssuePage(params);
   if (!data) notFound();
   const { cohort, issue, siblings, sessions } = data;

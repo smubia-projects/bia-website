@@ -1,6 +1,73 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/*
+ * Tailwind theme: utilities map onto the design tokens defined in :root below
+ * (bg-bg, text-ink, bg-pine, shadow-md, rounded-lg …). `inline` makes each
+ * utility use var(--token) directly, so the tokens stay the single source.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--border);
+  --color-pine: var(--pine-deep);
+  --color-pine-surface: var(--pine-surface);
+  --color-pine-border: var(--pine-border);
+  --color-pine-text: var(--pine-text);
+  --color-pine-soft: var(--pine-text-soft);
+  --color-mint: var(--mint);
+  --color-emerald: var(--emerald);
+  --color-emerald-strong: var(--emerald-strong);
+  --color-teal: var(--teal);
+  --color-teal-mid: var(--teal-mid);
+  --color-teal-deep: var(--teal-deep);
+  --color-sand: var(--sand);
+  --color-dusk: var(--dusk);
+  --color-dusk-deep: var(--dusk-deep);
+  --color-dusk-surface: var(--dusk-surface);
+  --color-dusk-border: var(--dusk-border);
+  --color-dusk-text: var(--dusk-text);
+  --color-dusk-soft: var(--dusk-text-soft);
+  --color-amber: var(--amber);
+  --color-sky: var(--sky);
+  --color-gold: var(--gold);
+  --color-gold-deep: var(--gold-deep);
+
+  --font-display: var(--font-display), sans-serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-roboto-mono), monospace;
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+}
+
+/* Tailwind 3 defaults the site was built on (v4 changed them) */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 :root {
   /* Light base */

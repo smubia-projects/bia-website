@@ -10,13 +10,15 @@ export function generateStaticParams() {
   return [];
 }
 
-export async function generateMetadata({ params }: { params: { cohort: string } }) {
+export async function generateMetadata(props: { params: Promise<{ cohort: string }> }) {
+  const params = await props.params;
   const cohort = (await getPublicCohorts("DAP")).find((c) => c.slug === params.cohort);
   if (!cohort) return { title: "DAP projects | SMUBIA" };
   return { title: `DAP ${cohort.name} | SMUBIA`, alternates: { canonical: `/projects/dap/${cohort.slug}` } };
 }
 
-export default async function DapCohortPage({ params }: { params: { cohort: string } }) {
+export default async function DapCohortPage(props: { params: Promise<{ cohort: string }> }) {
+  const params = await props.params;
   const [cohorts, all] = await Promise.all([getPublicCohorts("DAP"), getPublicProjects()]);
   const projects = all.filter((p) => p.badge === "DAP");
   const cohort = cohorts.find((c) => c.slug === params.cohort);

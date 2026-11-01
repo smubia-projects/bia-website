@@ -17,10 +17,11 @@ export function generateStaticParams() {
 }
 
 interface Props {
-  params: { cohort: string };
+  params: Promise<{ cohort: string }>;
 }
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata(props: Props) {
+  const params = await props.params;
   const run = await getPublicRun(params.cohort);
   if (!run) return { title: "DAP | SMUBIA" };
   return {
@@ -31,7 +32,8 @@ export async function generateMetadata({ params }: Props) {
 }
 
 /** One DAP cohort's run: the latest issue, the co-learning schedule and the groups. */
-export default async function DapRunPage({ params }: Props) {
+export default async function DapRunPage(props: Props) {
+  const params = await props.params;
   const [run, cohorts, links, projects] = await Promise.all([
     getPublicRun(params.cohort),
     getPublicCohorts("DAP"),

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useReducedMotion } from "framer-motion";
 import { Pause, Play } from "lucide-react";
 import styles from "./ProjectsMarquee.module.css";
+import { useHydrated } from "./ui/useClient";
 import { Project } from "@/app/projects/data/types";
 import { projectPath } from "@/app/lib/cms/paths";
 
@@ -90,8 +91,7 @@ export default function ProjectsMarquee({
   // The server can't know the visitor's motion preference, so it's applied after
   // mount; reading it during the first render made server and client HTML differ.
   const prefersReduced = useReducedMotion();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useHydrated();
   const reduceMotion = mounted && Boolean(prefersReduced);
   // WCAG 2.2.2: moving content needs a way to pause it
   const [userPaused, setUserPaused] = useState(false);
@@ -108,7 +108,7 @@ export default function ProjectsMarquee({
   const track = base.length > 0 ? [...base, ...base, ...base] : [];
   const autoscroll = !reduceMotion && !userPaused;
   const autoscrollRef = useRef(autoscroll);
-  const syncRef = useRef<() => void>();
+  const syncRef = useRef<(() => void) | undefined>(undefined);
 
   useEffect(() => {
     autoscrollRef.current = autoscroll;

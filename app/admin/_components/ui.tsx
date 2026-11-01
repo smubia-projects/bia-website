@@ -8,7 +8,7 @@ import ImageCropper from "./ImageCropper";
 /** Bottom toast, as in the approved CMS flows. */
 export function useToast() {
   const [toast, setToast] = useState<{ text: string; error: boolean } | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const show = useCallback((text: string, error = false) => {
     setToast({ text, error });
     clearTimeout(timer.current);

@@ -19,7 +19,8 @@ export const metadata = {
  * Old project addresses (/projects/<slug>). Project pages now live under their
  * semester or cohort, so this page points visitors to the new places instead.
  */
-export default async function ProjectsMovedPage({ params }: { params: { slug: string } }) {
+export default async function ProjectsMovedPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const project = (await getPublicProjects()).find((p) => p.slug === params.slug.toLowerCase());
 
   return (

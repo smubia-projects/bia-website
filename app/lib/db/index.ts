@@ -56,7 +56,7 @@ async function createDb(): Promise<Db> {
 
 /** Exclusive lock file next to the data dir; stale locks (dead pid) are taken over. */
 function acquireLock(dir: string): boolean {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const fs = require("fs") as typeof import("fs");
   fs.mkdirSync(path.dirname(dir), { recursive: true });
   const lock = `${dir}.lock`;
@@ -85,7 +85,7 @@ function isAlive(pid: number) {
 
 /** Flush and release on shutdown; an unclean stop can leave PGlite unreadable. */
 function closeOnExit(client: { close(): Promise<void> }, dir: string) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const fs = require("fs") as typeof import("fs");
   const release = () => fs.rmSync(`${dir}.lock`, { force: true });
   let closing = false;

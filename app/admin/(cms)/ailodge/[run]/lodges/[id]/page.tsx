@@ -5,7 +5,8 @@ import { getLodge, lodgePaths } from "@/app/lib/cms/lodges";
 import LodgeEditor from "../../../../_run/LodgeEditor";
 import { loadRun } from "../../../../_run/load";
 
-export default async function LodgeEditorPage({ params }: { params: { run: string; id: string } }) {
+export default async function LodgeEditorPage(props: { params: Promise<{ run: string; id: string }> }) {
+  const params = await props.params;
   const { actor, cohort } = await loadRun("AI Lodge", params.run);
   const lodge = await getLodge(Number(params.id));
   if (!lodge || lodge.cohortId !== cohort.id) notFound();

@@ -5,7 +5,8 @@ import { botUsername } from "@/app/lib/cms/telegram";
 import IssueEditor from "../../../../_run/IssueEditor";
 import { loadRun } from "../../../../_run/load";
 
-export default async function IssueEditorPage({ params }: { params: { run: string; id: string } }) {
+export default async function IssueEditorPage(props: { params: Promise<{ run: string; id: string }> }) {
+  const params = await props.params;
   const { actor, cohort } = await loadRun("DAP", params.run);
   if (!can.editNewsletter(actor)) notFound();
   const issue = await getIssue(Number(params.id));

@@ -4,7 +4,8 @@ import { cohortPath } from "@/app/lib/cms/paths";
 import CohortProjects from "../../../_run/CohortProjects";
 import { loadRun } from "../../../_run/load";
 
-export default async function CohortProjectsPage({ params }: { params: { run: string } }) {
+export default async function CohortProjectsPage(props: { params: Promise<{ run: string }> }) {
+  const params = await props.params;
   const { actor, cohorts, cohort } = await loadRun("DAP", params.run);
   const all = await listProjects();
   return (

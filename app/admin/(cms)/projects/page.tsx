@@ -5,7 +5,8 @@ import { requireActorPage } from "@/app/lib/cms/session";
 import { ROLE_PROGRAMME } from "@/app/lib/cms/taxonomy";
 import ProjectsTable from "./ProjectsTable";
 
-export default async function AdminProjectsPage({ searchParams }: { searchParams: { track?: string; cohort?: string } }) {
+export default async function AdminProjectsPage(props: { searchParams: Promise<{ track?: string; cohort?: string }> }) {
+  const searchParams = await props.searchParams;
   const actor = await requireActorPage();
   const [all, tracks, cohorts] = await Promise.all([listProjects(), listAllTracks(), listCohorts()]);
   let projects = all.filter((p) => can.editProject(actor, { programme: p.badge }));

@@ -20,7 +20,7 @@ import { canonicalPath } from "@/app/lib/canonical-path";
  * Old project pages (/projects/<slug>) are not redirected: app/projects/[slug]
  * shows a "projects have moved" page that links to the new address.
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
   const target = canonicalPath(pathname, searchParams.get("badge"));
   const url = request.nextUrl.clone();
@@ -31,7 +31,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Matchers are case-sensitive and every match costs a middleware run, so
+  // Matchers are case-sensitive and every match costs a proxy run, so
   // canonical lower-case pages never match. The first entry catches any page
   // path containing a capital letter (not _next, api or files with a dot).
   matcher: [

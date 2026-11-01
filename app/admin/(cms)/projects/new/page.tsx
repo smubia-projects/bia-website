@@ -2,7 +2,8 @@ import { requireActorPage } from "@/app/lib/cms/session";
 import ProjectEditor from "../ProjectEditor";
 import { editorOptions } from "../editorData";
 
-export default async function NewProjectPage({ searchParams }: { searchParams: { cohort?: string; track?: string } }) {
+export default async function NewProjectPage(props: { searchParams: Promise<{ cohort?: string; track?: string }> }) {
+  const searchParams = await props.searchParams;
   const actor = await requireActorPage();
   const { cohorts, tracks, lodges } = await editorOptions();
   const trackId = Number(searchParams.track) || null;

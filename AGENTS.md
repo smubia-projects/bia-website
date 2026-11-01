@@ -15,14 +15,14 @@ npm run lint     # Run ESLint
 
 ## Project Overview
 
-SMUBIA (Singapore Management University Business Intelligence & Analytics Club) website built with Next.js 14. The site showcases the club's mission, vision, events, and community.
+SMUBIA (Singapore Management University Business Intelligence & Analytics Club) website built with Next.js 16. The site showcases the club's mission, vision, curriculum, and community.
 
 **Key Technologies:**
-- **Framework:** Next.js 14 with App Router
+- **Framework:** Next.js 16 (App Router, Turbopack) with React 19
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS + CSS Modules, design tokens as CSS variables in `app/globals.css`
 - **Fonts:** Bricolage Grotesque (display, `--font-display`), Inter (body, `--font-inter`), Roboto Mono (eyebrows/stats, `--font-roboto-mono`) via `next/font/google`
-- **UI Components:** NextUI (CustomModal only), React Icons, Lucide Icons, Swiper
+- **UI Components:** our own primitives in `app/components/ui/`, Lucide icons, Framer Motion
 - **Hosting:** Vercel (www.smubia.com)
 - **Analytics:** Vercel Analytics and Speed Insights
 
@@ -30,8 +30,9 @@ SMUBIA (Singapore Management University Business Intelligence & Analytics Club) 
 - Light sections: `--bg #F6FAF8`, white cards, ink text `--ink #12352C`
 - Dark anchor sections (home hero, DAP bands, footer): `--pine-deep #0C211C` — never pure black
 - Brand mint `--mint #7DD7C2` is used on dark backgrounds only (fails contrast on white); on light backgrounds use `--emerald #0E7C5B`
-- Shadows/radius scales are tokens (`--shadow-*`, `--radius-*`); all mapped into Tailwind via `tailwind.config.ts`
-- All club URLs (Telegram, sign-up form, Instagram, prospectus, etc.) live in `app/lib/links.ts` — TODO placeholders must be filled before launch
+- Shadows/radius scales are tokens (`--shadow-*`, `--radius-*`); all mapped into Tailwind in the `@theme` block of `app/globals.css`
+- Photos are edited in the CMS under **Settings › Photos**. Every static photo is a slot in `app/lib/photos.ts` (the shipped file is the default); read it with `getSitePhotos()` + `pickPhoto()` (server) or `usePhoto()` (client) and put `data-photo-slot="<key>"` on the `<Image>` so the CMS preview can swap it. Never hard-code a new site photo: add a slot.
+- Club URLs (application forms, Telegram, emails, prospectus, socials) and the "applications open" switches are edited in the CMS under **Settings › Site links**. Join buttons use `joinLink()`. Read them with `getSiteLinks()` (server) or `useSiteLinks()` (client); `app/lib/links.ts` holds the defaults. Never hard-code a join link.
 
 ## Project Architecture
 
@@ -41,30 +42,32 @@ SMUBIA (Singapore Management University Business Intelligence & Analytics Club) 
 app/
 ├── components/          # Reusable React components
 │   ├── ui/             # Shared primitives: Button, SectionHeading, ScrollReveal, CountUp, RotatingWord
-│   ├── nav.tsx         # Fixed glassy navbar (custom mobile menu, active links)
+│   ├── nav.tsx         # Fixed glassy navbar (Projects dropdown, custom mobile menu, active links)
 │   ├── footer.tsx      # Dark pine footer (links, contact, socials)
 │   ├── loadingscreen.tsx
 │   ├── ProjectCard.tsx # Project card for showcase grid
 │   ├── carousel.tsx    # Alumni testimonial cards (home page)
-│   ├── Wordcard.tsx + CustomModal.tsx  # Image card with modal details (workshops)
-│   └── Timelines/      # TimelineMain (event data) + Timeline (Swiper cards)
 ├── lib/
-│   ├── auth.ts         # HMAC cookie auth (ADMIN_PASSWORD env var)
-│   ├── links.ts        # Single source of truth for all club URLs/CTAs
-│   └── projects.ts     # Read/write project data via Upstash Redis + image upload to Vercel Blob
-├── admin/              # Password-protected admin panel (stays dark-themed, style-isolated)
-├── Projects/
+│   ├── cms/            # CMS service layer (projects, cohorts, newsletter, people, telegram, uploads)
+│   ├── db/             # Drizzle schema + Neon/PGlite client
+│   ├── links.ts        # Club URL defaults + the list of CMS-editable links (read them with getSiteLinks/useSiteLinks)
+│   └── projects.ts     # Re-exports the public project reads from lib/cms
+├── admin/              # CMS: (cms)/ route group behind Google sign-in, login/, actions.ts
+├── api/                # auth (Auth.js), mcp (Claude tools), cron/publish
+├── projects/
 │   ├── data/types.ts   # Project & TeamMember interfaces
-│   ├── page.tsx        # Server Component — fetches from Redis (ISR 1h), Suspense for search params
-│   ├── ProjectsContent.tsx  # Client component — filter/grid; supports /Projects?badge=DAP deep links
-│   └── [slug]/         # Project detail page (Redis fetch + carousel)
-├── DAP/                # Flagship Data Associate Programme page (content in data.ts)
-├── WorkWithUs/         # Sponsorship page (tiers/benefits/events in data.ts, from prospectus)
-├── WhatWeDo/           # Offerings: workshops curriculum, events timeline, datathon section
-│   └── datathonData.ts # Datathon stats/copy
-├── Datathon/page.tsx   # Redirects to /WhatWeDo#datathon (route kept for old links)
-├── ContactUs/page.tsx  # Join CTAs (#join anchor), channels, address
-├── Merchandise/page.tsx # Placeholder (not in nav)
+│   ├── page.tsx        # All projects (ISR 1h) + ProjectsExplorer (search, filter sidebar, wall/cards)
+│   ├── ailodge/        # AI Lodge yearbook: [cohort]/ semester pages, [cohort]/[slug]/ project pages
+│   ├── dap/            # DAP yearbook: [cohort]/ cohort pages, [cohort]/[slug]/ project pages
+│   ├── _detail/        # Shared project detail page (used by AI Lodge and DAP project routes)
+│   └── [slug]/         # Old /projects/<slug> links: "projects have moved" page
+├── dap/                # DAP recruitment page (data.ts) + [cohort]/ run page (newsletter, schedule, groups) + [cohort]/[issue]/ issues
+├── work-with-us/       # Sponsorship page (tiers/benefits/events in data.ts, from prospectus)
+├── curriculum/         # Curriculum page — workshops roadmap (Monopoly-themed SVG board)
+│   └── datathonData.ts # Datathon stats/copy (retained, unused since Wave 3)
+├── contact-us/         # Join CTAs (#join anchor), channels, address
+├── merchandise/        # Placeholder (not in nav)
+├── ailodge/            # Old internal AI Lodge page; unreachable (/ailodge redirects to the infosite)
 ├── layout.tsx          # Root layout: fonts, metadata, Navbar/Footer/LoadingScreen
 ├── page.tsx            # Home: dark hero, offerings, stats, DAP band, testimonials, join CTA
 └── globals.css         # Tailwind + design tokens (CSS variables)
@@ -95,7 +98,7 @@ next.config.mjs         # Config for remote image domains
    - Use `className={styles.className}`
 
 2. **Tailwind CSS** (for utility classes):
-   - Tailwind config located in `tailwind.config.ts`
+   - Tailwind 4: the theme lives in the `@theme` block of `app/globals.css` (no `tailwind.config.ts`)
    - Content paths configured for `./app/**/*.{js,ts,jsx,tsx,mdx}`
    - Theme colors map to the CSS-variable tokens (`bg`, `surface`, `ink`, `pine`, `mint`, `emerald`, …)
 
@@ -122,9 +125,9 @@ import { useState } from "react";
 ### Scroll Reveal Pattern
 The home page (`app/page.tsx`) demonstrates a custom `ScrollReveal` component using IntersectionObserver for lazy animations. This pattern is used to animate sections as they enter the viewport.
 
-### Modal/Overlay Usage
-- `CustomModal.tsx` and `Overlay.tsx` exist for modal interactions
-- Modal content typically rendered into a `#portal` div defined in root layout
+### Client-only values
+Don't `setState` inside an effect to read browser-only values (React 19 lint forbids it).
+Use `useHydrated`, `useMediaQuery` or `useClientValue` from `app/components/ui/useClient.ts`.
 
 ## Image and Asset Management
 
@@ -133,42 +136,110 @@ The home page (`app/page.tsx`) demonstrates a custom `ScrollReveal` component us
 - Image domains configured in `next.config.mjs` - add new domains there if adding remote image sources
 - Use Next.js `Image` component with `width={0} height={0} sizes="100vw"` for responsive remote images
 
-## Project Data & Admin Panel
+## Content Data & CMS (`/admin`)
 
-### How Project Data Works
-- Project data is stored in Upstash Redis as per-project keys:
-  - `projects:index` — a Redis list of all project slugs (maintains order)
-  - `project:{slug}` — a JSON object for each individual project
-- Images/PDFs remain on Vercel Blob (CDN) — Redis stores only the URLs
-- The `/Projects` page fetches all projects from Redis at render time with ISR (revalidates every 1 hour)
-- The `/Projects/[slug]` detail page fetches a single project (1 Redis GET)
-- When projects are added/edited/deleted via the admin panel, `revalidatePath()` busts the cache immediately
-- The `Project` and `TeamMember` interfaces are defined in `app/Projects/data/types.ts`
+### Where content lives
+- **Neon Postgres** (Drizzle ORM) holds all CMS content: `projects`, `cohorts` (AI Lodge
+  semesters + DAP cohorts), `tracks` (Hack Day tracks), `lodges` (AI Lodge lodges, served to
+  ailodge.smubia.com), `dap_groups` (DAP teaching groups with members and mentors), `people`
+  (CMS access + roles), `sessions` (DAP co-learning schedule, each linked to a group), `issues` ("This week in DAP"), `site_links` (club links), `site_settings` (switches such as applications open) and `site_photos` (replaced photos). Schema: `app/lib/db/schema.ts`;
+  SQL migrations in `drizzle/` (generate with `npm run db:generate` after editing the schema).
+- **Local development needs no database account**: without `DATABASE_URL`, `app/lib/db`
+  uses an embedded PGlite database in `.data/pglite`, migrated on first use. It is
+  single-process: stop `npm run dev` before running a script against it, and never open it
+  from `generateStaticParams` (those run in worker processes).
+- Images stay on **Vercel Blob** (or `public/uploads/` locally without a Blob token).
+- **Upstash Redis is no longer used by this site.** It still backs the rate limiter for the
+  deployed student projects (see `../bia-all-projects`).
 
-### Admin Panel (`/admin`)
-- Password-protected route — password stored as `ADMIN_PASSWORD` Vercel env var
-- Auth uses HMAC-signed httpOnly cookies (24h expiry), no database required
-- Supports: add, edit, delete projects + direct image upload to Vercel Blob
-- Per-project show/hide toggle controls whether a project appears on the public `/Projects` listing (`hidden` flag on the Project type); **new projects are created hidden** and must be toggled visible
-- Server Actions in `app/admin/actions.ts` handle all mutations
+### Service layer
+`app/lib/cms/*` is the only place that reads or writes content. The admin server actions
+(`app/admin/actions.ts`), the MCP endpoint (`app/api/mcp/route.ts`) and the cron route all
+call it, so validation, permissions (`actor.ts`), the one-winner-per-track rule and cache
+revalidation (`revalidate.ts`, tags `projects` / `cohorts` / `newsletter`) apply everywhere.
+Public pages read through `unstable_cache` with those tags (ISR 1h, busted on every change).
 
-### Environment Variables Required
+### CMS
+- Sign-in: Auth.js (`auth.ts`) with Google, `@smu.edu.sg` accounts only, plus the email must
+  be on the People list (or in `CMS_BOOTSTRAP_ADMINS`). Roles are re-read from the database
+  on every request. Local dev also has a dev sign-in with a role picker (never in production).
+- Roles: **Exco admin** (everything), **DAP exco** (DAP only: cohorts, groups, schedule,
+  newsletter, DAP projects) and **AI Lodge exco** (AI Lodge only: semesters, tracks, lodges,
+  Hack Day winners, AI Lodge projects). Programme exco can't publish projects (an exco admin
+  approves them), edit Site links or manage people. Permissions live in `can` (`actor.ts`),
+  the role → programme map in `ROLE_PROGRAMME` (`taxonomy.ts`). There is no lodge head role.
+- Project status: `draft` → `in_review` → `published` (replaces the Redis-era `hidden` flag;
+  `Project.hidden` is now derived). Exco approves. A project needs a semester (AI Lodge) or
+  cohort (DAP) before it can be published, because its page lives under it. Each AI Lodge
+  track has at most one **Hack Day winner** (gold glow + medal, shown in the yearbook only).
+- AI Lodge has two separate groupings per semester: **Hack Day tracks** (yearbook shelves, one
+  winner each) and **lodges** (who taught the team). A project has one of each. Tracks and the
+  applications timeline are on the semester's **Overview**; its **Projects** page adds projects,
+  moves them between tracks, sets lodges and marks winners.
+- **Lodges** (a semester's Lodges page) hold everything ailodge.smubia.com shows: copy, captains
+  (lodge heads), weekly trail, schedule, per-lodge application status and art (logo, colours,
+  particles, neon sign, animated SVG). They are a new record each semester (copy one forward);
+  a past semester's lodges stay as they ran. Service: `app/lib/cms/lodges.ts`.
+- **Public AI Lodge feed**: `GET /api/public/ailodge[?semester=<slug>]`, unauthenticated and
+  read-only, built in `app/lib/cms/ailodge-feed.ts`. The AI Lodge site reads it; the contract
+  and migration notes for that site are in [docs/ailodge-site-handoff.md](docs/ailodge-site-handoff.md).
+  Bump `FEED_VERSION` before renaming or removing a field. Lodge links on smubia.com use each
+  lodge's `path` from `lodgePaths()` (`/lodges/<slug>`, or `/lodges/past/<semester>/<slug>` when a
+  later semester reuses the slug).
+- The CMS is organised by run, like Vercel projects: a switcher at the top of the sidebar picks an
+  AI Lodge semester or DAP cohort, and the run is in the path (`/admin/ailodge/<semester>[/projects]`,
+  `/admin/dap/<cohort>[/groups|/schedule|/newsletter|/projects]`; new runs at `/admin/<programme>/new`).
+  Home, All projects, Site links and People stay outside the switcher. Path helpers:
+  `app/admin/_components/runs.ts`. The cohort slug `new` is reserved.
+- DAP **Groups** (a cohort's Groups page): its teaching groups, with members and 1–3 mentors
+  (name, optional photo, LinkedIn, email, Telegram). The schedule picks the group teaching each
+  week; groups show on the cohort's run page, the newsletter issues and `/dap`.
+- Newsletter: publish now, or schedule a date; the daily Vercel Cron
+  (`vercel.json`, 01:00 UTC = 09:00 SGT, ±1 h on Hobby) publishes due issues. Publishing can
+  post once to the DAP Telegram channel; "Send test" sends to one Telegram user ID (they must
+  have sent /start to the bot). The bot is outbound-only: no webhook.
+- MCP: `/api/mcp` exposes the CMS as tools for Claude (bearer `CMS_MCP_TOKEN`).
+
+### URLs
+All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder names under
+`app/` match. Old forms (capitals, `/WorkWithUs`, `/workwithus`) redirect in `proxy.ts`.
+
+- `/projects` (all projects), `/projects/ailodge` (the live semester once it has projects, until then the
+  newest semester that has some), `/projects/ailodge/<semester>`
+- `/projects/dap` (current cohort's yearbook), `/projects/dap/<cohort>`
+- Project pages: `/projects/ailodge/<semester>/<slug>` and `/projects/dap/<cohort>/<slug>`.
+  Build links with `projectPath()` / `cohortPath()` / `dapRunPath()` / `issuePath()` from
+  `app/lib/cms/paths.ts`. A project moved to another semester redirects from its old address.
+- `/dap` (recruitment page), `/dap/<cohort>` (the run: latest issue, schedule, groups),
+  `/dap/<cohort>/week-<n>` (an issue)
+- `/work-with-us`, `/contact-us`, `/curriculum`
+- Legacy `/Projects?badge=…`, `/projects/ai-lodge` and any path with capitals
+  redirect in `proxy.ts` (mapping in `app/lib/canonical-path.ts`). Old project links
+  (`/projects/<slug>`) show a "projects have moved" page.
+- Project slugs `ailodge`, `ai-lodge`, `dap`, `new` stay reserved.
+- CMS previews (any status, signed in): `/admin/preview/project/<slug>`, `/admin/preview/cohort/<id>`.
+
+### Environment variables
 | Variable | Purpose |
 |---|---|
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob access for image/PDF uploads (auto-set when you link a Blob store in Vercel) |
-| `ADMIN_PASSWORD` | Password for the `/admin` route |
-| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST API URL |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST API token |
+| `DATABASE_URL` | Neon connection string (set by the Vercel ↔ Neon integration). Unset locally = PGlite |
+| `AUTH_SECRET` | Auth.js session secret (`npx auth secret`) |
+| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth client for CMS sign-in |
+| `CMS_BOOTSTRAP_ADMINS` | Comma-separated emails with exco access before anyone is on the People list |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob uploads |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_BOT_USERNAME` | Club bot (unset = messages are logged, not sent) |
+| `TELEGRAM_DAP_CHANNEL_ID` | Where published issues are posted (`@channel` or `-100…`) |
+| `CRON_SECRET` | Authenticates the Vercel Cron call to `/api/cron/publish` |
+| `CMS_MCP_TOKEN` | Bearer token for `/api/mcp` (unset locally = open on localhost only) |
+| `NEXT_PUBLIC_SITE_URL` | Absolute links in Telegram posts (default `https://www.smubia.com`) |
 
-### Project Data Is Live
-Redis is the single live source of project data — all changes go through the `/admin`
-panel. Do not add seed scripts; the seeding era ended July 2026.
+### Scripts
+- `npm run db:migrate`: apply migrations (runs automatically on Vercel via `vercel-build`)
+- `npm run db:import-redis [-- --commit] [--overwrite]`: the one-off, re-runnable import of the
+  Redis-era projects. It is the only data script allowed: content changes go through `/admin`
+  or the MCP tools, not seed scripts.
 
-### Adding a Project (via Admin)
-1. Go to `/admin` and log in
-2. Click "Add Project" and fill in the form
-3. Submit — project is saved to Redis (images uploaded to Blob) as **hidden**
-4. Flip the project's visibility toggle in the list when it's ready to go live; the showcase page updates immediately
+Full setup and cutover checklist: [docs/cms-setup.md](docs/cms-setup.md).
 
 ## Common Development Tasks
 
@@ -184,29 +255,39 @@ panel. Do not add seed scripts; the seeding era ended July 2026.
 2. If using styled CSS, create `app/components/ComponentName.module.css`
 3. Import in page or other components
 
-### Working with Forms and Modals
-- Look at `ContactUs/page.tsx` for form patterns
-- Use `CustomModal.tsx` for modal content
-- Use `react-modal` library for modal structure
-
-### Timeline Components
-The `Timelines/` folder contains multiple timeline variants:
-- `TimelineMain.tsx` - Entry point
-- `TimelineDesktop.tsx` / `TimelineMobile.tsx` - Responsive variants
-- Use `react-responsive` to conditionally render based on screen size
+### Working with Forms
+- Look at `contact-us/page.tsx` for form patterns
 
 ## Vercel Integration
 
 - **Analytics:** `@vercel/analytics/react` imported in layout
 - **Speed Insights:** `@vercel/speed-insights/next` imported in layout
 - **Blob Storage:** Used for hosting images and PDFs (CDN)
-- **Upstash Redis:** Used for project data storage (structured JSON)
+- **Neon Postgres:** CMS content (via the Vercel Marketplace integration)
+- **Vercel Cron:** daily newsletter publishing (`vercel.json`)
 - **Deployment:** Automatic on push to main branch
+
+## URL Paths
+
+**Never remove a public URL path. Redirect it instead.** Old links live on in Telegram posts, the
+AI Lodge infosite, Instagram and sponsor decks. This covers query deep links
+(`/Projects?badge=DAP`, `/Projects?badge=AI%20Lodge`) and the pre-2026 capitalised paths
+(`/DAP`, `/Projects`, `/WorkWithUs`, `/ContactUs`, `/Curriculum`).
+When a page moves or is retired, add its redirect in the same change.
+
+One agreed exception: the pre-CMS project pages (`/Projects/<slug>`) are not redirected to the
+project. They show a "projects have moved" page (`app/projects/[slug]`) with links to the new locations.
+
+- Case and renamed-path redirects go in `proxy.ts` / `app/lib/canonical-path.ts`. Its
+  matcher only fires on paths with a capital letter (plus a few listed old forms), so normal
+  visits never run the proxy. `next.config.mjs` redirect sources match case-insensitively, so
+  a `/DAP` → `/dap` rule there loops forever.
+- Cross-domain and other simple redirects can live in `next.config.mjs`.
 
 ## Notes for Future Development
 
 - The project uses both CSS Modules and Tailwind CSS - maintain this duality for consistency
-- Build new UI with the shared primitives in `app/components/ui/` and the design tokens; NextUI remains only for `CustomModal`
+- Build new UI with the shared primitives in `app/components/ui/` and the design tokens
 - Remote image hosting (Vercel Blob/S3) allows for dynamic content without rebuilds
 - All pages use the root layout structure (Navbar, Footer, SocialDots) - keep this consistent
 - Path alias `@/*` maps to repository root, enabling cleaner imports

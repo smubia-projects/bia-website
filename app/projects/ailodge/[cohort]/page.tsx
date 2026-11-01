@@ -10,13 +10,15 @@ export function generateStaticParams() {
   return [];
 }
 
-export async function generateMetadata({ params }: { params: { cohort: string } }) {
+export async function generateMetadata(props: { params: Promise<{ cohort: string }> }) {
+  const params = await props.params;
   const cohort = (await getPublicCohorts("AI Lodge")).find((c) => c.slug === params.cohort);
   if (!cohort) return { title: "AI Lodge projects | SMUBIA" };
   return { title: `AI Lodge ${cohort.name} | SMUBIA`, alternates: { canonical: `/projects/ailodge/${cohort.slug}` } };
 }
 
-export default async function AILodgeCohortPage({ params }: { params: { cohort: string } }) {
+export default async function AILodgeCohortPage(props: { params: Promise<{ cohort: string }> }) {
+  const params = await props.params;
   const [cohorts, projects] = await Promise.all([getPublicCohorts("AI Lodge"), getPublicProjects()]);
   const cohort = cohorts.find((c) => c.slug === params.cohort);
   if (!cohort) notFound();

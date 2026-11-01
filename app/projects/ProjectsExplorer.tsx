@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Grid3x3, LayoutGrid, SlidersHorizontal } from "lucide-react";
@@ -11,6 +11,7 @@ import ProjectCover from "@/app/components/cms/ProjectCover";
 import ProjectTile from "@/app/components/cms/ProjectTile";
 import ViewToggle from "@/app/components/cms/ViewToggle";
 import { programmeDot, shuffle, visitSeed } from "@/app/components/cms/visuals";
+import { useClientValue, useMediaQuery } from "@/app/components/ui/useClient";
 import styles from "@/app/components/cms/public.module.css";
 
 type FacetKey = "programme" | "track" | "madeFor" | "builtWith";
@@ -34,7 +35,7 @@ const VIEWS = [
  */
 export default function ProjectsExplorer({ projects }: { projects: Project[] }) {
   const searchParams = useSearchParams();
-  const [seed, setSeed] = useState<number | null>(null);
+  const seed = useClientValue<number | null>(visitSeed, null);
   const [q, setQ] = useState("");
   const [filters, setFilters] = useState<Filters>(() => {
     const programme = searchParams.get("programme");
@@ -44,17 +45,9 @@ export default function ProjectsExplorer({ projects }: { projects: Project[] }) 
   });
   // null = not chosen yet: the sidebar shows on wide screens and hides on narrow ones.
   const [filtersOpen, setFiltersOpen] = useState<boolean | null>(null);
-  const [wide, setWide] = useState(false);
   const [mode, setMode] = useState<Mode>("wall");
 
-  useEffect(() => setSeed(visitSeed()), []);
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    setWide(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setWide(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
+  const wide = useMediaQuery("(min-width: 1024px)");
   const open = filtersOpen ?? wide;
 
   const trackValues = useMemo(

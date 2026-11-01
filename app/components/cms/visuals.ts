@@ -40,15 +40,20 @@ export function shuffle<T>(items: T[], seed: number): T[] {
   return out;
 }
 
-/** One seed per browser tab, so order survives navigating between project pages. */
+let tabSeed: number | undefined;
+
+/**
+ * One seed per browser tab, so order survives navigating between project pages.
+ * Stable across calls (React reads it as an external store snapshot).
+ */
 export function visitSeed(): number {
+  if (tabSeed !== undefined) return tabSeed;
   try {
     const stored = sessionStorage.getItem("bia-shuffle-seed");
-    if (stored) return Number(stored);
-    const seed = Math.floor(Math.random() * 1e9);
-    sessionStorage.setItem("bia-shuffle-seed", String(seed));
-    return seed;
+    tabSeed = stored ? Number(stored) : Math.floor(Math.random() * 1e9);
+    if (!stored) sessionStorage.setItem("bia-shuffle-seed", String(tabSeed));
   } catch {
-    return Math.floor(Math.random() * 1e9);
+    tabSeed = Math.floor(Math.random() * 1e9);
   }
+  return tabSeed;
 }
