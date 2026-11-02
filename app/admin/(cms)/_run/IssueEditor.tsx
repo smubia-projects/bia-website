@@ -121,7 +121,6 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
     setBusy(true);
     const data = handle(await fn(), success);
     setBusy(false);
-    if (data !== undefined) router.refresh();
     return data;
   }
 
@@ -149,7 +148,6 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
     const tg =
       t === "sent" ? " and posted to Telegram" : t === "dry-run" ? " (Telegram not configured: logged instead)" : t === "not-configured" ? " (TELEGRAM_DAP_CHANNEL_ID isn't set)" : typeof t === "object" ? `. Telegram failed: ${t.error}` : "";
     show(`Week ${res.data.week} published${tg}`, typeof t === "object");
-    router.refresh();
   }
 
   async function sendTest() {

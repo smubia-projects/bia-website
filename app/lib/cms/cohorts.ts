@@ -234,10 +234,9 @@ export async function moveTrack(actor: Actor, id: number, direction: "up" | "dow
   const to = direction === "up" ? from - 1 : from + 1;
   if (to < 0 || to >= list.length) return;
   [list[from], list[to]] = [list[to], list[from]];
-  for (let position = 0; position < list.length; position++) {
-    const t = list[position];
-    if (t.position !== position) await db.update(tracks).set({ position }).where(eq(tracks.id, t.id));
-  }
+  await Promise.all(
+    list.flatMap((t, position) => (t.position === position ? [] : [db.update(tracks).set({ position }).where(eq(tracks.id, t.id))]))
+  );
   revalidateCms("cohorts", "projects");
 }
 

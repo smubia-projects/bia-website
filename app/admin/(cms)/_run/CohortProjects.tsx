@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { Cohort, Lodge, Track } from "@/app/lib/cms/cohorts";
 import type { Project } from "@/app/projects/data/types";
 import ProjectCover from "@/app/components/cms/ProjectCover";
@@ -42,7 +41,6 @@ const OUT = "__out";
  * moved between tracks and marked as winners here; the editor handles everything else.
  */
 export default function CohortProjects({ cohort, cohorts, tracks, lodges, projects, canEdit, canSetWinner, publicHref }: Props) {
-  const router = useRouter();
   const { handle, node } = useActionToast();
   const [busy, setBusy] = useState<string | null>(null);
   const isLodge = cohort.programme === "AI Lodge";
@@ -73,24 +71,21 @@ export default function CohortProjects({ cohort, cohorts, tracks, lodges, projec
 
   async function setLodge(p: Project, lodgeId: number | null) {
     setBusy(p.slug);
-    const ok = handle(await setProjectLodgeAction(p.slug, lodgeId), lodgeId ? "Lodge set" : "Lodge removed");
+    handle(await setProjectLodgeAction(p.slug, lodgeId), lodgeId ? "Lodge set" : "Lodge removed");
     setBusy(null);
-    if (ok !== undefined) router.refresh();
   }
 
   async function place(slug: string, trackId: number | null, cohortId: string | null = cohort.id, message?: string) {
     setBusy(slug);
-    const ok = handle(await placeProjectAction(slug, cohortId, trackId), message ?? "Project moved");
+    handle(await placeProjectAction(slug, cohortId, trackId), message ?? "Project moved");
     setBusy(null);
-    if (ok !== undefined) router.refresh();
   }
 
   async function toggleWinner(p: Project) {
     setBusy(p.slug);
     const next = !p.winner;
-    const ok = handle(await setWinnerAction(p.slug, next), next ? `${p.title} is the ${p.trackName ?? "track"} winner` : "Winner removed");
+    handle(await setWinnerAction(p.slug, next), next ? `${p.title} is the ${p.trackName ?? "track"} winner` : "Winner removed");
     setBusy(null);
-    if (ok !== undefined) router.refresh();
   }
 
   const cohortName = (id: string | null | undefined) => cohorts.find((c) => c.id === id)?.name ?? "";

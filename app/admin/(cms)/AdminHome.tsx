@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { Project } from "@/app/projects/data/types";
 import type { Issue } from "@/app/lib/cms/newsletter";
 import ProjectCover from "@/app/components/cms/ProjectCover";
@@ -44,15 +43,13 @@ function ProjectRow({ p, action }: { p: Project; action?: React.ReactNode }) {
 
 /** CMS landing page: what needs attention, then shortcuts. */
 export default function AdminHome({ name, canApprove, review, recent, drafts, noCohort, semester, newsletter }: Props) {
-  const router = useRouter();
   const { handle, node } = useActionToast();
   const [busy, setBusy] = useState<string | null>(null);
 
   async function approve(slug: string) {
     setBusy(slug);
-    const ok = handle(await approveProjectAction(slug), "Published");
+    handle(await approveProjectAction(slug), "Published");
     setBusy(null);
-    if (ok !== undefined) router.refresh();
   }
 
   return (

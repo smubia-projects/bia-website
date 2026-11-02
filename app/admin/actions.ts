@@ -305,6 +305,7 @@ export async function sendIssueTestAction(id: number, input: newsletter.IssueInp
   return run(async (actor) => {
     await newsletter.updateIssue(actor, id, input);
     const res = await newsletter.sendIssueTest(actor, id, telegramUserId);
+    refreshAdmin();
     return res.dryRun ? "dry-run" : "sent";
   });
 }

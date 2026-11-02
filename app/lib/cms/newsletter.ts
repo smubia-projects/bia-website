@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, lte } from "drizzle-orm";
+import { and, asc, desc, eq, lte, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/app/lib/db";
 import { cohorts, dapGroups, issues, sessions, type DapGroupRow, type IssueBlock, type IssueRow, type SessionRow } from "@/app/lib/db/schema";
@@ -65,25 +65,53 @@ export interface SessionInput {
   slides?: string;
 }
 
+/** The editable session columns, read from the row an upsert tried to insert. */
+const SESSION_EXCLUDED = {
+  topic: sql`excluded.topic`,
+  groupId: sql`excluded.group_id`,
+  slides: sql`excluded.slides`,
+};
+type SessionField = keyof typeof SESSION_EXCLUDED;
+
 export async function saveSessions(actor: Actor, cohortId: string, rows: SessionInput[]) {
   ensure(can.editNewsletter(actor), "You can't edit the co-learning schedule");
   await requireDapCohort(cohortId);
   const db = await getDb();
   const groupIds = new Set((await db.select({ id: dapGroups.id }).from(dapGroups).where(eq(dapGroups.cohortId, cohortId))).map((g) => g.id));
+
+  // Everything is validated before the first write. A repeated week merges, last value winning.
+  const weeks = new Map<number, Partial<Pick<SessionRow, SessionField>>>();
   for (const r of rows) {
     ensure(Number.isInteger(r.week) && r.week >= 1 && r.week <= 30, "Week must be between 1 and 30");
     ensure(!r.groupId || groupIds.has(r.groupId), "That group isn't in this cohort");
     if (r.slides) ensure(/^https?:\/\//i.test(r.slides.trim()), "Slides links must start with https://");
-    const values = {
+    weeks.set(r.week, {
+      ...weeks.get(r.week),
       ...(r.topic !== undefined ? { topic: r.topic.trim() } : {}),
       ...(r.groupId !== undefined ? { groupId: r.groupId || null } : {}),
       ...(r.slides !== undefined ? { slides: r.slides.trim() } : {}),
-    };
-    await db
-      .insert(sessions)
-      .values({ cohortId, week: r.week, ...values })
-      .onConflictDoUpdate({ target: [sessions.cohortId, sessions.week], set: values });
+    });
   }
+
+  // Weeks setting the same fields share one statement, so an editor save is a single
+  // upsert. They can't all share one: a field a week leaves out must keep its stored value.
+  const batches = new Map<string, { fields: SessionField[]; values: (typeof sessions.$inferInsert)[] }>();
+  for (const [week, values] of weeks) {
+    const fields = (Object.keys(SESSION_EXCLUDED) as SessionField[]).filter((f) => values[f] !== undefined);
+    const batch = batches.get(fields.join()) ?? { fields, values: [] };
+    batch.values.push({ cohortId, week, ...values });
+    batches.set(fields.join(), batch);
+  }
+  await Promise.all(
+    [...batches.values()].map(({ fields, values }) => {
+      const insert = db.insert(sessions).values(values);
+      if (fields.length === 0) return insert.onConflictDoNothing();
+      return insert.onConflictDoUpdate({
+        target: [sessions.cohortId, sessions.week],
+        set: Object.fromEntries(fields.map((f) => [f, SESSION_EXCLUDED[f]])),
+      });
+    })
+  );
   revalidateCms("newsletter");
   return listSessions(cohortId);
 }

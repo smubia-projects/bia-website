@@ -1,4 +1,4 @@
-import { and, asc, eq, ne, sql } from "drizzle-orm";
+import { and, asc, count, eq, ne, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/app/lib/db";
 import { cohorts, lodges, projects, tracks, type ProjectRow } from "@/app/lib/db/schema";
@@ -126,6 +126,13 @@ async function selectProjects(where?: ReturnType<typeof eq>) {
 /** Every project, any status (CMS and MCP). */
 export function listProjects(): Promise<Project[]> {
   return selectProjects();
+}
+
+/** How many projects await approval (the CMS sidebar badge, on every admin page). */
+export async function countProjectsInReview(): Promise<number> {
+  const db = await getDb();
+  const [row] = await db.select({ n: count() }).from(projects).where(eq(projects.status, "in_review"));
+  return row?.n ?? 0;
 }
 
 export async function getProject(slug: string): Promise<Project | null> {

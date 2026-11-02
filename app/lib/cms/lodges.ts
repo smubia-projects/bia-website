@@ -314,9 +314,9 @@ export async function moveLodge(actor: Actor, id: number, direction: "up" | "dow
   if (to < 0 || to >= list.length) return;
   [list[from], list[to]] = [list[to], list[from]];
   const db = await getDb();
-  for (let position = 0; position < list.length; position++) {
-    if (list[position].position !== position) await db.update(lodges).set({ position }).where(eq(lodges.id, list[position].id));
-  }
+  await Promise.all(
+    list.flatMap((l, position) => (l.position === position ? [] : [db.update(lodges).set({ position }).where(eq(lodges.id, l.id))]))
+  );
   revalidateCms("cohorts", "projects");
 }
 

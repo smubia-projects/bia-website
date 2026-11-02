@@ -32,7 +32,6 @@ export default function NewRunForm({ programme, canEdit, isFirst }: { programme:
     setBusy(false);
     if (id) {
       router.push(runHref(programme, draft.slug));
-      router.refresh();
     }
   }
 

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { Project } from "@/app/projects/data/types";
 import ProjectCover from "@/app/components/cms/ProjectCover";
 import Medal from "@/app/components/cms/Medal";
@@ -34,7 +33,6 @@ export default function ProjectsTable({
   cohorts: { id: string; name: string; programme: string }[];
   initialCohort: string;
 }) {
-  const router = useRouter();
   const { handle, node } = useActionToast();
   const [tab, setTab] = useState<Tab>(canApprove && projects.some((p) => p.status === "in_review") ? "in_review" : "all");
   const [q, setQ] = useState("");
@@ -51,9 +49,8 @@ export default function ProjectsTable({
 
   async function approve(slug: string) {
     setBusy(slug);
-    const ok = handle(await approveProjectAction(slug), "Published");
+    handle(await approveProjectAction(slug), "Published");
     setBusy(null);
-    if (ok !== undefined) router.refresh();
   }
 
   return (

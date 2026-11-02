@@ -66,19 +66,18 @@ export default function LodgeList({
   }
 
   async function move(id: number, direction: "up" | "down") {
-    if (handle(await moveLodgeAction(id, direction)) !== undefined) router.refresh();
+    handle(await moveLodgeAction(id, direction));
   }
 
   async function switchApplications(open: boolean) {
     setBusy(true);
-    const ok = handle(await setApplicationsOpenAction("AI Lodge", open));
+    handle(await setApplicationsOpenAction("AI Lodge", open));
     setBusy(false);
-    if (ok !== undefined) router.refresh();
   }
 
   async function remove(l: LodgeRowView) {
     if (!confirm(`Delete ${l.name}? Its projects keep everything except the lodge link.`)) return;
-    if (handle(await deleteLodgeAction(l.id), "Lodge deleted") !== undefined) router.refresh();
+    handle(await deleteLodgeAction(l.id), "Lodge deleted");
   }
 
   return (

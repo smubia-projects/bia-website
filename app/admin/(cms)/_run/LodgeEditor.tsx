@@ -92,7 +92,7 @@ export default function LodgeEditor({
 
   async function save() {
     setSaving(true);
-    const ok = handle(
+    handle(
       await saveLodgeAction({
         ...f,
         id: lodge.id,
@@ -105,7 +105,6 @@ export default function LodgeEditor({
       `${f.name} saved`
     );
     setSaving(false);
-    if (ok !== undefined) router.refresh();
   }
 
   async function remove() {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import type { Cohort, Track } from "@/app/lib/cms/cohorts";
 import type { TimelineStep } from "@/app/lib/db/schema";
 import { trackAccent } from "@/app/components/cms/visuals";
@@ -33,7 +32,6 @@ const DEFAULT_TIMELINE: TimelineStep[] = [
 
 /** A run's overview: name, visibility and write-up, plus Hack Day tracks and the applications timeline for AI Lodge. */
 export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Props) {
-  const router = useRouter();
   const { handle, node } = useActionToast();
   const isLodge = cohort.programme === "AI Lodge";
   const noun = isLodge ? "semester" : "cohort";
@@ -67,11 +65,10 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
 
   async function save() {
     setSaving(true);
-    const ok = handle(
+    handle(
       await saveCohortAction(cohort.id, { ...form, visibility: form.visibility as CohortVisibility, ...(isLodge ? { timeline } : {}) })
     );
     setSaving(false);
-    if (ok !== undefined) router.refresh();
   }
 
   async function saveTrack(input: { id?: number; name: string }) {
@@ -83,17 +80,16 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
         return next;
       });
       setNewTrack(null);
-      router.refresh();
     }
   }
 
   async function moveTrack(t: Track, direction: "up" | "down") {
-    if (handle(await moveTrackAction(t.id, direction)) !== undefined) router.refresh();
+    handle(await moveTrackAction(t.id, direction));
   }
 
   async function removeTrack(t: Track) {
     if (!confirm(`Remove ${t.name}?`)) return;
-    if (handle(await deleteTrackAction(t.id), "Track removed") !== undefined) router.refresh();
+    handle(await deleteTrackAction(t.id), "Track removed");
   }
 
   return (

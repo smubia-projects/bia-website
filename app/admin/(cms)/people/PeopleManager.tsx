@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ROLE_LABEL, ROLE_PROGRAMME, ROLES, type Role } from "@/app/lib/cms/taxonomy";
 import { removePersonAction, savePersonAction } from "../../actions";
 import { useActionToast } from "../../_components/ui";
@@ -43,7 +42,6 @@ export default function PeopleManager({
   me: string;
   bootstrap: string[];
 }) {
-  const router = useRouter();
   const { handle, node } = useActionToast();
   const [form, setForm] = useState<PersonInput>({ email: "", name: "", role: "dap_exco" });
   const [editing, setEditing] = useState<string | null>(null);
@@ -53,13 +51,12 @@ export default function PeopleManager({
     if (ok !== undefined) {
       setEditing(null);
       setForm((f) => ({ ...f, email: "", name: "" }));
-      router.refresh();
     }
   }
 
   async function remove(email: string) {
     if (!confirm(`Remove ${email}? They lose CMS access immediately.`)) return;
-    if (handle(await removePersonAction(email)) !== undefined) router.refresh();
+    handle(await removePersonAction(email));
   }
 
   return (

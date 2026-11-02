@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { Profile } from "@/app/lib/db/schema";
 import { deleteGroupAction, saveGroupAction } from "../../actions";
 import { useActionToast, useImageUpload, useUnsavedChanges } from "../../_components/ui";
@@ -32,7 +31,6 @@ export default function GroupsEditor({
   groups: GroupView[];
   canEdit: boolean;
 }) {
-  const router = useRouter();
   const { handle, node, show } = useActionToast();
   const uploader = useImageUpload("team");
   const [drafts, setDrafts] = useState<GroupView[]>(groups);
@@ -49,23 +47,20 @@ export default function GroupsEditor({
     setBusy(null);
     if (id !== undefined) {
       setNewName("");
-      router.refresh();
     }
   }
 
   async function save(g: GroupView) {
     setBusy(g.id);
-    const ok = handle(await saveGroupAction({ id: g.id, cohortId, name: g.name, members: g.members, mentors: g.mentors }), `${g.name} saved`);
+    handle(await saveGroupAction({ id: g.id, cohortId, name: g.name, members: g.members, mentors: g.mentors }), `${g.name} saved`);
     setBusy(null);
-    if (ok !== undefined) router.refresh();
   }
 
   async function remove(g: GroupView) {
     if (!confirm(`Delete ${g.name}? Sessions it taught will show no group.`)) return;
     setBusy(g.id);
-    const ok = handle(await deleteGroupAction(g.id), "Group deleted");
+    handle(await deleteGroupAction(g.id), "Group deleted");
     setBusy(null);
-    if (ok !== undefined) router.refresh();
   }
 
   async function pickPhoto(update: (url: string) => void) {

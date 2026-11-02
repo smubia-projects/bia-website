@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { can } from "@/app/lib/cms/actor";
 import { listCohorts, pickCurrentCohort } from "@/app/lib/cms/cohorts";
-import { listProjects } from "@/app/lib/cms/projects";
+import { countProjectsInReview } from "@/app/lib/cms/projects";
 import { requireActorPage } from "@/app/lib/cms/session";
 import { ROLE_LABEL } from "@/app/lib/cms/taxonomy";
 import { RUN_COOKIE, RUN_SEGMENT, type RunOption } from "../_components/runs";
@@ -16,8 +16,7 @@ export const metadata = {
 
 export default async function CmsLayout({ children }: { children: React.ReactNode }) {
   const actor = await requireActorPage();
-  const [projects, cohorts] = await Promise.all([can.publishProject(actor) ? listProjects() : Promise.resolve([]), listCohorts()]);
-  const reviewCount = projects.filter((p) => p.status === "in_review").length;
+  const [reviewCount, cohorts] = await Promise.all([can.publishProject(actor) ? countProjectsInReview() : 0, listCohorts()]);
 
   const visible = cohorts.filter((c) => (c.programme === "AI Lodge" ? can.seeLodge(actor) : can.seeDap(actor)));
   const runs: RunOption[] = visible.map((c) => ({ programme: c.programme, slug: c.slug, name: c.name, visibility: c.visibility }));

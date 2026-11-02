@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import type { Photo, PhotoSlot, SitePhotos } from "@/app/lib/photos";
 import { saveSitePhotoAction } from "../../actions";
 import { useActionToast, useImageUpload, useUnsavedChanges } from "../../_components/ui";
@@ -21,7 +20,6 @@ const valueOf = (photos: SitePhotos, slot: PhotoSlot): Value =>
  * frame and the new photo is swapped into the [data-photo-slot] image).
  */
 export default function PhotosManager({ photos, slots }: { photos: SitePhotos; /** The slots this person may edit */ slots: PhotoSlot[] }) {
-  const router = useRouter();
   const { handle, node, show } = useActionToast();
   const [drafts, setDrafts] = useState<Record<string, Value>>({});
   const [selected, setSelected] = useState(slots[0].key);
@@ -57,7 +55,6 @@ export default function PhotosManager({ photos, slots }: { photos: SitePhotos; /
     setBusy(null);
     if (ok !== undefined) {
       dropDraft(s.key);
-      router.refresh();
     }
   }
 

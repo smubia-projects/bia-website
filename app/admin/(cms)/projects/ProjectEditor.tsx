@@ -145,7 +145,6 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
     const data = handle(res, messages[intent]);
     if (!data) return;
     if (!project || data.slug !== project.slug) router.replace(`/admin/projects/${data.slug}`);
-    router.refresh();
   }
 
   async function toggleWinner(next: boolean) {
@@ -153,7 +152,6 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
     const ok = handle(await setWinnerAction(project.slug, next), next ? `${project.title} is the ${trackName ?? "track"} winner` : "Winner removed");
     if (ok !== undefined) {
       setWinner(next);
-      router.refresh();
     }
   }
 
@@ -162,7 +160,6 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
     const ok = handle(await deleteProjectAction(project.slug));
     if (ok !== undefined) {
       router.push("/admin/projects");
-      router.refresh();
     }
   }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   DEFAULT_LINKS,
   EDITABLE_LINKS,
@@ -28,7 +27,6 @@ const SWITCHES: { key: keyof Applications; programme: "DAP" | "AI Lodge" }[] = [
 ];
 
 export default function LinksEditor({ links }: { links: SiteLinks }) {
-  const router = useRouter();
   const { handle, node } = useActionToast();
   const [form, setForm] = useState<Record<LinkKey, string>>(links);
   const [apps, setApps] = useState<Applications>(links.applications);
@@ -42,9 +40,8 @@ export default function LinksEditor({ links }: { links: SiteLinks }) {
 
   async function save() {
     setSaving(true);
-    const ok = handle(await saveSiteLinksAction({ links: form, applications: apps }));
+    handle(await saveSiteLinksAction({ links: form, applications: apps }));
     setSaving(false);
-    if (ok !== undefined) router.refresh();
   }
 
   return (

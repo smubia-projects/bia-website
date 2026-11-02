@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ISSUE_STATUS_LABEL, type IssueStatus } from "@/app/lib/cms/taxonomy";
 import { saveSessionsAction } from "../../actions";
 import { StatusChip, useActionToast, useUnsavedChanges } from "../../_components/ui";
@@ -28,7 +27,6 @@ export default function SessionsEditor({
   groups: { id: number; name: string }[];
   initial: Row[];
 }) {
-  const router = useRouter();
   const { handle, node } = useActionToast();
   const [rows, setRows] = useState(initial);
   const [saving, setSaving] = useState(false);
@@ -37,9 +35,8 @@ export default function SessionsEditor({
 
   async function save() {
     setSaving(true);
-    const ok = handle(await saveSessionsAction(cohortId, rows.map(({ week, topic, groupId, slides }) => ({ week, topic, groupId, slides }))));
+    handle(await saveSessionsAction(cohortId, rows.map(({ week, topic, groupId, slides }) => ({ week, topic, groupId, slides }))));
     setSaving(false);
-    if (ok !== undefined) router.refresh();
   }
 
   return (
