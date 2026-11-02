@@ -33,7 +33,7 @@ export const RUN_SECTIONS: Record<Programme, RunSection[]> = {
   ],
   DAP: [
     { key: "", label: "Overview" },
-    { key: "groups", label: "Groups" },
+    { key: "groups", label: "Co-learning groups" },
     { key: "schedule", label: "Schedule" },
     { key: "newsletter", label: "Newsletter" },
     { key: "projects", label: "Projects" },

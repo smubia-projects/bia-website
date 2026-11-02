@@ -292,7 +292,7 @@ export interface Profile {
   telegram?: string;
 }
 
-/** A DAP teaching group: it teaches co-learning sessions; 1–3 mentors guide it. */
+/** A DAP co-learning group: it teaches sessions; 1–3 mentors guide it. Project groups are each project's `team`. */
 export const dapGroups = pgTable(
   "dap_groups",
   {

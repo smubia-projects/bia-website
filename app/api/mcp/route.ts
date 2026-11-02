@@ -122,7 +122,7 @@ const handler = createMcpHandler(
       {
         title: "List cohorts and tracks",
         description:
-          "AI Lodge semesters (with their Hack Day tracks and lodges) and DAP cohorts (with their teaching groups). Use the ids when placing projects or setting session groups.",
+          "AI Lodge semesters (with their Hack Day tracks and lodges) and DAP cohorts (with their co-learning groups, which are separate from project teams). Use the ids when placing projects or setting session groups.",
         inputSchema: z.object({}),
       },
       () =>
@@ -502,7 +502,7 @@ const handler = createMcpHandler(
 
     server.registerTool(
       "get_dap_group",
-      { title: "Get DAP group", description: "A DAP teaching group with its members and mentors.", inputSchema: z.object({ cohortId: z.string(), id: z.number().int() }) },
+      { title: "Get DAP group", description: "A DAP co-learning group with its members and mentors.", inputSchema: z.object({ cohortId: z.string(), id: z.number().int() }) },
       ({ cohortId, id }) =>
         tool(async () => (await cohorts.listGroups(cohortId)).find((g) => g.id === id) ?? Promise.reject(new CmsError("Group not found")))
     );
@@ -512,7 +512,7 @@ const handler = createMcpHandler(
       {
         title: "Create or edit a DAP group",
         description:
-          "A DAP cohort's teaching group. members and mentors (usually 1 to 3) replace the whole list when given. Pass id to edit; omit it to create.",
+          "A DAP cohort's co-learning group, which teaches sessions; project groups are each project's team instead. members and mentors (usually 1 to 3) replace the whole list when given. Pass id to edit; omit it to create.",
         inputSchema: z.object({
           id: z.number().int().optional(),
           cohortId: z.string(),
@@ -607,7 +607,7 @@ const handler = createMcpHandler(
             z.object({
               week: z.number().int(),
               topic: z.string().optional(),
-              groupId: z.number().int().nullable().optional().describe("Teaching group id from list_cohorts, or null"),
+              groupId: z.number().int().nullable().optional().describe("Co-learning group id from list_cohorts, or null"),
               slides: z.string().optional(),
             })
           ),

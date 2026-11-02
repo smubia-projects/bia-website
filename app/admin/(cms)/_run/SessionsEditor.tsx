@@ -48,9 +48,9 @@ export default function SessionsEditor({
         <div>
           <h1 className={styles.h1}>Co-learning schedule</h1>
           <p className={styles.sub}>
-            Feeds the schedule on the cohort&apos;s page and the session box in each issue. Set up the teaching groups on{" "}
+            Feeds the schedule on the cohort&apos;s page and the session box in each issue. Set up the groups on{" "}
             <Link className={styles.lnk} style={{ padding: 0, minHeight: 0, fontSize: "inherit" }} href={runHref("DAP", cohortSlug, "groups")}>
-              Groups
+              Co-learning groups
             </Link>
             .
           </p>
@@ -65,7 +65,7 @@ export default function SessionsEditor({
             <tr>
               <th>Week</th>
               <th>Topic</th>
-              <th>Teaching group</th>
+              <th>Co-learning group</th>
               <th>Slides link</th>
               <th>Issue</th>
             </tr>
@@ -81,7 +81,7 @@ export default function SessionsEditor({
                   <select
                     className={`${styles.inp} ${styles.inpSmall}`}
                     value={r.groupId ?? ""}
-                    aria-label={`Week ${r.week} teaching group`}
+                    aria-label={`Week ${r.week} co-learning group`}
                     disabled={groups.length === 0}
                     onChange={(e) => patch(r.week, { groupId: e.target.value ? Number(e.target.value) : null })}
                   >

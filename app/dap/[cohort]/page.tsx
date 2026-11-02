@@ -67,7 +67,7 @@ export default async function DapRunPage(props: Props) {
           </Link>
           {groups.length > 0 && (
             <a href="#groups" className={ui.pill}>
-              The groups
+              Co-learning groups
             </a>
           )}
           {links.dapNewsletter && (
@@ -178,7 +178,7 @@ export default async function DapRunPage(props: Props) {
         {groups.length > 0 && (
           <section id="groups" className={ui.section} aria-labelledby="groups-title">
             <h2 id="groups-title" className={ui.h2}>
-              The groups
+              Co-learning groups
             </h2>
             <p className={ui.muted} style={{ margin: "6px 0 0", fontSize: 14 }}>
               Each group teaches a co-learning session to the rest of the cohort, guided by its mentors.
@@ -213,7 +213,7 @@ export default async function DapRunPage(props: Props) {
       <JoinCta
         programmes={["DAP"]}
         heading="Join the next cohort"
-        text="Learn machine learning by teaching it: each group runs a co-learning session, builds a project with its mentors, and presents it at the end of the semester."
+        text="Learn machine learning by teaching it: run a co-learning session with one group, build a project with another, and present it at the end of the semester."
       />
     </main>
   );

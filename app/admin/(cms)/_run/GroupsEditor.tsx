@@ -20,7 +20,7 @@ interface GroupView {
 const AVATAR_CROP = { ratio: 1, label: "1:1 · photo" };
 const blank = (): Profile => ({ name: "", image: "", linkedin: "", email: "", telegram: "" });
 
-/** DAP teaching groups for one cohort: each has members and 1–3 mentors. */
+/** DAP co-learning groups for one cohort: each has members and 1–3 mentors. */
 export default function GroupsEditor({
   cohortId,
   cohortSlug,
@@ -130,9 +130,9 @@ export default function GroupsEditor({
     <>
       <div className={styles.pageHead}>
         <div>
-          <h1 className={styles.h1}>Groups</h1>
+          <h1 className={styles.h1}>Co-learning groups</h1>
           <p className={styles.sub}>
-            Each group teaches co-learning sessions and has its own mentors. Groups show on the cohort&apos;s page, the newsletter and the DAP page. Pick which group teaches each week on the{" "}
+            Each group teaches co-learning sessions and has its own mentors. Project groups are separate: add those under Team members on each project. Co-learning groups show on the cohort&apos;s page and the newsletter. Pick which group teaches each week on the{" "}
             <Link className={styles.lnk} style={{ padding: 0, minHeight: 0, fontSize: "inherit" }} href={runHref("DAP", cohortSlug, "schedule")}>
               Schedule
             </Link>

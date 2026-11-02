@@ -140,7 +140,7 @@ Use `useHydrated`, `useMediaQuery` or `useClientValue` from `app/components/ui/u
 ### Where content lives
 - **Neon Postgres** (Drizzle ORM) holds all CMS content: `projects`, `cohorts` (AI Lodge
   semesters + DAP cohorts), `tracks` (Hack Day tracks), `lodges` (AI Lodge lodges, served to
-  ailodge.smubia.com), `dap_groups` (DAP teaching groups with members and mentors), `people`
+  ailodge.smubia.com), `dap_groups` (DAP co-learning groups with members and mentors), `people`
   (CMS access + roles), `sessions` (DAP co-learning schedule, each linked to a group), `issues` ("This week in DAP"), `site_links` (club links), `site_settings` (switches such as applications open) and `site_photos` (replaced photos). Schema: `app/lib/db/schema.ts`;
   SQL migrations in `drizzle/` (generate with `npm run db:generate` after editing the schema).
 - **Local development needs no database account**: without `DATABASE_URL`, `app/lib/db`
@@ -190,9 +190,10 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
   `/admin/dap/<cohort>[/groups|/schedule|/newsletter|/projects]`; new runs at `/admin/<programme>/new`).
   Home, All projects, Site links and People stay outside the switcher. Path helpers:
   `app/admin/_components/runs.ts`. The cohort slug `new` is reserved.
-- DAP **Groups** (a cohort's Groups page): its teaching groups, with members and 1–3 mentors
-  (name, optional photo, LinkedIn, email, Telegram). The schedule picks the group teaching each
-  week; groups show on the cohort's run page, the newsletter issues and `/dap`.
+- DAP **Co-learning groups** (a cohort's Co-learning groups page): the groups that teach sessions,
+  with members and 1–3 mentors (name, optional photo, LinkedIn, email, Telegram). The schedule picks
+  the group teaching each week; groups show on the cohort's run page and the newsletter issues.
+  Project groups are different people and aren't stored here: each is a project's `team`.
 - Newsletter: publish now, or schedule a date; the daily Vercel Cron
   (`vercel.json`, 01:00 UTC = 09:00 SGT, ±1 h on Hobby) publishes due issues. Publishing can
   post once to the DAP Telegram channel; "Send test" sends to one Telegram user ID (they must
