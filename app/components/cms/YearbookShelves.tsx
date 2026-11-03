@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { LayoutGrid, Rows3 } from "lucide-react";
 import type { Project } from "@/app/projects/data/types";
 import ProjectTile from "./ProjectTile";
-import ViewToggle from "./ViewToggle";
 import { shuffle, visitSeed } from "./visuals";
 import { useClientValue } from "@/app/components/ui/useClient";
 import styles from "./public.module.css";
@@ -15,13 +13,6 @@ export interface Shelf {
   accent: string;
   projects: Project[];
 }
-
-type Layout = "grid" | "rows";
-
-const LAYOUTS = [
-  { value: "grid" as Layout, label: "Show every project", Icon: LayoutGrid },
-  { value: "rows" as Layout, label: "One scrolling row per group", Icon: Rows3 },
-];
 
 function FilterRow({
   label,
@@ -60,9 +51,8 @@ function FilterRow({
 
 /**
  * A yearbook's projects: filter by group (Hack Day track or DAP area) and by
- * lodge, then every card in a grid or one scrolling row per group. Group and
- * project order is shuffled per visit so nobody is always first; a track's
- * winner leads its group.
+ * lodge, with one scrolling row per group. Group and project order is shuffled
+ * per visit so nobody is always first; a track's winner leads its group.
  */
 export default function YearbookShelves({
   shelves,
@@ -78,7 +68,6 @@ export default function YearbookShelves({
   hideBuiltWith?: boolean;
 }) {
   const seed = useClientValue<number | null>(visitSeed, null);
-  const [layout, setLayout] = useState<Layout>("grid");
   const [group, setGroup] = useState<string | null>(null);
   const [lodge, setLodge] = useState<string | null>(null);
 
@@ -112,7 +101,6 @@ export default function YearbookShelves({
         <h2 id="yearbook-projects" className={styles.h2}>
           Projects
         </h2>
-        <ViewToggle options={LAYOUTS} value={layout} onChange={setLayout} label="Layout" />
       </div>
 
       {(shelves.length > 1 || lodgeOptions.length > 0) && (
@@ -148,7 +136,7 @@ export default function YearbookShelves({
                   </span>
                 </div>
               )}
-              <div className={layout === "grid" ? styles.shelfGrid : styles.shelfRow}>
+              <div className={styles.shelfRow}>
                 {s.projects.map((p) => (
                   <ProjectTile key={p.slug} project={p} variant="shelf" showWinner hideBuiltWith={hideBuiltWith} />
                 ))}

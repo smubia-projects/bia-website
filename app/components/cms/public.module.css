@@ -678,12 +678,6 @@
   flex: 0 0 244px;
   scroll-snap-align: start;
 }
-.shelfGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 16px;
-  padding: 22px 2px 14px;
-}
 
 /* ── DAP newsletter ────────────────────────────────────────────────── */
 
