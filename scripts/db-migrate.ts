@@ -2,7 +2,7 @@
  * Applies pending SQL migrations from ./drizzle.
  *
  * Runs automatically on Vercel through the `vercel-build` script, so every
- * deployment (including preview deployments on their own Neon branch) has an
+ * deployment (against that environment's DATABASE_URL, previews included) has an
  * up-to-date schema before `next build`. Locally, the PGlite database migrates
  * itself on first use; running this without DATABASE_URL does the same thing.
  *

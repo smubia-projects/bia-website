@@ -188,7 +188,7 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
 - The CMS is organised by run, like Vercel projects: a switcher at the top of the sidebar picks an
   AI Lodge semester or DAP cohort, and the run is in the path (`/admin/ailodge/<semester>[/projects]`,
   `/admin/dap/<cohort>[/groups|/schedule|/newsletter|/projects]`; new runs at `/admin/<programme>/new`).
-  Home, All projects, Site links and People stay outside the switcher. Path helpers:
+  Dashboard, All Projects, Site Links and People stay outside the switcher. Path helpers:
   `app/admin/_components/runs.ts`. The cohort slug `new` is reserved.
 - DAP **Co-learning groups** (a cohort's Co-learning groups page): the groups that teach sessions,
   with members and 1–3 mentors (name, optional photo, LinkedIn, email, Telegram). The schedule picks
@@ -227,7 +227,7 @@ All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder
 ### Environment variables
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | Neon connection string (set by the Vercel ↔ Neon integration). Unset locally = PGlite |
+| `DATABASE_URL` | Neon connection string, set by hand per Vercel environment (no Vercel ↔ Neon integration). Unset locally = PGlite |
 | `AUTH_SECRET` | Auth.js session secret (`npx auth secret`) |
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth client for CMS sign-in |
 | `CMS_BOOTSTRAP_ADMINS` | Comma-separated emails with exco access before anyone is on the People list |
@@ -269,7 +269,7 @@ Full setup and cutover checklist: [docs/cms-setup.md](docs/cms-setup.md).
 - **Analytics:** `@vercel/analytics/react` imported in layout
 - **Speed Insights:** `@vercel/speed-insights/next` imported in layout
 - **Blob Storage:** Used for hosting images and PDFs (CDN)
-- **Neon Postgres:** CMS content (via the Vercel Marketplace integration)
+- **Neon Postgres:** CMS content (our own Neon project, attached with `DATABASE_URL`)
 - **Vercel Cron:** daily newsletter publishing (`vercel.json`)
 - **Deployment:** Automatic on push to main branch
 

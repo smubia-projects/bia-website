@@ -19,6 +19,7 @@ export default async function SchedulePage(props: { params: Promise<{ run: strin
         groupId: s.groupId,
         slides: s.slides,
         issue: issues.find((i) => i.week === s.week)?.status ?? null,
+        issueId: issues.find((i) => i.week === s.week)?.id ?? null,
       }))}
     />
   );

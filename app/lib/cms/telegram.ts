@@ -51,7 +51,7 @@ function absoluteUrl(src: string) {
 
 export async function sendIssueToTelegram(chatId: string, issue: TelegramIssue) {
   const target = chatId.trim();
-  if (!target) throw new CmsError("Enter a Telegram user ID");
+  if (!target) throw new CmsError("Telegram user ID required");
   const text = formatIssueMessage(issue);
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) {

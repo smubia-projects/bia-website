@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { copyLodgeAction, deleteLodgeAction, moveLodgeAction, saveLodgeAction, setApplicationsOpenAction } from "../../actions";
-import { useActionToast } from "../../_components/ui";
+import { Modal, OrderButtons, PageHead, PickerDialog, useActionToast, useConfirm } from "../../_components/ui";
 import { runHref } from "../../_components/runs";
 import styles from "../../cms.module.css";
 
@@ -46,67 +46,89 @@ export default function LodgeList({
   applications: { open: boolean; canSwitch: boolean } | null;
 }) {
   const router = useRouter();
-  const { handle, node } = useActionToast();
+  const { handle, node, show } = useActionToast();
+  const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [copying, setCopying] = useState(false);
   const [newName, setNewName] = useState("");
   const base = runHref("AI Lodge", cohortSlug, "lodges");
 
   async function create() {
     setBusy(true);
-    const id = handle(await saveLodgeAction({ cohortId, name: newName }), `${newName} added`);
+    const id = handle(await saveLodgeAction({ cohortId, name: newName }), `${newName} created`);
     setBusy(false);
     if (id) router.push(`${base}/${id}`);
   }
 
-  async function copy(id: number) {
+  async function copy(ids: string[]) {
     setBusy(true);
-    const newId = handle(await copyLodgeAction(id, cohortId), "Lodge copied into this semester");
+    let done = 0;
+    for (const id of ids) {
+      const res = await copyLodgeAction(Number(id), cohortId);
+      if (!res.ok) {
+        show(`${done} of ${ids.length} copied. ${res.error}`, true);
+        setBusy(false);
+        return;
+      }
+      done++;
+    }
+    show(`${done} ${done === 1 ? "lodge" : "lodges"} copied`);
     setBusy(false);
-    if (newId) router.push(`${base}/${newId}`);
+    setCopying(false);
   }
 
-  async function move(id: number, direction: "up" | "down") {
-    handle(await moveLodgeAction(id, direction));
+  async function move(index: number, dir: -1 | 1) {
+    setBusy(true);
+    handle(await moveLodgeAction(lodges[index].id, dir === -1 ? "up" : "down"));
+    setBusy(false);
   }
 
   async function switchApplications(open: boolean) {
+    const yes = await confirm({
+      title: open ? "Open AI Lodge Applications" : "Close AI Lodge Applications",
+      body: open ? "Apply buttons on smubia.com and the AI Lodge site link to the sign-up form immediately." : "All lodges show as closed immediately, and apply buttons link to the club Telegram.",
+      action: open ? "Open Applications" : "Close Applications",
+      danger: !open,
+    });
+    if (!yes) return;
     setBusy(true);
     handle(await setApplicationsOpenAction("AI Lodge", open));
     setBusy(false);
   }
 
   async function remove(l: LodgeRowView) {
-    if (!confirm(`Delete ${l.name}? Its projects keep everything except the lodge link.`)) return;
+    if (!(await confirm({ title: "Delete Lodge", body: `${l.name} is deleted. Its projects stay, without a lodge.`, action: "Delete Lodge", danger: true }))) return;
     handle(await deleteLodgeAction(l.id), "Lodge deleted");
   }
 
   return (
     <>
-      <div className={styles.pageHead}>
-        <div>
-          <h1 className={styles.h1}>Lodges</h1>
-          <p className={styles.sub}>
-            {archived
-              ? "This semester is past: the AI Lodge site lists these lodges under previous lodges, as they ran."
-              : "Everything the AI Lodge site shows about each lodge: copy, captains, weekly trail, applications and art. This order is the order on the site."}
-          </p>
-        </div>
-      </div>
+      <PageHead title="Lodges" sub={archived ? "Past semester. Listed under previous lodges on the AI Lodge site." : "Lodge content for the AI Lodge site, in display order."}>
+        {canEdit && others.length > 0 && (
+          <button type="button" className={styles.pill} onClick={() => setCopying(true)}>
+            Copy From Another Semester
+          </button>
+        )}
+        {canEdit && (
+          <button type="button" className={styles.btn} onClick={() => setAdding(true)}>
+            Add Lodge
+          </button>
+        )}
+      </PageHead>
 
       {applications && (
         <section className={styles.panel} style={{ marginTop: 22 }}>
           <div className={styles.between} style={{ flexWrap: "wrap", gap: 12 }}>
             <span>
-              <strong>AI Lodge applications are {applications.open ? "open" : "closed"}</strong>
+              <strong>Applications: {applications.open ? "Open" : "Closed"}</strong>
               <span className={styles.hint} style={{ display: "block" }}>
-                {applications.open
-                  ? "Apply buttons on smubia.com and the AI Lodge site go to the sign-up form. Lodges set to not taking applications stay closed."
-                  : "Every lodge shows as closed and apply buttons go to the club Telegram."}
+                {applications.open ? "Apply buttons link to the sign-up form. Lodges marked closed stay closed." : "All lodges show as closed. Apply buttons link to the club Telegram."}
               </span>
             </span>
             {applications.canSwitch && (
               <button type="button" className={applications.open ? styles.pill : styles.btn} disabled={busy} onClick={() => switchApplications(!applications.open)}>
-                {applications.open ? "Close applications" : "Open applications"}
+                {applications.open ? "Close Applications" : "Open Applications"}
               </button>
             )}
           </div>
@@ -114,11 +136,7 @@ export default function LodgeList({
       )}
 
       <section className={styles.panel} style={{ marginTop: 22, gap: 0 }}>
-        {lodges.length === 0 && (
-          <p className={styles.hint} style={{ margin: 0, fontSize: 14 }}>
-            No lodges in this semester yet. Add one, or copy a lodge from another semester.
-          </p>
-        )}
+        {lodges.length === 0 && <p className={styles.emptyInline}>No lodges in this semester.</p>}
         {lodges.map((l, index) => (
           <div key={l.id} className={styles.trackRow}>
             <span className={styles.lodgeLogo} style={{ background: l.logo ? undefined : l.accent }}>
@@ -135,7 +153,7 @@ export default function LodgeList({
               </Link>
               <span className={styles.hint}>
                 {l.placeholder ? "Details not released · " : ""}
-                {l.status === "closed" ? "Not taking applications" : "Taking applications"} · {l.captains} {l.captains === 1 ? "captain" : "captains"} ·{" "}
+                {l.status === "closed" ? "Applications closed" : "Applications open"} · {l.captains} {l.captains === 1 ? "captain" : "captains"} ·{" "}
                 <a href={l.href} target="_blank" rel="noopener noreferrer">
                   {l.href.replace(/^https?:\/\//, "")}
                 </a>
@@ -143,14 +161,7 @@ export default function LodgeList({
             </span>
             {canEdit && (
               <>
-                <span className={styles.trackOrder}>
-                  <button type="button" className={styles.ico} aria-label={`Move ${l.name} up`} disabled={index === 0} onClick={() => move(l.id, "up")}>
-                    ↑
-                  </button>
-                  <button type="button" className={styles.ico} aria-label={`Move ${l.name} down`} disabled={index === lodges.length - 1} onClick={() => move(l.id, "down")}>
-                    ↓
-                  </button>
-                </span>
+                <OrderButtons index={index} count={lodges.length} label={l.name} disabled={busy} onMove={(dir) => move(index, dir)} />
                 <Link href={`${base}/${l.id}`} className={styles.lnk}>
                   Edit
                 </Link>
@@ -163,49 +174,39 @@ export default function LodgeList({
         ))}
       </section>
 
-      {canEdit && (
-        <div className={styles.cols} style={{ marginTop: 22 }}>
-          <section className={`${styles.panel} ${styles.colMain}`}>
-            <h2 className={styles.h2}>Add a lodge</h2>
-            <div className={styles.row}>
-              <input
-                className={`${styles.inp} ${styles.inpSmall}`}
-                style={{ maxWidth: 280 }}
-                value={newName}
-                placeholder="Lodge name, e.g. MIT Lodge"
-                aria-label="New lodge name"
-                onChange={(e) => setNewName(e.target.value)}
-              />
-              <button type="button" className={styles.btn} disabled={busy || !newName.trim()} onClick={create}>
-                Add lodge
+      {adding && (
+        <Modal
+          title="Add Lodge"
+          onClose={() => setAdding(false)}
+          onSubmit={() => newName.trim() && create()}
+          footer={
+            <>
+              <button type="button" className={styles.pill} onClick={() => setAdding(false)}>
+                Cancel
               </button>
-            </div>
-          </section>
-          {others.length > 0 && (
-            <section className={`${styles.panel} ${styles.colSide}`} style={{ position: "static" }}>
-              <h2 className={styles.h2}>Copy from another semester</h2>
-              <span className={styles.hint}>Brings the copy, captains, trail and art across. The original stays as it ran.</span>
-              <select
-                className={`${styles.inp} ${styles.inpSmall}`}
-                value=""
-                aria-label="Copy a lodge from another semester"
-                disabled={busy}
-                onChange={(e) => e.target.value && copy(Number(e.target.value))}
-              >
-                <option value="">Pick a lodge…</option>
-                {others.map((o) => (
-                  <optgroup key={o.semester} label={o.semester}>
-                    {o.lodges.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </section>
-          )}
-        </div>
+              <button type="submit" className={styles.btn} disabled={busy || !newName.trim()}>
+                {busy ? "Creating…" : "Create Lodge"}
+              </button>
+            </>
+          }
+        >
+          <label className={styles.fld}>
+            Lodge Name
+            <input className={styles.inp} autoFocus value={newName} onChange={(e) => setNewName(e.target.value)} />
+          </label>
+        </Modal>
+      )}
+
+      {copying && (
+        <PickerDialog
+          title="Copy Lodges"
+          sub="Copies all lodge content into this semester. The originals are unchanged."
+          groups={others.map((o) => ({ label: o.semester, items: o.lodges.map((l) => ({ id: String(l.id), title: l.name })) }))}
+          busy={busy}
+          actionLabel={(n) => (n ? `Copy ${n} ${n === 1 ? "Lodge" : "Lodges"}` : "Copy Lodges")}
+          onConfirm={copy}
+          onClose={() => setCopying(false)}
+        />
       )}
       {node}
     </>

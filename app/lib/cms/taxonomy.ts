@@ -27,7 +27,7 @@ export const PROJECT_STATUSES = ["draft", "in_review", "published"] as const;
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 export const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
   draft: "Draft",
-  in_review: "In review",
+  in_review: "In Review",
   published: "Published",
 };
 
@@ -64,7 +64,7 @@ export const LODGE_AMBIENT_LABEL: Record<LodgeAmbient, string> = {
 export const LODGE_NEON_SIGNS = ["none", "bat", "guitar", "ship", "skull"] as const;
 export type LodgeNeonSign = (typeof LODGE_NEON_SIGNS)[number];
 export const LODGE_NEON_SIGN_LABEL: Record<LodgeNeonSign, string> = {
-  none: "None (the logo)",
+  none: "None (logo)",
   bat: "Bat",
   guitar: "Guitar",
   ship: "Ship",
@@ -75,8 +75,8 @@ export const LODGE_NEON_SIGN_LABEL: Record<LodgeNeonSign, string> = {
 export const LODGE_LOGO_STYLES = ["tint", "original"] as const;
 export type LodgeLogoStyle = (typeof LODGE_LOGO_STYLES)[number];
 export const LODGE_LOGO_STYLE_LABEL: Record<LodgeLogoStyle, string> = {
-  tint: "Painted in the glow colour",
-  original: "Its own colours",
+  tint: "Glow colour",
+  original: "Original colours",
 };
 
 /** Stand-in emblems for a lodge without a logo yet. */
@@ -87,11 +87,11 @@ export type LodgeEmblem = (typeof LODGE_EMBLEMS)[number];
 export const LODGE_HERO_KINDS = ["logo", "neon", "showpiece", "custom", "animated"] as const;
 export type LodgeHeroKind = (typeof LODGE_HERO_KINDS)[number];
 export const LODGE_HERO_KIND_LABEL: Record<LodgeHeroKind, string> = {
-  logo: "The logo",
-  neon: "The neon sign",
-  showpiece: "A coded showpiece",
-  custom: "A custom showpiece",
-  animated: "An animated SVG",
+  logo: "Logo",
+  neon: "Neon sign",
+  showpiece: "Coded showpiece",
+  custom: "Custom showpiece",
+  animated: "Animated SVG",
 };
 
 /** Layered, animated hero art coded on the AI Lodge site (one per lodge that commissioned it). */
@@ -119,9 +119,9 @@ export const LODGE_PARTICLES_LABEL: Record<LodgeParticles, string> = {
 export const LODGE_BELT_MODES = ["mark", "tile", "banner", "papel-picado", "none"] as const;
 export type LodgeBeltMode = (typeof LODGE_BELT_MODES)[number];
 export const LODGE_BELT_MODE_LABEL: Record<LodgeBeltMode, string> = {
-  mark: "Repeat the lodge's mark",
-  tile: "Repeat an uploaded image",
-  banner: "Scroll one long uploaded image",
+  mark: "Repeating lodge mark",
+  tile: "Repeating image",
+  banner: "Scrolling strip image",
   "papel-picado": "Papel picado bunting",
   none: "No strip",
 };
@@ -153,9 +153,9 @@ export const ROLE_PROGRAMME: Record<Role, Programme | null> = {
 export const BLOCK_TYPES = ["Text", "Team updates", "Shout-outs", "Image"] as const;
 export type BlockType = (typeof BLOCK_TYPES)[number];
 export const BLOCK_HINTS: Record<BlockType, string> = {
-  Text: "Write a short section",
-  "Team updates": "One or two lines per team: what they shipped or where they are stuck",
-  "Shout-outs": "Thank-yous and small wins",
+  Text: "Section text",
+  "Team updates": "One or two lines per team: progress and blockers",
+  "Shout-outs": "Acknowledgements",
   Image: "Image caption",
 };
 export const BLOCK_DEFAULT_HEADING: Record<BlockType, string> = {

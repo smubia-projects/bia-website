@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Markdown from "@/app/components/ui/Markdown";
 import ui from "@/app/components/cms/public.module.css";
 import PeopleList from "@/app/components/cms/PeopleList";
@@ -53,14 +54,12 @@ export default async function IssuePage(props: Props) {
   return (
     <main id="main-content" className={ui.page}>
       <article className={ui.issue}>
-        <Link href={dapRunPath(cohort.slug)} className={ui.pill}>
-          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-          {cohort.name}
-        </Link>
+        <nav aria-label="Breadcrumb" className={ui.crumbs}>
+          <Link href={dapRunPath(cohort.slug)}>This week in DAP</Link>
+          <ChevronRight size={14} strokeWidth={1.75} aria-hidden="true" />
+        </nav>
         <div className={ui.issueEyebrow}>
-          This week in DAP · Week {issue.week}
+          Week {issue.week}
           {issue.publishedAt ? ` · ${formatIssueDate(issue.publishedAt)}` : ""}
         </div>
         <h1 className={ui.issueH1}>{issue.title}</h1>
@@ -115,7 +114,7 @@ export default async function IssuePage(props: Props) {
 
         {next?.topic && (
           <div className={ui.comingUp}>
-            <span className={ui.label} style={{ fontSize: 11 }}>
+            <span className={ui.label}>
               Coming up
             </span>
             <div style={{ marginTop: 6, fontWeight: 600, color: "var(--ink)" }}>
@@ -133,14 +132,16 @@ export default async function IssuePage(props: Props) {
           <nav aria-label="Issues" className={ui.issueNav}>
             {prev ? (
               <Link className={ui.pill} href={prev.path}>
-                ← Week {prev.week}
+                <ChevronLeft size={14} strokeWidth={1.75} aria-hidden="true" />
+                Week {prev.week}
               </Link>
             ) : (
               <span />
             )}
             {after && (
               <Link className={ui.pill} href={after.path}>
-                Week {after.week} →
+                Week {after.week}
+                <ChevronRight size={14} strokeWidth={1.75} aria-hidden="true" />
               </Link>
             )}
           </nav>

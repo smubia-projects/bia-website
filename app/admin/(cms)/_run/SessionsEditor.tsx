@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ISSUE_STATUS_LABEL, type IssueStatus } from "@/app/lib/cms/taxonomy";
 import { saveSessionsAction } from "../../actions";
-import { StatusChip, useActionToast, useUnsavedChanges } from "../../_components/ui";
+import { PageHead, StatusChip, UnsavedNote, useActionToast, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import { runHref } from "../../_components/runs";
 import styles from "../../cms.module.css";
 
@@ -14,6 +14,7 @@ interface Row {
   groupId: number | null;
   slides: string;
   issue: IssueStatus | null;
+  issueId: number | null;
 }
 
 export default function SessionsEditor({
@@ -29,41 +30,48 @@ export default function SessionsEditor({
 }) {
   const { handle, node } = useActionToast();
   const [rows, setRows] = useState(initial);
+  const [saved, setSaved] = useState(initial);
   const [saving, setSaving] = useState(false);
-  useUnsavedChanges(!saving && JSON.stringify(rows) !== JSON.stringify(initial));
+  const dirty = JSON.stringify(rows) !== JSON.stringify(saved);
+  useUnsavedChanges(!saving && dirty);
   const patch = (week: number, p: Partial<Row>) => setRows((rs) => rs.map((r) => (r.week === week ? { ...r, ...p } : r)));
 
   async function save() {
     setSaving(true);
-    handle(await saveSessionsAction(cohortId, rows.map(({ week, topic, groupId, slides }) => ({ week, topic, groupId, slides }))));
+    const res = await saveSessionsAction(cohortId, rows.map(({ week, topic, groupId, slides }) => ({ week, topic, groupId, slides })));
+    handle(res);
+    if (res.ok) setSaved(rows);
     setSaving(false);
   }
+  useSaveShortcut(save, dirty && !saving);
 
   return (
     <>
-      <div className={styles.pageHead}>
-        <div>
-          <h1 className={styles.h1}>Co-learning schedule</h1>
-          <p className={styles.sub}>
-            Feeds the schedule on the cohort&apos;s page and the session box in each issue. Set up the groups on{" "}
-            <Link className={styles.lnk} style={{ padding: 0, minHeight: 0, fontSize: "inherit" }} href={runHref("DAP", cohortSlug, "groups")}>
-              Co-learning groups
+      <PageHead
+        title="Schedule"
+        sub={
+          <>
+            Co-learning sessions for the cohort page and each issue&apos;s session box. Groups are managed in{" "}
+            <Link className={`${styles.lnk} ${styles.lnkInline}`} href={runHref("DAP", cohortSlug, "groups")}>
+              Co-Learning Groups
             </Link>
             .
-          </p>
-        </div>
-        <button type="button" className={styles.btn} onClick={save} disabled={saving}>
-          {saving ? "Saving…" : "Save schedule"}
+          </>
+        }
+      >
+        <UnsavedNote show={dirty} onDiscard={() => setRows(saved)} />
+        <button type="button" className={styles.btn} onClick={save} disabled={saving || !dirty}>
+          {saving ? "Saving…" : "Save Schedule"}
         </button>
-      </div>
+      </PageHead>
       <div className={styles.tableWrap} style={{ marginTop: 20 }}>
         <table className={styles.table} style={{ minWidth: 780 }}>
           <thead>
             <tr>
               <th>Week</th>
               <th>Topic</th>
-              <th>Co-learning group</th>
-              <th>Slides link</th>
+              <th>Co-Learning Group</th>
+              <th>Slides URL</th>
               <th>Issue</th>
             </tr>
           </thead>
@@ -82,7 +90,7 @@ export default function SessionsEditor({
                     disabled={groups.length === 0}
                     onChange={(e) => patch(r.week, { groupId: e.target.value ? Number(e.target.value) : null })}
                   >
-                    <option value="">{groups.length ? "Not set" : "No groups yet"}</option>
+                    <option value="">{groups.length ? "Not set" : "No groups"}</option>
                     {groups.map((g) => (
                       <option key={g.id} value={g.id}>
                         {g.name}
@@ -95,13 +103,19 @@ export default function SessionsEditor({
                     className={`${styles.inp} ${styles.inpSmall}`}
                     type="url"
                     value={r.slides}
-                    placeholder="Google Slides or notebook link"
-                    aria-label={`Week ${r.week} slides link`}
+                    placeholder="https://"
+                    aria-label={`Week ${r.week} slides URL`}
                     onChange={(e) => patch(r.week, { slides: e.target.value })}
                   />
                 </td>
                 <td>
-                  <StatusChip status={r.issue ?? "none"} label={r.issue ? ISSUE_STATUS_LABEL[r.issue] : "No issue yet"} />
+                  {r.issue && r.issueId ? (
+                    <Link href={`${runHref("DAP", cohortSlug, "newsletter")}/${r.issueId}`} aria-label={`Edit week ${r.week} issue`}>
+                      <StatusChip status={r.issue} label={ISSUE_STATUS_LABEL[r.issue]} />
+                    </Link>
+                  ) : (
+                    <span className={styles.hint}>None</span>
+                  )}
                 </td>
               </tr>
             ))}

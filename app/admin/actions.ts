@@ -27,7 +27,7 @@ async function run<T>(fn: (actor: Actor) => Promise<T>, message?: string): Promi
   } catch (error) {
     if (error instanceof CmsError) return { ok: false, error: error.message };
     console.error("[cms action]", error);
-    return { ok: false, error: "Something went wrong. Try again, and check the server logs if it keeps failing." };
+    return { ok: false, error: "Action failed. Retry, and check the server logs if the error persists." };
   }
 }
 
@@ -46,7 +46,7 @@ export async function saveProjectAction(
     const target: ProjectStatus | null =
       intent === "draft" ? "draft" : intent === "submit" ? "in_review" : intent === "publish" ? "published" : null;
     if (target === "published" && !input.cohortId) {
-      throw new CmsError("Pick a semester (AI Lodge) or cohort (DAP) before publishing");
+      throw new CmsError("Semester (AI Lodge) or cohort (DAP) required before publishing");
     }
     let project = slug
       ? await projects.updateProject(actor, slug, input)
@@ -65,7 +65,7 @@ export async function approveProjectAction(slug: string) {
     await projects.setProjectStatus(actor, slug, "published");
     refreshAdmin();
     return null;
-  }, "Published");
+  }, "Project published");
 }
 
 export async function setWinnerAction(slug: string, winner: boolean) {
@@ -145,6 +145,19 @@ export async function placeProjectAction(slug: string, cohortId: string | null, 
     });
     refreshAdmin();
     return project.slug;
+  });
+}
+
+/** Adds several projects to a semester/cohort and track in one go. */
+export async function placeProjectsAction(slugs: string[], cohortId: string, trackId: number | null) {
+  return run(async (actor) => {
+    const cohort = await cohorts.getCohort(cohortId);
+    if (!cohort) throw new CmsError("That semester no longer exists");
+    for (const slug of slugs) {
+      await projects.updateProject(actor, slug, { programme: cohort.programme, cohortId, trackId });
+    }
+    refreshAdmin();
+    return slugs.length;
   });
 }
 

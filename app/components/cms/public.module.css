@@ -284,7 +284,7 @@
 
 .progBadge {
   font-family: var(--font-roboto-mono), monospace;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 1.4px;
   text-transform: uppercase;
@@ -358,6 +358,12 @@
 .tile:focus-visible .tileOverlay {
   opacity: 1;
 }
+/* No hover on touch screens: wall tiles always show their names. */
+@media (hover: none) {
+  .tileOverlay {
+    opacity: 1;
+  }
+}
 .legend {
   display: flex;
   gap: 18px;
@@ -401,7 +407,7 @@
   border-radius: 999px;
   background: var(--emerald);
   color: #fff;
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 20px;
   text-align: center;
   box-sizing: border-box;
@@ -519,7 +525,7 @@
 .legendLabel {
   padding: 0 6px 6px;
   font-family: var(--font-roboto-mono), monospace;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 1.4px;
   text-transform: uppercase;
@@ -621,15 +627,18 @@
   color: var(--pine-deep);
 }
 .stats {
+  margin-bottom: 0;
   display: flex;
   gap: 40px;
   flex-wrap: wrap;
   margin-top: 34px;
 }
 .statNum {
+  margin: 0;
   font-family: var(--font-display), sans-serif;
   font-size: 40px;
   font-weight: 800;
+  color: var(--mint);
 }
 .statLabel {
   font-size: 13px;
@@ -637,71 +646,6 @@
 }
 
 /* ── Yearbook body ─────────────────────────────────────────────────── */
-
-.about {
-  margin-top: 36px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-.aboutMain {
-  flex: 999 1 520px;
-  min-width: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 28px 30px;
-  box-sizing: border-box;
-}
-.aboutSide {
-  flex: 1 1 260px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px 26px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.aboutHeadline {
-  margin: 10px 0 0;
-  font-family: var(--font-display), sans-serif;
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--ink);
-}
-.aboutBody {
-  margin-top: 14px;
-}
-.glanceItem {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.glanceKey {
-  font-size: 12px;
-  color: var(--meta);
-}
-.glanceValue {
-  font-weight: 600;
-  color: var(--ink);
-}
-.glanceTrack {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  text-decoration: none;
-  color: var(--ink);
-  font-size: 14px;
-}
-.glanceTrack strong {
-  font-weight: 600;
-}
-.glanceTrack span {
-  color: var(--meta);
-  text-align: right;
-}
 
 .shelvesBar {
   display: flex;
@@ -714,33 +658,12 @@
 }
 .yearbookFoot {
   display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   justify-content: center;
   margin-top: 48px;
 }
 
-.shelf {
-  padding-top: 36px;
-  scroll-margin-top: 5rem;
-}
-.shelfHead {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.shelfTitle {
-  margin: 6px 0 0;
-  font-family: var(--font-display), sans-serif;
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--ink);
-}
-.shelfBlurb {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: var(--meta);
-}
 .shelfRow {
   display: flex;
   gap: 16px;
@@ -760,12 +683,6 @@
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 16px;
   padding: 22px 2px 14px;
-}
-.dapGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
 }
 
 /* ── DAP newsletter ────────────────────────────────────────────────── */
@@ -810,8 +727,8 @@
 }
 .latestWeek {
   font-family: var(--font-display), sans-serif;
-  font-size: 64px;
-  line-height: 0.9;
+  font-size: 44px;
+  line-height: 1;
   font-weight: 800;
   color: var(--sand);
 }
@@ -882,8 +799,7 @@
 }
 .sessionWeek {
   width: 64px;
-  font-family: var(--font-roboto-mono), monospace;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--meta);
 }
@@ -933,7 +849,7 @@
   padding-top: 14px;
   border-top: 1px solid var(--hair);
   font-family: var(--font-roboto-mono), monospace;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 1.4px;
   text-transform: uppercase;
@@ -941,21 +857,21 @@
 }
 .state {
   flex: 0 0 auto;
+  border: 1px solid currentColor;
+  background: var(--surface);
+  justify-self: start;
   font-size: 12px;
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 999px;
 }
 .stateDone {
-  background: #edf0ef;
   color: var(--ink-soft);
 }
 .stateNow {
-  background: var(--emerald);
-  color: #fff;
+  color: var(--emerald-strong);
 }
 .stateUpcoming {
-  background: #e4f5fd;
   color: #0b5d82;
 }
 .issueGrid {
@@ -1051,7 +967,7 @@
 }
 .sessionBoxLabel {
   font-family: var(--font-roboto-mono), monospace;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 1.4px;
   text-transform: uppercase;
   color: var(--mint);
@@ -1109,60 +1025,6 @@
   border-top: 1px solid var(--border);
 }
 
-/* DAP project dialog */
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1100;
-  background: rgba(12, 33, 28, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  box-sizing: border-box;
-}
-.dialog {
-  width: 100%;
-  max-width: 720px;
-  background: var(--surface);
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: var(--shadow-xl);
-  display: flex;
-  flex-wrap: wrap;
-}
-.dialogMedia {
-  flex: 1 1 260px;
-  min-height: 220px;
-  display: flex;
-}
-.dialogCover {
-  min-height: 220px;
-  height: 100%;
-}
-.dialogBody {
-  flex: 1 1 300px;
-  padding: 26px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-sizing: border-box;
-}
-.dialogTitle {
-  margin: 0;
-  font-family: var(--font-display), sans-serif;
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--ink);
-}
-.dialogActions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: auto;
-  padding-top: 8px;
-}
-
 @media (max-width: 640px) {
   .sessionRow {
     grid-template-columns: 56px minmax(0, 1fr) auto;
@@ -1174,9 +1036,6 @@
   .sessionLinks {
     grid-column: 2 / -1;
     justify-content: flex-start;
-  }
-  .aboutMain {
-    padding: 22px;
   }
 }
 
@@ -1278,4 +1137,221 @@
 .peopleOnDark + .mentorLine,
 .sessionBox .mentorLine {
   color: var(--pine-text-soft);
+}
+
+/* ── Yearbook ──────────────────────────────────────────────────────── */
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--meta);
+}
+.crumbs a {
+  font-weight: 600;
+  color: var(--emerald);
+  text-decoration: none;
+}
+.crumbs a:hover {
+  text-decoration: underline;
+}
+.onDark .crumbs {
+  color: var(--pine-text-soft);
+}
+.onDark .crumbs a {
+  color: var(--mint);
+}
+.heroMeta {
+  margin: 10px 0 0;
+  font-size: 15px;
+  color: var(--pine-text-soft);
+}
+.about {
+  max-width: 72ch;
+  margin-top: 40px;
+}
+.aboutHeadline {
+  margin: 0 0 12px;
+  font-family: var(--font-display), sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.sectionNote {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--meta);
+}
+.filterBar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.filterLabel {
+  width: 56px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.pill:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.pillNum {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 12px;
+  opacity: 0.8;
+}
+.filterBar + .activeRow {
+  margin: 14px 0 0;
+}
+.shelf {
+  padding-top: 32px;
+  scroll-margin-top: 5rem;
+}
+.shelfHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.shelfAccent {
+  width: 4px;
+  height: 22px;
+  border-radius: 999px;
+}
+.shelfTitle {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.shelfCount {
+  font-size: 13px;
+  color: var(--meta);
+}
+.shelvesBar {
+  margin-top: 0;
+}
+.section > .shelvesBar:first-child {
+  padding-bottom: 12px;
+}
+.shelfRow,
+.filterSide {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(18, 53, 44, 0.22) transparent;
+}
+
+/* Lodge cards */
+.lodgeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+.lodgeCard {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.lodgeCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(14, 124, 91, 0.35);
+}
+.lodgeMark {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--pine-deep);
+  color: #fff;
+  font: 800 22px var(--font-display), sans-serif;
+}
+.lodgeMark img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+.lodgeText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.lodgeName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 16px var(--font-display), sans-serif;
+  color: var(--ink);
+}
+.lodgeName svg {
+  flex: none;
+  color: var(--meta);
+}
+.lodgeTagline {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.sessionTba {
+  color: var(--meta);
+}
+
+.stats > div {
+  display: flex;
+  flex-direction: column-reverse;
+}
+.stats dd {
+  margin: 0;
+}
+.latestCover {
+  position: relative;
+  flex: 1 1 240px;
+  min-height: 180px;
+  overflow: hidden;
+  background: var(--surface-muted);
+}
+.sessionRow {
+  grid-template-columns: 84px minmax(0, 1fr) 110px 92px 190px;
+}
+.sessionLinks {
+  flex-wrap: nowrap;
+}
+@media (max-width: 640px) {
+  .sessionRow {
+    grid-template-columns: 72px minmax(0, 1fr) auto;
+  }
+  .sessionLinks {
+    flex-wrap: wrap;
+  }
+}
+
+.sessionWeek {
+  width: auto;
+  white-space: nowrap;
 }

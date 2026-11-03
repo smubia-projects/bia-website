@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AccessToken } from "@/app/lib/cms/tokens";
 import { createTokenAction, revokeTokenAction } from "../../actions";
-import { useActionToast } from "../../_components/ui";
+import { Modal, PageHead, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";
 
 const LIFETIMES = [
@@ -18,13 +18,15 @@ const day = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" }) : "";
 
 /**
- * Personal access tokens: how Claude (or any MCP client) reaches the CMS as you.
- * A token does what your role can do, and stops working when it's revoked, when
- * it expires or when you're removed from People.
+ * Personal access tokens: how Claude (or any MCP client) reaches the CMS as their
+ * owner. A token has the owner's role, and stops working when it's revoked, when
+ * it expires or when the owner is removed from People.
  */
 export default function TokensManager({ tokens, endpoint }: { tokens: AccessToken[]; endpoint: string }) {
   const router = useRouter();
   const { handle, node } = useActionToast();
+  const confirm = useConfirm();
+  const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [days, setDays] = useState(90);
   const [busy, setBusy] = useState(false);
@@ -40,13 +42,14 @@ export default function TokensManager({ tokens, endpoint }: { tokens: AccessToke
       setCreated(token);
       setCopied(false);
       setName("");
+      setAdding(false);
       router.refresh();
     }
   }
 
   async function revoke(t: AccessToken) {
-    if (!confirm(`Revoke "${t.name}"? Anything using it stops working immediately.`)) return;
-    if (handle(await revokeTokenAction(t.id), "Token revoked") !== undefined) router.refresh();
+    const yes = await confirm({ title: "Revoke Token", body: `Clients using "${t.name}" lose access immediately.`, action: "Revoke Token", danger: true });
+    if (yes && handle(await revokeTokenAction(t.id), "Token revoked") !== undefined) router.refresh();
   }
 
   async function copy() {
@@ -69,21 +72,35 @@ export default function TokensManager({ tokens, endpoint }: { tokens: AccessToke
 
   return (
     <>
-      <h1 className={styles.h1}>Access tokens</h1>
-      <p className={styles.sub}>
-        Connect Claude to the CMS as you. A token can do exactly what your role can, and its changes are recorded under your name.
-      </p>
+      <PageHead title="Access Tokens" sub="MCP access to the CMS. A token has its owner's role, and its changes are recorded under the owner's name.">
+        <button type="button" className={styles.btn} onClick={() => setAdding(true)}>
+          New Token
+        </button>
+      </PageHead>
 
-      <div className={styles.panel} style={{ marginTop: 20 }}>
-        <h2 className={styles.h2}>New token</h2>
-        <div className={styles.grid2}>
+      {adding && (
+        <Modal
+          title="New Token"
+          onClose={() => setAdding(false)}
+          onSubmit={() => name.trim() && !busy && create()}
+          footer={
+            <>
+              <button type="button" className={styles.pill} onClick={() => setAdding(false)}>
+                Cancel
+              </button>
+              <button type="submit" className={styles.btn} disabled={busy || !name.trim()}>
+                {busy ? "Creating…" : "Create Token"}
+              </button>
+            </>
+          }
+        >
           <label className={styles.fld}>
             Name
-            <input className={styles.inp} value={name} placeholder="Claude Code on my laptop" onChange={(e) => setName(e.target.value)} />
-            <span className={styles.hint}>Where you&apos;ll use it, so you know which one to revoke.</span>
+            <input className={styles.inp} autoFocus value={name} placeholder="Claude Code, personal laptop" onChange={(e) => setName(e.target.value)} />
+            <span className={styles.hint}>Identifies the client using this token.</span>
           </label>
           <label className={styles.fld}>
-            Expires after
+            Expiry
             <select className={styles.inp} value={days} onChange={(e) => setDays(Number(e.target.value))}>
               {LIFETIMES.map((l) => (
                 <option key={l.days} value={l.days}>
@@ -92,26 +109,26 @@ export default function TokensManager({ tokens, endpoint }: { tokens: AccessToke
               ))}
             </select>
           </label>
-        </div>
-        <button type="button" className={styles.btn} style={{ alignSelf: "flex-start" }} disabled={busy || !name.trim()} onClick={create}>
-          {busy ? "Creating…" : "Create token"}
-        </button>
-        {created && (
+        </Modal>
+      )}
+
+      {created && (
+        <section className={styles.panel} style={{ marginTop: 20 }}>
           <div className={styles.subItem}>
-            <strong>Copy this now: it won&apos;t be shown again.</strong>
-            <span className={styles.hint}>Run it in a terminal to add the CMS to Claude Code:</span>
-            <code style={{ display: "block", wordBreak: "break-all", fontSize: 12.5, lineHeight: 1.5 }}>{command}</code>
+            <strong>Token shown once. Copy it before closing this panel.</strong>
+            <span className={styles.hint}>Claude Code setup command:</span>
+            <code style={{ display: "block", wordBreak: "break-all", fontSize: 13, lineHeight: 1.5 }}>{command}</code>
             <div className={styles.row}>
               <button type="button" className={styles.pill} onClick={copy}>
-                {copied ? "Copied" : "Copy command"}
+                {copied ? "Copied" : "Copy Command"}
               </button>
               <button type="button" className={styles.lnk} onClick={() => setCreated(null)}>
-                Done
+                Close
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </section>
+      )}
 
       <div className={styles.tableWrap} style={{ marginTop: 20 }}>
         <table className={styles.table} style={{ minWidth: 560 }}>
@@ -119,7 +136,7 @@ export default function TokensManager({ tokens, endpoint }: { tokens: AccessToke
             <tr>
               <th>Token</th>
               <th>Created</th>
-              <th>Last used</th>
+              <th>Last Used</th>
               <th>Status</th>
               <th style={{ textAlign: "right" }}>Actions</th>
             </tr>
@@ -145,7 +162,7 @@ export default function TokensManager({ tokens, endpoint }: { tokens: AccessToke
             ))}
           </tbody>
         </table>
-        {tokens.length === 0 && <p className={styles.emptyRow}>No tokens yet.</p>}
+        {tokens.length === 0 && <p className={styles.emptyRow}>No tokens.</p>}
       </div>
       {node}
     </>

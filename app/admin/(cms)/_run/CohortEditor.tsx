@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "lucide-react";
 import type { Cohort, Track } from "@/app/lib/cms/cohorts";
 import type { TimelineStep } from "@/app/lib/db/schema";
 import { trackAccent } from "@/app/components/cms/visuals";
 import type { CohortVisibility } from "@/app/lib/cms/taxonomy";
 import { deleteTrackAction, moveTrackAction, saveCohortAction, saveTrackAction } from "../../actions";
-import { useActionToast, useUnsavedChanges } from "../../_components/ui";
+import { AddButton, ExternalAction, MarkdownHint, OrderButtons, PageHead, UnsavedNote, useActionToast, useConfirm, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
 
 interface Props {
@@ -18,9 +19,9 @@ interface Props {
 }
 
 const VISIBILITY: { value: CohortVisibility; label: string }[] = [
-  { value: "live", label: "Current: shown first on the site" },
-  { value: "archived", label: "Past: still public" },
-  { value: "hidden", label: "Hidden: not on the site" },
+  { value: "live", label: "Current: listed first on the site" },
+  { value: "archived", label: "Past: public" },
+  { value: "hidden", label: "Hidden: not public" },
 ];
 
 const DEFAULT_TIMELINE: TimelineStep[] = [
@@ -33,6 +34,7 @@ const DEFAULT_TIMELINE: TimelineStep[] = [
 /** A run's overview: name, visibility and write-up, plus Hack Day tracks and the applications timeline for AI Lodge. */
 export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Props) {
   const { handle, node } = useActionToast();
+  const confirm = useConfirm();
   const isLodge = cohort.programme === "AI Lodge";
   const noun = isLodge ? "semester" : "cohort";
   const [form, setForm] = useState({
@@ -51,17 +53,16 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
   const [newTrack, setNewTrack] = useState<{ name: string } | null>(null);
 
   const set = (k: keyof typeof form, v: string) => setForm((s) => ({ ...s, [k]: v }));
-  useUnsavedChanges(
-    !saving &&
-      (form.name !== cohort.name ||
-        form.visibility !== cohort.visibility ||
-        form.headline !== cohort.headline ||
-        form.writeup !== cohort.writeup ||
-        form.hackDay !== cohort.hackDay ||
-        form.shortName !== cohort.shortName ||
-        form.revealNote !== cohort.revealNote ||
-        JSON.stringify(timeline) !== JSON.stringify(cohort.timeline))
-  );
+  const dirty =
+    form.name !== cohort.name ||
+    form.visibility !== cohort.visibility ||
+    form.headline !== cohort.headline ||
+    form.writeup !== cohort.writeup ||
+    form.hackDay !== cohort.hackDay ||
+    form.shortName !== cohort.shortName ||
+    form.revealNote !== cohort.revealNote ||
+    JSON.stringify(timeline) !== JSON.stringify(cohort.timeline);
+  useUnsavedChanges(!saving && dirty);
 
   async function save() {
     setSaving(true);
@@ -69,6 +70,21 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
       await saveCohortAction(cohort.id, { ...form, visibility: form.visibility as CohortVisibility, ...(isLodge ? { timeline } : {}) })
     );
     setSaving(false);
+  }
+
+  useSaveShortcut(save, canEdit && dirty && !saving);
+
+  function discard() {
+    setForm({
+      name: cohort.name,
+      visibility: cohort.visibility,
+      headline: cohort.headline,
+      writeup: cohort.writeup,
+      hackDay: cohort.hackDay,
+      shortName: cohort.shortName,
+      revealNote: cohort.revealNote,
+    });
+    setTimeline(cohort.timeline);
   }
 
   async function saveTrack(input: { id?: number; name: string }) {
@@ -88,41 +104,26 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
   }
 
   async function removeTrack(t: Track) {
-    if (!confirm(`Remove ${t.name}?`)) return;
+    if (!(await confirm({ title: "Remove Track", body: `${t.name} is removed from this semester.`, action: "Remove Track", danger: true }))) return;
     handle(await deleteTrackAction(t.id), "Track removed");
   }
 
   return (
     <>
-      <div className={styles.pageHead}>
-        <div>
-          <h1 className={styles.h1}>{cohort.name}</h1>
-          <p className={styles.sub}>
-            {isLodge
-              ? "The semester's yearbook page and its Hack Day tracks, plus the applications timeline on the AI Lodge site. Lodges and projects have their own pages."
-              : "The cohort's details and write-up, shown on its yearbook page. Groups, the schedule and the newsletter each have their own page."}
-          </p>
-        </div>
-        <div className={styles.row}>
-          <a className={styles.pill} href={`/admin/preview/cohort/${cohort.id}`} target="_blank" rel="noopener noreferrer">
-            Preview
-          </a>
-          {cohort.visibility !== "hidden" && (
-            <a className={styles.pill} href={publicHref} target="_blank" rel="noopener noreferrer">
-              View on site
-            </a>
-          )}
-          <button type="button" className={styles.btn} onClick={save} disabled={!canEdit || saving}>
-            {saving ? "Saving…" : "Save changes"}
-          </button>
-        </div>
-      </div>
+      <PageHead title="Overview">
+        <UnsavedNote show={dirty} onDiscard={discard} />
+        <ExternalAction href={`/admin/preview/cohort/${cohort.id}`} label="Preview" />
+        {cohort.visibility !== "hidden" && <ExternalAction href={publicHref} label="View Public Page" />}
+        <button type="button" className={styles.btn} onClick={save} disabled={!canEdit || saving || !dirty}>
+          {saving ? "Saving…" : "Save Changes"}
+        </button>
+      </PageHead>
 
       <div className={styles.cols} style={{ marginTop: 22 }}>
           <section className={`${styles.colMain} ${styles.panel}`}>
             <div className={styles.grid2}>
               <label className={styles.fld}>
-                {isLodge ? "Semester" : "Cohort"}
+                {isLodge ? "Semester Name" : "Cohort Name"}
                 <input className={styles.inp} value={form.name} onChange={(e) => set("name", e.target.value)} disabled={!canEdit} />
               </label>
               <label className={styles.fld}>
@@ -134,12 +135,13 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
                     </option>
                   ))}
                 </select>
+                <span className={styles.hint}>One {noun} can be current. Setting this one moves the previous {noun} to past.</span>
               </label>
             </div>
             {isLodge && (
               <label className={styles.fld}>
                 Headline
-                <input className={styles.inp} value={form.headline} onChange={(e) => set("headline", e.target.value)} placeholder="One line that sums up the semester" disabled={!canEdit} />
+                <input className={styles.inp} value={form.headline} onChange={(e) => set("headline", e.target.value)} disabled={!canEdit} />
               </label>
             )}
             <label className={styles.fld}>
@@ -149,62 +151,59 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
                 rows={7}
                 value={form.writeup}
                 onChange={(e) => set("writeup", e.target.value)}
-                placeholder={isLodge ? "What the tracks explored, Hack Day highlights, anything that stood out" : "The kinds of models teams built and highlights from the final presentations"}
                 disabled={!canEdit}
               />
-              <span className={styles.hint}>Markdown supported. Shown under the yearbook header.</span>
+              <MarkdownHint>Shown under the yearbook header.</MarkdownHint>
             </label>
             {isLodge && (
               <label className={styles.fld}>
-                Hack Day
+                Hack Day Date and Venue
                 <input className={styles.inp} value={form.hackDay} onChange={(e) => set("hackDay", e.target.value)} placeholder="Date · Venue" disabled={!canEdit} />
               </label>
             )}
             {isLodge && (
               <div className={styles.grid2}>
                 <label className={styles.fld}>
-                  Name on the AI Lodge site
+                  AI Lodge Site Name
                   <input className={styles.inp} value={form.shortName} onChange={(e) => set("shortName", e.target.value)} placeholder="Fall 2026" disabled={!canEdit} />
-                  <span className={styles.hint}>As in &quot;Fall 2026 cohort&quot;. Uses the {noun} name when empty.</span>
+                  <span className={styles.hint}>Shown as &quot;Fall 2026 cohort&quot;. Empty uses the {noun} name.</span>
                 </label>
                 <label className={styles.fld}>
-                  Lodge details drop
+                  Lodge Details Release
                   <input className={styles.inp} value={form.revealNote} onChange={(e) => set("revealNote", e.target.value)} placeholder="soon" disabled={!canEdit} />
-                  <span className={styles.hint}>For lodges marked &quot;details not released&quot;: read as &quot;Details drop soon&quot; or &quot;Details drop 26 Oct&quot;.</span>
+                  <span className={styles.hint}>Completes &quot;Details drop …&quot; on unreleased lodges, for example &quot;soon&quot; or &quot;26 Oct&quot;.</span>
                 </label>
               </div>
             )}
-            <span className={styles.hint}>Only one {noun} is current at a time: making this one current moves the previous one to past.</span>
             {isLodge && (
               <fieldset className={styles.fieldset} style={{ gap: 8, marginTop: 8 }}>
-                <legend className={styles.legend}>Applications timeline</legend>
-                <span className={styles.hint}>The &quot;Save the dates&quot; steps on the AI Lodge site.</span>
+                <legend className={styles.legend}>Applications Timeline</legend>
+                <span className={styles.hint}>Shown as &quot;Save the dates&quot; on the AI Lodge site.</span>
+                {timeline.length > 0 && (
+                  <div className={styles.timelineHead}>
+                    <span>Step</span>
+                    <span>Date</span>
+                    <span>Note</span>
+                    <span>Deadline</span>
+                    <span />
+                  </div>
+                )}
                 {timeline.map((t, i) => (
-                  <div key={i} className={styles.row}>
-                    <input className={`${styles.inp} ${styles.inpSmall}`} style={{ flex: "1 1 160px", width: "auto" }} value={t.label} placeholder="Deadline" aria-label="Step" disabled={!canEdit} onChange={(e) => setStep(i, { label: e.target.value })} />
-                    <input className={`${styles.inp} ${styles.inpSmall}`} style={{ maxWidth: 170 }} type="date" value={t.date} aria-label={`${t.label || "Step"} date`} disabled={!canEdit} onChange={(e) => setStep(i, { date: e.target.value })} />
-                    <input className={`${styles.inp} ${styles.inpSmall}`} style={{ flex: "2 1 220px", width: "auto" }} value={t.note ?? ""} placeholder="Note (optional)" aria-label="Note" disabled={!canEdit} onChange={(e) => setStep(i, { note: e.target.value })} />
-                    <label className={styles.radio}>
-                      <input type="checkbox" checked={Boolean(t.deadline)} disabled={!canEdit} onChange={(e) => setStep(i, { deadline: e.target.checked || undefined })} />
-                      Deadline
+                  <div key={i} className={styles.timelineRow}>
+                    <input className={`${styles.inp} ${styles.inpSmall}`} value={t.label} aria-label="Step" disabled={!canEdit} onChange={(e) => setStep(i, { label: e.target.value })} />
+                    <input className={`${styles.inp} ${styles.inpSmall}`} type="date" value={t.date} aria-label={`${t.label || "Step"} date`} disabled={!canEdit} onChange={(e) => setStep(i, { date: e.target.value })} />
+                    <input className={`${styles.inp} ${styles.inpSmall}`} value={t.note ?? ""} placeholder="Optional" aria-label="Note" disabled={!canEdit} onChange={(e) => setStep(i, { note: e.target.value })} />
+                    <label className={styles.radio} style={{ justifyContent: "center" }}>
+                      <input type="checkbox" aria-label={`${t.label || "Step"} is a deadline`} checked={Boolean(t.deadline)} disabled={!canEdit} onChange={(e) => setStep(i, { deadline: e.target.checked || undefined })} />
                     </label>
                     {canEdit && (
                       <button type="button" className={styles.ico} aria-label={`Remove ${t.label || "step"}`} onClick={() => setTimeline((s) => s.filter((_, j) => j !== i))}>
-                        ×
+                        <X size={16} strokeWidth={1.75} aria-hidden="true" />
                       </button>
                     )}
                   </div>
                 ))}
-                {canEdit && (
-                  <button
-                    type="button"
-                    className={styles.add}
-                    style={{ alignSelf: "flex-start" }}
-                    onClick={() => setTimeline((s) => (s.length ? [...s, { label: "", date: "" }] : DEFAULT_TIMELINE))}
-                  >
-                    + Step
-                  </button>
-                )}
+                {canEdit && <AddButton label="Add Step" onClick={() => setTimeline((s) => (s.length ? [...s, { label: "", date: "" }] : DEFAULT_TIMELINE))} />}
               </fieldset>
             )}
           </section>
@@ -212,9 +211,9 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
           {isLodge && (
             <div className={styles.colSide} style={{ position: "static" }}>
             <section className={styles.panel} style={{ gap: 0 }}>
-              <h2 className={styles.h2}>Hack Day tracks</h2>
-              <p className={styles.hint} style={{ margin: "4px 0 14px", fontSize: 13 }}>
-                The tracks teams entered at Hack Day. Each becomes a shelf with one winner. This order sets the shelf colours; the public page shuffles it per visitor.
+              <h2 className={styles.h2}>Hack Day Tracks</h2>
+              <p className={styles.sectionHint} style={{ margin: "4px 0 14px" }}>
+                One yearbook shelf and one winner per track. Order sets shelf colours; the public page shuffles the display order. Changes in this panel save immediately.
               </p>
               {tracks.map((t, index) => {
                 const edit = editing[t.id];
@@ -250,14 +249,7 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
                     )}
                     {!edit && canEdit && (
                       <>
-                        <span className={styles.trackOrder}>
-                          <button type="button" className={styles.ico} aria-label={`Move ${t.name} up`} disabled={index === 0} onClick={() => moveTrack(t, "up")}>
-                            ↑
-                          </button>
-                          <button type="button" className={styles.ico} aria-label={`Move ${t.name} down`} disabled={index === tracks.length - 1} onClick={() => moveTrack(t, "down")}>
-                            ↓
-                          </button>
-                        </span>
+                        <OrderButtons index={index} count={tracks.length} label={t.name} onMove={(dir) => moveTrack(t, dir === -1 ? "up" : "down")} />
                         <button type="button" className={styles.lnk} onClick={() => setEditing((s) => ({ ...s, [t.id]: { name: t.name } }))}>
                           Edit
                         </button>
@@ -269,10 +261,10 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
               {canEdit &&
                 (newTrack ? (
                   <div className={styles.subItem} style={{ marginTop: 10 }}>
-                    <input className={`${styles.inp} ${styles.inpSmall}`} value={newTrack.name} placeholder="Track name, e.g. Agents" aria-label="Track name" onChange={(e) => setNewTrack({ ...newTrack, name: e.target.value })} />
+                    <input className={`${styles.inp} ${styles.inpSmall}`} value={newTrack.name} placeholder="Track name" aria-label="Track name" onChange={(e) => setNewTrack({ ...newTrack, name: e.target.value })} />
                     <span className={styles.row}>
                       <button type="button" className={styles.btn} disabled={!newTrack.name.trim()} onClick={() => saveTrack(newTrack)}>
-                        Add track
+                        Add Track
                       </button>
                       <button type="button" className={styles.pill} onClick={() => setNewTrack(null)}>
                         Cancel
@@ -280,9 +272,7 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
                     </span>
                   </div>
                 ) : (
-                  <button type="button" className={styles.add} style={{ marginTop: 10 }} onClick={() => setNewTrack({ name: "" })}>
-                    + Track
-                  </button>
+                  <AddButton label="Add Track" style={{ marginTop: 10 }} onClick={() => setNewTrack({ name: "" })} />
                 ))}
             </section>
             </div>

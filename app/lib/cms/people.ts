@@ -43,10 +43,11 @@ export interface PersonInput {
 }
 
 export async function savePerson(actor: Actor, input: PersonInput) {
-  ensure(can.managePeople(actor), "Only exco can manage people");
+  ensure(can.managePeople(actor), "Managing people requires the exco admin role");
   const email = input.email.trim().toLowerCase();
-  ensure(/^[^@\s]+@smu\.edu\.sg$/.test(email), "Use an @smu.edu.sg Google account");
+  ensure(/^[^@\s]+@smu\.edu\.sg$/.test(email), "Email must be an @smu.edu.sg Google account");
   ensure((ROLES as readonly string[]).includes(input.role), "Unknown role");
+  ensure(email !== actor.email || input.role === actor.role, "The signed-in account cannot change its own role. Another exco admin can.");
   const values = { name: (input.name ?? "").trim(), role: input.role };
   const db = await getDb();
   await db
@@ -56,9 +57,9 @@ export async function savePerson(actor: Actor, input: PersonInput) {
 }
 
 export async function removePerson(actor: Actor, email: string) {
-  ensure(can.managePeople(actor), "Only exco can manage people");
+  ensure(can.managePeople(actor), "Managing people requires the exco admin role");
   const key = email.trim().toLowerCase();
-  ensure(key !== actor.email, "You can't remove yourself");
+  ensure(key !== actor.email, "The signed-in account cannot be removed. Another exco admin can remove it.");
   const db = await getDb();
   await db.delete(people).where(eq(people.email, key));
 }

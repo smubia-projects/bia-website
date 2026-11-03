@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Grid3x3, LayoutGrid, SlidersHorizontal } from "lucide-react";
+import { Grid3x3, LayoutGrid, SlidersHorizontal, X } from "lucide-react";
 import type { Project } from "@/app/projects/data/types";
 import { projectPath } from "@/app/lib/cms/paths";
 import { BUILT_WITH, MADE_FOR, PROGRAMMES } from "@/app/lib/cms/taxonomy";
@@ -24,8 +24,8 @@ const facetValue = (p: Project, key: FacetKey) =>
   key === "programme" ? p.badge : key === "track" ? p.trackName ?? "" : key === "madeFor" ? p.madeFor ?? "" : p.builtWith ?? "";
 
 const VIEWS = [
-  { value: "wall" as Mode, label: "Thumbnail wall", Icon: Grid3x3 },
   { value: "cards" as Mode, label: "Cards", Icon: LayoutGrid },
+  { value: "wall" as Mode, label: "Thumbnail wall", Icon: Grid3x3 },
 ];
 
 /**
@@ -36,16 +36,36 @@ const VIEWS = [
 export default function ProjectsExplorer({ projects }: { projects: Project[] }) {
   const searchParams = useSearchParams();
   const seed = useClientValue<number | null>(visitSeed, null);
-  const [q, setQ] = useState("");
-  const [filters, setFilters] = useState<Filters>(() => {
-    const programme = searchParams.get("programme");
-    return programme && (PROGRAMMES as readonly string[]).includes(programme)
-      ? { ...EMPTY, programme: [programme] }
-      : EMPTY;
-  });
+  const [q, setQState] = useState(() => searchParams.get("q") ?? "");
+  const [filters, setFiltersState] = useState<Filters>(() => ({
+    programme: searchParams.getAll("programme").filter((v) => (PROGRAMMES as readonly string[]).includes(v)),
+    track: searchParams.getAll("track"),
+    madeFor: searchParams.getAll("madeFor"),
+    builtWith: searchParams.getAll("builtWith"),
+  }));
+
+  /** Keeps search and filters in the address, so reload, Back and shared links keep them. */
+  const syncUrl = (nextFilters: Filters, nextQ: string) => {
+    const url = new URL(window.location.href);
+    for (const key of Object.keys(nextFilters) as FacetKey[]) {
+      url.searchParams.delete(key);
+      nextFilters[key].forEach((v) => url.searchParams.append(key, v));
+    }
+    if (nextQ) url.searchParams.set("q", nextQ);
+    else url.searchParams.delete("q");
+    window.history.replaceState(null, "", url);
+  };
+  const setQ = (value: string) => {
+    setQState(value);
+    syncUrl(filters, value);
+  };
+  const setFilters = (next: Filters) => {
+    setFiltersState(next);
+    syncUrl(next, q);
+  };
   // null = not chosen yet: the sidebar shows on wide screens and hides on narrow ones.
   const [filtersOpen, setFiltersOpen] = useState<boolean | null>(null);
-  const [mode, setMode] = useState<Mode>("wall");
+  const [mode, setMode] = useState<Mode>("cards");
 
   const wide = useMediaQuery("(min-width: 1024px)");
   const open = filtersOpen ?? wide;
@@ -81,10 +101,11 @@ export default function ProjectsExplorer({ projects }: { projects: Project[] }) 
   const narrowed = chips.length > 0 || query.length > 0;
 
   const toggle = (key: FacetKey, v: string) =>
-    setFilters((f) => ({ ...f, [key]: f[key].includes(v) ? f[key].filter((x) => x !== v) : [...f[key], v] }));
+    setFilters({ ...filters, [key]: filters[key].includes(v) ? filters[key].filter((x) => x !== v) : [...filters[key], v] });
   const clearAll = () => {
-    setFilters(EMPTY);
-    setQ("");
+    setFiltersState(EMPTY);
+    setQState("");
+    syncUrl(EMPTY, "");
   };
 
   const layout = filtersOpen === null ? styles.explorerAuto : filtersOpen ? styles.explorerOpen : styles.explorerClosed;
@@ -137,28 +158,25 @@ export default function ProjectsExplorer({ projects }: { projects: Project[] }) 
         </aside>
 
         <div className={styles.results}>
-          {narrowed && (
-            <div className={styles.activeRow} aria-live="polite">
+          <div className={styles.activeRow} aria-live="polite">
               <span className={styles.resultText}>
-                {results.length} of {projects.length} projects
+                {narrowed ? `${results.length} of ${projects.length} projects` : `${projects.length} projects`}
               </span>
               {chips.map((c) => (
                 <button key={c.key + c.v} type="button" className={styles.chip} onClick={() => toggle(c.key, c.v)} aria-label={`Remove filter ${c.v}`}>
                   {c.v}
-                  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M6 6l12 12" />
-                    <path d="M18 6 6 18" />
-                  </svg>
+                  <X size={12} strokeWidth={2.5} aria-hidden="true" />
                 </button>
               ))}
-              <button type="button" className={styles.lnkBtn} onClick={clearAll}>
-                Clear all
-              </button>
-            </div>
-          )}
+              {narrowed && (
+                <button type="button" className={styles.lnkBtn} onClick={clearAll}>
+                  Clear filters
+                </button>
+              )}
+          </div>
 
           {results.length === 0 ? (
-            <div className={styles.empty}>No projects match. Remove a filter to widen the search.</div>
+            <div className={styles.empty}>No projects match these filters.</div>
           ) : mode === "wall" ? (
             <>
               <div key={seed ?? "ssr"} className={`${styles.wall} ${styles.fadeIn}`}>

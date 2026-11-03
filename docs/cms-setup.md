@@ -17,16 +17,23 @@ npm run dev
 - Without a Telegram token, posts and tests are printed to the dev server console.
 - Without `BLOB_READ_WRITE_TOKEN`, uploads land in `public/uploads/` (git-ignored).
 
-## 1. Neon database (Vercel dashboard)
+## 1. Neon database (connection string)
 
-1. Open vercel.com, then the **bia-website** project, then **Storage**, then **Create Database**, then **Neon**.
-2. Pick region **Singapore (aws-ap-southeast-1)** and the **Free** plan.
-3. Connect it to **Production, Preview and Development**.
-4. In the integration's settings, turn on **database branch per preview deployment**.
-   Each preview deployment then gets its own copy of the production data, so testing on
-   `feat/cms` never touches the live database.
-5. This adds `DATABASE_URL` (plus a few `PG*`/`POSTGRES_*` variables) to the project. Nothing
-   else to do: the `vercel-build` script runs migrations before every build.
+The site uses our own Neon project, attached with a connection string. It does not use the
+Vercel ↔ Neon integration, so Vercel creates no database and no per-preview branches.
+
+1. In console.neon.tech, open the project and copy the connection string of the branch that
+   holds the CMS content (**Connect**).
+2. In Vercel → **bia-website** → **Settings** → **Environment Variables**, set it as
+   `DATABASE_URL` for **Production**.
+3. Set `DATABASE_URL` for **Preview** too: `vercel-build` fails without it. Decide what previews
+   point at, because **every preview build runs migrations against that database and every preview
+   edit is written to it**:
+   - **Recommended:** create a `preview` branch in the Neon console and use its connection string.
+     Testing then can't touch the real content. Refresh the branch from `main` when it goes stale.
+   - **Or** use the same string as Production. Edits on a preview are then live edits.
+
+Nothing else to do: the `vercel-build` script runs migrations before every build.
 
 ## 2. Copy the live projects into Neon (your machine)
 
@@ -82,7 +89,7 @@ the stable branch URL you registered, e.g. `bia-website-git-feat-cms-<team>.verc
 
 | Variable | Production | Preview | Value |
 |---|---|---|---|
-| `DATABASE_URL` | auto | auto | Set by the Neon integration |
+| `DATABASE_URL` | ✓ | ✓ | Neon connection string from step 1. Migrations run against it on every build |
 | `AUTH_SECRET` | ✓ | ✓ | `npx auth secret` (or `openssl rand -base64 32`), a different one per environment |
 | `AUTH_GOOGLE_ID` | ✓ | ✓ | From step 3 |
 | `AUTH_GOOGLE_SECRET` | ✓ | ✓ | From step 3 |
@@ -96,11 +103,13 @@ the stable branch URL you registered, e.g. `bia-website-git-feat-cms-<team>.verc
 | `NEXT_PUBLIC_SITE_URL` | `https://www.smubia.com` | (leave unset) | Absolute links in Telegram posts |
 | `BLOB_READ_WRITE_TOKEN` | already set | already set | Unchanged |
 
-Keep `ADMIN_PASSWORD` and `UPSTASH_REDIS_REST_*` until step 9.
+Keep `ADMIN_PASSWORD` until step 9. Keep `UPSTASH_REDIS_REST_*` for good (server-side only, never
+`NEXT_PUBLIC_`): the planned rate-limit Ops page writes the shared limiter's config with them
+(`docs/rate-limit-ops-plan.md`).
 
 ## 6. Test on a preview deployment
 
-1. `git push -u origin feat/cms`. Vercel builds a preview with its own Neon branch. It
+1. `git push -u origin feat/cms`. Vercel builds a preview against the Preview `DATABASE_URL`. It
    runs migrations first, so a failed build usually means `DATABASE_URL` is missing.
 2. Open the **branch URL** (Vercel → Deployments → the feat/cms deployment → Domains). Add it
    to the Google OAuth client from step 3 if you haven't yet.
@@ -108,7 +117,8 @@ Keep `ADMIN_PASSWORD` and `UPSTASH_REDIS_REST_*` until step 9.
    `/projects/dap`, `/dap` and its current cohort page (`/dap/ay2627`), `/work-with-us`, and `/admin` sign-in. Then the old links, which
    should all redirect: `/Projects`, `/DAP`, `/WorkWithUs`, `/ContactUs`, `/Projects?badge=DAP`,
    `/Projects?badge=AI%20Lodge`. An old project link (`/Projects/scamsense`) should show "Projects have moved".
-4. Edits made on the preview stay on its database branch and never reach production.
+4. Edits made on the preview go to the Preview `DATABASE_URL` (step 1). They only stay out of
+   production if that is a separate Neon branch.
 
 ## 7. Merge
 
@@ -121,7 +131,7 @@ Keep `ADMIN_PASSWORD` and `UPSTASH_REDIS_REST_*` until step 9.
    - Switch to the DAP cohort. On **Overview**, check it is current. On **Groups**, add each
      group's members and mentors, then fill in the **Schedule** and pick each week's group.
    - **All projects**: fill in the Made for / Built with facets.
-   - **Settings › Site links**: check the application forms, the "applications open" switches, the
+   - **Settings › Site Links**: check the application forms, the "applications open" switches, the
      emails, and add the prospectus PDF link if you have one. Every join button uses these.
    - **People and roles**: add exco admins, DAP exco and AI Lodge exco.
      After that you can clear `CMS_BOOTSTRAP_ADMINS`.
@@ -130,14 +140,19 @@ Keep `ADMIN_PASSWORD` and `UPSTASH_REDIS_REST_*` until step 9.
 
 - Backups: follow `ops/db-backup/README.md` (private repo, one secret, done).
 - Claude: each person opens **Settings › Access tokens** in `/admin`, creates a token and runs
-  the `claude mcp add …` command it shows. The token acts as them, with their role. Then ask
+  the `claude mcp add …` command it shows. The token acts as them, with their role. The server URL
+  is part of that config, so moving from localhost to production means running
+  `claude mcp remove smubia-cms -s local`, then adding it again with `https://www.smubia.com/api/mcp`.
+  Tokens live in the database, so an existing token keeps working if production uses the same Neon
+  branch; otherwise create a new one in production. Then ask
   things like "add this project as a draft", "make Leash the Agents winner", "close PandAI
   Lodge" or "draft week 6's issue". The tools can create, edit, publish and schedule, but
   never delete. Revoke a token on the same page.
 
 ## 9. After a week of the new CMS running cleanly
 
-- Remove `ADMIN_PASSWORD`, `UPSTASH_REDIS_REST_*` and the retired `CMS_MCP_TOKEN` from the bia-website Vercel env.
+- Remove `ADMIN_PASSWORD` and the retired `CMS_MCP_TOKEN` from the bia-website Vercel env. Leave
+  `UPSTASH_REDIS_REST_*` in place: the rate-limit Ops page needs them (`docs/rate-limit-ops-plan.md`).
 - Hand `../bia-all-projects/NOTES-bia-website-cms.md` to the other agent: it covers repointing the
   writeup skill and deleting the website's old keys from the shared Redis.
 

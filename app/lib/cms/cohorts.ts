@@ -123,11 +123,11 @@ export async function createCohort(
   input: { programme: Programme; slug: string; name: string }
 ): Promise<Cohort> {
   ensure((PROGRAMMES as readonly string[]).includes(input.programme), "Unknown programme");
-  ensure(can.editCohort(actor, input.programme), "You can't add cohorts");
+  ensure(can.editCohort(actor, input.programme), "This role cannot create cohorts");
   const slug = input.slug.trim().toLowerCase();
-  ensure(/^[a-z0-9-]+$/.test(slug), 'Use a short URL name like "ay2627-s2"');
+  ensure(/^[a-z0-9-]+$/.test(slug), 'URL slug must use lower-case letters, numbers and dashes, for example "ay2627-s2"');
   // "new" is the CMS's new-run page (/admin/dap/new).
-  ensure(slug !== "new", '"new" is reserved; pick another URL name');
+  ensure(slug !== "new", 'URL slug "new" is reserved. Choose another.');
   const name = input.name.trim();
   ensure(name, "Name is required");
   const db = await getDb();
@@ -148,7 +148,7 @@ export async function updateCohort(actor: Actor, id: string, input: CohortInput)
   const db = await getDb();
   const row = await getCohort(id);
   ensure(row, "Cohort not found");
-  ensure(can.editCohort(actor, row.programme), "Only exco can edit this page");
+  ensure(can.editCohort(actor, row.programme), "This role cannot edit this programme");
   if (input.visibility) {
     ensure((COHORT_VISIBILITY as readonly string[]).includes(input.visibility), "Unknown visibility");
   }
@@ -173,7 +173,7 @@ export async function updateCohort(actor: Actor, id: string, input: CohortInput)
       .filter((t) => t.label || t.date);
     for (const t of values.timeline) {
       ensure(t.label, "Every timeline step needs a label");
-      ensure(/^\d{4}-\d{2}-\d{2}$/.test(t.date), `Pick a date for "${t.label}"`);
+      ensure(/^\d{4}-\d{2}-\d{2}$/.test(t.date), `Date required for "${t.label}"`);
     }
   }
   if (input.visibility === "live") {
@@ -199,7 +199,7 @@ export async function saveTrack(actor: Actor, input: TrackInput): Promise<TrackR
   const cohort = await getCohort(input.cohortId);
   ensure(cohort, "Cohort not found");
   ensure(cohort.programme === "AI Lodge", "Only AI Lodge semesters have tracks");
-  ensure(can.editCohort(actor, cohort.programme), "Only exco can edit tracks");
+  ensure(can.editCohort(actor, cohort.programme), "This role cannot edit tracks");
   const name = input.name.trim();
   ensure(name, "Track name is required");
   const db = await getDb();
@@ -225,7 +225,7 @@ export async function saveTrack(actor: Actor, input: TrackInput): Promise<TrackR
 
 /** Moves a track one place up or down; positions are renumbered 0..n-1 as it goes. */
 export async function moveTrack(actor: Actor, id: number, direction: "up" | "down") {
-  ensure(can.editCohort(actor, "AI Lodge"), "You can't reorder tracks");
+  ensure(can.editCohort(actor, "AI Lodge"), "This role cannot reorder tracks");
   const db = await getDb();
   const [row] = await db.select().from(tracks).where(eq(tracks.id, id));
   ensure(row, "Track not found");
@@ -241,11 +241,11 @@ export async function moveTrack(actor: Actor, id: number, direction: "up" | "dow
 }
 
 export async function deleteTrack(actor: Actor, id: number) {
-  ensure(can.editCohort(actor, "AI Lodge"), "You can't remove tracks");
+  ensure(can.editCohort(actor, "AI Lodge"), "This role cannot remove tracks");
   const db = await getDb();
   const [row] = await db.select().from(tracks).where(eq(tracks.id, id));
   ensure(row, "Track not found");
-  ensure(Number((await listTracks(row.cohortId)).find((t) => t.id === id)?.projectCount ?? 0) === 0, "Move this track's projects to another track first");
+  ensure(Number((await listTracks(row.cohortId)).find((t) => t.id === id)?.projectCount ?? 0) === 0, "Track has projects. Move them to another track first.");
   await db.delete(tracks).where(eq(tracks.id, id));
   revalidateCms("cohorts", "projects");
 }
@@ -282,7 +282,7 @@ function cleanProfiles(list: Profile[] | undefined, label: string): Profile[] {
     .map((p) => {
       ensure(p.name, `Every ${label} needs a name`);
       ensure(!p.linkedin || /^https:\/\/\S+$/i.test(p.linkedin), `${p.name}'s LinkedIn must be a full https:// link`);
-      ensure(!p.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email), `${p.name}'s email doesn't look right`);
+      ensure(!p.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email), `${p.name}: invalid email address`);
       return p;
     });
 }
@@ -291,7 +291,7 @@ export async function saveGroup(actor: Actor, input: GroupInput): Promise<DapGro
   const cohort = await getCohort(input.cohortId);
   ensure(cohort, "Cohort not found");
   ensure(cohort.programme === "DAP", "Only DAP cohorts have groups");
-  ensure(can.editCohort(actor, "DAP"), "You can't edit DAP groups");
+  ensure(can.editCohort(actor, "DAP"), "This role cannot edit DAP groups");
   const name = input.name.trim();
   ensure(name, "Group name is required");
   const values = {
@@ -310,7 +310,7 @@ export async function saveGroup(actor: Actor, input: GroupInput): Promise<DapGro
     ensure(row, "Group not found");
   } else {
     const existing = await listGroups(input.cohortId);
-    ensure(!existing.some((g) => g.name.toLowerCase() === name.toLowerCase()), `There is already a group called ${name}`);
+    ensure(!existing.some((g) => g.name.toLowerCase() === name.toLowerCase()), `A group named ${name} already exists`);
     [row] = await db.insert(dapGroups).values({ cohortId: input.cohortId, position: existing.length, ...values }).returning();
   }
   revalidateCms("cohorts", "newsletter");
@@ -319,7 +319,7 @@ export async function saveGroup(actor: Actor, input: GroupInput): Promise<DapGro
 
 /** Sessions taught by a removed group just lose the link. */
 export async function deleteGroup(actor: Actor, id: number) {
-  ensure(can.editCohort(actor, "DAP"), "You can't edit DAP groups");
+  ensure(can.editCohort(actor, "DAP"), "This role cannot edit DAP groups");
   const db = await getDb();
   await db.delete(dapGroups).where(eq(dapGroups.id, id));
   revalidateCms("cohorts", "newsletter");

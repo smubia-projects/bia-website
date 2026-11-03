@@ -1,5 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import ui from "@/app/components/cms/public.module.css";
 import JoinCta from "@/app/components/cms/JoinCta";
 import PeopleList from "@/app/components/cms/PeopleList";
@@ -52,6 +54,11 @@ export default async function DapRunPage(props: Props) {
   // Every scheduled week, plus any issue written for a week that has no session row.
   const weeks = Array.from(new Set([...sessions.map((s) => s.week), ...issues.map((i) => i.week)])).sort((a, b) => a - b);
   const hasSchedule = sessions.some((s) => s.topic) || issues.length > 0;
+  // Unannounced weeks at the end collapse into one row.
+  const isAnnounced = (week: number) => Boolean(sessions.find((s) => s.week === week)?.topic || issueByWeek.get(week));
+  const lastAnnounced = weeks.filter(isAnnounced).at(-1) ?? 0;
+  const announced = weeks.filter((w) => w <= lastAnnounced);
+  const tba = weeks.filter((w) => w > lastAnnounced);
 
   return (
     <main id="main-content" className={ui.page}>
@@ -60,22 +67,13 @@ export default async function DapRunPage(props: Props) {
         <h1 className={ui.h1}>
           This week in <em>DAP</em>
         </h1>
-        <p className={ui.lede}>The weekly newsletter, co-learning schedule and groups of the {cohort.name}.</p>
-        <div className={ui.row} style={{ marginTop: 20 }}>
-          <Link href={cohortPath("DAP", cohort.slug)} className={ui.btn}>
-            {projectCount > 0 ? `${cohort.name} projects (${projectCount})` : `${cohort.name} projects`}
-          </Link>
-          {groups.length > 0 && (
-            <a href="#groups" className={ui.pill}>
-              Co-learning groups
+        {links.dapNewsletter && (
+          <div className={ui.row} style={{ marginTop: 20 }}>
+            <a href={links.dapNewsletter} className={ui.btn} target="_blank" rel="noopener noreferrer">
+              Subscribe on Telegram
             </a>
-          )}
-          {links.dapNewsletter && (
-            <a href={links.dapNewsletter} className={ui.pill} target="_blank" rel="noopener noreferrer">
-              Get it on Telegram
-            </a>
-          )}
-        </div>
+          </div>
+        )}
         {cohorts.length > 1 && (
           <div role="group" aria-label="Cohort" className={ui.row} style={{ marginTop: 14 }}>
             {cohorts.map((c) => (
@@ -97,16 +95,13 @@ export default async function DapRunPage(props: Props) {
           <div className={ui.latestRow}>
             {latest && (
               <Link href={latest.path} className={ui.latest}>
-                <span className={ui.latestBadge}>
-                  <span className={ui.label} style={{ color: "var(--mint)", fontSize: 11 }}>
-                    Latest issue
+                {latest.coverImage && (
+                  <span className={ui.latestCover}>
+                    <Image src={latest.coverImage} alt="" fill sizes="(max-width: 768px) 100vw, 320px" style={{ objectFit: "cover" }} />
                   </span>
-                  <span className={ui.latestWeek}>W{latest.week}</span>
-                </span>
+                )}
                 <span className={ui.latestBody}>
-                  <span className={ui.label} style={{ fontSize: 11.5 }}>
-                    This week in DAP · {formatIssueDate(latest.publishedAt)}
-                  </span>
+                  <span className={ui.label}>Latest issue · {formatIssueDate(latest.publishedAt)}</span>
                   <span className={ui.latestTitle}>{latest.title}</span>
                   {latest.summary && <span className={ui.latestSummary}>{latest.summary}</span>}
                   <span className={ui.readMore}>Read the issue →</span>
@@ -115,7 +110,7 @@ export default async function DapRunPage(props: Props) {
             )}
             {current?.topic && (
               <div className={ui.nextCard}>
-                <span className={ui.label} style={{ fontSize: 11.5 }}>
+                <span className={ui.label}>
                   Next co-learning session
                 </span>
                 <span className={ui.nextTopic}>{current.topic}</span>
@@ -135,21 +130,20 @@ export default async function DapRunPage(props: Props) {
                 <h2 id="schedule" className={ui.h2}>
                   Co-learning schedule
                 </h2>
-                <p className={ui.muted} style={{ margin: "6px 0 0", fontSize: 14 }}>
-                  Each week, one group teaches the rest of the cohort. Each recap is that week&apos;s issue.
-                </p>
+                <p className={ui.sectionNote}>One group teaches the cohort each week.</p>
               </div>
             </div>
             <ol className={ui.schedule}>
-              {weeks.map((week) => {
+              {announced.map((week) => {
                 const s = sessions.find((x) => x.week === week);
                 const issue = issueByWeek.get(week);
-                const state = week <= lastWeek ? "Done" : week === lastWeek + 1 ? "This week" : "Upcoming";
-                const stateClass = state === "Done" ? ui.stateDone : state === "This week" ? ui.stateNow : ui.stateUpcoming;
+                const state = week <= lastWeek ? "Completed" : week === lastWeek + 1 ? "Next" : "Upcoming";
+                const stateClass = state === "Completed" ? ui.stateDone : state === "Next" ? ui.stateNow : ui.stateUpcoming;
+                const topic = s?.topic || issue?.title;
                 return (
-                  <li key={week} className={`${ui.sessionRow} ${state === "This week" ? ui.sessionNow : ""}`}>
-                    <span className={ui.sessionWeek}>WEEK {week}</span>
-                    <span className={ui.sessionTopic}>{s?.topic || issue?.title || "To be announced"}</span>
+                  <li key={week} className={`${ui.sessionRow} ${state === "Next" ? ui.sessionNow : ""}`}>
+                    <span className={ui.sessionWeek}>Week {week}</span>
+                    <span className={topic ? ui.sessionTopic : ui.sessionTba}>{topic || "To be announced"}</span>
                     <span className={ui.sessionGroup}>{s?.group?.name}</span>
                     <span className={`${ui.state} ${stateClass}`}>{state}</span>
                     <span className={ui.sessionLinks}>
@@ -160,18 +154,24 @@ export default async function DapRunPage(props: Props) {
                       )}
                       {issue && (
                         <Link href={issue.path} className={`${ui.pill} ${ui.pillSmall}`}>
-                          Recap
+                          Read issue
                         </Link>
                       )}
                     </span>
                   </li>
                 );
               })}
+              {tba.length > 0 && (
+                <li className={ui.sessionRow}>
+                  <span className={ui.sessionWeek}>{tba.length > 1 ? `Weeks ${tba[0]}–${tba[tba.length - 1]}` : `Week ${tba[0]}`}</span>
+                  <span className={ui.sessionTba}>To be announced</span>
+                </li>
+              )}
             </ol>
           </section>
         ) : (
           <div className={ui.empty} style={{ marginTop: 40 }}>
-            The schedule and the first issue go out after week 1 of the programme.
+            The schedule and first issue publish after week 1.
           </div>
         )}
 
@@ -180,9 +180,7 @@ export default async function DapRunPage(props: Props) {
             <h2 id="groups-title" className={ui.h2}>
               Co-learning groups
             </h2>
-            <p className={ui.muted} style={{ margin: "6px 0 0", fontSize: 14 }}>
-              Each group teaches a co-learning session to the rest of the cohort, guided by its mentors.
-            </p>
+            <p className={ui.sectionNote}>Each group teaches one session to the cohort, guided by its mentors.</p>
             <div className={ui.groupGrid}>
               {groups.map((g) => (
                 <article key={g.id} className={ui.groupCard}>
@@ -200,12 +198,14 @@ export default async function DapRunPage(props: Props) {
           </section>
         )}
 
-        <div className={ui.yearbookFoot} style={{ gap: 10, flexWrap: "wrap" }}>
+        <div className={ui.yearbookFoot}>
           <Link href={cohortPath("DAP", cohort.slug)} className={ui.pill}>
-            {cohort.name} projects →
+            {projectCount > 0 ? `Cohort projects (${projectCount})` : "Cohort projects"}
+            <ChevronRight size={14} strokeWidth={1.75} aria-hidden="true" />
           </Link>
           <Link href="/dap" className={ui.pill}>
-            About the programme →
+            About the programme
+            <ChevronRight size={14} strokeWidth={1.75} aria-hidden="true" />
           </Link>
         </div>
       </div>
@@ -213,7 +213,7 @@ export default async function DapRunPage(props: Props) {
       <JoinCta
         programmes={["DAP"]}
         heading="Join the next cohort"
-        text="Learn machine learning by teaching it: run a co-learning session with one group, build a project with another, and present it at the end of the semester."
+        text="Associates learn machine learning by teaching it: each runs a co-learning session with one group, then builds and presents a project with another."
       />
     </main>
   );

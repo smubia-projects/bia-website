@@ -49,7 +49,7 @@ function cleanPhoto(p: Photo, label: string): Photo {
 export async function saveSitePhoto(actor: Actor, key: string, value: Photo | Photo[] | null) {
   const slot = photoSlot(key);
   ensure(slot, "Unknown photo");
-  ensure(can.editPhotos(actor, photoSite(key)), "You can't change this photo");
+  ensure(can.editPhotos(actor, photoSite(key)), "This role cannot edit this photo");
   const db = await getDb();
   if (value === null) {
     await db.delete(sitePhotos).where(eq(sitePhotos.key, key));

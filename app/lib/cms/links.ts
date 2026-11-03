@@ -53,7 +53,7 @@ export interface SiteLinksInput {
 
 /** Opens or closes one programme's applications (every join button follows). */
 export async function setApplicationsOpen(actor: Actor, programme: Programme, open: boolean): Promise<SiteLinks> {
-  ensure(can.setApplications(actor, programme), `You can't open or close ${programme} applications`);
+  ensure(can.setApplications(actor, programme), `This role cannot open or close ${programme} applications`);
   const db = await getDb();
   const current = (await listSiteLinks()).applications;
   const value: Applications = { ...current, [programme === "DAP" ? "dap" : "aiLodge"]: Boolean(open) };
@@ -65,7 +65,7 @@ export async function setApplicationsOpen(actor: Actor, programme: Programme, op
 
 /** Saves links (a value equal to the default clears the override) and the applications switches. */
 export async function saveSiteLinks(actor: Actor, input: SiteLinksInput): Promise<SiteLinks> {
-  ensure(can.editLinks(actor), "Only exco can change site links");
+  ensure(can.editLinks(actor), "Editing site links requires the exco admin role");
   const db = await getDb();
   const now = new Date().toISOString();
   const entries = Object.entries(input.links ?? {}).filter(([key]) => KEYS.includes(key));

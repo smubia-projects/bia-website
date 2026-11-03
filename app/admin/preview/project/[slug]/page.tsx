@@ -22,9 +22,9 @@ export default async function ProjectPreviewPage(props: { params: Promise<{ slug
   return (
     <>
       <PreviewBar
-        note={status === "published" ? "This project is live." : `${PROJECT_STATUS_LABEL[status]}: not on the site yet.`}
+        note={status === "published" ? "Published." : `${PROJECT_STATUS_LABEL[status]}, not public.`}
         backHref={`/admin/projects/${project.slug}`}
-        backLabel="Back to the editor"
+        backLabel="Return to Editor"
       />
       <main id="main-content" className={styles.page} style={{ paddingTop: "4rem" }}>
         <div className={styles.container}>

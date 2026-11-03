@@ -21,6 +21,6 @@ export async function requireActorPage(): Promise<Actor> {
 /** For server actions: throws instead of redirecting. */
 export async function requireActor(): Promise<Actor> {
   const actor = await getCurrentActor();
-  if (!actor) throw new CmsError("Your session has ended. Sign in again.");
+  if (!actor) throw new CmsError("Session expired. Sign in again.");
   return actor;
 }

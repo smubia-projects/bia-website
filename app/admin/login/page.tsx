@@ -12,17 +12,18 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
+const NO_ACCESS = "Account not on the CMS access list. An exco admin can add it under People and Roles.";
 const ERRORS: Record<string, string> = {
-  domain: "Sign in with your @smu.edu.sg Google account.",
-  noaccess: "That account isn't on the CMS access list yet. Ask an exco admin to add you under People and roles.",
-  AccessDenied: "That account isn't on the CMS access list yet. Ask an exco admin to add you under People and roles.",
-  Configuration: "Sign-in isn't configured correctly. Check the AUTH_* environment variables.",
+  domain: "Sign-in requires an @smu.edu.sg Google account.",
+  noaccess: NO_ACCESS,
+  AccessDenied: NO_ACCESS,
+  Configuration: "Sign-in failed. Retry from this page. If it persists, check the AUTH_* environment variables.",
 };
 
 export default async function LoginPage(props: { searchParams: Promise<{ error?: string }> }) {
   const searchParams = await props.searchParams;
   if (await getCurrentActor()) redirect("/admin");
-  const error = searchParams.error ? ERRORS[searchParams.error] ?? "Sign-in failed. Try again." : null;
+  const error = searchParams.error ? ERRORS[searchParams.error] ?? "Sign-in failed. Retry from this page." : null;
 
   async function google() {
     "use server";
@@ -47,25 +48,29 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
         </div>
         <div>
           <h1 className={styles.h1} style={{ fontSize: 24 }}>
-            Sign in
+            CMS Sign-In
           </h1>
-          <p className={styles.sub}>Use your SMU Google account. Access is managed under People and roles.</p>
+          <p className={styles.sub}>SMU Google accounts on the CMS access list.</p>
         </div>
-        {error && <p className={styles.error}>{error}</p>}
+        {error && (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        )}
         {googleConfigured ? (
           <form action={google}>
             <button type="submit" className={styles.btn} style={{ width: "100%" }}>
-              Sign in with Google
+              Sign In with Google
             </button>
           </form>
         ) : (
-          <p className={styles.hint}>Google sign-in isn&apos;t configured (AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET).</p>
+          <p className={styles.hint}>Google sign-in not configured. Set AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET.</p>
         )}
         {devLoginEnabled && (
           <form action={dev} className={styles.panelTight} style={{ background: "var(--bg)" }}>
-            <span className={styles.monoLabel}>Local development only</span>
+            <span className={styles.monoLabel}>Local Development</span>
             <label className={styles.fld}>
-              Sign in as
+              Role
               <select name="role" className={styles.inp} defaultValue="exco">
                 {ROLES.map((r) => (
                   <option key={r} value={r}>
@@ -75,9 +80,9 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
               </select>
             </label>
             <button type="submit" className={styles.pill}>
-              Continue
+              Sign In as Role
             </button>
-            <span className={styles.hint}>Hidden in production builds. A lodge head gets the first track.</span>
+            <span className={styles.hint}>Not available in production builds.</span>
           </form>
         )}
       </div>

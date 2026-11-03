@@ -1,12 +1,14 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import Markdown from "@/app/components/ui/Markdown";
 import JoinCta from "@/app/components/cms/JoinCta";
+import YearbookShelves, { type Shelf } from "@/app/components/cms/YearbookShelves";
+import { trackAccent } from "@/app/components/cms/visuals";
 import ui from "@/app/components/cms/public.module.css";
 import type { PublicCohort } from "@/app/lib/cms/cohorts";
 import { cohortPath, dapRunPath } from "@/app/lib/cms/paths";
 import { BUILT_WITH } from "@/app/lib/cms/taxonomy";
 import type { Project } from "@/app/projects/data/types";
-import DapYearbook, { type DapShelf } from "./DapYearbook";
 
 /** The cohort /projects/dap shows: the live one if it has projects, else the newest that does. */
 export function defaultDapCohort(cohorts: PublicCohort[], projects: Project[]) {
@@ -26,28 +28,22 @@ export default function DapYearbookPage({
 }) {
   const mine = cohort ? projects.filter((p) => p.cohortId === cohort.id) : projects.filter((p) => !p.cohortId);
   const areas = [...BUILT_WITH, ""];
-  const shelves: DapShelf[] = areas
-    .map((area) => ({ name: area || "Other projects", projects: mine.filter((p) => (p.builtWith ?? "") === area) }))
+  const shelves: Shelf[] = areas
+    .map((area, i) => ({ key: `area-${i}`, name: area || "Other projects", accent: trackAccent(i), projects: mine.filter((p) => (p.builtWith ?? "") === area) }))
     .filter((s) => s.projects.length > 0);
   const listed = cohorts.filter((c) => projects.some((p) => p.cohortId === c.id));
+  const groups = cohort?.groups.length ?? 0;
 
   return (
     <main id="main-content" className={ui.page}>
       <section className={`${ui.hero} ${ui.onDark}`}>
-        <div className={ui.heroInner} style={{ paddingTop: 32, paddingBottom: 40 }}>
-          <Link href="/projects" className={`${ui.pill} ${ui.pillOnDark} ${ui.pillSmall}`}>
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-            All projects
-          </Link>
-          <div className={ui.eyebrowLine} style={{ marginTop: 24 }}>DAP yearbook</div>
+        <div className={ui.heroInner} style={{ paddingTop: 32 }}>
+          <nav aria-label="Breadcrumb" className={ui.crumbs}>
+            <Link href="/projects">Projects</Link>
+            <ChevronRight size={14} strokeWidth={1.75} aria-hidden="true" />
+          </nav>
+          <div className={ui.eyebrowLine} style={{ marginTop: 20 }}>DAP yearbook</div>
           <h1 className={ui.heroTitle}>{cohort?.name ?? "DAP projects"}</h1>
-          {cohort?.writeup && (
-            <div className={ui.heroLede}>
-              <Markdown content={cohort.writeup} />
-            </div>
-          )}
           {listed.length > 1 && (
             <div role="group" aria-label="Cohort" className={ui.row} style={{ marginTop: 22 }}>
               {listed.map((c) => (
@@ -62,22 +58,45 @@ export default function DapYearbookPage({
               ))}
             </div>
           )}
+          {cohort && (
+            <dl className={ui.stats}>
+              <div>
+                <dt className={ui.statLabel}>{mine.length === 1 ? "Project" : "Projects"}</dt>
+                <dd className={ui.statNum}>{mine.length}</dd>
+              </div>
+              {groups > 0 && (
+                <div>
+                  <dt className={ui.statLabel}>{groups === 1 ? "Co-learning group" : "Co-learning groups"}</dt>
+                  <dd className={ui.statNum}>{groups}</dd>
+                </div>
+              )}
+            </dl>
+          )}
         </div>
       </section>
 
-      <div className={ui.main} style={{ paddingTop: 8, paddingBottom: 24 }}>
+      <div className={ui.main} style={{ paddingBottom: 24 }}>
+        {cohort?.writeup && (
+          <section aria-label="About this cohort" className={ui.about}>
+            <div className={ui.aboutBody}>
+              <Markdown content={cohort.writeup} />
+            </div>
+          </section>
+        )}
+
         {shelves.length > 0 ? (
-          <DapYearbook shelves={shelves} />
+          <YearbookShelves shelves={shelves} groupLabel="Area" hideBuiltWith />
         ) : (
           <div className={ui.empty} style={{ marginTop: 48 }}>
-            Projects from this cohort will appear here at the end of the semester.
+            Projects from this cohort publish at the end of the semester.
           </div>
         )}
 
         {cohort && (
-          <div className={ui.yearbookFoot} style={{ gap: 10, flexWrap: "wrap" }}>
+          <div className={ui.yearbookFoot}>
             <Link href={dapRunPath(cohort.slug)} className={ui.pill}>
-              {cohort.name}: newsletter, schedule and groups →
+              Cohort newsletter and schedule
+              <ChevronRight size={14} strokeWidth={1.75} aria-hidden="true" />
             </Link>
           </div>
         )}
@@ -85,8 +104,8 @@ export default function DapYearbookPage({
 
       <JoinCta
         programmes={["DAP"]}
-        heading="Build your own ML project"
-        text="Join the Data Associate Programme to learn machine learning with a cohort, build a project as a team, and present it to the DAP community at the end of the semester."
+        heading="Build a machine learning project"
+        text="The Data Associate Programme teaches machine learning in a cohort. Each team builds a project and presents it at the end of the semester."
       />
     </main>
   );

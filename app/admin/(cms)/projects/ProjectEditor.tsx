@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import type { HighlightCard, Project, TeamMember } from "@/app/projects/data/types";
 import { CARD_ICONS } from "@/app/projects/data/cardIcons";
 import ProjectCover from "@/app/components/cms/ProjectCover";
@@ -19,7 +20,7 @@ import {
 } from "@/app/lib/cms/taxonomy";
 import { projectPath } from "@/app/lib/cms/paths";
 import { deleteProjectAction, saveProjectAction, setWinnerAction, type SaveIntent } from "../../actions";
-import { StatusChip, useActionToast, useImageUpload, useUnsavedChanges } from "../../_components/ui";
+import { AddButton, ExternalAction, MarkdownHint, MiniField, OrderButtons, PageHead, StatusChip, UnsavedNote, moveItem, useActionToast, useConfirm, useImageUpload, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import { runHref } from "../../_components/runs";
 import styles from "../../cms.module.css";
 
@@ -80,12 +81,14 @@ function initialForm(
 export default function ProjectEditor({ project, cohorts, tracks, lodges, role, preset }: Props) {
   const router = useRouter();
   const { handle, node, show } = useActionToast();
+  const confirm = useConfirm();
   const cover = useImageUpload("projects");
   const team = useImageUpload("team");
   const [initial] = useState(() => initialForm(project, role, cohorts, preset));
   const [f, setF] = useState(initial);
   const [saving, setSaving] = useState(false);
-  useUnsavedChanges(!saving && JSON.stringify(f) !== JSON.stringify(initial));
+  const dirty = JSON.stringify(f) !== JSON.stringify(initial);
+  useUnsavedChanges(!saving && dirty);
   const [winner, setWinner] = useState(Boolean(project?.winner));
   const isExco = role === "exco";
   const status = project?.status ?? "draft";
@@ -94,7 +97,7 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
   const placementGroups = PROGRAMMES.filter((p) => !ROLE_PROGRAMME[role] || ROLE_PROGRAMME[role] === p).map((p) => ({
     programme: p,
     label: p === "AI Lodge" ? "AI Lodge semesters" : "DAP cohorts",
-    none: p === "AI Lodge" ? "AI Lodge, no semester yet" : "DAP, no cohort yet",
+    none: p === "AI Lodge" ? "AI Lodge, no semester" : "DAP, no cohort",
     cohorts: cohorts.filter((c) => c.programme === p),
   }));
   const trackOptions = tracks.filter((t) => t.cohortId === f.cohortId);
@@ -111,6 +114,13 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
   }
 
   async function save(intent: SaveIntent) {
+    if (
+      intent === "draft" &&
+      status === "published" &&
+      !(await confirm({ title: "Move to Draft", body: `"${project?.title}" is removed from the public site until it is published again.`, action: "Move to Draft" }))
+    ) {
+      return;
+    }
     setSaving(true);
     const res = await saveProjectAction(
       project?.slug ?? null,
@@ -139,7 +149,7 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
     const messages: Record<SaveIntent, string> = {
       draft: "Draft saved",
       submit: "Submitted for review",
-      publish: "Published",
+      publish: "Project published",
       keep: "Changes saved",
     };
     const data = handle(res, messages[intent]);
@@ -149,73 +159,72 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
 
   async function toggleWinner(next: boolean) {
     if (!project) return;
-    const ok = handle(await setWinnerAction(project.slug, next), next ? `${project.title} is the ${trackName ?? "track"} winner` : "Winner removed");
+    const ok = handle(await setWinnerAction(project.slug, next), next ? `${project.title} set as ${trackName ?? "track"} winner` : "Winner removed");
     if (ok !== undefined) {
       setWinner(next);
     }
   }
 
   async function remove() {
-    if (!project || !confirm(`Delete "${project.title}"? This can't be undone.`)) return;
-    const ok = handle(await deleteProjectAction(project.slug));
+    if (!project) return;
+    const yes = await confirm({ title: "Delete Project", body: `"${project.title}" is permanently deleted. This cannot be undone.`, action: "Delete Project", danger: true });
+    if (!yes) return;
+    const ok = handle(await deleteProjectAction(project.slug), "Project deleted");
     if (ok !== undefined) {
       router.push("/admin/projects");
     }
   }
 
   const primary: { label: string; intent: SaveIntent } = !isExco
-    ? { label: status === "in_review" ? "Save and keep in review" : "Submit for review", intent: "submit" }
+    ? { label: status === "in_review" ? "Save Changes" : "Submit for Review", intent: "submit" }
     : status === "published"
-      ? { label: "Save changes", intent: "keep" }
+      ? { label: "Save Changes", intent: "keep" }
       : { label: "Publish", intent: "publish" };
   const secondary =
-    isExco && status === "published" ? "Move to draft" : !isExco && status === "published" ? null : "Save as draft";
+    isExco && status === "published" ? "Move to Draft" : !isExco && status === "published" ? null : "Save as Draft";
   const help = !isExco
     ? status === "published"
-      ? "This project is live. Your edits go live when you save."
-      : "An exco admin approves it before it appears on the site."
+      ? "Published. Saved changes apply to the public page immediately."
+      : "Publishing requires exco admin approval."
     : status === "published"
-      ? "Changes go live on Projects straight away."
-      : "Publishing makes it visible on Projects straight away.";
+      ? "Published. Saved changes apply to the public page immediately."
+      : "Publishing adds the project to the public site immediately.";
   const cantSave = saving || !f.title.trim();
   const needsCohort = (primary.intent === "publish" || status === "published") && !f.cohortId;
+  // Saves without changing status: Ctrl+S never publishes or submits.
+  useSaveShortcut(() => save(project ? "keep" : "draft"), dirty && !cantSave && !(status === "published" && !f.cohortId));
 
   return (
     <>
-      <Link href="/admin/projects" className={styles.pill}>
-        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-        All projects
-      </Link>
-      <h1 className={styles.h1} style={{ marginTop: 16 }}>
-        {project ? "Edit project" : "New project"}
-      </h1>
+      <PageHead crumbs={[{ href: "/admin/projects", label: "All Projects" }]} title={project ? project.title : "New Project"} />
 
       <div className={styles.cols}>
-        <section className={`${styles.colMain} ${styles.panel}`}>
-          <label className={styles.fld}>
-            Project name
-            <input className={styles.inp} value={f.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. ScamSense" />
-          </label>
-          <label className={styles.fld}>
-            Card description
-            <textarea
-              className={styles.inp}
-              rows={3}
-              maxLength={Math.max(200, f.description.length)}
-              value={f.description}
-              onChange={(e) => set("description", e.target.value)}
-              placeholder="One or two sentences shown on cards"
-            />
-            <span className={styles.hint} style={{ color: f.description.length > 200 ? "#b42318" : undefined }}>
-              {f.description.length} / 200 characters
-            </span>
-          </label>
+        <div className={`${styles.colMain} ${styles.stack}`}>
+          <section className={styles.panel}>
+            <h2 className={styles.h2}>Project Details</h2>
+            <label className={styles.fld}>
+              Project Name
+              <input className={styles.inp} value={f.title} onChange={(e) => set("title", e.target.value)} placeholder="ScamSense" />
+            </label>
+            <label className={styles.fld}>
+              Card Description
+              <textarea
+                className={styles.inp}
+                rows={3}
+                maxLength={Math.max(200, f.description.length)}
+                value={f.description}
+                onChange={(e) => set("description", e.target.value)}
+              />
+              <span className={styles.hint} style={{ color: f.description.length > 200 ? "var(--danger)" : undefined }}>
+                {f.description.length} / 200 characters. Shown on project cards.
+              </span>
+            </label>
+          </section>
 
-          <div className={styles.grid2} style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-            <label className={styles.fld} style={{ gridColumn: "1 / -1" }}>
-              Semester or cohort
+          <section className={styles.panel}>
+            <h2 className={styles.h2}>Placement</h2>
+            <label className={styles.fld}>
+              Semester / Cohort
               <select
                 className={styles.inp}
                 value={`${f.programme}|${f.cohortId}`}
@@ -238,237 +247,253 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
               <span className={styles.hint}>
                 {f.cohortId ? (
                   <>
-                    The project page lives under this {f.programme === "AI Lodge" ? "semester" : "cohort"}.{" "}
+                    Sets the project&apos;s public URL.{" "}
                     <Link
-                      className={styles.lnk}
-                      style={{ padding: 0, minHeight: 0, fontSize: "inherit" }}
+                      className={`${styles.lnk} ${styles.lnkInline}`}
                       href={runHref(f.programme, cohorts.find((c) => c.id === f.cohortId)?.slug ?? "", "projects")}
                     >
-                      Open its page
+                      Open {f.programme === "AI Lodge" ? "Semester" : "Cohort"} Projects
                     </Link>
                   </>
                 ) : (
-                  "Needed before the project can be published."
+                  "Required before publishing."
                 )}
               </span>
             </label>
             {f.programme === "AI Lodge" && (
-              <label className={styles.fld}>
-                Hack Day track
-                <select
-                  className={styles.inp}
-                  value={f.trackId ?? ""}
-                  disabled={trackOptions.length === 0}
-                  onChange={(e) => set("trackId", e.target.value ? Number(e.target.value) : null)}
-                >
-                  <option value="">{trackOptions.length ? "Not set" : "No tracks yet"}</option>
-                  {trackOptions.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            {f.programme === "AI Lodge" && (
-              <label className={styles.fld}>
-                Lodge
-                <select
-                  className={styles.inp}
-                  value={f.lodgeId ?? ""}
-                  disabled={lodgeOptions.length === 0}
-                  onChange={(e) => set("lodgeId", e.target.value ? Number(e.target.value) : null)}
-                >
-                  <option value="">{lodgeOptions.length ? "Not set" : "No lodges yet"}</option>
-                  {lodgeOptions.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            <label className={styles.fld}>
-              Made for
-              <select className={styles.inp} value={f.madeFor} onChange={(e) => set("madeFor", e.target.value)}>
-                <option value="">Not set</option>
-                {MADE_FOR.map((v) => (
-                  <option key={v}>{v}</option>
-                ))}
-              </select>
-            </label>
-            <label className={styles.fld}>
-              Built with
-              <select className={styles.inp} value={f.builtWith} onChange={(e) => set("builtWith", e.target.value)}>
-                <option value="">Not set</option>
-                {BUILT_WITH.map((v) => (
-                  <option key={v}>{v}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className={styles.grid2} style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-            <label className={styles.fld}>
-              Live demo URL
-              <input className={styles.inp} type="url" value={f.liveUrl} onChange={(e) => set("liveUrl", e.target.value)} placeholder="https://…vercel.app" />
-            </label>
-            <label className={styles.fld}>
-              GitHub URL
-              <input className={styles.inp} type="url" value={f.sourceUrl} onChange={(e) => set("sourceUrl", e.target.value)} placeholder="https://github.com/smubia-projects/…" />
-            </label>
-          </div>
-
-          <div className={styles.fld}>
-            Cover image
-            <button
-              type="button"
-              className={styles.coverPick}
-              disabled={cover.busy}
-              onClick={async () => {
-                const url = await upload(() => cover.pick(COVER_CROP));
-                if (url) set("coverImage", url);
-              }}
-            >
-              <span className={styles.coverThumb}>
-                <ProjectCover title={f.title || "New"} src={f.coverImage} aspect="16 / 10" monoSize={16} sizes="72px" />
-              </span>
-              <span className={styles.coverText}>
-                <span className={styles.coverTitle}>
-                  {cover.busy ? "Uploading…" : f.coverImage ? "Replace cover image" : "Upload a cover image"}
-                </span>
-                <span className={styles.hint}>{f.coverImage ? "Stored in Vercel Blob · click to replace" : "16:10, shown on cards and yearbook shelves"}</span>
-              </span>
-            </button>
-            {f.coverImage && (
-              <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} style={{ alignSelf: "flex-start" }} onClick={() => set("coverImage", "")}>
-                Remove cover
-              </button>
-            )}
-          </div>
-
-          <div className={styles.fld}>
-            Screenshots
-            <span className={styles.hint}>16:9 images for the carousel on the project page. The first one leads.</span>
-            <div className={styles.imageStrip}>
-              {f.images.map((src, i) => (
-                <div key={src + i} className={styles.imageItem}>
-                  <Image src={src} alt="" width={128} height={72} style={{ objectFit: "cover", display: "block" }} />
-                  <button type="button" className={styles.imageRemove} aria-label={`Remove screenshot ${i + 1}`} onClick={() => set("images", f.images.filter((_, j) => j !== i))}>
-                    ×
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                className={styles.add}
-                disabled={cover.busy}
-                onClick={async () => {
-                  const url = await upload(() => cover.pick(SHOT_CROP));
-                  if (url) set("images", [...f.images, url]);
-                }}
-              >
-                + Screenshot
-              </button>
-            </div>
-          </div>
-
-          <label className={styles.fld}>
-            Full write-up
-            <textarea className={styles.inp} rows={8} value={f.overview} onChange={(e) => set("overview", e.target.value)} placeholder="The problem, how it was built, what the team learned" />
-            <span className={styles.hint}>Markdown supported. Shown as &ldquo;Project details&rdquo; on the project page.</span>
-          </label>
-
-          <div className={styles.fld}>
-            Highlight cards
-            <span className={styles.hint}>Optional short cards under the write-up, e.g. a key result or takeaway.</span>
-            {f.cards.map((c, i) => (
-              <div key={i} className={styles.subItem}>
-                <div className={styles.row}>
+              <div className={styles.grid2}>
+                <label className={styles.fld}>
+                  Hack Day Track
                   <select
-                    className={`${styles.inp} ${styles.inpSmall}`}
-                    style={{ width: 150 }}
-                    value={c.icon}
-                    aria-label="Card icon"
-                    onChange={(e) => set("cards", f.cards.map((x, j) => (j === i ? { ...x, icon: e.target.value } : x)))}
+                    className={styles.inp}
+                    value={f.trackId ?? ""}
+                    disabled={trackOptions.length === 0}
+                    onChange={(e) => set("trackId", e.target.value ? Number(e.target.value) : null)}
                   >
-                    {CARD_ICONS.map((ic) => (
-                      <option key={ic.key} value={ic.key}>
-                        {ic.label}
+                    <option value="">{trackOptions.length ? "Not set" : "No tracks in this semester"}</option>
+                    {trackOptions.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
                       </option>
                     ))}
                   </select>
-                  <input
-                    className={`${styles.inp} ${styles.inpSmall}`}
-                    style={{ flex: 1, width: "auto" }}
-                    value={c.title}
-                    placeholder="Heading"
-                    aria-label="Card heading"
-                    onChange={(e) => set("cards", f.cards.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))}
-                  />
-                  <button type="button" className={styles.ico} aria-label="Remove card" onClick={() => set("cards", f.cards.filter((_, j) => j !== i))}>
-                    ×
-                  </button>
-                </div>
-                <textarea
-                  className={styles.inp}
-                  rows={2}
-                  value={c.body}
-                  placeholder="Body (Markdown)"
-                  aria-label="Card body"
-                  onChange={(e) => set("cards", f.cards.map((x, j) => (j === i ? { ...x, body: e.target.value } : x)))}
+                </label>
+                <label className={styles.fld}>
+                  Lodge
+                  <select
+                    className={styles.inp}
+                    value={f.lodgeId ?? ""}
+                    disabled={lodgeOptions.length === 0}
+                    onChange={(e) => set("lodgeId", e.target.value ? Number(e.target.value) : null)}
+                  >
+                    <option value="">{lodgeOptions.length ? "Not set" : "No lodges in this semester"}</option>
+                    {lodgeOptions.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+          </section>
+
+          <section className={styles.panel}>
+            <h2 className={styles.h2}>Classification</h2>
+            <div className={styles.grid2}>
+              <label className={styles.fld}>
+                Made For
+                <select className={styles.inp} value={f.madeFor} onChange={(e) => set("madeFor", e.target.value)}>
+                  <option value="">Not set</option>
+                  {MADE_FOR.map((v) => (
+                    <option key={v}>{v}</option>
+                  ))}
+                </select>
+              </label>
+              <label className={styles.fld}>
+                Built With
+                <select className={styles.inp} value={f.builtWith} onChange={(e) => set("builtWith", e.target.value)}>
+                  <option value="">Not set</option>
+                  {BUILT_WITH.map((v) => (
+                    <option key={v}>{v}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <label className={styles.fld}>
+              Tech Stack
+              <input className={styles.inp} value={f.techStack} onChange={(e) => set("techStack", e.target.value)} placeholder="Next.js, FastAPI, OpenRouter" />
+              <span className={styles.hint}>Comma-separated.</span>
+            </label>
+          </section>
+
+          <section className={styles.panel}>
+            <h2 className={styles.h2}>Links</h2>
+            <div className={styles.grid2} style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+              <label className={styles.fld}>
+                Live Demo URL
+                <input className={styles.inp} type="url" value={f.liveUrl} onChange={(e) => set("liveUrl", e.target.value)} placeholder="https://" />
+              </label>
+              <label className={styles.fld}>
+                GitHub URL
+                <input className={styles.inp} type="url" value={f.sourceUrl} onChange={(e) => set("sourceUrl", e.target.value)} placeholder="https://github.com/smubia-projects/" />
+              </label>
+            </div>
+          </section>
+
+          <section className={styles.panel}>
+            <h2 className={styles.h2}>Images</h2>
+            <div className={styles.fld}>
+              Cover Image
+              <button
+                type="button"
+                className={styles.coverPick}
+                disabled={cover.busy}
+                onClick={async () => {
+                  const url = await upload(() => cover.pick(COVER_CROP));
+                  if (url) set("coverImage", url);
+                }}
+              >
+                <span className={styles.coverThumb}>
+                  <ProjectCover title={f.title || "New"} src={f.coverImage} aspect="16 / 10" monoSize={16} sizes="72px" />
+                </span>
+                <span className={styles.coverText}>
+                  <span className={styles.coverTitle}>{cover.busy ? "Uploading…" : f.coverImage ? "Replace Cover Image" : "Upload Cover Image"}</span>
+                  <span className={styles.hint}>16:10. Shown on cards and yearbook shelves.</span>
+                </span>
+              </button>
+              {f.coverImage && (
+                <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} style={{ alignSelf: "flex-start" }} onClick={() => set("coverImage", "")}>
+                  Remove Cover Image
+                </button>
+              )}
+            </div>
+
+            <div className={styles.fld}>
+              Screenshots
+              <span className={styles.hint}>16:9. Project page carousel, in this order.</span>
+              <div className={styles.imageStrip}>
+                {f.images.map((src, i) => (
+                  <div key={src + i} className={styles.imageItem}>
+                    <Image src={src} alt="" width={128} height={72} style={{ objectFit: "cover", display: "block" }} />
+                    <button type="button" className={styles.imageRemove} aria-label={`Remove screenshot ${i + 1}`} title="Remove" onClick={() => set("images", f.images.filter((_, j) => j !== i))}>
+                      <X size={14} strokeWidth={2} aria-hidden="true" />
+                    </button>
+                    <span className={styles.imageOrder}>
+                      <button type="button" className={styles.ico} aria-label={`Move screenshot ${i + 1} earlier`} title="Move Earlier" disabled={i === 0} onClick={() => set("images", moveItem(f.images, i, -1))}>
+                        <ChevronLeft size={14} strokeWidth={1.75} aria-hidden="true" />
+                      </button>
+                      <button type="button" className={styles.ico} aria-label={`Move screenshot ${i + 1} later`} title="Move Later" disabled={i === f.images.length - 1} onClick={() => set("images", moveItem(f.images, i, 1))}>
+                        <ChevronRight size={14} strokeWidth={1.75} aria-hidden="true" />
+                      </button>
+                    </span>
+                  </div>
+                ))}
+                <AddButton
+                  label="Add Screenshot"
+                  disabled={cover.busy}
+                  onClick={async () => {
+                    const url = await upload(() => cover.pick(SHOT_CROP));
+                    if (url) set("images", [...f.images, url]);
+                  }}
                 />
               </div>
-            ))}
-            <button type="button" className={styles.add} style={{ alignSelf: "flex-start" }} onClick={() => set("cards", [...f.cards, { icon: "lightbulb", title: "", body: "" }])}>
-              + Highlight card
-            </button>
-          </div>
+            </div>
+          </section>
 
-          <div className={styles.fld}>
-            Team members
+          <section className={styles.panel}>
+            <h2 className={styles.h2}>Write-Up</h2>
+            <div className={styles.fld}>
+              <textarea className={styles.inp} rows={8} aria-label="Write-up" value={f.overview} onChange={(e) => set("overview", e.target.value)} placeholder="Problem, approach and outcome" />
+              <MarkdownHint>Shown as &ldquo;Project details&rdquo; on the project page.</MarkdownHint>
+            </div>
+          </section>
+
+          <section className={styles.panel}>
+            <div className={styles.sectionHead}>
+              <h2 className={styles.h2}>Highlight Cards</h2>
+              <p className={styles.sectionHint}>Optional. Shown under the write-up, for example a key result.</p>
+            </div>
+              {f.cards.map((c, i) => (
+                <div key={i} className={styles.subItem}>
+                  <div className={styles.rowEnd}>
+                    <MiniField label="Icon" grow={0}>
+                      <select
+                        className={`${styles.inp} ${styles.inpSmall}`}
+                        style={{ width: 150 }}
+                        value={c.icon}
+                        onChange={(e) => set("cards", f.cards.map((x, j) => (j === i ? { ...x, icon: e.target.value } : x)))}
+                      >
+                        {CARD_ICONS.map((ic) => (
+                          <option key={ic.key} value={ic.key}>
+                            {ic.label}
+                          </option>
+                        ))}
+                      </select>
+                    </MiniField>
+                    <MiniField label="Heading">
+                      <input className={`${styles.inp} ${styles.inpSmall}`} value={c.title} onChange={(e) => set("cards", f.cards.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))} />
+                    </MiniField>
+                    <OrderButtons index={i} count={f.cards.length} label={c.title || `card ${i + 1}`} onMove={(dir) => set("cards", moveItem(f.cards, i, dir))} />
+                    <button type="button" className={styles.ico} aria-label={`Remove card ${c.title || i + 1}`} title="Remove" onClick={() => set("cards", f.cards.filter((_, j) => j !== i))}>
+                      <X size={16} strokeWidth={1.75} aria-hidden="true" />
+                    </button>
+                  </div>
+                  <MiniField label="Body (Markdown)">
+                    <textarea className={styles.inp} rows={2} value={c.body} onChange={(e) => set("cards", f.cards.map((x, j) => (j === i ? { ...x, body: e.target.value } : x)))} />
+                  </MiniField>
+                </div>
+              ))}
+              <AddButton label="Add Highlight Card" onClick={() => set("cards", [...f.cards, { icon: "lightbulb", title: "", body: "" }])} />
+          </section>
+
+          <section className={styles.panel}>
+            <h2 className={styles.h2}>Team Members</h2>
             {f.team.map((m, i) => {
               const patch = (p: Partial<TeamMember>) => set("team", f.team.map((x, j) => (j === i ? { ...x, ...p } : x)));
               return (
                 <div key={i} className={styles.subItem}>
-                  <div className={styles.row}>
+                  <div className={styles.rowEnd}>
                     <button
                       type="button"
-                      className={styles.ico}
-                      style={{ width: 42, height: 42, borderRadius: 999, overflow: "hidden", position: "relative" }}
-                      aria-label={m.avatar ? "Replace photo" : "Add photo"}
+                      className={styles.avatarBtn}
+                      aria-label={m.avatar ? `Replace photo of ${m.name || "team member"}` : `Add photo of ${m.name || "team member"}`}
+                      title={m.avatar ? "Replace Photo" : "Add Photo"}
                       onClick={async () => {
                         const url = await upload(() => team.pick(AVATAR_CROP));
                         if (url) patch({ avatar: url });
                       }}
                     >
-                      {m.avatar ? <Image src={m.avatar} alt="" fill sizes="42px" style={{ objectFit: "cover" }} /> : "+"}
+                      {m.avatar ? <Image src={m.avatar} alt="" fill sizes="42px" style={{ objectFit: "cover" }} /> : <Plus size={16} strokeWidth={1.75} aria-hidden="true" />}
                     </button>
-                    <input className={`${styles.inp} ${styles.inpSmall}`} style={{ flex: "1 1 160px", width: "auto" }} value={m.name} placeholder="Name" aria-label="Name" onChange={(e) => patch({ name: e.target.value })} />
-                    <input className={`${styles.inp} ${styles.inpSmall}`} style={{ flex: "1 1 160px", width: "auto" }} value={m.role} placeholder="Role, e.g. ML engineer" aria-label="Role" onChange={(e) => patch({ role: e.target.value })} />
-                    <button type="button" className={styles.ico} aria-label="Remove member" onClick={() => set("team", f.team.filter((_, j) => j !== i))}>
-                      ×
+                    <MiniField label="Name">
+                      <input className={`${styles.inp} ${styles.inpSmall}`} value={m.name} onChange={(e) => patch({ name: e.target.value })} />
+                    </MiniField>
+                    <MiniField label="Role">
+                      <input className={`${styles.inp} ${styles.inpSmall}`} value={m.role} onChange={(e) => patch({ role: e.target.value })} />
+                    </MiniField>
+                    <OrderButtons index={i} count={f.team.length} label={m.name || "team member"} onMove={(dir) => set("team", moveItem(f.team, i, dir))} />
+                    <button type="button" className={styles.ico} aria-label={`Remove ${m.name || "team member"}`} title="Remove" onClick={() => set("team", f.team.filter((_, j) => j !== i))}>
+                      <X size={16} strokeWidth={1.75} aria-hidden="true" />
                     </button>
                   </div>
                   <div className={styles.grid2} style={{ gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8 }}>
-                    <input className={`${styles.inp} ${styles.inpSmall}`} value={m.linkedin ?? ""} placeholder="LinkedIn URL" aria-label="LinkedIn URL" onChange={(e) => patch({ linkedin: e.target.value })} />
-                    <input className={`${styles.inp} ${styles.inpSmall}`} value={m.github ?? ""} placeholder="GitHub URL" aria-label="GitHub URL" onChange={(e) => patch({ github: e.target.value })} />
-                    <input className={`${styles.inp} ${styles.inpSmall}`} value={m.website ?? ""} placeholder="Website URL" aria-label="Website URL" onChange={(e) => patch({ website: e.target.value })} />
+                    <MiniField label="LinkedIn URL">
+                      <input className={`${styles.inp} ${styles.inpSmall}`} type="url" value={m.linkedin ?? ""} onChange={(e) => patch({ linkedin: e.target.value })} />
+                    </MiniField>
+                    <MiniField label="GitHub URL">
+                      <input className={`${styles.inp} ${styles.inpSmall}`} type="url" value={m.github ?? ""} onChange={(e) => patch({ github: e.target.value })} />
+                    </MiniField>
+                    <MiniField label="Website URL">
+                      <input className={`${styles.inp} ${styles.inpSmall}`} type="url" value={m.website ?? ""} onChange={(e) => patch({ website: e.target.value })} />
+                    </MiniField>
                   </div>
                 </div>
               );
             })}
-            <button type="button" className={styles.add} style={{ alignSelf: "flex-start" }} onClick={() => set("team", [...f.team, { name: "", role: "", avatar: "" }])}>
-              + Team member
-            </button>
-          </div>
-
-          <label className={styles.fld}>
-            Tech stack
-            <input className={styles.inp} value={f.techStack} onChange={(e) => set("techStack", e.target.value)} placeholder="Next.js, FastAPI, OpenRouter" />
-            <span className={styles.hint}>Comma separated.</span>
-          </label>
-        </section>
+            <AddButton label="Add Team Member" onClick={() => set("team", [...f.team, { name: "", role: "", avatar: "" }])} />
+          </section>
+        </div>
 
         <aside className={styles.colSide}>
           <div className={styles.panelTight}>
@@ -478,6 +503,7 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
               </span>
               <StatusChip status={status} label={PROJECT_STATUS_LABEL[status]} />
             </div>
+            <UnsavedNote show={dirty} onDiscard={() => setF(initial)} />
             <button type="button" className={styles.btn} disabled={cantSave || needsCohort} onClick={() => save(primary.intent)}>
               {saving ? "Saving…" : primary.label}
             </button>
@@ -486,7 +512,7 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
                 {secondary}
               </button>
             )}
-            <span className={styles.hint}>{needsCohort ? "Pick a semester or cohort first: the project page lives under it." : help}</span>
+            <span className={styles.hint}>{needsCohort ? "Semester or cohort required before publishing." : help}</span>
           </div>
 
           {isExco && project && f.programme === "AI Lodge" && (
@@ -495,24 +521,24 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
                 <input type="checkbox" checked={winner} disabled={!project.trackId} onChange={(e) => toggleWinner(e.target.checked)} style={{ marginTop: 2 }} />
                 <span>
                   <span className={styles.row} style={{ fontWeight: 600 }}>
-                    <Medal size={16} /> Hack Day winner
+                    <Medal size={16} /> Hack Day Winner
                   </span>
                   <span className={styles.hint}>
                     {project.trackId
-                      ? `One winner per track. Marking this replaces the current ${project.trackName ?? "track"} winner.`
-                      : "Pick a Hack Day track and save first."}
+                      ? `Saves immediately. One winner per track: replaces the current ${project.trackName ?? "track"} winner.`
+                      : "Requires a saved Hack Day track."}
                   </span>
                 </span>
               </label>
             </div>
           )}
 
-          <div className={styles.monoLabel}>Card preview</div>
+          <div className={styles.monoLabel}>Card Preview</div>
           <div className={styles.cardPreview}>
             <ProjectCover title={f.title || "New project"} src={f.coverImage} aspect="16 / 10" monoSize={40} sizes="300px" />
             <div style={{ padding: "14px 16px 18px", display: "flex", flexDirection: "column", gap: 7 }}>
               <div className={styles.row}>
-                <span className={styles.blockType} style={f.programme === "DAP" ? undefined : { background: "rgba(255,201,120,0.22)", color: "#7a6600" }}>
+                <span className={styles.blockType} style={f.programme === "DAP" ? undefined : { background: "rgba(233,196,0,0.18)", color: "var(--gold-deep)" }}>
                   {f.programme}
                 </span>
                 {f.builtWith && <span className={styles.hint}>{f.builtWith}</span>}
@@ -524,17 +550,11 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
 
           {project && (
             <div className={styles.row}>
-              <a className={styles.lnk} href={`/admin/preview/project/${project.slug}`} target="_blank" rel="noopener noreferrer">
-                Preview
-              </a>
-              {project.status === "published" && (
-                <a className={styles.lnk} href={projectPath(project)} target="_blank" rel="noopener noreferrer">
-                  View on site
-                </a>
-              )}
+              <ExternalAction quiet href={`/admin/preview/project/${project.slug}`} label="Preview" />
+              {project.status === "published" && <ExternalAction quiet href={projectPath(project)} label="View Public Page" />}
               {isExco && (
                 <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} onClick={remove}>
-                  Delete project
+                  Delete Project
                 </button>
               )}
             </div>

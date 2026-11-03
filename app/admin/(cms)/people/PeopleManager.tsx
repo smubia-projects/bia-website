@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ROLE_LABEL, ROLE_PROGRAMME, ROLES, type Role } from "@/app/lib/cms/taxonomy";
 import { removePersonAction, savePersonAction } from "../../actions";
-import { useActionToast } from "../../_components/ui";
+import { Modal, PageHead, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";
 
 interface PersonView {
@@ -15,21 +15,18 @@ interface PersonView {
 
 type PersonInput = { email: string; name: string; role: Role };
 
-const ROLE_INFO: { role: Role; can: string; who: string }[] = [
+const ROLE_INFO: { role: Role; can: string }[] = [
   {
     role: "exco",
-    can: "Everything: AI Lodge and DAP, all projects, approvals, site links, photos, and people and roles.",
-    who: "Exco members",
+    can: "All content: AI Lodge, DAP, project approval, site links, photos, people and roles.",
   },
   {
     role: "dap_exco",
-    can: "DAP only: cohorts, groups, the co-learning schedule and newsletter, and DAP projects (an exco admin approves them).",
-    who: "DAP leads",
+    can: "DAP only: cohorts, groups, schedule, newsletter and DAP projects. Publishing projects requires an exco admin.",
   },
   {
     role: "lodge_exco",
-    can: "AI Lodge only: semesters, Hack Day tracks and winners, lodges, the AI Lodge site's photos and applications switch, and AI Lodge projects (an exco admin approves them).",
-    who: "AI Lodge leads",
+    can: "AI Lodge only: semesters, Hack Day tracks and winners, lodges, AI Lodge site photos, the applications switch and AI Lodge projects. Publishing projects requires an exco admin.",
   },
 ];
 
@@ -43,66 +40,35 @@ export default function PeopleManager({
   bootstrap: string[];
 }) {
   const { handle, node } = useActionToast();
+  const confirm = useConfirm();
   const [form, setForm] = useState<PersonInput>({ email: "", name: "", role: "dap_exco" });
   const [editing, setEditing] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const emailOk = /^[^@\s]+@smu\.edu\.sg$/.test(form.email.trim().toLowerCase());
 
   async function save(input = form) {
     const ok = handle(await savePersonAction(input), `${input.email} saved`);
     if (ok !== undefined) {
       setEditing(null);
+      setAdding(false);
       setForm((f) => ({ ...f, email: "", name: "" }));
     }
   }
 
   async function remove(email: string) {
-    if (!confirm(`Remove ${email}? They lose CMS access immediately.`)) return;
-    handle(await removePersonAction(email));
+    const yes = await confirm({ title: "Remove Person", body: `${email} loses CMS access immediately.`, action: "Remove Person", danger: true });
+    if (yes) handle(await removePersonAction(email), `${email} removed`);
   }
 
   return (
     <>
-      <h1 className={styles.h1}>People and roles</h1>
-      <p className={styles.sub}>
-        Sign-in is Google with SMU accounts only. Roles are set here, so nobody shares a password and access ends when someone is removed.
-      </p>
-      <div className={styles.roleCards}>
-        {ROLE_INFO.map((r) => (
-          <div key={r.role} className={styles.roleCard}>
-            <span className={styles.roleName}>{ROLE_LABEL[r.role]}</span>
-            <span style={{ fontSize: 13.5, lineHeight: 1.55 }}>{r.can}</span>
-            <span className={styles.hint}>{r.who}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className={styles.panel} style={{ marginTop: 20 }}>
-        <h2 className={styles.h2}>Add a person</h2>
-        <div className={styles.grid2} style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-          <label className={styles.fld}>
-            SMU email
-            <input className={styles.inp} type="email" value={form.email} placeholder="name.2025@smu.edu.sg" onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          </label>
-          <label className={styles.fld}>
-            Name
-            <input className={styles.inp} value={form.name} placeholder="Optional" onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          </label>
-          <label className={styles.fld}>
-            Role
-            <select className={styles.inp} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {ROLE_LABEL[r]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <button type="button" className={styles.btn} style={{ alignSelf: "flex-start" }} disabled={!form.email.trim()} onClick={() => save()}>
-          Add person
+      <PageHead title="People and Roles" sub="Google sign-in, @smu.edu.sg accounts only. Access ends when a person is removed.">
+        <button type="button" className={styles.btn} onClick={() => setAdding(true)}>
+          Add Person
         </button>
-      </div>
+      </PageHead>
 
-      <div className={styles.tableWrap} style={{ marginTop: 20 }}>
+      <div className={styles.tableWrap} style={{ marginTop: 22 }}>
         <table className={styles.table} style={{ minWidth: 560 }}>
           <thead>
             <tr>
@@ -123,7 +89,7 @@ export default function PeopleManager({
             ))}
             {people.map((p) =>
               editing === p.email ? (
-                <EditRow key={p.email} person={p} onCancel={() => setEditing(null)} onSave={(input) => save(input)} />
+                <EditRow key={p.email} person={p} isMe={p.email === me} onCancel={() => setEditing(null)} onSave={(input) => save(input)} />
               ) : (
                 <tr key={p.email}>
                   <td>
@@ -147,7 +113,57 @@ export default function PeopleManager({
             )}
           </tbody>
         </table>
-        {people.length === 0 && bootstrap.length === 0 && <p className={styles.emptyRow}>Nobody has been added yet.</p>}
+        {people.length === 0 && bootstrap.length === 0 && <p className={styles.emptyRow}>No people on the access list.</p>}
+      </div>
+
+      {adding && (
+        <Modal
+          title="Add Person"
+          onClose={() => setAdding(false)}
+          onSubmit={() => emailOk && save()}
+          footer={
+            <>
+              <button type="button" className={styles.pill} onClick={() => setAdding(false)}>
+                Cancel
+              </button>
+              <button type="submit" className={styles.btn} disabled={!emailOk}>
+                Add Person
+              </button>
+            </>
+          }
+        >
+          <label className={styles.fld}>
+            SMU Email
+            <input className={styles.inp} type="email" autoFocus value={form.email} placeholder="name.2025@smu.edu.sg" onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            {form.email.trim() && !emailOk && <span className={styles.error}>Must be an @smu.edu.sg address.</span>}
+          </label>
+          <label className={styles.fld}>
+            Name (Optional)
+            <input className={styles.inp} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </label>
+          <label className={styles.fld}>
+            Role
+            <select className={styles.inp} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
+              {ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {ROLE_LABEL[r]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </Modal>
+      )}
+
+      <h2 className={styles.h2} style={{ marginTop: 28 }}>
+        Role Permissions
+      </h2>
+      <div className={styles.roleCards} style={{ marginTop: 12 }}>
+        {ROLE_INFO.map((r) => (
+          <div key={r.role} className={styles.roleCard}>
+            <span className={styles.roleName}>{ROLE_LABEL[r.role]}</span>
+            <span style={{ fontSize: 14, lineHeight: 1.55 }}>{r.can}</span>
+          </div>
+        ))}
       </div>
       {node}
     </>
@@ -156,10 +172,13 @@ export default function PeopleManager({
 
 function EditRow({
   person,
+  isMe,
   onCancel,
   onSave,
 }: {
   person: PersonView;
+  /** People can't change their own role, so nobody locks themselves out. */
+  isMe: boolean;
   onCancel: () => void;
   onSave: (input: PersonInput) => void;
 }) {
@@ -171,7 +190,7 @@ function EditRow({
         <div className={styles.hint}>{person.email}</div>
       </td>
       <td>
-        <select className={`${styles.inp} ${styles.inpSmall}`} value={f.role} aria-label="Role" onChange={(e) => setF({ ...f, role: e.target.value as Role })}>
+        <select className={`${styles.inp} ${styles.inpSmall}`} value={f.role} aria-label="Role" disabled={isMe} title={isMe ? "The signed-in account cannot change its own role" : undefined} onChange={(e) => setF({ ...f, role: e.target.value as Role })}>
           {ROLES.map((r) => (
             <option key={r} value={r}>
               {ROLE_LABEL[r]}
@@ -179,9 +198,7 @@ function EditRow({
           ))}
         </select>
       </td>
-      <td>
-        {ROLE_PROGRAMME[f.role] ?? "Everything"}
-      </td>
+      <td>{ROLE_PROGRAMME[f.role] ?? "All programmes"}</td>
       <td className={styles.actionsCell}>
         <button type="button" className={styles.lnk} onClick={() => onSave(f)}>
           Save

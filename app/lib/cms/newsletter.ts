@@ -74,7 +74,7 @@ const SESSION_EXCLUDED = {
 type SessionField = keyof typeof SESSION_EXCLUDED;
 
 export async function saveSessions(actor: Actor, cohortId: string, rows: SessionInput[]) {
-  ensure(can.editNewsletter(actor), "You can't edit the co-learning schedule");
+  ensure(can.editNewsletter(actor), "This role cannot edit the co-learning schedule");
   await requireDapCohort(cohortId);
   const db = await getDb();
   const groupIds = new Set((await db.select({ id: dapGroups.id }).from(dapGroups).where(eq(dapGroups.cohortId, cohortId))).map((g) => g.id));
@@ -83,7 +83,7 @@ export async function saveSessions(actor: Actor, cohortId: string, rows: Session
   const weeks = new Map<number, Partial<Pick<SessionRow, SessionField>>>();
   for (const r of rows) {
     ensure(Number.isInteger(r.week) && r.week >= 1 && r.week <= 30, "Week must be between 1 and 30");
-    ensure(!r.groupId || groupIds.has(r.groupId), "That group isn't in this cohort");
+    ensure(!r.groupId || groupIds.has(r.groupId), "Group is not in this cohort");
     if (r.slides) ensure(/^https?:\/\//i.test(r.slides.trim()), "Slides links must start with https://");
     weeks.set(r.week, {
       ...weeks.get(r.week),
@@ -158,7 +158,7 @@ function cleanBlocks(blocks: IssueBlock[]): IssueBlock[] {
 }
 
 export async function createIssue(actor: Actor, cohortId: string, week?: number): Promise<Issue> {
-  ensure(can.editNewsletter(actor), "You can't write newsletter issues");
+  ensure(can.editNewsletter(actor), "This role cannot create newsletter issues");
   const cohort = await requireDapCohort(cohortId);
   const existing = await listIssues(cohortId);
   const nextWeek = week ?? Math.max(0, ...existing.map((i) => i.week)) + 1;
@@ -188,7 +188,7 @@ export interface IssueInput {
 }
 
 export async function updateIssue(actor: Actor, id: number, input: IssueInput): Promise<Issue> {
-  ensure(can.editNewsletter(actor), "You can't edit newsletter issues");
+  ensure(can.editNewsletter(actor), "This role cannot edit newsletter issues");
   const current = await getIssue(id);
   ensure(current, "Issue not found");
   const values: Partial<typeof issues.$inferInsert> = {
@@ -196,7 +196,7 @@ export async function updateIssue(actor: Actor, id: number, input: IssueInput): 
     updatedBy: actor.email,
   };
   if (input.week !== undefined && input.week !== current.week) {
-    ensure(Number.isInteger(input.week) && input.week >= 1, "Pick a week");
+    ensure(Number.isInteger(input.week) && input.week >= 1, "Week required");
     const taken = (await listIssues(current.cohortId)).some((i) => i.week === input.week);
     ensure(!taken, `Week ${input.week} already has an issue`);
     values.week = input.week;
@@ -232,10 +232,10 @@ export type TelegramOutcome = "sent" | "dry-run" | "skipped" | "not-configured" 
 
 /** Publishes now and, when enabled, posts once to the DAP Telegram channel. */
 export async function publishIssue(actor: Actor, id: number): Promise<{ issue: Issue; telegram: TelegramOutcome }> {
-  ensure(can.editNewsletter(actor), "You can't publish newsletter issues");
+  ensure(can.editNewsletter(actor), "This role cannot publish newsletter issues");
   const current = await getIssue(id);
   ensure(current, "Issue not found");
-  ensure(current.title.trim(), "Add a title before publishing");
+  ensure(current.title.trim(), "Title required before publishing");
   const db = await getDb();
   const now = new Date().toISOString();
   await db
@@ -272,13 +272,13 @@ export async function publishIssue(actor: Actor, id: number): Promise<{ issue: I
 
 /** `date` is YYYY-MM-DD; the issue goes out at about 09:00 SGT that day. */
 export async function scheduleIssue(actor: Actor, id: number, date: string): Promise<Issue> {
-  ensure(can.editNewsletter(actor), "You can't schedule newsletter issues");
-  ensure(/^\d{4}-\d{2}-\d{2}$/.test(date), "Pick a date to schedule");
+  ensure(can.editNewsletter(actor), "This role cannot schedule newsletter issues");
+  ensure(/^\d{4}-\d{2}-\d{2}$/.test(date), "Schedule date required");
   const current = await getIssue(id);
   ensure(current, "Issue not found");
   ensure(current.status !== "published", "This issue is already published");
   const publishAt = new Date(`${date}T${String(PUBLISH_HOUR_UTC).padStart(2, "0")}:00:00Z`);
-  ensure(publishAt.getTime() > Date.now() - 60 * 60 * 1000, "Pick today or a later date");
+  ensure(publishAt.getTime() > Date.now() - 60 * 60 * 1000, "Schedule date must be today or later");
   const db = await getDb();
   await db
     .update(issues)
@@ -289,7 +289,7 @@ export async function scheduleIssue(actor: Actor, id: number, date: string): Pro
 
 /** Back to draft: unpublishes or cancels a schedule. */
 export async function revertIssueToDraft(actor: Actor, id: number): Promise<Issue> {
-  ensure(can.editNewsletter(actor), "You can't edit newsletter issues");
+  ensure(can.editNewsletter(actor), "This role cannot edit newsletter issues");
   const db = await getDb();
   const current = await getIssue(id);
   ensure(current, "Issue not found");
@@ -302,7 +302,7 @@ export async function revertIssueToDraft(actor: Actor, id: number): Promise<Issu
 }
 
 export async function deleteIssue(actor: Actor, id: number) {
-  ensure(can.editNewsletter(actor), "You can't delete newsletter issues");
+  ensure(can.editNewsletter(actor), "This role cannot delete newsletter issues");
   const db = await getDb();
   const deleted = await db.delete(issues).where(eq(issues.id, id)).returning({ status: issues.status });
   if (deleted.length === 0) throw new CmsError("Issue not found");
@@ -311,8 +311,8 @@ export async function deleteIssue(actor: Actor, id: number) {
 
 /** Sends the issue as it would appear in the channel, to one person. */
 export async function sendIssueTest(actor: Actor, id: number, telegramUserId: string) {
-  ensure(can.editNewsletter(actor), "You can't send newsletter tests");
-  ensure(/^-?\d{4,}$/.test(telegramUserId.trim()), "A Telegram user ID is a number, like 123456789");
+  ensure(can.editNewsletter(actor), "This role cannot send newsletter tests");
+  ensure(/^-?\d{4,}$/.test(telegramUserId.trim()), "Telegram user ID must be numeric, for example 123456789");
   const issue = await getIssue(id);
   ensure(issue, "Issue not found");
   return sendIssueToTelegram(telegramUserId, await telegramPayload(issue));

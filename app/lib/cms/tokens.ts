@@ -33,8 +33,8 @@ export async function listTokens(actor: Actor): Promise<AccessToken[]> {
 /** Returns the token itself: it is never shown again. */
 export async function createToken(actor: Actor, input: { name: string; days: number }): Promise<{ token: string; row: AccessToken }> {
   const name = input.name.trim();
-  ensure(name, "Name the token after where you'll use it, e.g. \"Claude Code on my laptop\"");
-  ensure((TOKEN_LIFETIMES as readonly number[]).includes(input.days), "Pick how long the token lasts");
+  ensure(name, "Token name required, for example \"Claude Code, personal laptop\"");
+  ensure((TOKEN_LIFETIMES as readonly number[]).includes(input.days), "Token expiry required");
   const token = PREFIX + randomBytes(32).toString("base64url");
   const db = await getDb();
   const [row] = await db

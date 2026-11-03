@@ -40,17 +40,17 @@ export const EDITABLE_LINKS: {
   type?: "email";
   optional?: boolean;
 }[] = [
-  { key: "dapApplication", label: "DAP application form", hint: "Where “Join DAP” goes while DAP applications are open. Leave empty to use the DAP Telegram instead.", group: "Recruitment", optional: true },
-  { key: "dapTelegram", label: "DAP Telegram", hint: "Where “Join DAP” goes when there's no form or applications are closed", group: "Recruitment" },
-  { key: "aiLodgeSignup", label: "AI Lodge sign-up form", hint: "Where “Join AI Lodge” goes while AI Lodge applications are open", group: "Recruitment" },
-  { key: "telegram", label: "Club Telegram", hint: "Navbar “Join us”, and where “Join AI Lodge” goes when applications are closed", group: "Club" },
-  { key: "aiLodgeInfosite", label: "AI Lodge site", hint: "The AI Lodge item in the navbar and footer", group: "Club" },
-  { key: "dapNewsletter", label: "DAP newsletter channel", hint: "“Get it on Telegram” on This week in DAP. Leave empty to hide the button.", group: "Club", optional: true },
-  { key: "email", label: "Club email", hint: "Footer and Contact page", group: "Contact", type: "email" },
-  { key: "partnershipEmail", label: "Partnerships email", hint: "“Get in touch” on Work with us and Contact (sent with a “Partnership enquiry” subject)", group: "Contact", type: "email" },
-  { key: "prospectus", label: "Partnership prospectus", hint: "A PDF link for “Download our prospectus” on Work with us. Leave empty to hide the button.", group: "Contact", optional: true },
-  { key: "instagram", label: "Instagram", hint: "Footer", group: "Socials" },
-  { key: "linkedin", label: "LinkedIn", hint: "Footer", group: "Socials" },
+  { key: "dapApplication", label: "DAP Application Form", hint: "“Join DAP” target while applications are open. Empty uses the DAP Telegram.", group: "Recruitment", optional: true },
+  { key: "dapTelegram", label: "DAP Telegram", hint: "“Join DAP” target when no form is set or applications are closed.", group: "Recruitment" },
+  { key: "aiLodgeSignup", label: "AI Lodge Sign-Up Form", hint: "“Join AI Lodge” target while applications are open.", group: "Recruitment" },
+  { key: "telegram", label: "Club Telegram", hint: "Navbar “Join us”, and “Join AI Lodge” target when applications are closed.", group: "Club" },
+  { key: "aiLodgeInfosite", label: "AI Lodge Site", hint: "AI Lodge item in the navbar and footer.", group: "Club" },
+  { key: "dapNewsletter", label: "DAP Newsletter Channel", hint: "“Subscribe on Telegram” on This Week in DAP. Empty hides the button.", group: "Club", optional: true },
+  { key: "email", label: "Club Email", hint: "Footer and Contact page.", group: "Contact", type: "email" },
+  { key: "partnershipEmail", label: "Partnerships Email", hint: "“Get in touch” on Work with us and Contact, with the subject “Partnership enquiry”.", group: "Contact", type: "email" },
+  { key: "prospectus", label: "Partnership Prospectus", hint: "PDF URL for “Download our prospectus” on Work with us. Empty hides the button.", group: "Contact", optional: true },
+  { key: "instagram", label: "Instagram", hint: "Footer.", group: "Socials" },
+  { key: "linkedin", label: "LinkedIn", hint: "Footer.", group: "Socials" },
 ];
 
 export const mailto = (email: string, subject?: string) =>

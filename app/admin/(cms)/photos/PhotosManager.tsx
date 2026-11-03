@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { Photo, PhotoSlot, SitePhotos } from "@/app/lib/photos";
 import { saveSitePhotoAction } from "../../actions";
-import { useActionToast, useImageUpload, useUnsavedChanges } from "../../_components/ui";
+import { AddButton, PageHead, useActionToast, useConfirm, useImageUpload, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
 
 type Value = Photo | Photo[];
@@ -21,6 +22,7 @@ const valueOf = (photos: SitePhotos, slot: PhotoSlot): Value =>
  */
 export default function PhotosManager({ photos, slots }: { photos: SitePhotos; /** The slots this person may edit */ slots: PhotoSlot[] }) {
   const { handle, node, show } = useActionToast();
+  const confirm = useConfirm();
   const [drafts, setDrafts] = useState<Record<string, Value>>({});
   const [selected, setSelected] = useState(slots[0].key);
   const [busy, setBusy] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export default function PhotosManager({ photos, slots }: { photos: SitePhotos; /
 
   async function save(s: PhotoSlot, value: Value | null) {
     setBusy(s.key);
-    const ok = handle(await saveSitePhotoAction(s.key, value), value === null ? `${s.label}: original photo back` : `${s.label} saved`);
+    const ok = handle(await saveSitePhotoAction(s.key, value), value === null ? `${s.label}: default restored` : `${s.label} saved`);
     setBusy(null);
     if (ok !== undefined) {
       dropDraft(s.key);
@@ -60,23 +62,13 @@ export default function PhotosManager({ photos, slots }: { photos: SitePhotos; /
 
   return (
     <>
-      <div className={styles.pageHead}>
-        <div>
-          <h1 className={styles.h1}>Photos</h1>
-          <p className={styles.sub}>
-            Every photo on the site. Pick one to see it in place on its page, upload a replacement, and save. The original photo can always be put back.
-          </p>
-        </div>
-      </div>
+      <PageHead title="Photos" sub="Site photos by page. The selected photo is previewed in place." />
 
       <div className={styles.cols} style={{ marginTop: 22 }}>
         <div className={styles.colMain} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {pages.map((page) => (
             <section key={page} className={styles.panel} style={{ gap: 10 }}>
               <h2 className={styles.h2}>{page}</h2>
-              {page === "AI Lodge site" && (
-                <span className={styles.hint}>The AI Lodge site shows these once it reads them from smubia.com (see docs/ailodge-site-handoff.md).</span>
-              )}
               {slots.filter((s) => s.page === page).map((s) => {
                 const value = current(s);
                 const dirty = s.key in drafts;
@@ -110,14 +102,14 @@ export default function PhotosManager({ photos, slots }: { photos: SitePhotos; /
                         <span className={styles.photoFields}>
                           <span className={styles.trackName}>
                             {s.label}
-                            {custom && !dirty && <span className={styles.count}>replaced</span>}
-                            {dirty && <span className={styles.count}>not saved</span>}
+                            {custom && !dirty && <span className={styles.count}> · Custom</span>}
+                            {dirty && <span className={styles.count}> · Unsaved</span>}
                           </span>
                           {s.hint && <span className={styles.hint}>{s.hint}</span>}
                           <input
                             className={`${styles.inp} ${styles.inpSmall}`}
                             value={value.alt}
-                            placeholder="Describe the photo for screen readers"
+                            placeholder="Alt text"
                             aria-label={`${s.label}: alt text`}
                             onChange={(e) => setDraft(s.key, { ...value, alt: e.target.value })}
                           />
@@ -135,7 +127,7 @@ export default function PhotosManager({ photos, slots }: { photos: SitePhotos; /
                             if (url) setDraft(s.key, { ...(value as Photo), src: url });
                           }}
                         >
-                          {uploader.busy && uploadSlot.key === s.key ? "Uploading…" : "Replace photo"}
+                          {uploader.busy && uploadSlot.key === s.key ? "Uploading…" : "Replace Photo"}
                         </button>
                       )}
                       {dirty && (
@@ -149,8 +141,10 @@ export default function PhotosManager({ photos, slots }: { photos: SitePhotos; /
                         </>
                       )}
                       {custom && !dirty && (
-                        <button type="button" className={styles.lnk} disabled={busy === s.key} onClick={() => confirm(`Put the original photo back for ${s.label}?`) && save(s, null)}>
-                          Use the original
+                        <button type="button" className={styles.lnk} disabled={busy === s.key} onClick={async () => {
+                          if (await confirm({ title: "Restore Default Photo", body: `${s.label} returns to the default photo.`, action: "Restore Default" })) save(s, null);
+                        }}>
+                          Restore Default
                         </button>
                       )}
                     </div>
@@ -167,8 +161,8 @@ export default function PhotosManager({ photos, slots }: { photos: SitePhotos; /
           <PagePreview slot={slot} value={current(slot)} />
           <span className={styles.hint}>
             {slot.path.startsWith("/")
-              ? "The real page, with this photo swapped in. Unsaved changes show here first."
-              : "This photo is on the AI Lodge site, so the preview shows the photo itself."}
+              ? "Live page with this photo applied, including unsaved changes."
+              : "AI Lodge site photo. Previewed on its own."}
           </span>
         </aside>
       </div>
@@ -226,21 +220,19 @@ function GalleryField({
             />
             <span className={styles.trackOrder}>
               <button type="button" className={styles.ico} aria-label={`Move photo ${i + 1} earlier`} disabled={i === 0} onClick={() => move(i, i - 1)}>
-                ←
+                <ChevronLeft size={16} strokeWidth={1.75} aria-hidden="true" />
               </button>
               <button type="button" className={styles.ico} aria-label={`Move photo ${i + 1} later`} disabled={i === items.length - 1} onClick={() => move(i, i + 1)}>
-                →
+                <ChevronRight size={16} strokeWidth={1.75} aria-hidden="true" />
               </button>
               <button type="button" className={styles.ico} aria-label={`Remove photo ${i + 1}`} disabled={items.length === 1} onClick={() => onChange(items.filter((_, j) => j !== i))}>
-                ×
+                <X size={16} strokeWidth={1.75} aria-hidden="true" />
               </button>
             </span>
           </div>
         ))}
       </div>
-      <button type="button" className={styles.add} style={{ alignSelf: "flex-start" }} disabled={busy} onClick={onAdd}>
-        + Photo
-      </button>
+      <AddButton label="Add Photo" disabled={busy} onClick={onAdd} />
     </div>
   );
 }

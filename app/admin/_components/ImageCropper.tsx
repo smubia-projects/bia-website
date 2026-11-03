@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
 import styles from "../cms.module.css";
@@ -44,24 +44,38 @@ export default function ImageCropper({ imageSrc, aspectRatio, aspectLabel, onCom
   const [zoom, setZoom] = useState(1);
   const [area, setArea] = useState<Area | null>(null);
   const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (!dialog.current?.open) dialog.current?.showModal();
+  }, []);
 
   const onCropComplete = useCallback((_: Area, pixels: Area) => setArea(pixels), []);
 
   async function confirm() {
     if (!area) return;
     setSaving(true);
+    setFailed(false);
     try {
       onComplete(await getCroppedImg(imageSrc, area));
     } catch {
       setSaving(false);
+      setFailed(true);
     }
   }
 
   return (
-    <div className={styles.overlay} onClick={onCancel}>
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-label="Crop image" onClick={(e) => e.stopPropagation()}>
+    <dialog
+      ref={dialog}
+      className={styles.cropDialog}
+      aria-label="Crop image"
+      onCancel={(e) => {
+        e.preventDefault();
+        onCancel();
+      }}
+    >
         <div className={styles.modalHead}>
-          <h3 className={styles.h2}>Crop image</h3>
+          <h3 className={styles.h2}>Crop Image</h3>
           <span className={styles.monoLabel}>{aspectLabel}</span>
         </div>
         <div className={styles.cropArea}>
@@ -77,16 +91,15 @@ export default function ImageCropper({ imageSrc, aspectRatio, aspectLabel, onCom
           />
         </div>
         <div className={styles.modalFoot}>
-          <span className={styles.hint}>Zoom</span>
+          <span className={styles.hint}>{failed ? "Crop failed. Try a different image." : "Zoom"}</span>
           <input type="range" min={1} max={3} step={0.05} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} aria-label="Zoom" />
           <button type="button" className={styles.pill} onClick={onCancel}>
             Cancel
           </button>
           <button type="button" className={styles.btn} onClick={confirm} disabled={saving}>
-            {saving ? "Processing…" : "Crop and use"}
+            {saving ? "Processing…" : "Apply Crop"}
           </button>
         </div>
-      </div>
-    </div>
+    </dialog>
   );
 }

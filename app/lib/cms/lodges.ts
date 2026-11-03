@@ -148,15 +148,15 @@ function cleanCaptains(list: Captain[] | undefined): Captain[] {
 
 function cleanHero(h: LodgeHero): LodgeHero {
   const kind = oneOf(LODGE_HERO_KINDS, h?.kind, "Unknown header art");
-  if (kind === "showpiece") return { kind, showpiece: oneOf(LODGE_SHOWPIECES, h.showpiece, "Pick a showpiece") };
+  if (kind === "showpiece") return { kind, showpiece: oneOf(LODGE_SHOWPIECES, h.showpiece, "Showpiece required") };
   if (kind === "animated") {
     const image = cleanImage(h.image, "The animated art");
-    ensure(image, "Upload the animated SVG, or pick other header art");
+    ensure(image, "Animated SVG required for this header art");
     return { kind, image };
   }
   if (kind === "custom") {
     const image = cleanImage(h.image, "The showpiece image");
-    ensure(image, "Upload the showpiece image, or pick other header art");
+    ensure(image, "Showpiece image required for this header art");
     const glow = (h.glow ?? "").trim();
     ensure(!glow || HEX.test(glow), "The showpiece glow must be a colour like #FFB547, or empty for none");
     return {
@@ -179,7 +179,7 @@ function cleanBelt(b: Partial<LodgeBelt>, current: LodgeBelt): LodgeBelt {
   };
   if (belt.mode === "tile" || belt.mode === "banner") {
     belt.image = cleanImage(next.image, "The strip image");
-    ensure(belt.image, belt.mode === "tile" ? "Upload the image to repeat in the strip" : "Upload the long strip image");
+    ensure(belt.image, belt.mode === "tile" ? "Repeating image required for this strip style" : "Strip image required for this strip style");
   }
   return belt;
 }
@@ -203,13 +203,13 @@ function lodgeValues(input: LodgeInput, currentBelt: LodgeBelt) {
   v.name = name;
   if (input.slug !== undefined) {
     const slug = input.slug.trim().toLowerCase() || lodgeSlug(name);
-    ensure(SLUG.test(slug), 'Use a short URL name with letters, numbers and dashes, like "hackstreet-boys"');
-    ensure(slug !== "past", '"past" is reserved on the AI Lodge site; pick another URL name');
+    ensure(SLUG.test(slug), 'URL slug must use lower-case letters, numbers and dashes, for example "hackstreet-boys"');
+    ensure(slug !== "past", 'URL slug "past" is reserved on the AI Lodge site. Choose another.');
     v.slug = slug;
   }
   if (input.oldSlugs !== undefined) {
     v.oldSlugs = Array.from(new Set(cleanList(input.oldSlugs).map((s) => s.toLowerCase().replace(/^\/?(lodges\/)?/, ""))));
-    for (const old of v.oldSlugs) ensure(SLUG.test(old) && old !== "past", `"${old}" isn't a URL name (letters, numbers and dashes)`);
+    for (const old of v.oldSlugs) ensure(SLUG.test(old) && old !== "past", `"${old}" is not a valid URL slug. Use lower-case letters, numbers and dashes.`);
   }
   if (input.placeholder !== undefined) v.placeholder = Boolean(input.placeholder);
   if (input.trailTentative !== undefined) v.trailTentative = Boolean(input.trailTentative);
@@ -246,7 +246,7 @@ function lodgeValues(input: LodgeInput, currentBelt: LodgeBelt) {
   }
   if (input.logo !== undefined) v.logo = cleanImage(input.logo, "The logo");
   if (input.logoStyle !== undefined) v.logoStyle = oneOf(LODGE_LOGO_STYLES, input.logoStyle, "Unknown logo style");
-  if (input.emblem !== undefined) v.emblem = oneOf(LODGE_EMBLEMS, input.emblem, "Unknown stand-in emblem");
+  if (input.emblem !== undefined) v.emblem = oneOf(LODGE_EMBLEMS, input.emblem, "Unknown fallback emblem");
   if (input.ambientImage !== undefined) v.ambientImage = cleanImage(input.ambientImage, "The particle image");
   if (input.hero !== undefined) v.hero = cleanHero(input.hero);
   if (input.belt !== undefined) v.belt = cleanBelt(input.belt, currentBelt);
@@ -258,7 +258,7 @@ async function requireSemester(actor: Actor, cohortId: string) {
   const [cohort] = await db.select().from(cohorts).where(eq(cohorts.id, cohortId));
   ensure(cohort, "Semester not found");
   ensure(cohort.programme === "AI Lodge", "Only AI Lodge semesters have lodges");
-  ensure(can.editCohort(actor, "AI Lodge"), "You can't edit lodges");
+  ensure(can.editCohort(actor, "AI Lodge"), "This role cannot edit lodges");
   return cohort;
 }
 
@@ -268,7 +268,7 @@ async function ensureSlugFree(cohortId: string, slug: string, exceptId?: number)
     .select({ id: lodges.id, name: lodges.name })
     .from(lodges)
     .where(and(eq(lodges.cohortId, cohortId), eq(lodges.slug, slug), exceptId ? ne(lodges.id, exceptId) : undefined));
-  ensure(!clash, `${clash?.name} already uses the URL name "${slug}" this semester`);
+  ensure(!clash, `URL slug "${slug}" is already used by ${clash?.name} in this semester`);
 }
 
 export async function saveLodge(actor: Actor, input: LodgeInput): Promise<Lodge> {
@@ -281,7 +281,7 @@ export async function saveLodge(actor: Actor, input: LodgeInput): Promise<Lodge>
   );
   const hero = values.hero ?? existing?.hero;
   const neonSign = values.neonSign ?? existing?.neonSign ?? "none";
-  ensure(hero?.kind !== "neon" || neonSign !== "none", "Pick a neon sign to show it in the header");
+  ensure(hero?.kind !== "neon" || neonSign !== "none", "Neon sign required for this header art");
   if (values.slug) await ensureSlugFree(input.cohortId, values.slug, input.id);
   const db = await getDb();
   let row: Lodge | undefined;
@@ -342,7 +342,7 @@ export async function copyLodge(actor: Actor, id: number, toCohortId: string): P
 
 /** Projects in a removed lodge keep everything else; only the lodge link goes. */
 export async function deleteLodge(actor: Actor, id: number) {
-  ensure(can.editCohort(actor, "AI Lodge"), "You can't remove lodges");
+  ensure(can.editCohort(actor, "AI Lodge"), "This role cannot delete lodges");
   const db = await getDb();
   await db.delete(lodges).where(eq(lodges.id, id));
   revalidateCms("cohorts", "projects");

@@ -10,13 +10,13 @@ const GLOW = {
 };
 
 /**
- * "Want your project showcased?" band. The join buttons always use the links set
+ * The closing join band. The join buttons always use the links set
  * in the CMS (Settings › Site links), so every page points at the same form; when a
  * programme's applications are closed they point at its Telegram instead.
  */
 export default async function JoinCta({
   programmes,
-  heading = "Want your project showcased here?",
+  heading = "Build a project with us",
   text,
 }: {
   programmes: Programme[];

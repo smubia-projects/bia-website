@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Captain, LodgeBelt, LodgeHero, LodgeWeek } from "@/app/lib/db/schema";
 import type { Lodge } from "@/app/lib/cms/lodges";
@@ -31,7 +31,7 @@ import {
   type LodgeNeonSign,
 } from "@/app/lib/cms/taxonomy";
 import { deleteLodgeAction, saveLodgeAction } from "../../actions";
-import { useActionToast, useImageUpload, useUnsavedChanges } from "../../_components/ui";
+import { AddButton, ExternalAction, MiniField, OrderButtons, PageHead, UnsavedNote, moveItem, useActionToast, useConfirm, useImageUpload, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import { runHref } from "../../_components/runs";
 import styles from "../../cms.module.css";
 
@@ -80,6 +80,7 @@ export default function LodgeEditor({
 }) {
   const router = useRouter();
   const { handle, node, show } = useActionToast();
+  const confirm = useConfirm();
   const art = useImageUpload("lodges");
   const photos = useImageUpload("team");
   const initial = toDraft(lodge);
@@ -107,8 +108,10 @@ export default function LodgeEditor({
     setSaving(false);
   }
 
+  useSaveShortcut(save, canEdit && dirty && !saving && Boolean(f.name.trim()));
+
   async function remove() {
-    if (!confirm(`Delete ${lodge.name}? Its projects keep everything except the lodge link.`)) return;
+    if (!(await confirm({ title: "Delete Lodge", body: `${lodge.name} is deleted. Its projects stay, without a lodge.`, action: "Delete Lodge", danger: true }))) return;
     if (handle(await deleteLodgeAction(lodge.id), "Lodge deleted") !== undefined) router.push(back);
   }
 
@@ -146,12 +149,12 @@ export default function LodgeEditor({
         )}
         {canEdit && (
           <button type="button" className={styles.pill} disabled={art.busy} onClick={() => upload("art", onChange)}>
-            {value ? "Replace" : "Upload"}
+            {value ? "Replace Image" : "Upload Image"}
           </button>
         )}
         {value && canEdit && (
           <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} onClick={() => onChange("")}>
-            Remove
+            Remove Image
           </button>
         )}
       </div>
@@ -207,27 +210,7 @@ export default function LodgeEditor({
 
   return (
     <>
-      <div className={styles.between} style={{ flexWrap: "wrap" }}>
-        <Link href={back} className={styles.pill}>
-          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-          All lodges
-        </Link>
-        <div className={styles.row}>
-          <a className={styles.pill} href={siteHref} target="_blank" rel="noopener noreferrer">
-            View on the AI Lodge site
-          </a>
-          {canEdit && (
-            <button type="button" className={styles.btn} onClick={save} disabled={saving || !dirty || !f.name.trim()}>
-              {saving ? "Saving…" : "Save lodge"}
-            </button>
-          )}
-        </div>
-      </div>
-      <h1 className={styles.h1} style={{ marginTop: 18 }}>
-        {f.name || "Untitled lodge"}
-      </h1>
+      <PageHead crumbs={[{ href: back, label: "Lodges" }]} title={lodge.name} />
 
       <div className={styles.cols} style={{ marginTop: 18 }}>
         <div className={styles.colMain} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -235,19 +218,19 @@ export default function LodgeEditor({
             <h2 className={styles.h2}>Basics</h2>
             <div className={styles.grid2}>
               {text("name", "Name")}
-              {text("slug", "URL name", { hint: `ailodge.smubia.com/lodges/${f.slug || "…"}` })}
+              {text("slug", "URL Slug", { hint: `ailodge.smubia.com/lodges/${f.slug || "…"}` })}
             </div>
-            {text("oldSlugs", "Old URL names", { rows: 2, hint: "One per line. Links to ailodge.smubia.com/lodges/<old name> redirect here, e.g. after a rename." })}
+            {text("oldSlugs", "Previous URL Slugs", { rows: 2, hint: "One per line. These addresses redirect to this lodge." })}
             <label className={styles.radio}>
               <input type="checkbox" checked={f.placeholder} disabled={!canEdit} onChange={(e) => set("placeholder", e.target.checked)} />
-              Details not released yet
+              Details Not Released
             </label>
             <span className={styles.hint}>
-              The card says &quot;Reveals …&quot; with the semester&apos;s &quot;Lodge details drop&quot; text, and the lodge takes no applications until you untick this.
+              The card shows the semester&apos;s Lodge Details Release text. Applications stay closed while this is set.
             </span>
             <div className={styles.grid2}>
               <label className={styles.fld}>
-                Level badge
+                Level Badge
                 <input className={styles.inp} list="lodge-levels" value={f.level} placeholder="Open to all" disabled={!canEdit} onChange={(e) => set("level", e.target.value)} />
                 <datalist id="lodge-levels">
                   {LODGE_LEVELS.map((l) => (
@@ -255,167 +238,172 @@ export default function LodgeEditor({
                   ))}
                 </datalist>
               </label>
-              {text("whoCanJoin", "Who can join", { placeholder: "Anyone" })}
+              {text("whoCanJoin", "Eligibility", { placeholder: "Anyone" })}
             </div>
-            {text("motto", "Motto", { placeholder: "Mostly Intelligent Together", hint: "Shown in quotes under the name. Optional." })}
+            {text("motto", "Motto", { placeholder: "Mostly Intelligent Together", hint: "Optional. Shown in quotes under the name." })}
             {text("tagline", "Tagline", { placeholder: "Building AI agents that plan, remember and act." })}
             <fieldset className={styles.fieldset}>
               <legend className={styles.legend}>Applications</legend>
               <label className={styles.radio}>
                 <input type="radio" name="status" checked={f.status === "open"} disabled={!canEdit} onChange={() => set("status", "open")} />
-                Taking applications
+                Open
               </label>
               <label className={styles.radio}>
                 <input type="radio" name="status" checked={f.status === "closed"} disabled={!canEdit} onChange={() => set("status", "closed")} />
-                Not taking applications (still shown)
+                Closed (lodge remains listed)
               </label>
-              <span className={styles.hint}>The AI Lodge applications switch in Site links closes every lodge at once.</span>
+              <span className={styles.hint}>The AI Lodge switch in Site Links closes all lodges.</span>
             </fieldset>
           </section>
 
           <section className={styles.panel}>
-            <h2 className={styles.h2}>Who it&apos;s for</h2>
-            {text("forWho", "Who this lodge is for", { rows: 3 })}
-            {text("forWhoCard", "Short version for the lodge card", { hint: "Optional. The card uses the full text when empty." })}
-            {text("why", "Why join", { rows: 5 })}
+            <h2 className={styles.h2}>Audience and Content</h2>
+            {text("forWho", "Target Audience", { rows: 3 })}
+            {text("forWhoCard", "Target Audience (Card)", { hint: "Optional. Empty uses the full text." })}
+            {text("why", "Join Rationale", { rows: 5, hint: "Shown as “Why join” on the lodge page." })}
             <div className={styles.grid2}>
-              {text("topics", "What you'll explore", { rows: 6, hint: "One topic per line." })}
+              {text("topics", "Topics", { rows: 6, hint: "One per line. Shown as “What you'll explore”." })}
               {text("goals", "Goals", { rows: 6, hint: "One per line. Optional." })}
             </div>
-            {text("cardTags", "Card tags", { rows: 3, hint: "Up to three, one per line. The first three topics are used when empty." })}
+            {text("cardTags", "Card Tags", { rows: 3, hint: "Up to three, one per line. Empty uses the first three topics." })}
           </section>
 
           <section className={styles.panel}>
-            <h2 className={styles.h2}>When</h2>
+            <h2 className={styles.h2}>Schedule</h2>
             <div className={styles.grid2}>
-              {text("schedule", "Schedule", { placeholder: "Tue or Wed evenings · 7–10pm" })}
-              {text("scheduleShort", "Short schedule for the card", { placeholder: "Tue · 7–10pm" })}
+              {text("schedule", "Meeting Time", { placeholder: "Tue or Wed evenings · 7–10pm" })}
+              {text("scheduleShort", "Meeting Time (Card)", { placeholder: "Tue · 7–10pm" })}
             </div>
             <div className={styles.grid2}>
-              {text("sessionLength", "Session length", { placeholder: "~3 hours per session" })}
+              {text("sessionLength", "Session Length", { placeholder: "~3 hours per session" })}
               <label className={styles.radio} style={{ alignSelf: "end" }}>
                 <input type="checkbox" checked={f.scheduleTentative} disabled={!canEdit} onChange={(e) => set("scheduleTentative", e.target.checked)} />
-                Schedule is tentative
+                Meeting Time Tentative
               </label>
             </div>
           </section>
 
           <section className={styles.panel}>
             <div className={styles.between}>
-              <h2 className={styles.h2}>Week by week</h2>
+              <h2 className={styles.h2}>Weekly Trail</h2>
               {canEdit && weeks.length === 0 && (
                 <button type="button" className={styles.pill} onClick={() => set("weeks", STANDARD_TRAIL)}>
-                  Start from the standard 10 weeks
+                  Insert 10-Week Template
                 </button>
               )}
             </div>
             {weeks.map((w, i) => (
               <div key={i} className={styles.subItem}>
-                <div className={styles.row}>
-                  <input className={`${styles.inp} ${styles.inpSmall}`} style={{ maxWidth: 120 }} value={w.label} placeholder="Week 1" aria-label="Week label" disabled={!canEdit} onChange={(e) => setWeek(i, { label: e.target.value })} />
-                  <input className={`${styles.inp} ${styles.inpSmall}`} style={{ flex: "1 1 220px", width: "auto" }} value={w.topic} placeholder="Topic" aria-label="Topic" disabled={!canEdit} onChange={(e) => setWeek(i, { topic: e.target.value })} />
-                  <select className={`${styles.inp} ${styles.inpSmall}`} style={{ maxWidth: 140 }} value={w.tag ?? ""} aria-label="Attendance" disabled={!canEdit} onChange={(e) => setWeek(i, { tag: (e.target.value || undefined) as LodgeWeek["tag"] })}>
-                    <option value="">No tag</option>
-                    <option value="mandatory">Mandatory</option>
-                    <option value="optional">Optional</option>
-                  </select>
+                <div className={styles.rowEnd}>
+                  <MiniField label="Label" grow={0}>
+                    <input className={`${styles.inp} ${styles.inpSmall}`} style={{ width: 110 }} value={w.label} disabled={!canEdit} onChange={(e) => setWeek(i, { label: e.target.value })} />
+                  </MiniField>
+                  <MiniField label="Topic" grow={3}>
+                    <input className={`${styles.inp} ${styles.inpSmall}`} value={w.topic} disabled={!canEdit} onChange={(e) => setWeek(i, { topic: e.target.value })} />
+                  </MiniField>
+                  <MiniField label="Attendance" grow={0}>
+                    <select className={`${styles.inp} ${styles.inpSmall}`} style={{ width: 130 }} value={w.tag ?? ""} disabled={!canEdit} onChange={(e) => setWeek(i, { tag: (e.target.value || undefined) as LodgeWeek["tag"] })}>
+                      <option value="">Not set</option>
+                      <option value="mandatory">Mandatory</option>
+                      <option value="optional">Optional</option>
+                    </select>
+                  </MiniField>
                   {canEdit && (
-                    <span className={styles.trackOrder}>
-                      <button type="button" className={styles.ico} aria-label="Move up" disabled={i === 0} onClick={() => set("weeks", weeks.map((x, j) => (j === i - 1 ? weeks[i] : j === i ? weeks[i - 1] : x)))}>
-                        ↑
+                    <>
+                      <OrderButtons index={i} count={weeks.length} label={w.label || "week"} onMove={(dir) => set("weeks", moveItem(weeks, i, dir))} />
+                      <button type="button" className={styles.ico} aria-label={`Remove ${w.label || "week"}`} title="Remove" onClick={() => set("weeks", weeks.filter((_, j) => j !== i))}>
+                        <X size={16} strokeWidth={1.75} aria-hidden="true" />
                       </button>
-                      <button type="button" className={styles.ico} aria-label="Remove week" onClick={() => set("weeks", weeks.filter((_, j) => j !== i))}>
-                        ×
-                      </button>
-                    </span>
+                    </>
                   )}
                 </div>
-                <input className={`${styles.inp} ${styles.inpSmall}`} value={w.note ?? ""} placeholder="Note (optional), e.g. highly recommended if you need guidance" aria-label="Note" disabled={!canEdit} onChange={(e) => setWeek(i, { note: e.target.value })} />
+                <MiniField label="Note (Optional)">
+                  <input className={`${styles.inp} ${styles.inpSmall}`} value={w.note ?? ""} disabled={!canEdit} onChange={(e) => setWeek(i, { note: e.target.value })} />
+                </MiniField>
               </div>
             ))}
-            {canEdit && (
-              <button type="button" className={styles.add} style={{ alignSelf: "flex-start" }} onClick={() => set("weeks", [...weeks, { label: `Week ${weeks.length + 1}`, topic: "" }])}>
-                + Week
-              </button>
-            )}
+            {canEdit && <AddButton label="Add Week" onClick={() => set("weeks", [...weeks, { label: `Week ${weeks.length + 1}`, topic: "" }])} />}
             <label className={styles.radio}>
               <input type="checkbox" checked={f.trailTentative} disabled={!canEdit} onChange={(e) => set("trailTentative", e.target.checked)} />
-              The weekly topics are a draft
+              Weekly Topics Tentative
             </label>
-            {text("weeksNote", "Note under the trail", { placeholder: "Weekly topics are indicative and may shift to fit the lodge." })}
+            {text("weeksNote", "Trail Note", { placeholder: "Weekly topics are indicative and may shift to fit the lodge." })}
           </section>
 
           <section className={styles.panel}>
             <h2 className={styles.h2}>Captains</h2>
-            <span className={styles.hint}>The lodge heads. Usually three.</span>
+            <span className={styles.hint}>Lodge heads.</span>
             {captains.map((c, i) => (
               <div key={i} className={styles.subItem}>
-                <div className={styles.row}>
+                <div className={styles.rowEnd}>
                   <button
                     type="button"
-                    className={styles.ico}
-                    style={{ width: 48, height: 48, borderRadius: 999, overflow: "hidden", position: "relative" }}
-                    aria-label={c.image ? `Replace ${c.name || "this captain"}'s photo` : "Add a photo"}
+                    className={styles.avatarBtn}
+                    title={c.image ? "Replace Photo" : "Add Photo"}
+                    aria-label={c.image ? `Replace photo of ${c.name || "this captain"}` : `Add photo of ${c.name || "this captain"}`}
                     disabled={!canEdit || photos.busy}
                     onClick={() => upload("photo", (url) => setCaptain(i, { image: url }))}
                   >
-                    {c.image ? <Image src={c.image} alt="" fill sizes="48px" style={{ objectFit: "cover" }} /> : "+"}
+                    {c.image ? <Image src={c.image} alt="" fill sizes="42px" style={{ objectFit: "cover" }} /> : <Plus size={16} strokeWidth={1.75} aria-hidden="true" />}
                   </button>
-                  <input className={`${styles.inp} ${styles.inpSmall}`} style={{ flex: "1 1 140px", width: "auto" }} value={c.name} placeholder="Name" aria-label="Captain name" disabled={!canEdit} onChange={(e) => setCaptain(i, { name: e.target.value })} />
-                  <input className={`${styles.inp} ${styles.inpSmall}`} style={{ flex: "1 1 160px", width: "auto" }} value={c.detail} placeholder="SCIS (IS) / Year 2" aria-label="School and year" disabled={!canEdit} onChange={(e) => setCaptain(i, { detail: e.target.value })} />
-                  <input className={`${styles.inp} ${styles.inpSmall}`} style={{ flex: "1 1 140px", width: "auto" }} value={c.telegram} placeholder="Telegram handle" aria-label="Telegram handle" disabled={!canEdit} onChange={(e) => setCaptain(i, { telegram: e.target.value })} />
+                  <MiniField label="Name">
+                    <input className={`${styles.inp} ${styles.inpSmall}`} value={c.name} disabled={!canEdit} onChange={(e) => setCaptain(i, { name: e.target.value })} />
+                  </MiniField>
+                  <MiniField label="School and Year">
+                    <input className={`${styles.inp} ${styles.inpSmall}`} value={c.detail} placeholder="SCIS (IS) / Year 2" disabled={!canEdit} onChange={(e) => setCaptain(i, { detail: e.target.value })} />
+                  </MiniField>
+                  <MiniField label="Telegram Handle">
+                    <input className={`${styles.inp} ${styles.inpSmall}`} value={c.telegram} disabled={!canEdit} onChange={(e) => setCaptain(i, { telegram: e.target.value })} />
+                  </MiniField>
+                  {canEdit && <OrderButtons index={i} count={captains.length} label={c.name || "captain"} onMove={(dir) => set("captains", moveItem(captains, i, dir))} />}
                   {canEdit && (
                     <button type="button" className={styles.ico} aria-label={`Remove ${c.name || "this captain"}`} onClick={() => set("captains", captains.filter((_, j) => j !== i))}>
-                      ×
+                      <X size={16} strokeWidth={1.75} aria-hidden="true" />
                     </button>
                   )}
                 </div>
               </div>
             ))}
-            {canEdit && (
-              <button type="button" className={styles.add} style={{ alignSelf: "flex-start" }} onClick={() => set("captains", [...captains, { name: "", detail: "", telegram: "", image: "" }])}>
-                + Captain
-              </button>
-            )}
+            {canEdit && <AddButton label="Add Captain" onClick={() => set("captains", [...captains, { name: "", detail: "", telegram: "", image: "" }])} />}
           </section>
 
           <section className={styles.panel}>
-            <h2 className={styles.h2}>Logo and colours</h2>
-            {imageField(f.logo, (url) => set("logo", url), "Logo", "PNG, SVG or WebP on a transparent background. Used on the lodge card, in the strip and in the header.")}
+            <h2 className={styles.h2}>Logo and Colours</h2>
+            {imageField(f.logo, (url) => set("logo", url), "Logo", "PNG, SVG or WebP with transparency. Shown on the card, strip and header.")}
             <div className={styles.grid2}>
-              {select("Draw the logo", f.logoStyle, LODGE_LOGO_STYLES, (v) => LODGE_LOGO_STYLE_LABEL[v], (v) => set("logoStyle", v as LodgeLogoStyle), "Painting suits one-colour logos; multi-colour art keeps its own colours.")}
-              {select("Stand-in emblem", f.emblem, LODGE_EMBLEMS, cap, (v) => set("emblem", v as LodgeEmblem), "Shown while there's no logo.")}
+              {select("Logo Rendering", f.logoStyle, LODGE_LOGO_STYLES, (v) => LODGE_LOGO_STYLE_LABEL[v], (v) => set("logoStyle", v as LodgeLogoStyle), "Glow colour suits one-colour logos.")}
+              {select("Fallback Emblem", f.emblem, LODGE_EMBLEMS, cap, (v) => set("emblem", v as LodgeEmblem), "Shown when no logo is set.")}
             </div>
             <div className={styles.grid2}>
-              {color("accent", "Accent", "Badges, bullets and tints.")}
-              {color("neonColor", "Glow colour", "The lit logo and neon sign. Empty uses the accent.")}
+              {color("accent", "Accent Colour", "Badges, bullets and tints.")}
+              {color("neonColor", "Glow Colour", "Lit logo and neon sign. Empty uses the accent.")}
             </div>
             {select(
-              "Neon sign",
+              "Neon Sign",
               f.neonSign,
               LODGE_NEON_SIGNS,
               (v) => LODGE_NEON_SIGN_LABEL[v],
               (v) => set("neonSign", v as LodgeNeonSign),
-              "Animated glass-tube signs coded on the AI Lodge site. When set, it replaces the logo on the card and in the strip."
+              "Coded on the AI Lodge site. Replaces the logo on the card and strip."
             )}
           </section>
 
           <section className={styles.panel}>
-            <h2 className={styles.h2}>Page header</h2>
-            {select("Art beside the name", f.hero.kind, LODGE_HERO_KINDS, (v) => LODGE_HERO_KIND_LABEL[v], (kind) =>
+            <h2 className={styles.h2}>Page Header</h2>
+            {select("Header Art", f.hero.kind, LODGE_HERO_KINDS, (v) => LODGE_HERO_KIND_LABEL[v], (kind) =>
               set("hero", kind === "showpiece" ? { kind, showpiece: f.hero.showpiece ?? "despacito" } : kind === "custom" ? { glow: "", particles: "none", float: true, ...f.hero, kind } : { ...f.hero, kind })
             )}
-            {f.hero.kind === "neon" && f.neonSign === "none" && <span className={styles.hint}>Pick a neon sign under Logo and colours.</span>}
+            {f.hero.kind === "neon" && f.neonSign === "none" && <span className={styles.hint}>Neon sign required. Set it under Logo and Colours.</span>}
             {f.hero.kind === "showpiece" &&
-              select("Showpiece", f.hero.showpiece ?? "despacito", LODGE_SHOWPIECES, (v) => LODGE_SHOWPIECE_LABEL[v], (v) => setHero({ showpiece: v }), "Layered, animated art coded on the AI Lodge site for one lodge. Any lodge can reuse one.")}
+              select("Showpiece", f.hero.showpiece ?? "despacito", LODGE_SHOWPIECES, (v) => LODGE_SHOWPIECE_LABEL[v], (v) => setHero({ showpiece: v }), "Animated art coded on the AI Lodge site.")}
             {f.hero.kind === "custom" && (
               <>
-                {imageField(f.hero.image ?? "", (url) => setHero({ image: url }), "Showpiece image", "The main lodge picture, shown in its own colours. A transparent PNG or WebP works best.")}
+                {imageField(f.hero.image ?? "", (url) => setHero({ image: url }), "Showpiece Image", "Transparent PNG or WebP recommended.")}
                 <div className={styles.grid2}>
                   <label className={styles.fld}>
-                    Glow behind it
+                    Background Glow
                     <span className={styles.row}>
-                      <input type="color" className={styles.colorSwatch} value={f.hero.glow || glow} aria-label="Glow colour picker" disabled={!canEdit} onChange={(e) => setHero({ glow: e.target.value.toUpperCase() })} />
+                      <input type="color" className={styles.colorSwatch} value={f.hero.glow || glow} aria-label="Background glow picker" disabled={!canEdit} onChange={(e) => setHero({ glow: e.target.value.toUpperCase() })} />
                       <input className={`${styles.inp} ${styles.inpSmall}`} style={{ maxWidth: 130 }} value={f.hero.glow ?? ""} placeholder="No glow" disabled={!canEdit} onChange={(e) => setHero({ glow: e.target.value })} />
                     </span>
                   </label>
@@ -423,22 +411,22 @@ export default function LodgeEditor({
                 </div>
                 <label className={styles.radio}>
                   <input type="checkbox" checked={f.hero.float !== false} disabled={!canEdit} onChange={(e) => setHero({ float: e.target.checked })} />
-                  Float gently and follow the pointer
+                  Float and Follow Pointer
                 </label>
               </>
             )}
             {f.hero.kind === "animated" &&
-              imageField(f.hero.image ?? "", (url) => setHero({ image: url }), "Animated SVG", "Shown in the header as uploaded, animations included.")}
-            <span className={styles.hint}>The logo and neon sign also draw a faint oversized copy of the logo behind the header; showpieces bring their own backdrop.</span>
+              imageField(f.hero.image ?? "", (url) => setHero({ image: url }), "Animated SVG", "Shown as uploaded, with its animations.")}
+            <span className={styles.hint}>Logo and neon sign options add a faint logo behind the header. Showpieces have their own backdrop.</span>
           </section>
 
           <section className={styles.panel}>
-            <h2 className={styles.h2}>Strip under the header</h2>
-            {select("Strip", f.belt.mode, LODGE_BELT_MODES, (v) => LODGE_BELT_MODE_LABEL[v], (mode) => setBelt({ mode }))}
+            <h2 className={styles.h2}>Header Strip</h2>
+            {select("Strip Style", f.belt.mode, LODGE_BELT_MODES, (v) => LODGE_BELT_MODE_LABEL[v], (mode) => setBelt({ mode }))}
             {f.belt.mode === "tile" &&
-              imageField(f.belt.image ?? "", (url) => setBelt({ image: url }), "Image to repeat", "A small transparent image, repeated in a line in its own colours.")}
+              imageField(f.belt.image ?? "", (url) => setBelt({ image: url }), "Repeating Image", "Small transparent image, repeated in a line.")}
             {f.belt.mode === "banner" &&
-              imageField(f.belt.image ?? "", (url) => setBelt({ image: url }), "Long strip image", "One wide image whose left and right edges join up; it scrolls in a loop. About 3000 × 160 px works well.", true)}
+              imageField(f.belt.image ?? "", (url) => setBelt({ image: url }), "Strip Image", "Seamless left and right edges, about 3000 × 160 px. Scrolls in a loop.", true)}
             {f.belt.mode !== "none" && (
               <div className={styles.grid2}>
                 {select("Speed", f.belt.speed, LODGE_BELT_SPEEDS, cap, (speed) => setBelt({ speed }))}
@@ -448,31 +436,30 @@ export default function LodgeEditor({
           </section>
 
           <section className={styles.panel}>
-            <h2 className={styles.h2}>Drifting particles</h2>
+            <h2 className={styles.h2}>Ambient Particles</h2>
             <div className={styles.grid2}>
-              {select("Particles behind the page", f.ambient, LODGE_AMBIENTS, (v) => LODGE_AMBIENT_LABEL[v], (v) => set("ambient", v as LodgeAmbient))}
+              {select("Particle Style", f.ambient, LODGE_AMBIENTS, (v) => LODGE_AMBIENT_LABEL[v], (v) => set("ambient", v as LodgeAmbient))}
               <label className={styles.radio} style={{ alignSelf: "end" }}>
                 <input type="checkbox" checked={f.ambientGlow} disabled={!canEdit} onChange={(e) => set("ambientGlow", e.target.checked)} />
-                Glowing halo on the particles
+                Particle Glow
               </label>
             </div>
-            {imageField(f.ambientImage, (url) => set("ambientImage", url), "Custom particle", "Optional small image that drifts instead of the preset, e.g. a hand-drawn leaf.")}
+            {imageField(f.ambientImage, (url) => set("ambientImage", url), "Custom Particle", "Optional small image. Replaces the preset.")}
           </section>
 
-          {canEdit && (
-            <div className={styles.row}>
-              <button type="button" className={styles.btn} onClick={save} disabled={saving || !dirty || !f.name.trim()}>
-                {saving ? "Saving…" : "Save lodge"}
-              </button>
-              <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} onClick={remove}>
-                Delete lodge
-              </button>
-            </div>
-          )}
         </div>
 
         <aside className={styles.colSide}>
-          <span className={styles.monoLabel}>Card preview</span>
+          {canEdit && (
+            <div className={styles.panelTight}>
+              <UnsavedNote show={dirty} onDiscard={() => setF(initial)} />
+              <button type="button" className={styles.btn} onClick={save} disabled={saving || !dirty || !f.name.trim()}>
+                {saving ? "Saving…" : "Save Lodge"}
+              </button>
+              <span className={styles.hint}>Saved changes apply to the AI Lodge site immediately.</span>
+            </div>
+          )}
+          <span className={styles.monoLabel}>Card Preview</span>
           <div className={styles.lodgeCard} style={{ ["--glow" as string]: glow }}>
             <div className={styles.lodgeCardArt}>
               {f.logo && f.logoStyle === "original" ? (
@@ -492,7 +479,7 @@ export default function LodgeEditor({
                     {f.level}
                   </span>
                 )}
-                {f.status === "closed" && <span className={styles.lodgeBadgeMuted}>Not taking applications</span>}
+                {f.status === "closed" && <span className={styles.lodgeBadgeMuted}>Applications closed</span>}
               </span>
               {f.tagline && <span className={styles.lodgeCardTagline}>{f.tagline}</span>}
               {(f.forWhoCard || f.forWho) && <span className={styles.hint}>{f.forWhoCard || f.forWho}</span>}
@@ -508,12 +495,28 @@ export default function LodgeEditor({
               {f.scheduleShort && <span className={styles.hint}>{f.scheduleShort}</span>}
             </div>
           </div>
-          <span className={styles.hint}>
-            Header: {f.hero.kind === "showpiece" && f.hero.showpiece ? LODGE_SHOWPIECE_LABEL[f.hero.showpiece] : LODGE_HERO_KIND_LABEL[f.hero.kind]}. Strip:{" "}
-            {LODGE_BELT_MODE_LABEL[f.belt.mode].toLowerCase()}. Neon sign: {LODGE_NEON_SIGN_LABEL[f.neonSign]}. Particles:{" "}
-            {f.ambientImage ? "custom image" : LODGE_AMBIENT_LABEL[f.ambient]}
-            {f.ambientGlow ? ", glowing" : ""}. The AI Lodge site draws the motion; open the lodge there to see it.
-          </span>
+          <dl className={styles.metaList}>
+            <dt>Header</dt>
+            <dd>{f.hero.kind === "showpiece" && f.hero.showpiece ? LODGE_SHOWPIECE_LABEL[f.hero.showpiece] : LODGE_HERO_KIND_LABEL[f.hero.kind]}</dd>
+            <dt>Strip</dt>
+            <dd>{LODGE_BELT_MODE_LABEL[f.belt.mode]}</dd>
+            <dt>Neon sign</dt>
+            <dd>{LODGE_NEON_SIGN_LABEL[f.neonSign]}</dd>
+            <dt>Particles</dt>
+            <dd>
+              {f.ambientImage ? "Custom image" : LODGE_AMBIENT_LABEL[f.ambient]}
+              {f.ambientGlow ? ", glow" : ""}
+            </dd>
+          </dl>
+          <span className={styles.hint}>Motion renders on the AI Lodge site only.</span>
+          <div className={styles.row}>
+            <ExternalAction quiet href={siteHref} label="View on AI Lodge Site" />
+            {canEdit && (
+              <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} onClick={remove}>
+                Delete Lodge
+              </button>
+            )}
+          </div>
         </aside>
       </div>
       {art.cropper}

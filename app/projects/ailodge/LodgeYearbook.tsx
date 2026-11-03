@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronRight, ExternalLink } from "lucide-react";
 import Markdown from "@/app/components/ui/Markdown";
 import JoinCta from "@/app/components/cms/JoinCta";
 import YearbookShelves, { type Shelf } from "@/app/components/cms/YearbookShelves";
@@ -9,7 +10,7 @@ import { getSiteLinks } from "@/app/lib/cms/links";
 import { cohortPath } from "@/app/lib/cms/paths";
 import type { Project } from "@/app/projects/data/types";
 
-/** AI Lodge yearbook for one semester: dark header, write-up, one shelf per track. */
+/** AI Lodge yearbook for one semester: header, write-up, filterable projects, then the lodges. */
 export default async function LodgeYearbook({
   cohort,
   cohorts,
@@ -33,28 +34,25 @@ export default async function LodgeYearbook({
   if (unassigned.length) {
     shelves.push({
       key: "more-projects",
-      name: shelves.length ? "More projects" : "Projects",
+      name: shelves.length ? "Other projects" : "Projects",
       accent: trackAccent(shelves.length),
       projects: unassigned,
     });
   }
-  const glanceTracks = (cohort?.tracks ?? []).filter((t) => t.projectCount > 0);
   const lodges = cohort?.lodges ?? [];
-  const hasAbout = Boolean(cohort && (cohort.headline || cohort.writeup));
-  const hasGlance = Boolean(cohort && (cohort.hackDay || glanceTracks.length > 0 || lodges.length > 0));
+  const trackCount = (cohort?.tracks ?? []).filter((t) => t.projectCount > 0).length;
 
   return (
     <main id="main-content" className={ui.page}>
       <section className={`${ui.hero} ${ui.onDark}`}>
         <div className={ui.heroInner} style={{ paddingTop: 32 }}>
-          <Link href="/projects" className={`${ui.pill} ${ui.pillOnDark} ${ui.pillSmall}`}>
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-            All projects
-          </Link>
-          <div className={ui.eyebrowLine} style={{ marginTop: 24 }}>AI Lodge yearbook</div>
-          <h1 className={ui.heroTitle}>{cohort?.name ?? "Coming soon"}</h1>
+          <nav aria-label="Breadcrumb" className={ui.crumbs}>
+            <Link href="/projects">Projects</Link>
+            <ChevronRight size={14} strokeWidth={1.75} aria-hidden="true" />
+          </nav>
+          <div className={ui.eyebrowLine} style={{ marginTop: 20 }}>AI Lodge yearbook</div>
+          <h1 className={ui.heroTitle}>{cohort?.name ?? "No semesters published"}</h1>
+          {cohort?.hackDay && <p className={ui.heroMeta}>Hack Day: {cohort.hackDay}</p>}
           {cohorts.length > 1 && (
             <div role="group" aria-label="Semester" className={ui.row} style={{ marginTop: 22 }}>
               {cohorts.map((c) => (
@@ -70,94 +68,91 @@ export default async function LodgeYearbook({
             </div>
           )}
           {cohort && (
-            <div className={ui.stats}>
+            <dl className={ui.stats}>
               <div>
-                <div className={ui.statNum} style={{ color: "var(--sand)" }}>{mine.length}</div>
-                <div className={ui.statLabel}>projects</div>
+                <dt className={ui.statLabel}>{mine.length === 1 ? "Project" : "Projects"}</dt>
+                <dd className={ui.statNum}>{mine.length}</dd>
               </div>
-              {cohort.tracks.length > 0 && (
+              {trackCount > 0 && (
                 <div>
-                  <div className={ui.statNum} style={{ color: "var(--mint)" }}>{cohort.tracks.length}</div>
-                  <div className={ui.statLabel}>tracks</div>
+                  <dt className={ui.statLabel}>{trackCount === 1 ? "Hack Day track" : "Hack Day tracks"}</dt>
+                  <dd className={ui.statNum}>{trackCount}</dd>
                 </div>
               )}
-              {cohort.hackDay && (
+              {lodges.length > 0 && (
                 <div>
-                  <div className={ui.statNum} style={{ color: "var(--sky)" }}>1</div>
-                  <div className={ui.statLabel}>Hack Day</div>
+                  <dt className={ui.statLabel}>{lodges.length === 1 ? "Lodge" : "Lodges"}</dt>
+                  <dd className={ui.statNum}>{lodges.length}</dd>
                 </div>
               )}
-            </div>
+            </dl>
           )}
         </div>
       </section>
 
       <div className={ui.main} style={{ paddingBottom: 24 }}>
-        {(hasAbout || hasGlance) && cohort && (
+        {cohort && (cohort.headline || cohort.writeup) && (
           <section aria-label="About this semester" className={ui.about}>
-            {hasAbout && (
-              <div className={ui.aboutMain}>
-                <div className={ui.label}>About this semester</div>
-                {cohort.headline && <h2 className={ui.aboutHeadline}>{cohort.headline}</h2>}
-                {cohort.writeup && (
-                  <div className={ui.aboutBody}>
-                    <Markdown content={cohort.writeup} />
-                  </div>
-                )}
-              </div>
-            )}
-            {hasGlance && (
-              <div className={ui.aboutSide}>
-                <div className={ui.label}>At a glance</div>
-                {cohort.hackDay && (
-                  <div className={ui.glanceItem}>
-                    <span className={ui.glanceKey}>Hack Day</span>
-                    <span className={ui.glanceValue}>{cohort.hackDay}</span>
-                  </div>
-                )}
-                {glanceTracks.length > 0 && (
-                  <div className={ui.glanceItem} style={{ gap: 6 }}>
-                    <span className={ui.glanceKey}>Hack Day tracks</span>
-                    {glanceTracks.map((t) => (
-                      <a key={t.id} href={`#track-${t.id}`} className={ui.glanceTrack}>
-                        <strong>{t.name}</strong>
-                        <span>
-                          {t.projectCount} {t.projectCount === 1 ? "project" : "projects"}
-                        </span>
-                      </a>
-                    ))}
-                  </div>
-                )}
-                {lodges.length > 0 && (
-                  <div className={ui.glanceItem} style={{ gap: 6 }}>
-                    <span className={ui.glanceKey}>Lodges</span>
-                    {lodges.map((l) => (
-                      <a key={l.id} href={`${lodgeSite}${l.path}`} target="_blank" rel="noopener noreferrer" className={ui.glanceTrack}>
-                        <strong>{l.name}</strong>
-                        <span aria-hidden="true">↗</span>
-                      </a>
-                    ))}
-                  </div>
-                )}
+            {cohort.headline && <h2 className={ui.aboutHeadline}>{cohort.headline}</h2>}
+            {cohort.writeup && (
+              <div className={ui.aboutBody}>
+                <Markdown content={cohort.writeup} />
               </div>
             )}
           </section>
         )}
 
         {shelves.length > 0 ? (
-          <YearbookShelves shelves={shelves} />
+          <YearbookShelves shelves={shelves} groupLabel="Track" lodges={lodges.map((l) => ({ id: l.id, name: l.name }))} />
         ) : (
           <div className={ui.empty} style={{ marginTop: 48 }}>
-            Projects for this semester will appear here after Hack Day.
+            Projects for this semester publish after Hack Day.
           </div>
         )}
 
+        {lodges.length > 0 && (
+          <section className={ui.section} aria-labelledby="yearbook-lodges">
+            <h2 id="yearbook-lodges" className={ui.h2}>
+              Lodges
+            </h2>
+            <p className={ui.sectionNote}>Each lodge page opens on the AI Lodge site.</p>
+            <div className={ui.lodgeGrid}>
+              {lodges.map((l) => {
+                const count = mine.filter((p) => p.lodgeId === l.id).length;
+                return (
+                  <a key={l.id} href={`${lodgeSite}${l.path}`} target="_blank" rel="noopener noreferrer" className={ui.lodgeCard}>
+                    <span className={ui.lodgeMark} style={l.logo ? undefined : { background: l.accent }}>
+                      {l.logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={l.logo} alt="" />
+                      ) : (
+                        l.name.charAt(0)
+                      )}
+                    </span>
+                    <span className={ui.lodgeText}>
+                      <span className={ui.lodgeName}>
+                        {l.name}
+                        <ExternalLink size={14} strokeWidth={1.75} aria-label="Opens the AI Lodge site in a new tab" />
+                      </span>
+                      {l.tagline && <span className={ui.lodgeTagline}>{l.tagline}</span>}
+                      {count > 0 && (
+                        <span className={ui.cardMeta}>
+                          {count} {count === 1 ? "project" : "projects"}
+                        </span>
+                      )}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </div>
 
       <JoinCta
         programmes={["AI Lodge"]}
         heading="Build at the next Hack Day"
-        text="Join AI Lodge to learn applied AI in a small track, build your own project through the semester, and present it at Hack Day."
+        text="AI Lodge teaches applied AI in small lodges. Each team builds a project over the semester and presents it at Hack Day."
       />
     </main>
   );

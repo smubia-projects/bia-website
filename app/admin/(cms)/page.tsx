@@ -15,7 +15,6 @@ export default async function AdminHomePage() {
 
   return (
     <AdminHome
-      name={actor.name}
       canApprove={can.publishProject(actor)}
       review={mine.filter((p) => p.status === "in_review")}
       recent={[...mine].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")).slice(0, 5)}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { PROGRAMMES, type Programme } from "@/app/lib/cms/taxonomy";
 import { RUN_NOUN, RUN_SECTIONS, newRunHref, runHref, type RunOption } from "./runs";
 import styles from "../cms.module.css";
@@ -55,17 +56,14 @@ export default function RunSwitcher({
         className={styles.switcherBtn}
         aria-expanded={open}
         aria-controls="cms-run-list"
-        aria-label={current ? `Switch run. Current: ${current.programme} ${current.name}` : "Pick a semester or cohort"}
+        aria-label={current ? `Switch semester or cohort. Current: ${current.programme} ${current.name}` : "Select a semester or cohort"}
         onClick={() => setOpen((o) => !o)}
       >
         <span className={styles.switcherText}>
           <span className={styles.switcherProgramme}>{current?.programme ?? "Programme"}</span>
-          <span className={styles.switcherName}>{current?.name ?? "Pick a run"}</span>
+          <span className={styles.switcherName}>{current?.name ?? "None selected"}</span>
         </span>
-        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m7 15 5 5 5-5" />
-          <path d="m7 9 5-5 5 5" />
-        </svg>
+        <ChevronsUpDown size={16} strokeWidth={1.75} aria-hidden="true" />
       </button>
 
       {open && (
@@ -87,7 +85,7 @@ export default function RunSwitcher({
                           onClick={() => setOpen(false)}
                         >
                           <span className={styles.switcherCheck} aria-hidden="true">
-                            {on ? "✓" : ""}
+                            {on && <Check size={14} strokeWidth={2} />}
                           </span>
                           <span className={styles.switcherItemName}>{r.name}</span>
                           {r.visibility === "live" && <span className={styles.switcherTag}>Current</span>}
@@ -99,7 +97,8 @@ export default function RunSwitcher({
               </ul>
               {canCreate[programme] && (
                 <Link href={newRunHref(programme)} className={styles.switcherNew} onClick={() => setOpen(false)}>
-                  + New {RUN_NOUN[programme]}
+                  <Plus size={14} strokeWidth={2} aria-hidden="true" />
+                  New {RUN_NOUN[programme] === "semester" ? "Semester" : "Cohort"}
                 </Link>
               )}
             </div>

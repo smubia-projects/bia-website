@@ -7,12 +7,11 @@ import type { Issue } from "@/app/lib/cms/newsletter";
 import ProjectCover from "@/app/components/cms/ProjectCover";
 import { PROJECT_STATUS_LABEL } from "@/app/lib/cms/taxonomy";
 import { approveProjectAction } from "../actions";
-import { StatusChip, formatEdited, useActionToast } from "../_components/ui";
+import { PageHead, StatusChip, formatEdited, useActionToast, useConfirm } from "../_components/ui";
 import { runHref } from "../_components/runs";
 import styles from "../cms.module.css";
 
 interface Props {
-  name: string;
   canApprove: boolean;
   review: Project[];
   recent: Project[];
@@ -41,46 +40,48 @@ function ProjectRow({ p, action }: { p: Project; action?: React.ReactNode }) {
   );
 }
 
-/** CMS landing page: what needs attention, then shortcuts. */
-export default function AdminHome({ name, canApprove, review, recent, drafts, noCohort, semester, newsletter }: Props) {
+/** CMS landing page: the review queue and recent edits, then each programme's current run. */
+export default function AdminHome({ canApprove, review, recent, drafts, noCohort, semester, newsletter }: Props) {
   const { handle, node } = useActionToast();
+  const confirm = useConfirm();
   const [busy, setBusy] = useState<string | null>(null);
 
   async function approve(slug: string) {
+    if (!(await confirm({ title: "Publish Project", body: "The project appears on the public site immediately.", action: "Publish Project" }))) return;
     setBusy(slug);
-    handle(await approveProjectAction(slug), "Published");
+    handle(await approveProjectAction(slug), "Project published");
     setBusy(null);
   }
 
   return (
     <>
-      <div className={styles.pageHead}>
-        <div>
-          <h1 className={styles.h1}>Welcome back{name && !name.includes("@") ? `, ${name.split(" ")[0]}` : ""}</h1>
-          <p className={styles.sub}>What needs attention across the site.</p>
-        </div>
+      <PageHead title="Dashboard">
         <Link href="/admin/projects/new" className={styles.btn}>
-          New project
+          New Project
         </Link>
-      </div>
+      </PageHead>
 
       <div className={styles.cols} style={{ marginTop: 22 }}>
-        <div className={styles.colMain} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div className={`${styles.colMain} ${styles.stack}`}>
           {canApprove && (
             <section className={styles.panel}>
-              <h2 className={styles.h2}>Waiting for review</h2>
+              <h2 className={styles.h2}>Review Queue</h2>
               {review.length === 0 ? (
-                <p className={styles.hint} style={{ margin: 0, fontSize: 14 }}>
-                  Nothing to review. Projects that DAP exco and AI Lodge exco submit show up here.
-                </p>
+                <p className={styles.emptyInline}>No projects in review.</p>
               ) : (
                 review.map((p) => (
                   <ProjectRow
                     key={p.slug}
                     p={p}
                     action={
-                      <button type="button" className={styles.lnk} disabled={busy === p.slug || !p.cohortId} onClick={() => approve(p.slug)} title={p.cohortId ? undefined : "Pick a semester or cohort first"}>
-                        Approve
+                      <button
+                        type="button"
+                        className={styles.lnk}
+                        disabled={busy === p.slug || !p.cohortId}
+                        onClick={() => approve(p.slug)}
+                        title={p.cohortId ? undefined : "Semester or cohort required before publishing"}
+                      >
+                        Publish
                       </button>
                     }
                   />
@@ -91,24 +92,18 @@ export default function AdminHome({ name, canApprove, review, recent, drafts, no
 
           <section className={styles.panel}>
             <div className={styles.between}>
-              <h2 className={styles.h2}>Recently edited</h2>
+              <h2 className={styles.h2}>Recently Edited</h2>
               <Link href="/admin/projects" className={styles.lnk}>
-                All projects
+                View All Projects
               </Link>
             </div>
-            {recent.length === 0 ? (
-              <p className={styles.hint} style={{ margin: 0, fontSize: 14 }}>
-                No projects yet.
-              </p>
-            ) : (
-              recent.map((p) => <ProjectRow key={p.slug} p={p} />)
-            )}
+            {recent.length === 0 ? <p className={styles.emptyInline}>No projects.</p> : recent.map((p) => <ProjectRow key={p.slug} p={p} />)}
             {(drafts > 0 || noCohort > 0) && (
-              <p className={styles.hint} style={{ margin: 0, fontSize: 13 }}>
+              <p className={styles.sectionHint}>
                 {drafts > 0 && `${drafts} ${drafts === 1 ? "draft" : "drafts"}`}
                 {drafts > 0 && noCohort > 0 && " · "}
                 {noCohort > 0 && (
-                  <Link className={styles.lnk} style={{ padding: 0, minHeight: 0, fontSize: "inherit" }} href="/admin/projects?cohort=none">
+                  <Link className={`${styles.lnk} ${styles.lnkInline}`} href="/admin/projects?cohort=none">
                     {noCohort} without a semester or cohort
                   </Link>
                 )}
@@ -126,28 +121,34 @@ export default function AdminHome({ name, canApprove, review, recent, drafts, no
                 {semester.projects} {semester.projects === 1 ? "project" : "projects"}
               </span>
               <Link href={runHref("AI Lodge", semester.slug)} className={styles.pill}>
-                Open semester
+                Open Semester
               </Link>
             </section>
           )}
           {newsletter && (
             <section className={styles.panelTight}>
-              <span className={styles.monoLabel}>This week in DAP · {newsletter.cohortName}</span>
-              <span className={styles.hint} style={{ fontSize: 13 }}>
-                {newsletter.latest ? `Last published: Week ${newsletter.latest.week}, ${fmtDate(newsletter.latest.publishedAt)}` : "Nothing published yet"}
-              </span>
-              {newsletter.scheduled && (
-                <span className={styles.hint} style={{ fontSize: 13 }}>
-                  Scheduled: Week {newsletter.scheduled.week}, {fmtDate(newsletter.scheduled.publishAt)}
-                </span>
-              )}
-              {newsletter.drafts > 0 && (
-                <span className={styles.hint} style={{ fontSize: 13 }}>
-                  {newsletter.drafts} {newsletter.drafts === 1 ? "draft" : "drafts"}
-                </span>
-              )}
+              <span className={styles.monoLabel}>DAP Newsletter</span>
+              <strong style={{ color: "var(--ink)" }}>{newsletter.cohortName}</strong>
+              <dl className={styles.metaList}>
+                <dt>Last published</dt>
+                <dd>{newsletter.latest ? `Week ${newsletter.latest.week}, ${fmtDate(newsletter.latest.publishedAt)}` : "None"}</dd>
+                {newsletter.scheduled && (
+                  <>
+                    <dt>Scheduled</dt>
+                    <dd>
+                      Week {newsletter.scheduled.week}, {fmtDate(newsletter.scheduled.publishAt)}
+                    </dd>
+                  </>
+                )}
+                {newsletter.drafts > 0 && (
+                  <>
+                    <dt>Drafts</dt>
+                    <dd>{newsletter.drafts}</dd>
+                  </>
+                )}
+              </dl>
               <Link href={runHref("DAP", newsletter.cohortSlug, "newsletter")} className={styles.pill}>
-                Open newsletter
+                Open Newsletter
               </Link>
             </section>
           )}

@@ -40,7 +40,7 @@ export async function uploadImage(
   }
 
   if (process.env.VERCEL) {
-    throw new CmsError("Image uploads are not configured (BLOB_READ_WRITE_TOKEN is missing)");
+    throw new CmsError("Image uploads not configured. Set BLOB_READ_WRITE_TOKEN.");
   }
 
   const target = path.join(process.cwd(), "public", "uploads", pathname);
@@ -61,7 +61,7 @@ export async function uploadImageFromUrl(url: string, folder: UploadFolder = "pr
     throw new CmsError("Image URLs must be http(s)");
   }
   const res = await fetch(parsed, { redirect: "follow" });
-  if (!res.ok) throw new CmsError(`Could not download the image (HTTP ${res.status})`);
+  if (!res.ok) throw new CmsError(`Image download failed (HTTP ${res.status})`);
   const blob = await res.blob();
   const name = path.basename(parsed.pathname) || "image";
   return uploadImage(blob, name, folder);

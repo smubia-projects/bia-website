@@ -24,7 +24,7 @@ export default async function PeoplePage() {
           email: p.email,
           name: p.name,
           role: p.role,
-          scope: ROLE_PROGRAMME[p.role] ?? "Everything",
+          scope: ROLE_PROGRAMME[p.role] ?? "All programmes",
         }))}
     />
   );

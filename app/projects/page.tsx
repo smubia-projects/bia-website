@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import ui from "@/app/components/cms/public.module.css";
 import JoinCta from "@/app/components/cms/JoinCta";
 import { getPublicProjects } from "@/app/lib/projects";
@@ -18,29 +19,31 @@ export default async function ProjectsPage() {
   return (
     <main id="main-content" className={ui.page}>
       <div className={ui.main} style={{ paddingTop: 48, paddingBottom: 24 }}>
-        <div className={ui.eyebrowLine}>All projects</div>
-        <h1 className={ui.h1}>
+        <h1 className={ui.h1} style={{ marginTop: 0 }}>
           Our <em>projects</em>
         </h1>
-        <div className={ui.row} style={{ marginTop: 20 }}>
-          <Link href="/projects/ailodge" className={ui.pill}>
-            AI Lodge yearbook →
-          </Link>
-          <Link href="/projects/dap" className={ui.pill}>
-            DAP yearbook →
-          </Link>
-        </div>
 
         {/* Suspense boundary required for useSearchParams inside the explorer */}
         <Suspense>
           <ProjectsExplorer projects={projects} />
         </Suspense>
+
+        <div className={ui.yearbookFoot}>
+          <Link href="/projects/ailodge" className={ui.pill}>
+            AI Lodge yearbook
+            <ChevronRight size={14} strokeWidth={1.75} aria-hidden="true" />
+          </Link>
+          <Link href="/projects/dap" className={ui.pill}>
+            DAP yearbook
+            <ChevronRight size={14} strokeWidth={1.75} aria-hidden="true" />
+          </Link>
+        </div>
       </div>
 
       <JoinCta
         programmes={["DAP", "AI Lodge"]}
-        heading="Want your project up here?"
-        text="Join a programme, build something you are proud of, and we will showcase it right here."
+        heading="Build a project with us"
+        text="Join a programme and build a project to feature on this page."
       />
     </main>
   );

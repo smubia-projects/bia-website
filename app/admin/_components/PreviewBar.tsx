@@ -5,7 +5,7 @@ export default function PreviewBar({ note, backHref, backLabel }: { note: string
   return (
     <div className={styles.previewBar} role="status">
       <span>
-        <strong>Preview.</strong> {note}
+        <strong>CMS Preview</strong> · {note}
       </span>
       <a href={backHref}>{backLabel}</a>
     </div>

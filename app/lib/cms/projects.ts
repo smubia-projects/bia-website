@@ -227,7 +227,7 @@ function buildValues(input: ProjectInput) {
   }
   if (input.description !== undefined) {
     v.description = input.description.trim();
-    ensure(v.description.length <= 400, "Card description is too long");
+    ensure(v.description.length <= 400, "Card description exceeds 400 characters");
   }
   if (input.madeFor !== undefined) {
     ensure(!input.madeFor || (MADE_FOR as readonly string[]).includes(input.madeFor), `"Made for" must be one of: ${MADE_FOR.join(", ")}`);
@@ -267,11 +267,11 @@ export async function createProject(
   ensure(title, "Project name is required");
   const slug = slugify(title);
   ensure(slug, "Project name needs at least one letter or number");
-  ensure(!RESERVED_PROJECT_SLUGS.includes(slug), `"${title}" clashes with a site page; pick another name`);
+  ensure(!RESERVED_PROJECT_SLUGS.includes(slug), `"${title}" conflicts with a site page. Choose another name.`);
 
   const programme = input.programme ?? ROLE_PROGRAMME[actor.role] ?? "AI Lodge";
   ensure((PROGRAMMES as readonly string[]).includes(programme), "Unknown programme");
-  ensure(can.editProject(actor, { programme }), "You can't add projects here");
+  ensure(can.editProject(actor, { programme }), "This role cannot add projects to this programme");
 
   const [existing] = await db.select({ slug: projects.slug }).from(projects).where(eq(projects.slug, slug));
   ensure(!existing, "A project with this name already exists");
@@ -303,7 +303,7 @@ export async function updateProject(actor: Actor, slug: string, input: ProjectIn
   const db = await getDb();
   const [row] = await db.select().from(projects).where(eq(projects.slug, slug));
   ensure(row, "Project not found");
-  ensure(can.editProject(actor, row), "You can't edit this project");
+  ensure(can.editProject(actor, row), "This role cannot edit this project");
 
   let programme = row.programme;
   const cohortId = input.cohortId === undefined ? row.cohortId : input.cohortId;
@@ -342,9 +342,9 @@ export async function setProjectStatus(actor: Actor, slug: string, status: Proje
   ensure((PROJECT_STATUSES as readonly string[]).includes(status), "Unknown status");
   const [row] = await db.select().from(projects).where(eq(projects.slug, slug));
   ensure(row, "Project not found");
-  ensure(can.editProject(actor, row), "You can't change this project");
+  ensure(can.editProject(actor, row), "This role cannot change this project");
   if (status === "published" || row.status === "published") {
-    ensure(can.publishProject(actor), "Publishing goes through an exco review");
+    ensure(can.publishProject(actor), "Publishing requires the exco admin role");
   }
   if (status === "published") ensure(row.cohortId, NEEDS_COHORT);
   await db
@@ -356,12 +356,12 @@ export async function setProjectStatus(actor: Actor, slug: string, status: Proje
 
 /** Marks a project as its track's winner, replacing any previous winner. */
 export async function setProjectWinner(actor: Actor, slug: string, winner: boolean) {
-  ensure(can.setWinner(actor), "Only exco can set track winners");
+  ensure(can.setWinner(actor), "Setting track winners requires the exco admin role");
   const db = await getDb();
   const [row] = await db.select().from(projects).where(eq(projects.slug, slug));
   ensure(row, "Project not found");
   if (winner) {
-    ensure(row.programme === "AI Lodge" && row.trackId, "Only AI Lodge projects in a track can win");
+    ensure(row.programme === "AI Lodge" && row.trackId, "Only AI Lodge projects in a track can be winners");
     await db
       .update(projects)
       .set({ winner: false })
@@ -375,7 +375,7 @@ export async function setProjectWinner(actor: Actor, slug: string, winner: boole
 }
 
 export async function deleteProject(actor: Actor, slug: string) {
-  ensure(can.deleteProject(actor), "Only exco can delete projects");
+  ensure(can.deleteProject(actor), "Deleting projects requires the exco admin role");
   const db = await getDb();
   const deleted = await db.delete(projects).where(eq(projects.slug, slug)).returning({ slug: projects.slug });
   if (deleted.length === 0) throw new CmsError("Project not found");

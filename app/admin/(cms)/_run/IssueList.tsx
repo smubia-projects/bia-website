@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ISSUE_STATUS_LABEL, type IssueStatus } from "@/app/lib/cms/taxonomy";
 import { createIssueAction } from "../../actions";
-import { StatusChip, useActionToast } from "../../_components/ui";
+import { PageHead, StatusChip, useActionToast } from "../../_components/ui";
 import { runHref } from "../../_components/runs";
 import styles from "../../cms.module.css";
 
@@ -35,15 +35,11 @@ export default function IssueList({ cohortId, cohortSlug, rows }: { cohortId: st
 
   return (
     <>
-      <div className={styles.pageHead}>
-        <div>
-          <h1 className={styles.h1}>This week in DAP</h1>
-          <p className={styles.sub}>One issue per week. Each issue links to that week&apos;s co-learning session.</p>
-        </div>
+      <PageHead title="Newsletter" sub="This Week in DAP. One issue per week, linked to that week's session.">
         <button type="button" className={styles.btn} onClick={create} disabled={busy}>
-          New issue
+          {busy ? "Creating…" : "New Issue"}
         </button>
-      </div>
+      </PageHead>
       <div className={styles.tableWrap} style={{ marginTop: 20 }}>
         <table className={styles.table}>
           <thead>
@@ -51,7 +47,7 @@ export default function IssueList({ cohortId, cohortSlug, rows }: { cohortId: st
               <th>Issue</th>
               <th>Session</th>
               <th>Status</th>
-              <th>Goes out</th>
+              <th>Publish Date</th>
               <th style={{ textAlign: "right" }}>Actions</th>
             </tr>
           </thead>
@@ -83,7 +79,7 @@ export default function IssueList({ cohortId, cohortSlug, rows }: { cohortId: st
             ))}
           </tbody>
         </table>
-        {rows.length === 0 && <p className={styles.emptyRow}>No issues for this cohort yet.</p>}
+        {rows.length === 0 && <p className={styles.emptyRow}>No issues for this cohort.</p>}
       </div>
       {node}
     </>

@@ -41,11 +41,11 @@ export default async function CohortPreviewPage(props: { params: Promise<{ id: s
   return (
     <>
       <PreviewBar
-        note={`${cohort.visibility === "hidden" ? `This ${noun} is hidden from the site.` : `This ${noun} is live.`}${
+        note={`${cohort.visibility === "hidden" ? `Hidden ${noun}, not public.` : `Public ${noun}.`}${
           drafts ? ` Includes ${drafts} unpublished ${drafts === 1 ? "project" : "projects"}.` : ""
         }`}
         backHref={runHref(cohort.programme, cohort.slug)}
-        backLabel={`Back to ${cohort.name}`}
+        backLabel={`Return to ${cohort.name}`}
       />
       {isLodge ? (
         <LodgeYearbook cohort={current} cohorts={[current]} projects={projects} />

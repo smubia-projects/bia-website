@@ -11,11 +11,11 @@ import {
   type SiteLinks,
 } from "@/app/lib/links";
 import { saveSiteLinksAction } from "../../actions";
-import { useActionToast, useUnsavedChanges } from "../../_components/ui";
+import { PageHead, UnsavedNote, useActionToast, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
 
 const GROUPS: { group: LinkGroup; intro: string }[] = [
-  { group: "Recruitment", intro: "Where each programme's join buttons go." },
+  { group: "Recruitment", intro: "Targets of each programme's join buttons." },
   { group: "Club", intro: "General club links." },
   { group: "Contact", intro: "Shown on Contact and Work with us." },
   { group: "Socials", intro: "Footer icons." },
@@ -40,31 +40,32 @@ export default function LinksEditor({ links }: { links: SiteLinks }) {
 
   async function save() {
     setSaving(true);
-    handle(await saveSiteLinksAction({ links: form, applications: apps }));
+    handle(await saveSiteLinksAction({ links: form, applications: apps }), "Site links saved");
     setSaving(false);
   }
 
+  useSaveShortcut(save, dirty && !saving);
+
   return (
     <>
-      <div className={styles.pageHead}>
-        <div>
-          <h1 className={styles.h1}>Site links</h1>
-          <p className={styles.sub}>
-            Every button on the site that points to these places uses what is saved here. Changes go live straight away.
-          </p>
-        </div>
+      <PageHead title="Site Links" sub="Targets of the matching buttons across the site. Saved changes apply immediately.">
+        <UnsavedNote
+          show={dirty}
+          onDiscard={() => {
+            setForm(links);
+            setApps(links.applications);
+          }}
+        />
         <button type="button" className={styles.btn} onClick={save} disabled={!dirty || saving}>
-          {saving ? "Saving…" : "Save changes"}
+          {saving ? "Saving…" : "Save Changes"}
         </button>
-      </div>
+      </PageHead>
 
       {GROUPS.map(({ group, intro }) => (
         <section key={group} className={styles.panel} style={{ marginTop: 22, maxWidth: 720 }}>
-          <div>
+          <div className={styles.sectionHead}>
             <h2 className={styles.h2}>{group}</h2>
-            <p className={styles.hint} style={{ margin: "4px 0 0", fontSize: 13 }}>
-              {intro}
-            </p>
+            <p className={styles.sectionHint}>{intro}</p>
           </div>
 
           {group === "Recruitment" &&
@@ -79,9 +80,10 @@ export default function LinksEditor({ links }: { links: SiteLinks }) {
                     style={{ marginTop: 2 }}
                   />
                   <span>
-                    <span style={{ fontWeight: 600 }}>{programme} applications are open</span>
+                    <span style={{ fontWeight: 600 }}>{programme} Applications Open</span>
                     <span className={styles.hint} style={{ display: "block" }}>
-                      {target.open ? `“Join ${programme}” buttons` : `Buttons read “Get ${programme} updates” and`} go to {target.href}
+                      {target.open ? `“Join ${programme}” buttons link to ` : `Buttons read “Get ${programme} updates” and link to `}
+                      {target.href}
                     </span>
                   </span>
                 </label>
@@ -91,14 +93,17 @@ export default function LinksEditor({ links }: { links: SiteLinks }) {
           {EDITABLE_LINKS.filter((l) => l.group === group).map((l) => {
             const isDefault = form[l.key] === DEFAULT_LINKS[l.key];
             return (
-              <label key={l.key} className={styles.fld}>
-                {l.label}
-                {l.optional && <span className={styles.hint}> (optional)</span>}
+              <div key={l.key} className={styles.fld}>
+                <label htmlFor={`link-${l.key}`}>
+                  {l.label}
+                  {l.optional && <span className={styles.hint}> (optional)</span>}
+                </label>
                 <input
+                  id={`link-${l.key}`}
                   className={styles.inp}
                   type={l.type === "email" ? "email" : "url"}
                   value={form[l.key]}
-                  placeholder={DEFAULT_LINKS[l.key] || (l.type === "email" ? "name@example.com" : "https://…")}
+                  placeholder={DEFAULT_LINKS[l.key] || (l.type === "email" ? "name@example.com" : "https://")}
                   onChange={(e) => setForm((f) => ({ ...f, [l.key]: e.target.value }))}
                 />
                 <span className={styles.hint}>
@@ -108,16 +113,15 @@ export default function LinksEditor({ links }: { links: SiteLinks }) {
                       {" · "}
                       <button
                         type="button"
-                        className={styles.lnk}
-                        style={{ padding: 0, minHeight: 0, fontSize: "inherit" }}
+                        className={`${styles.lnk} ${styles.lnkInline}`}
                         onClick={() => setForm((f) => ({ ...f, [l.key]: DEFAULT_LINKS[l.key] }))}
                       >
-                        Reset to default
+                        Reset to Default
                       </button>
                     </>
                   )}
                 </span>
-              </label>
+              </div>
             );
           })}
         </section>

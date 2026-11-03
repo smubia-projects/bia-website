@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { ChevronDown, ChevronUp, Eye, Link2, PenLine, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Markdown from "@/app/components/ui/Markdown";
 import { useClientValue } from "@/app/components/ui/useClient";
@@ -24,7 +25,7 @@ import {
   sendIssueTestAction,
   type ActionResult,
 } from "../../actions";
-import { StatusChip, useActionToast, useImageUpload, useUnsavedChanges } from "../../_components/ui";
+import { AddButton, MarkdownHint, PageHead, StatusChip, UnsavedNote, useActionToast, useConfirm, useImageUpload, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import { runHref } from "../../_components/runs";
 import styles from "../../cms.module.css";
 
@@ -72,6 +73,7 @@ const today = () => sgDate(new Date().toISOString());
 export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, botUsername, telegramReady }: IssueEditorProps) {
   const router = useRouter();
   const { handle, node, show } = useActionToast();
+  const confirm = useConfirm();
   const uploader = useImageUpload("newsletter");
   const [mode, setMode] = useState<"write" | "preview">("write");
   const [saved] = useState(() =>
@@ -103,7 +105,8 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
   const linked = sessions.find((s) => s.week === ed.week);
   const input = { ...ed };
   const published = issue.status === "published";
-  useUnsavedChanges(!busy && JSON.stringify(ed) !== saved);
+  const dirty = JSON.stringify(ed) !== saved;
+  useUnsavedChanges(!busy && dirty);
 
   const setBlocks = (blocks: IssueBlock[]) => setEd((s) => ({ ...s, blocks }));
   const patchBlock = (id: string, patch: Partial<IssueBlock>) => setBlocks(ed.blocks.map((b) => (b.id === id ? { ...b, ...patch } : b)));
@@ -136,7 +139,7 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
     if (
       ed.postToTelegram &&
       !issue.telegramPostedAt &&
-      !confirm(`Publish week ${ed.week} now and post it to the DAP Telegram channel? A Telegram post can't be taken back from here.`)
+      !(await confirm({ title: "Publish and Post to Telegram", body: `Week ${ed.week} goes live and posts to the DAP Telegram channel. Telegram posts cannot be removed from the CMS.`, action: "Publish and Post" }))
     ) {
       return;
     }
@@ -146,7 +149,7 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
     if (!res.ok) return show(res.error, true);
     const t = res.data.telegram;
     const tg =
-      t === "sent" ? " and posted to Telegram" : t === "dry-run" ? " (Telegram not configured: logged instead)" : t === "not-configured" ? " (TELEGRAM_DAP_CHANNEL_ID isn't set)" : typeof t === "object" ? `. Telegram failed: ${t.error}` : "";
+      t === "sent" ? " and posted to Telegram" : t === "dry-run" ? ". Telegram not configured: message logged to the server console" : t === "not-configured" ? ". Telegram not posted: set TELEGRAM_DAP_CHANNEL_ID" : typeof t === "object" ? `. Telegram failed: ${t.error}` : "";
     show(`Week ${res.data.week} published${tg}`, typeof t === "object");
   }
 
@@ -157,35 +160,31 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
       // Not remembered; that's fine.
     }
     const res = await act(() => sendIssueTestAction(issue.id, input, tgId));
-    if (res) show(res === "dry-run" ? "Telegram isn't configured here: the message was logged to the server console" : `Test sent to ${tgId.trim()}`);
+    if (res) show(res === "dry-run" ? "Telegram not configured: message logged to the server console" : `Test sent to ${tgId.trim()}`);
   }
 
   async function remove() {
-    if (!confirm(`Delete the week ${issue.week} issue? This can't be undone.`)) return;
-    const res = handle(await deleteIssueAction(issue.id));
+    if (!(await confirm({ title: "Delete Issue", body: `The week ${issue.week} issue is permanently deleted. This cannot be undone.`, action: "Delete Issue", danger: true }))) return;
+    const res = handle(await deleteIssueAction(issue.id), "Issue deleted");
     if (res !== undefined) router.push(runHref("DAP", cohortSlug, "newsletter"));
   }
 
-  const primaryLabel = published ? "Save changes" : when === "sched" ? "Schedule issue" : "Publish now";
+  const primaryLabel = published ? "Save Changes" : when === "sched" ? (issue.status === "scheduled" ? "Update Schedule" : "Schedule Issue") : "Publish Now";
+  // Saves without changing status: Ctrl+S never publishes.
+  useSaveShortcut(() => act(() => saveIssueAction(issue.id, input), published ? "Changes saved" : "Draft saved"), dirty && !busy && Boolean(ed.title.trim()));
 
   return (
     <>
-      <div className={styles.between} style={{ flexWrap: "wrap" }}>
-        <Link href={runHref("DAP", cohortSlug, "newsletter")} className={styles.pill}>
-          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-          All issues
-        </Link>
-        <div role="group" aria-label="Mode" className={styles.row} style={{ gap: 6 }}>
-          <button type="button" className={`${styles.pill} ${mode === "write" ? styles.pillOn : ""}`} aria-pressed={mode === "write"} onClick={() => setMode("write")}>
-            Write
+      <PageHead crumbs={[{ href: runHref("DAP", cohortSlug, "newsletter"), label: "Newsletter" }]} title={issue.title || `Week ${issue.week}`}>
+        <div role="group" aria-label="Editor view" className={styles.switch}>
+          <button type="button" className={`${styles.switchBtn} ${mode === "write" ? styles.switchOn : ""}`} aria-pressed={mode === "write"} aria-label="Edit" title="Edit" onClick={() => setMode("write")}>
+            <PenLine size={18} strokeWidth={1.75} aria-hidden="true" />
           </button>
-          <button type="button" className={`${styles.pill} ${mode === "preview" ? styles.pillOn : ""}`} aria-pressed={mode === "preview"} onClick={() => setMode("preview")}>
-            Preview
+          <button type="button" className={`${styles.switchBtn} ${mode === "preview" ? styles.switchOn : ""}`} aria-pressed={mode === "preview"} aria-label="Preview" title="Preview" onClick={() => setMode("preview")}>
+            <Eye size={18} strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>
-      </div>
+      </PageHead>
 
       <div className={styles.cols}>
         <div className={styles.colMain}>
@@ -198,7 +197,7 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
                     {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => (
                       <option key={w} value={w} disabled={w !== issue.week && takenWeeks.includes(w)}>
                         Week {w}
-                        {w !== issue.week && takenWeeks.includes(w) ? " (has an issue)" : ""}
+                        {w !== issue.week && takenWeeks.includes(w) ? " (issue exists)" : ""}
                       </option>
                     ))}
                   </select>
@@ -209,27 +208,25 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
                 </label>
               </div>
               <div className={styles.linkedSession}>
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7dd7c2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" />
-                  <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" />
-                </svg>
+                <Link2 size={18} strokeWidth={1.75} color="var(--mint)" aria-hidden="true" />
                 <span style={{ flex: 1 }}>
                   {linked?.topic ? (
                     <>
                       Linked session: <strong>{linked.topic}</strong>
-                      {linked.group ? ` · taught by ${linked.group}` : ""}
+                      {linked.group ? ` · ${linked.group}` : ""}
                     </>
                   ) : (
-                    `No session set for week ${ed.week}`
+                    `No session for week ${ed.week}`
                   )}
                 </span>
                 <Link className={styles.lnk} href={runHref("DAP", cohortSlug, "schedule")}>
-                  Edit sessions
+                  Edit Schedule
                 </Link>
               </div>
               <label className={styles.fld}>
                 Summary
-                <textarea className={styles.inp} rows={2} value={ed.summary} onChange={(e) => setEd((s) => ({ ...s, summary: e.target.value }))} placeholder="One line shown on the newsletter card" />
+                <textarea className={styles.inp} rows={2} value={ed.summary} onChange={(e) => setEd((s) => ({ ...s, summary: e.target.value }))} />
+                <span className={styles.hint}>One line. Shown on the newsletter card.</span>
               </label>
               <div className={styles.monoLabel} style={{ marginTop: 4 }}>
                 Sections
@@ -247,20 +244,13 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
                       onChange={(e) => patchBlock(b.id, { heading: e.target.value })}
                     />
                     <button type="button" className={styles.ico} onClick={() => move(idx, -1)} disabled={idx === 0} aria-label="Move section up">
-                      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M6 15l6-6 6 6" />
-                      </svg>
+                      <ChevronUp size={16} strokeWidth={1.75} aria-hidden="true" />
                     </button>
                     <button type="button" className={styles.ico} onClick={() => move(idx, 1)} disabled={idx === ed.blocks.length - 1} aria-label="Move section down">
-                      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M6 9l6 6 6-6" />
-                      </svg>
+                      <ChevronDown size={16} strokeWidth={1.75} aria-hidden="true" />
                     </button>
                     <button type="button" className={styles.ico} onClick={() => setBlocks(ed.blocks.filter((x) => x.id !== b.id))} aria-label="Remove section">
-                      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <path d="M6 6l12 12" />
-                        <path d="M18 6 6 18" />
-                      </svg>
+                      <X size={16} strokeWidth={1.75} aria-hidden="true" />
                     </button>
                   </div>
                   {b.type === "Image" && (
@@ -270,7 +260,7 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
                       disabled={uploader.busy}
                       onClick={async () => {
                         try {
-                          const url = await uploader.pick(null);
+                          const url = await uploader.pick({ ratio: 16 / 9, label: "16:9 · section image" });
                           if (url) patchBlock(b.id, { image: url });
                         } catch (e) {
                           show(e instanceof Error ? e.message : "Upload failed", true);
@@ -281,8 +271,8 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
                         <Image src={b.image} alt="" width={96} height={54} style={{ objectFit: "cover", borderRadius: 8 }} />
                       ) : null}
                       <span className={styles.coverText}>
-                        <span className={styles.coverTitle}>{uploader.busy ? "Uploading…" : b.image ? "Replace image" : "Upload an image"}</span>
-                        <span className={styles.hint}>Shown full width, 16:9</span>
+                        <span className={styles.coverTitle}>{uploader.busy ? "Uploading…" : b.image ? "Replace Image" : "Upload Image"}</span>
+                        <span className={styles.hint}>16:9. Shown full width.</span>
                       </span>
                     </button>
                   )}
@@ -298,12 +288,10 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
               ))}
               <div className={styles.row}>
                 {BLOCK_TYPES.map((t) => (
-                  <button key={t} type="button" className={styles.add} onClick={() => addBlock(t)}>
-                    + {t}
-                  </button>
+                  <AddButton key={t} label={`Add ${t}`} onClick={() => addBlock(t)} />
                 ))}
               </div>
-              <span className={styles.hint}>Section text supports Markdown. Empty sections are left out.</span>
+              <MarkdownHint>Empty sections are omitted.</MarkdownHint>
             </section>
           ) : (
             <article className={styles.preview}>
@@ -351,15 +339,15 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
             </div>
             {published ? (
               <span className={styles.hint}>
-                Live at{" "}
+                Public URL:{" "}
                 <a className={styles.lnk} style={{ padding: 0, minHeight: 0 }} href={issue.path} target="_blank" rel="noopener noreferrer">
                   {issue.path}
                 </a>
-                {issue.telegramPostedAt ? ". Posted to Telegram." : "."}
+                {issue.telegramPostedAt ? ". Posted to Telegram." : ""}
               </span>
             ) : (
               <fieldset className={styles.fieldset}>
-                <legend className={styles.legend}>When</legend>
+                <legend className={styles.legend}>Publish Time</legend>
                 <label className={styles.radio}>
                   <input type="radio" name="when" checked={when === "now"} onChange={() => setWhen("now")} />
                   Publish now
@@ -372,7 +360,7 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
                   <>
                     <input className={styles.inp} type="date" value={date} min={today()} onChange={(e) => setDate(e.target.value)} aria-label="Publish date" style={{ marginTop: 4 }} />
                     <span className={styles.hint} style={{ marginTop: 4 }}>
-                      Goes out at about 9am SGT on this date (±1 hour).
+                      Publishes at 09:00 SGT (±1 h) on this date.
                     </span>
                   </>
                 )}
@@ -382,39 +370,40 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
               <label className={styles.radio} style={{ alignItems: "flex-start", lineHeight: 1.4 }}>
                 <input type="checkbox" checked={ed.postToTelegram} onChange={(e) => setEd((s) => ({ ...s, postToTelegram: e.target.checked }))} style={{ marginTop: 2 }} />
                 <span>
-                  Also post it to the DAP Telegram channel
+                  Post to DAP Telegram Channel
                   <br />
-                  <span className={styles.hint}>Posted once by the club bot{published ? " (only when first published)" : ""}</span>
+                  <span className={styles.hint}>Posted once by the club bot{published ? ", on first publish only" : ""}.</span>
                 </span>
               </label>
             )}
             <button type="button" className={styles.btn} onClick={publish} disabled={busy || !ed.title.trim()}>
-              {busy ? "Working…" : primaryLabel}
+              {busy ? "Saving…" : primaryLabel}
             </button>
+            <UnsavedNote show={dirty} onDiscard={() => setEd(JSON.parse(saved))} />
             {published || issue.status === "scheduled" ? (
-              <button type="button" className={styles.pill} disabled={busy} onClick={() => {
-                if (published && !confirm(`Unpublish week ${issue.week}? It disappears from the newsletter page. A Telegram post stays up.`)) return;
-                act(() => revertIssueAction(issue.id), published ? "Unpublished" : "Schedule cancelled");
+              <button type="button" className={styles.pill} disabled={busy} onClick={async () => {
+                if (published && !(await confirm({ title: "Unpublish Issue", body: `Week ${issue.week} is removed from the newsletter page. Any Telegram post stays up.`, action: "Unpublish Issue", danger: true }))) return;
+                act(() => revertIssueAction(issue.id), published ? "Issue unpublished" : "Schedule cancelled");
               }}>
-                {published ? "Unpublish" : "Cancel schedule"}
+                {published ? "Unpublish" : "Cancel Schedule"}
               </button>
             ) : (
               <button type="button" className={styles.pill} disabled={busy} onClick={() => act(() => saveIssueAction(issue.id, input), "Draft saved")}>
-                Save draft
+                Save Draft
               </button>
             )}
           </div>
 
           <div className={styles.panelTight}>
             <span className={styles.legend} style={{ padding: 0 }}>
-              Send a test
+              Test Send
             </span>
             <span className={styles.hint}>
-              Sends this issue, as the channel would see it, to one Telegram user. They must have sent <strong>/start</strong> to{" "}
-              {botUsername ? `@${botUsername}` : "the club bot"} first.
-              {!telegramReady && " (No bot token here: tests are logged to the server console.)"}
+              Saves this issue, then sends the channel post to one Telegram user, who must have sent <strong>/start</strong> to{" "}
+              {botUsername ? `@${botUsername}` : "the club bot"}.
+              {!telegramReady && " Bot token not set: tests are logged to the server console."}
             </span>
-            <div className={styles.row} style={{ flexWrap: "nowrap" }}>
+            <div className={styles.stackTight}>
               <input
                 className={`${styles.inp} ${styles.inpSmall}`}
                 inputMode="numeric"
@@ -424,15 +413,15 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
                 onChange={(e) => setTgId(e.target.value)}
               />
               <button type="button" className={styles.pill} disabled={busy || !tgId.trim()} onClick={sendTest}>
-                Send test
+                Save and Send Test
               </button>
             </div>
-            <span className={styles.hint}>Find your ID by messaging @userinfobot on Telegram.</span>
+            <span className={styles.hint}>User IDs are available from @userinfobot on Telegram.</span>
           </div>
 
           <div className={styles.panelTight}>
             <span className={styles.legend} style={{ padding: 0 }}>
-              Cover image
+              Cover Image
             </span>
             <button
               type="button"
@@ -449,15 +438,20 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
             >
               {ed.coverImage ? <Image src={ed.coverImage} alt="" width={96} height={54} style={{ objectFit: "cover", borderRadius: 8 }} /> : null}
               <span className={styles.coverText}>
-                <span className={styles.coverTitle}>{ed.coverImage ? "Replace cover" : "Add a cover image"}</span>
-                <span className={styles.hint}>Used for the Telegram post and link previews</span>
+                <span className={styles.coverTitle}>{ed.coverImage ? "Replace Image" : "Upload Image"}</span>
+                <span className={styles.hint}>16:9. Used for the Telegram post and link previews.</span>
               </span>
             </button>
+            {ed.coverImage && (
+              <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} style={{ alignSelf: "flex-start" }} onClick={() => setEd((s) => ({ ...s, coverImage: "" }))}>
+                Remove Image
+              </button>
+            )}
           </div>
 
           {!published && (
             <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} style={{ alignSelf: "flex-start" }} onClick={remove}>
-              Delete issue
+              Delete Issue
             </button>
           )}
         </aside>

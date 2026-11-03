@@ -153,8 +153,7 @@ function FooterBar() {
 
         <div className={styles.bottomBar}>
           <span>
-            © {new Date().getFullYear()} SMU Business Intelligence &amp;
-            Analytics Club
+            {`© ${new Date().getFullYear()} SMU Business Intelligence & Analytics Club`}
           </span>
           <span className={styles.est}>est. 2015</span>
         </div>
