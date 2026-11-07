@@ -19,81 +19,92 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "draft", label: "Draft" },
 ];
 
-type SortKey = "title" | "programme" | "cohort" | "status" | "edited";
+type SortKey = "title" | "cohort" | "track" | "lodge" | "status" | "edited";
 const SORT_VALUE: Record<SortKey, (p: Project) => string> = {
   title: (p) => p.title.toLowerCase(),
-  programme: (p) => p.badge,
-  cohort: (p) => p.cohortName ?? "",
+  cohort: (p) => `${p.badge} ${p.cohortName ?? "~"}`,
+  track: (p) => p.trackName ?? "~",
+  lodge: (p) => p.lodgeName ?? "~",
   status: (p) => p.status ?? "draft",
   edited: (p) => p.updatedAt ?? "",
 };
+
+type Filters = { tab: Tab; q: string; cohort: string; track: string; lodge: string };
+const URL_KEY: Record<keyof Filters, string> = { tab: "status", q: "q", cohort: "cohort", track: "track", lodge: "lodge" };
 
 export default function ProjectsTable({
   projects,
   subtitle,
   canApprove,
-  trackFilter,
   cohorts,
+  tracks,
   initialCohort,
+  initialTrack,
+  initialLodge,
   initialStatus,
   initialQuery,
 }: {
   projects: Project[];
   subtitle: string;
   canApprove: boolean;
-  trackFilter: { id: number; name: string } | null;
   cohorts: { id: string; name: string; programme: string }[];
+  tracks: { id: number; name: string; cohortId: string }[];
   initialCohort: string;
+  initialTrack: string;
+  initialLodge: string;
   initialStatus: string;
   initialQuery: string;
 }) {
   const { handle, node } = useActionToast();
   const confirm = useConfirm();
   const defaultTab: Tab = canApprove && projects.some((p) => p.status === "in_review") ? "in_review" : "all";
-  const [tab, setTabState] = useState<Tab>(TABS.some((t) => t.key === initialStatus) ? (initialStatus as Tab) : defaultTab);
-  const [q, setQState] = useState(initialQuery);
-  const [cohortId, setCohortState] = useState(initialCohort);
+  const trackCohort = tracks.find((t) => String(t.id) === initialTrack)?.cohortId ?? "";
+  const [f, setF] = useState<Filters>({
+    tab: TABS.some((t) => t.key === initialStatus) ? (initialStatus as Tab) : defaultTab,
+    q: initialQuery,
+    cohort: initialCohort || trackCohort,
+    track: initialTrack,
+    lodge: initialLodge,
+  });
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "edited", dir: -1 });
   const [busy, setBusy] = useState<string | null>(null);
 
   /** Keeps the filters in the address, so reload, Back and shared links keep them. */
-  function syncUrl(next: { tab?: Tab; q?: string; cohort?: string }) {
-    const url = new URL(window.location.href);
-    const set = (key: string, value: string | undefined) => (value ? url.searchParams.set(key, value) : url.searchParams.delete(key));
-    if (next.tab !== undefined) set("status", next.tab === "all" ? "" : next.tab);
-    if (next.q !== undefined) set("q", next.q);
-    if (next.cohort !== undefined) set("cohort", next.cohort);
-    window.history.replaceState(null, "", url);
+  function update(next: Partial<Filters>) {
+    setF((s) => {
+      const merged = { ...s, ...next };
+      const url = new URL(window.location.href);
+      for (const key of Object.keys(URL_KEY) as (keyof Filters)[]) {
+        const value = key === "tab" && merged.tab === "all" ? "" : merged[key];
+        if (value) url.searchParams.set(URL_KEY[key], value);
+        else url.searchParams.delete(URL_KEY[key]);
+      }
+      window.history.replaceState(null, "", url);
+      return merged;
+    });
   }
-  const setTab = (value: Tab) => {
-    setTabState(value);
-    syncUrl({ tab: value });
-  };
-  const setQ = (value: string) => {
-    setQState(value);
-    syncUrl({ q: value });
-  };
-  const setCohortId = (value: string) => {
-    setCohortState(value);
-    syncUrl({ cohort: value });
-  };
 
-  const query = q.trim().toLowerCase();
-  const rows = projects
-    .filter(
-      (p) =>
-        (tab === "all" || p.status === tab) &&
-        (!cohortId || (cohortId === "none" ? !p.cohortId : p.cohortId === cohortId)) &&
-        (!query || `${p.title} ${p.trackName ?? ""} ${p.cohortName ?? ""}`.toLowerCase().includes(query))
-    )
+  // Track and lodge choices follow the semester filter.
+  const inRun = (cohortId: string | null | undefined) => !f.cohort || cohortId === f.cohort;
+  const cohortName = (id: string) => cohorts.find((c) => c.id === id)?.name ?? "";
+  const trackOptions = tracks.filter((t) => inRun(t.cohortId) && cohorts.some((c) => c.id === t.cohortId));
+  const lodgeOptions = [
+    ...new Map(
+      projects.filter((p) => p.lodgeId && inRun(p.cohortId)).map((p) => [p.lodgeId!, { id: p.lodgeId!, name: p.lodgeName ?? "", cohortId: p.cohortId ?? "" }])
+    ).values(),
+  ];
+
+  const query = f.q.trim().toLowerCase();
+  const matches = (p: Project) =>
+    (!f.cohort || (f.cohort === "none" ? !p.cohortId : p.cohortId === f.cohort)) &&
+    (!f.track || String(p.trackId) === f.track) &&
+    (!f.lodge || String(p.lodgeId) === f.lodge) &&
+    (!query || `${p.title} ${p.trackName ?? ""} ${p.lodgeName ?? ""} ${p.cohortName ?? ""}`.toLowerCase().includes(query));
+  const inFilters = projects.filter(matches);
+  const rows = inFilters
+    .filter((p) => f.tab === "all" || p.status === f.tab)
     .sort((a, b) => SORT_VALUE[sort.key](a).localeCompare(SORT_VALUE[sort.key](b)) * sort.dir);
-  const filtered = tab !== "all" || Boolean(cohortId) || Boolean(query);
-
-  function clearFilters() {
-    setTab("all");
-    setCohortId("");
-    setQ("");
-  }
+  const filtered = f.tab !== "all" || Boolean(f.cohort || f.track || f.lodge || query);
 
   async function approve(p: Project) {
     if (!(await confirm({ title: "Publish Project", body: `${p.title} appears on the public site immediately.`, action: "Publish Project" }))) return;
@@ -118,73 +129,102 @@ export default function ProjectsTable({
     );
   };
 
+  const showAILodge = cohorts.some((c) => c.programme === "AI Lodge");
+  const notSet = <span className={styles.hint}>Not set</span>;
+
   return (
     <>
-      <PageHead
-        title="All Projects"
-        sub={
-          <>
-            {subtitle}
-            {trackFilter && (
-              <>
-                {" · "}Filtered to {trackFilter.name} ·{" "}
-                <Link className={`${styles.lnk} ${styles.lnkInline}`} href="/admin/projects">
-                  Clear Track Filter
-                </Link>
-              </>
-            )}
-          </>
-        }
-      >
-        <Link href={cohortId && cohortId !== "none" ? `/admin/projects/new?cohort=${cohortId}` : "/admin/projects/new"} className={styles.btn}>
+      <PageHead title="All Projects" sub={subtitle}>
+        <Link href={f.cohort && f.cohort !== "none" ? `/admin/projects/new?cohort=${f.cohort}` : "/admin/projects/new"} className={styles.btn}>
           New Project
         </Link>
       </PageHead>
 
       <div className={styles.row} style={{ marginTop: 20 }}>
         {TABS.map((t) => {
-          const n = t.key === "all" ? projects.length : projects.filter((p) => p.status === t.key).length;
+          const n = t.key === "all" ? inFilters.length : inFilters.filter((p) => p.status === t.key).length;
           return (
             <button
               key={t.key}
               type="button"
-              className={`${styles.pill} ${tab === t.key ? styles.pillOn : ""}`}
-              aria-pressed={tab === t.key}
-              onClick={() => setTab(t.key)}
+              className={`${styles.pill} ${f.tab === t.key ? styles.pillOn : ""}`}
+              aria-pressed={f.tab === t.key}
+              onClick={() => update({ tab: t.key })}
             >
               {t.label} <span className={styles.count}>{n}</span>
             </button>
           );
         })}
+      </div>
+
+      <div className={styles.row} style={{ marginTop: 12 }}>
         <select
           className={`${styles.inp} ${styles.inpPill}`}
-          value={cohortId}
-          onChange={(e) => setCohortId(e.target.value)}
+          value={f.cohort}
+          onChange={(e) => update({ cohort: e.target.value, track: "", lodge: "" })}
           aria-label="Filter by semester or cohort"
-          style={{ marginLeft: "auto", width: "auto", maxWidth: 240 }}
+          style={{ width: "auto", maxWidth: 240 }}
         >
           <option value="">All semesters and cohorts</option>
-          {["AI Lodge", "DAP"].map((prog) => (
-            <optgroup key={prog} label={prog === "AI Lodge" ? "AI Lodge semesters" : "DAP cohorts"}>
-              {cohorts
-                .filter((c) => c.programme === prog)
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-            </optgroup>
-          ))}
+          {["AI Lodge", "DAP"].map((prog) =>
+            cohorts.some((c) => c.programme === prog) ? (
+              <optgroup key={prog} label={prog === "AI Lodge" ? "AI Lodge semesters" : "DAP cohorts"}>
+                {cohorts
+                  .filter((c) => c.programme === prog)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+              </optgroup>
+            ) : null
+          )}
           <option value="none">No semester or cohort</option>
         </select>
+        {showAILodge && (
+          <>
+            <select
+              className={`${styles.inp} ${styles.inpPill}`}
+              value={f.track}
+              onChange={(e) => update({ track: e.target.value })}
+              aria-label="Filter by Hack Day track"
+              style={{ width: "auto", maxWidth: 220 }}
+              disabled={trackOptions.length === 0}
+            >
+              <option value="">All tracks</option>
+              {trackOptions.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                  {f.cohort ? "" : ` (${cohortName(t.cohortId)})`}
+                </option>
+              ))}
+            </select>
+            <select
+              className={`${styles.inp} ${styles.inpPill}`}
+              value={f.lodge}
+              onChange={(e) => update({ lodge: e.target.value })}
+              aria-label="Filter by lodge"
+              style={{ width: "auto", maxWidth: 220 }}
+              disabled={lodgeOptions.length === 0}
+            >
+              <option value="">All lodges</option>
+              {lodgeOptions.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                  {f.cohort ? "" : ` (${cohortName(l.cohortId)})`}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
         <input
           className={`${styles.inp} ${styles.inpPill}`}
           type="search"
           placeholder="Search projects"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
+          value={f.q}
+          onChange={(e) => update({ q: e.target.value })}
           aria-label="Search projects"
-          style={{ maxWidth: 220 }}
+          style={{ maxWidth: 220, marginLeft: "auto" }}
         />
       </div>
 
@@ -193,8 +233,9 @@ export default function ProjectsTable({
           <thead>
             <tr>
               {head("title", "Project")}
-              {head("programme", "Programme")}
               {head("cohort", "Semester / Cohort")}
+              {showAILodge && head("track", "Track")}
+              {showAILodge && head("lodge", "Lodge")}
               {head("status", "Status")}
               {head("edited", "Edited")}
               <th style={{ textAlign: "right" }}>Actions</th>
@@ -214,17 +255,12 @@ export default function ProjectsTable({
                     {p.winner && <Medal size={16} label={`${p.trackName ?? "Track"} winner`} />}
                   </span>
                 </td>
-                <td>{p.badge}</td>
                 <td>
-                  {p.cohortName ? (
-                    <>
-                      {p.cohortName}
-                      {p.trackName && <span className={styles.hint}> · {p.trackName}</span>}
-                    </>
-                  ) : (
-                    <span className={styles.hint}>Not set</span>
-                  )}
+                  {p.cohortName ?? notSet}
+                  <div className={styles.hint}>{p.badge}</div>
                 </td>
+                {showAILodge && <td>{p.badge === "AI Lodge" ? p.trackName ?? notSet : <span className={styles.hint}>-</span>}</td>}
+                {showAILodge && <td>{p.badge === "AI Lodge" ? p.lodgeName ?? notSet : <span className={styles.hint}>-</span>}</td>}
                 <td>
                   <StatusChip status={p.status ?? "draft"} label={PROJECT_STATUS_LABEL[p.status ?? "draft"]} />
                 </td>
@@ -242,7 +278,7 @@ export default function ProjectsTable({
                     </button>
                   )}
                   <Link className={styles.lnk} href={`/admin/projects/${p.slug}`}>
-                    Edit
+                    Open
                   </Link>
                 </td>
               </tr>
@@ -253,7 +289,7 @@ export default function ProjectsTable({
           <div className={styles.empty}>
             {filtered ? "No projects match the filters." : "No projects."}
             {filtered && (
-              <button type="button" className={styles.pill} onClick={clearFilters}>
+              <button type="button" className={styles.pill} onClick={() => update({ tab: "all", cohort: "", track: "", lodge: "", q: "" })}>
                 Clear Filters
               </button>
             )}

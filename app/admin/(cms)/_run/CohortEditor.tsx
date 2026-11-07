@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import type { Cohort, Track } from "@/app/lib/cms/cohorts";
 import type { TimelineStep } from "@/app/lib/db/schema";
 import { trackAccent } from "@/app/components/cms/visuals";
-import type { CohortVisibility } from "@/app/lib/cms/taxonomy";
+import { LODGE_HEAD_ACCESS_WEEKS, type CohortVisibility } from "@/app/lib/cms/taxonomy";
 import { deleteTrackAction, moveTrackAction, saveCohortAction, saveTrackAction } from "../../actions";
 import { AddButton, ExternalAction, MarkdownHint, OrderButtons, PageHead, UnsavedNote, useActionToast, useConfirm, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
@@ -45,6 +45,7 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
     hackDay: cohort.hackDay,
     shortName: cohort.shortName,
     revealNote: cohort.revealNote,
+    startsOn: cohort.startsOn ?? "",
   });
   const [timeline, setTimeline] = useState<TimelineStep[]>(cohort.timeline);
   const setStep = (i: number, p: Partial<TimelineStep>) => setTimeline((t) => t.map((s, j) => (j === i ? { ...s, ...p } : s)));
@@ -61,13 +62,18 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
     form.hackDay !== cohort.hackDay ||
     form.shortName !== cohort.shortName ||
     form.revealNote !== cohort.revealNote ||
+    form.startsOn !== (cohort.startsOn ?? "") ||
     JSON.stringify(timeline) !== JSON.stringify(cohort.timeline);
   useUnsavedChanges(!saving && dirty);
 
   async function save() {
     setSaving(true);
     handle(
-      await saveCohortAction(cohort.id, { ...form, visibility: form.visibility as CohortVisibility, ...(isLodge ? { timeline } : {}) })
+      await saveCohortAction(cohort.id, {
+        ...form,
+        visibility: form.visibility as CohortVisibility,
+        ...(isLodge ? { timeline, startsOn: form.startsOn || null } : { startsOn: undefined }),
+      })
     );
     setSaving(false);
   }
@@ -83,6 +89,7 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
       hackDay: cohort.hackDay,
       shortName: cohort.shortName,
       revealNote: cohort.revealNote,
+      startsOn: cohort.startsOn ?? "",
     });
     setTimeline(cohort.timeline);
   }
@@ -156,10 +163,17 @@ export default function CohortEditor({ cohort, tracks, canEdit, publicHref }: Pr
               <MarkdownHint>Shown under the yearbook header.</MarkdownHint>
             </label>
             {isLodge && (
-              <label className={styles.fld}>
-                Hack Day Date and Venue
-                <input className={styles.inp} value={form.hackDay} onChange={(e) => set("hackDay", e.target.value)} placeholder="Date · Venue" disabled={!canEdit} />
-              </label>
+              <div className={styles.grid2}>
+                <label className={styles.fld}>
+                  Week 1 Start Date
+                  <input className={styles.inp} type="date" value={form.startsOn} onChange={(e) => set("startsOn", e.target.value)} disabled={!canEdit} />
+                  <span className={styles.hint}>First day of week 1. Lodge heads keep CMS access for {LODGE_HEAD_ACCESS_WEEKS} weeks from this date by default.</span>
+                </label>
+                <label className={styles.fld}>
+                  Hack Day Date and Venue
+                  <input className={styles.inp} value={form.hackDay} onChange={(e) => set("hackDay", e.target.value)} placeholder="Date · Venue" disabled={!canEdit} />
+                </label>
+              </div>
             )}
             {isLodge && (
               <div className={styles.grid2}>

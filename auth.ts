@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import { findAccess, upsertDevPerson } from "@/app/lib/cms/people";
+import { DEV_SUPERADMIN_EMAIL, findAccess, upsertDevPerson } from "@/app/lib/cms/people";
 import { ROLES, type Role } from "@/app/lib/cms/taxonomy";
 
 /**
@@ -45,7 +45,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             name: "Local development",
             credentials: { role: {} },
             async authorize(credentials) {
-              const role = String(credentials?.role ?? "") as Role;
+              const picked = String(credentials?.role ?? "");
+              if (picked === "superadmin") {
+                await upsertDevPerson(DEV_SUPERADMIN_EMAIL, "exco");
+                return { id: DEV_SUPERADMIN_EMAIL, email: DEV_SUPERADMIN_EMAIL, name: "Local superadmin" };
+              }
+              const role = picked as Role;
               if (!ROLES.includes(role)) return null;
               const email = `dev-${role.replace("_", "-")}@localhost`;
               await upsertDevPerson(email, role);

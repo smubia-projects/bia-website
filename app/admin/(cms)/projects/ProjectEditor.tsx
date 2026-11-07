@@ -45,6 +45,8 @@ interface Props {
   role: Role;
   /** New projects started from a semester's or cohort's Projects page */
   preset?: { cohortId: string; trackId: number | null } | null;
+  /** Read-only: a lodge head's submitted or published project */
+  locked?: boolean;
 }
 
 const COVER_CROP = { ratio: 16 / 10, label: "16:10 · card cover" };
@@ -78,13 +80,20 @@ function initialForm(
   };
 }
 
-export default function ProjectEditor({ project, cohorts, tracks, lodges, role, preset }: Props) {
+export default function ProjectEditor({ project, cohorts, tracks, lodges, role, preset, locked = false }: Props) {
   const router = useRouter();
   const { handle, node, show } = useActionToast();
   const confirm = useConfirm();
   const cover = useImageUpload("projects");
   const team = useImageUpload("team");
-  const [initial] = useState(() => initialForm(project, role, cohorts, preset));
+  const isHead = role === "lodge_head";
+  const [initial] = useState(() => {
+    const form = initialForm(project, role, cohorts, preset);
+    // A lodge head with one lodge in the semester starts in it.
+    const own = lodges.filter((l) => l.cohortId === form.cohortId);
+    if (!project && isHead && own.length === 1) form.lodgeId = own[0].id;
+    return form;
+  });
   const [f, setF] = useState(initial);
   const [saving, setSaving] = useState(false);
   const dirty = JSON.stringify(f) !== JSON.stringify(initial);
@@ -97,7 +106,8 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
   const placementGroups = PROGRAMMES.filter((p) => !ROLE_PROGRAMME[role] || ROLE_PROGRAMME[role] === p).map((p) => ({
     programme: p,
     label: p === "AI Lodge" ? "AI Lodge semesters" : "DAP cohorts",
-    none: p === "AI Lodge" ? "AI Lodge, no semester" : "DAP, no cohort",
+    // Lodge heads always place projects in one of their lodges' semesters.
+    none: isHead ? null : p === "AI Lodge" ? "AI Lodge, no semester" : "DAP, no cohort",
     cohorts: cohorts.filter((c) => c.programme === p),
   }));
   const trackOptions = tracks.filter((t) => t.cohortId === f.cohortId);
@@ -182,14 +192,20 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
       : { label: "Publish", intent: "publish" };
   const secondary =
     isExco && status === "published" ? "Move to Draft" : !isExco && status === "published" ? null : "Save as Draft";
-  const help = !isExco
-    ? status === "published"
-      ? "Published. Saved changes apply to the public page immediately."
-      : "Publishing requires exco admin approval."
-    : status === "published"
-      ? "Published. Saved changes apply to the public page immediately."
-      : "Publishing adds the project to the public site immediately.";
-  const cantSave = saving || !f.title.trim();
+  const help = isHead
+    ? "Submitting locks the project for review. AI Lodge exco can return it to draft for changes."
+    : !isExco
+      ? status === "published"
+        ? "Published. Saved changes apply to the public page immediately."
+        : "Publishing requires exco admin approval."
+      : status === "published"
+        ? "Published. Saved changes apply to the public page immediately."
+        : "Publishing adds the project to the public site immediately.";
+  const lockedNote =
+    status === "published"
+      ? "Published. Ask AI Lodge exco for changes."
+      : "Submitted for review. Locked until AI Lodge exco approves it or returns it to draft.";
+  const cantSave = locked || saving || !f.title.trim() || (isHead && !f.lodgeId);
   const needsCohort = (primary.intent === "publish" || status === "published") && !f.cohortId;
   // Saves without changing status: Ctrl+S never publishes or submits.
   useSaveShortcut(() => save(project ? "keep" : "draft"), dirty && !cantSave && !(status === "published" && !f.cohortId));
@@ -199,7 +215,7 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
       <PageHead crumbs={[{ href: "/admin/projects", label: "All Projects" }]} title={project ? project.title : "New Project"} />
 
       <div className={styles.cols}>
-        <div className={`${styles.colMain} ${styles.stack}`}>
+        <fieldset disabled={locked} className={`${styles.colMain} ${styles.stack}`} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
           <section className={styles.panel}>
             <h2 className={styles.h2}>Project Details</h2>
             <label className={styles.fld}>
@@ -240,7 +256,7 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
                         {c.name}
                       </option>
                     ))}
-                    <option value={`${g.programme}|`}>{g.none}</option>
+                    {g.none && <option value={`${g.programme}|`}>{g.none}</option>}
                   </optgroup>
                 ))}
               </select>
@@ -248,12 +264,12 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
                 {f.cohortId ? (
                   <>
                     Sets the project&apos;s public URL.{" "}
-                    <Link
+                    {!isHead && <Link
                       className={`${styles.lnk} ${styles.lnkInline}`}
                       href={runHref(f.programme, cohorts.find((c) => c.id === f.cohortId)?.slug ?? "", "projects")}
                     >
                       Open {f.programme === "AI Lodge" ? "Semester" : "Cohort"} Projects
-                    </Link>
+                    </Link>}
                   </>
                 ) : (
                   "Required before publishing."
@@ -286,7 +302,7 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
                     disabled={lodgeOptions.length === 0}
                     onChange={(e) => set("lodgeId", e.target.value ? Number(e.target.value) : null)}
                   >
-                    <option value="">{lodgeOptions.length ? "Not set" : "No lodges in this semester"}</option>
+                    {(!isHead || !f.lodgeId) && <option value="">{lodgeOptions.length ? (isHead ? "Choose your lodge" : "Not set") : "No lodges in this semester"}</option>}
                     {lodgeOptions.map((l) => (
                       <option key={l.id} value={l.id}>
                         {l.name}
@@ -493,7 +509,7 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
             })}
             <AddButton label="Add Team Member" onClick={() => set("team", [...f.team, { name: "", role: "", avatar: "" }])} />
           </section>
-        </div>
+        </fieldset>
 
         <aside className={styles.colSide}>
           <div className={styles.panelTight}>
@@ -503,16 +519,34 @@ export default function ProjectEditor({ project, cohorts, tracks, lodges, role, 
               </span>
               <StatusChip status={status} label={PROJECT_STATUS_LABEL[status]} />
             </div>
+            {locked ? (
+              <span className={styles.hint}>{lockedNote}</span>
+            ) : (
+              <>
             <UnsavedNote show={dirty} onDiscard={() => setF(initial)} />
             <button type="button" className={styles.btn} disabled={cantSave || needsCohort} onClick={() => save(primary.intent)}>
               {saving ? "Saving…" : primary.label}
             </button>
+            {isExco && status !== "published" && (
+              <button
+                type="button"
+                className={styles.pill}
+                disabled={cantSave}
+                onClick={() => save(status === "in_review" ? "keep" : "submit")}
+              >
+                {status === "in_review" ? "Save in Review" : "Mark as In Review"}
+              </button>
+            )}
             {secondary && (
               <button type="button" className={styles.pill} disabled={cantSave} onClick={() => save("draft")}>
                 {secondary}
               </button>
             )}
-            <span className={styles.hint}>{needsCohort ? "Semester or cohort required before publishing." : help}</span>
+            <span className={styles.hint}>
+              {needsCohort ? "Semester or cohort required before publishing." : isHead && !f.lodgeId ? "Choose your lodge under Placement." : help}
+            </span>
+              </>
+            )}
           </div>
 
           {isExco && project && f.programme === "AI Lodge" && (

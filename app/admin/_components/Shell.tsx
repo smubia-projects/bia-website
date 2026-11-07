@@ -15,7 +15,9 @@ import styles from "../cms.module.css";
 interface Props {
   email: string;
   roleLabel: string;
-  seeSettings: boolean;
+  seeLinks: boolean;
+  /** People and Roles: superadmins only */
+  seePeople: boolean;
   /** Photos alone (AI Lodge exco edit the AI Lodge site's photos) */
   seePhotos: boolean;
   reviewCount: number;
@@ -109,9 +111,9 @@ export default function Shell(props: Props) {
             )}
 
             <div className={styles.sideGroup}>Settings</div>
-            {props.seeSettings && item("/admin/links", "Site Links", pathname.startsWith("/admin/links"))}
+            {props.seeLinks && item("/admin/links", "Site Links", pathname.startsWith("/admin/links"))}
             {props.seePhotos && item("/admin/photos", "Photos", pathname.startsWith("/admin/photos"))}
-            {props.seeSettings && item("/admin/people", "People and Roles", pathname.startsWith("/admin/people"))}
+            {props.seePeople && item("/admin/people", "People and Roles", pathname.startsWith("/admin/people"))}
             {item("/admin/tokens", "Access Tokens", pathname.startsWith("/admin/tokens"))}
 
             <div className={styles.sideFoot}>

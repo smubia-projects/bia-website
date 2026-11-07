@@ -3,7 +3,7 @@ import { can } from "@/app/lib/cms/actor";
 import { listCohorts, pickCurrentCohort } from "@/app/lib/cms/cohorts";
 import { countProjectsInReview } from "@/app/lib/cms/projects";
 import { requireActorPage } from "@/app/lib/cms/session";
-import { ROLE_LABEL } from "@/app/lib/cms/taxonomy";
+import { ROLE_LABEL, SUPERADMIN_LABEL } from "@/app/lib/cms/taxonomy";
 import { RUN_COOKIE, RUN_SEGMENT, type RunOption } from "../_components/runs";
 import Shell from "../_components/Shell";
 
@@ -30,8 +30,9 @@ export default async function CmsLayout({ children }: { children: React.ReactNod
   return (
     <Shell
       email={actor.email}
-      roleLabel={ROLE_LABEL[actor.role]}
-      seeSettings={can.managePeople(actor)}
+      roleLabel={actor.superadmin ? SUPERADMIN_LABEL : ROLE_LABEL[actor.role]}
+      seeLinks={can.editLinks(actor)}
+      seePeople={can.managePeople(actor)}
       seePhotos={can.seePhotos(actor)}
       reviewCount={reviewCount}
       runs={runs}

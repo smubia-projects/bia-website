@@ -161,12 +161,20 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
 ### CMS
 - Sign-in: Auth.js (`auth.ts`) with Google, `@smu.edu.sg` accounts only, plus the email must
   be on the People list (or in `CMS_BOOTSTRAP_ADMINS`). Roles are re-read from the database
-  on every request. Local dev also has a dev sign-in with a role picker (never in production).
-- Roles: **Exco admin** (everything), **DAP exco** (DAP only: cohorts, groups, schedule,
-  newsletter, DAP projects) and **AI Lodge exco** (AI Lodge only: semesters, tracks, lodges,
-  Hack Day winners, AI Lodge projects). Programme exco can't publish projects (an exco admin
-  approves them), edit Site links or manage people. Permissions live in `can` (`actor.ts`),
-  the role → programme map in `ROLE_PROGRAMME` (`taxonomy.ts`). There is no lodge head role.
+  on every request, and a person whose `access_ends` date has passed has no access. Local dev
+  also has a dev sign-in with a role picker, superadmin included (never in production).
+- Roles: **Superadmin** (the `CMS_BOOTSTRAP_ADMINS` emails, so it proves access to the
+  deployment: an exco admin who is also the only role that manages People and roles),
+  **Exco admin** (everything else), **DAP exco** (DAP only: cohorts, groups, schedule,
+  newsletter, DAP projects), **AI Lodge exco** (AI Lodge only: semesters, tracks, lodges,
+  Hack Day winners, AI Lodge projects) and **Lodge head** (only the projects of the lodges
+  picked for them on People: add and edit drafts, submit for review; submitted and published
+  projects are locked for them). Programme exco can't publish projects (an exco admin approves
+  them) or edit Site links. Permissions live in `can` (`actor.ts`: `seeProject` vs
+  `editProject`), the role → programme map in `ROLE_PROGRAMME` (`taxonomy.ts`).
+- Lodge head access ends by default `LODGE_HEAD_ACCESS_WEEKS` (20) weeks after the semester's
+  **Week 1 Start Date** (`cohorts.starts_on`, set on the semester's Overview); People prefills
+  that date (editable, or no end), and the MCP uses it when no date is given.
 - Project status: `draft` → `in_review` → `published` (replaces the Redis-era `hidden` flag;
   `Project.hidden` is now derived). Exco approves. A project needs a semester (AI Lodge) or
   cohort (DAP) before it can be published, because its page lives under it. Each AI Lodge
@@ -200,7 +208,10 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
   have sent /start to the bot). The bot is outbound-only: no webhook.
 - MCP: `/api/mcp` exposes the CMS as tools for Claude. Each person creates a personal access
   token under **Settings › Access tokens** (`app/lib/cms/tokens.ts`, stored hashed); the MCP acts
-  as that person with their current role. Locally (dev sign-in on) it also works without a token, as exco.
+  as that person with their current role, and lists only the tools that role can use
+  (`TOOL_ACCESS` in the route: a lodge head sees 8 tools, a superadmin all, including
+  `list_people`, `set_person`, `remove_person` and `set_lodge_heads`). Locally (dev sign-in on)
+  it also works without a token, as a superadmin.
 - AI Lodge site refresh: after any change to lodges, semesters, links or photos, the CMS calls
   `AILODGE_REVALIDATE_URL` with `AILODGE_REVALIDATE_SECRET` (`app/lib/cms/revalidate.ts`), and the
   AI Lodge site rebuilds from the feed at once (it also refreshes hourly).
