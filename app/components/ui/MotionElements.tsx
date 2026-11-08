@@ -48,7 +48,8 @@ export function MotionSurface({
   return <motion.div {...props} />;
 }
 
-type AnchorProps = HTMLMotionProps<"a"> & {
+// Motion also defines `tap` for gesture options; this wrapper uses it as an animation target.
+type AnchorProps = Omit<HTMLMotionProps<"a">, "tap"> & {
   hover?: MotionStyle;
   tap?: MotionStyle;
   gleam?: boolean;
