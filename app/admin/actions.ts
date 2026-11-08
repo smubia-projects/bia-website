@@ -14,7 +14,7 @@ import { saveSitePhoto } from "@/app/lib/cms/photos";
 import { createToken, revokeToken } from "@/app/lib/cms/tokens";
 import type { Photo } from "@/app/lib/photos";
 import { UPLOAD_FOLDERS, uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
-import type { Programme, ProjectStatus, Role } from "@/app/lib/cms/taxonomy";
+import type { Programme, ProjectStatus } from "@/app/lib/cms/taxonomy";
 
 export type ActionResult<T = null> = { ok: true; data: T; message?: string } | { ok: false; error: string };
 
@@ -333,7 +333,7 @@ export async function saveSessionsAction(cohortId: string, rows: newsletter.Sess
 
 // ── People ───────────────────────────────────────────────────────────────
 
-export async function savePersonAction(input: { email: string; name?: string; role: Role }) {
+export async function savePersonAction(input: people.PersonInput) {
   return run(async (actor) => {
     await people.savePerson(actor, input);
     refreshAdmin();

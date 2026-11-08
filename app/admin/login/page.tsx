@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
 import { devLoginEnabled, googleConfigured, signIn } from "@/auth";
 import { getCurrentActor } from "@/app/lib/cms/session";
-import { ROLE_LABEL, ROLES } from "@/app/lib/cms/taxonomy";
+import { ROLE_LABEL, ROLES, SUPERADMIN_LABEL } from "@/app/lib/cms/taxonomy";
 import styles from "../cms.module.css";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-const NO_ACCESS = "Account not on the CMS access list. An exco admin can add it under People and Roles.";
+const NO_ACCESS = "Account not on the CMS access list, or its access has ended. A superadmin can add it under People and Roles.";
 const ERRORS: Record<string, string> = {
   domain: "Sign-in requires an @smu.edu.sg Google account.",
   noaccess: NO_ACCESS,
@@ -71,7 +71,8 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
             <span className={styles.monoLabel}>Local Development</span>
             <label className={styles.fld}>
               Role
-              <select name="role" className={styles.inp} defaultValue="exco">
+              <select name="role" className={styles.inp} defaultValue="superadmin">
+                <option value="superadmin">{SUPERADMIN_LABEL}</option>
                 {ROLES.map((r) => (
                   <option key={r} value={r}>
                     {ROLE_LABEL[r]}

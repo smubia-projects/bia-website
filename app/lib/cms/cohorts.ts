@@ -116,6 +116,8 @@ export interface CohortInput {
   shortName?: string;
   /** "Details drop {revealNote}" on the AI Lodge site, e.g. "soon" or "26 Oct" */
   revealNote?: string;
+  /** AI Lodge: first day of week 1 (YYYY-MM-DD), or null */
+  startsOn?: string | null;
 }
 
 export async function createCohort(
@@ -162,6 +164,11 @@ export async function updateCohort(actor: Actor, id: string, input: CohortInput)
   }
   if (input.shortName !== undefined) values.shortName = input.shortName.trim();
   if (input.revealNote !== undefined) values.revealNote = input.revealNote.trim();
+  if (input.startsOn !== undefined) {
+    const v = input.startsOn?.trim() || null;
+    ensure(v === null || /^\d{4}-\d{2}-\d{2}$/.test(v), "Week 1 start must be a date (YYYY-MM-DD)");
+    values.startsOn = v;
+  }
   if (input.timeline !== undefined) {
     values.timeline = input.timeline
       .map((t) => ({

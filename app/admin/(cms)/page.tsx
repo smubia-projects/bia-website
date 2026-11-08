@@ -8,7 +8,7 @@ import AdminHome from "./AdminHome";
 export default async function AdminHomePage() {
   const actor = await requireActorPage();
   const [all, lodgeCohorts, dapCohorts] = await Promise.all([listProjects(), listCohorts("AI Lodge"), listCohorts("DAP")]);
-  const mine = all.filter((p) => can.editProject(actor, { programme: p.badge }));
+  const mine = all.filter((p) => can.seeProject(actor, { programme: p.badge, lodgeId: p.lodgeId }));
   const dapCohort = can.seeDap(actor) ? pickCurrentCohort(dapCohorts) : null;
   const issues = dapCohort ? await listIssues(dapCohort.id) : [];
   const semester = can.seeLodge(actor) ? pickCurrentCohort(lodgeCohorts) : null;

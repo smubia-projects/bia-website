@@ -16,7 +16,7 @@ export default async function ProjectPreviewPage(props: { params: Promise<{ slug
   const params = await props.params;
   const actor = await requireActorPage();
   const project = await getProject(params.slug);
-  if (!project || !can.editProject(actor, { programme: project.badge })) notFound();
+  if (!project || !can.seeProject(actor, { programme: project.badge, lodgeId: project.lodgeId })) notFound();
   const status = project.status ?? "draft";
 
   return (

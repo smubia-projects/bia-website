@@ -257,6 +257,15 @@ const NEEDS_COHORT = "Pick a semester (AI Lodge) or cohort (DAP) before publishi
 
 // ── Mutations ────────────────────────────────────────────────────────────
 
+function lockedMessage(actor: Actor, row: { programme: Programme; lodgeId: number | null; status: ProjectStatus }) {
+  if (actor.role === "lodge_head" && can.seeProject(actor, row)) {
+    return row.status === "published"
+      ? "Published projects are locked for lodge heads. Ask AI Lodge exco for changes."
+      : "Submitted for review: locked until AI Lodge exco returns it to draft.";
+  }
+  return "This role cannot edit this project";
+}
+
 /** New projects always start as drafts (or in review, for lodge heads submitting). */
 export async function createProject(
   actor: Actor,
@@ -271,12 +280,16 @@ export async function createProject(
 
   const programme = input.programme ?? ROLE_PROGRAMME[actor.role] ?? "AI Lodge";
   ensure((PROGRAMMES as readonly string[]).includes(programme), "Unknown programme");
-  ensure(can.editProject(actor, { programme }), "This role cannot add projects to this programme");
+
+  const placement = await resolvePlacement(programme, input.cohortId, input.trackId, input.lodgeId);
+  ensure(
+    can.editProject(actor, { programme, lodgeId: placement.lodgeId, status: "draft" }),
+    actor.role === "lodge_head" ? "Lodge heads add projects to their own lodge: pick it under Lodge" : "This role cannot add projects to this programme"
+  );
 
   const [existing] = await db.select({ slug: projects.slug }).from(projects).where(eq(projects.slug, slug));
   ensure(!existing, "A project with this name already exists");
 
-  const placement = await resolvePlacement(programme, input.cohortId, input.trackId, input.lodgeId);
   let status: ProjectStatus = input.status === "in_review" ? "in_review" : "draft";
   if (input.status === "published" && can.publishProject(actor)) status = "published";
   ensure(status !== "published" || placement.cohortId, NEEDS_COHORT);
@@ -303,7 +316,7 @@ export async function updateProject(actor: Actor, slug: string, input: ProjectIn
   const db = await getDb();
   const [row] = await db.select().from(projects).where(eq(projects.slug, slug));
   ensure(row, "Project not found");
-  ensure(can.editProject(actor, row), "This role cannot edit this project");
+  ensure(can.editProject(actor, row), lockedMessage(actor, row));
 
   let programme = row.programme;
   const cohortId = input.cohortId === undefined ? row.cohortId : input.cohortId;
@@ -318,6 +331,10 @@ export async function updateProject(actor: Actor, slug: string, input: ProjectIn
   ensure(
     row.status !== "published" || placement.cohortId,
     "A published project needs a semester or cohort. Move it to draft first."
+  );
+  ensure(
+    can.editProject(actor, { programme, lodgeId: placement.lodgeId, status: row.status }),
+    "Lodge heads can only move a project to another of their own lodges"
   );
   const movedTrack = placement.trackId !== row.trackId;
 
@@ -342,7 +359,9 @@ export async function setProjectStatus(actor: Actor, slug: string, status: Proje
   ensure((PROJECT_STATUSES as readonly string[]).includes(status), "Unknown status");
   const [row] = await db.select().from(projects).where(eq(projects.slug, slug));
   ensure(row, "Project not found");
-  ensure(can.editProject(actor, row), "This role cannot change this project");
+  ensure(can.editProject(actor, row), lockedMessage(actor, row));
+  // Lodge heads submit their drafts; AI Lodge exco or above returns them to draft.
+  ensure(actor.role !== "lodge_head" || status !== "published", "Publishing requires the exco admin role");
   if (status === "published" || row.status === "published") {
     ensure(can.publishProject(actor), "Publishing requires the exco admin role");
   }

@@ -26,6 +26,22 @@ smubia.com `/admin`, behind the Google sign-in and roles, so who changed what is
 - Role: **exco admin only** (user decision 2026-11-02): no other CMS role sees or edits these
   controls. Log every change (who, what, before/after) in Postgres.
 
+## Related CMS work (one plan, built together)
+
+The full plan, decided 2026-11-07/08, is in `../bia-all-projects/DOCS/shared/centralisation-decisions.md`. The
+website parts:
+
+- **`projects.fullSlug`**, the full repo name, which ties the CMS record to the demo, its rate-limit slug and its
+  monitoring.
+- **`GET /api/public/links`**, with the club links plus per-project links and modal copy:
+  `docs/public-links-endpoint-handoff.md`.
+- **Modal copy fields** on each project (`ctaHeadline`, `ctaHook`, `ctaInvitation`): same file.
+- **This Ops page:** limits, event mode (with an end time, default 5 days), kill switches, counter reset, and the
+  project list read from each repo's `ratelimit.json`.
+- **A Systems page** (uptime): a sweep triggered by Cloud Scheduler every 5 min, deep checks hourly, state in Upstash
+  and history in Neon (1 year), Telegram alerts, and HetrixTools watching a heartbeat endpoint
+  (`centralisation-decisions.md` §10).
+
 ## Things to watch
 
 - **The website keeps its Upstash credentials.** `docs/cms-setup.md` (steps 5 and 9) now keeps

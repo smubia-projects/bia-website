@@ -85,6 +85,13 @@
       "when": 1793525201615,
       "tag": "0011_access_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794077731986,
+      "tag": "0012_lodge_heads",
+      "breakpoints": true
     }
   ]
 }

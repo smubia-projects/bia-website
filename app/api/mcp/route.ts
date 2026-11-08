@@ -7,6 +7,8 @@ import { getAILodgeFeed } from "@/app/lib/cms/ailodge-feed";
 import * as cohorts from "@/app/lib/cms/cohorts";
 import * as lodgesCms from "@/app/lib/cms/lodges";
 import * as newsletter from "@/app/lib/cms/newsletter";
+import * as people from "@/app/lib/cms/people";
+import { lodgeOptions } from "@/app/lib/cms/people";
 import * as projects from "@/app/lib/cms/projects";
 import { listSiteLinks, saveSiteLinks, setApplicationsOpen } from "@/app/lib/cms/links";
 import { listSitePhotos, saveSitePhoto } from "@/app/lib/cms/photos";
@@ -29,8 +31,11 @@ import {
   LODGE_SHOWPIECES,
   MADE_FOR,
   PROGRAMMES,
+  LODGE_HEAD_ACCESS_WEEKS,
   PROJECT_STATUSES,
   ROLE_LABEL,
+  ROLES,
+  SUPERADMIN_LABEL,
 } from "@/app/lib/cms/taxonomy";
 import { uploadImageFromBase64, uploadImageFromUrl } from "@/app/lib/cms/uploads";
 
@@ -114,8 +119,52 @@ const issueFields = {
   postToTelegram: z.boolean().optional(),
 };
 
+/*
+ * Progressive disclosure: each token only lists the tools its owner's role can
+ * use, so a lodge head's Claude never sees (or spends tokens on) exco tools.
+ * The service layer still checks every call. Tools not listed here are open to
+ * every role.
+ */
+const TOOL_ACCESS: Record<string, (a: Actor) => boolean> = {
+  set_track_winner: (a) => can.setWinner(a),
+  create_cohort: (a) => a.role !== "lodge_head",
+  update_cohort: (a) => a.role !== "lodge_head",
+  save_track: (a) => can.seeLodge(a),
+  get_lodge: (a) => can.seeLodge(a),
+  save_lodge: (a) => can.seeLodge(a),
+  copy_lodge: (a) => can.seeLodge(a),
+  set_lodge_applications: (a) => can.seeLodge(a),
+  get_ailodge_feed: (a) => can.seeLodge(a),
+  set_applications_open: (a) => can.setApplications(a, "AI Lodge") || can.setApplications(a, "DAP"),
+  list_site_links: (a) => can.editLinks(a),
+  update_site_links: (a) => can.editLinks(a),
+  list_photos: (a) => can.seePhotos(a),
+  set_photo: (a) => can.seePhotos(a),
+  get_dap_group: (a) => can.seeDap(a),
+  save_dap_group: (a) => can.seeDap(a),
+  list_issues: (a) => can.editNewsletter(a),
+  get_issue: (a) => can.editNewsletter(a),
+  create_issue: (a) => can.editNewsletter(a),
+  update_issue: (a) => can.editNewsletter(a),
+  publish_issue: (a) => can.editNewsletter(a),
+  schedule_issue: (a) => can.editNewsletter(a),
+  send_issue_test: (a) => can.editNewsletter(a),
+  update_sessions: (a) => can.editNewsletter(a),
+  list_people: (a) => can.managePeople(a),
+  set_person: (a) => can.managePeople(a),
+  remove_person: (a) => can.managePeople(a),
+  set_lodge_heads: (a) => can.managePeople(a),
+};
+
 const handler = createMcpHandler(
   (server) => {
+    // The server is built per request (stateless), inside guarded(), so actor() is known here.
+    const register = server.registerTool.bind(server);
+    server.registerTool = ((name: string, ...rest: unknown[]) =>
+      TOOL_ACCESS[name] && !TOOL_ACCESS[name](actor())
+        ? undefined
+        : (register as (...args: unknown[]) => unknown)(name, ...rest)) as typeof server.registerTool;
+
     // ── Reference data ──
     server.registerTool(
       "list_cohorts",
@@ -127,7 +176,9 @@ const handler = createMcpHandler(
       },
       () =>
         tool(async () => {
-          const all = await cohorts.listCohorts();
+          const a = actor();
+          const mine = new Set(a.role === "lodge_head" ? (await lodgesCms.listAllLodges()).filter((l) => a.lodgeIds?.includes(l.id)).map((l) => l.cohortId) : []);
+          const all = (await cohorts.listCohorts()).filter((c) => (a.role === "lodge_head" ? mine.has(c.id) : can.editCohort(a, c.programme)));
           return Promise.all(
             all.map(async (c) => ({
               id: c.id,
@@ -135,8 +186,14 @@ const handler = createMcpHandler(
               slug: c.slug,
               name: c.name,
               visibility: c.visibility,
+              startsOn: c.programme === "AI Lodge" ? c.startsOn : undefined,
               tracks: c.programme === "AI Lodge" ? (await cohorts.listTracks(c.id)).map((t) => ({ id: t.id, name: t.name, projects: t.projectCount })) : undefined,
-              lodges: c.programme === "AI Lodge" ? (await cohorts.listLodges(c.id)).map((l) => ({ id: l.id, slug: l.slug, name: l.name, status: l.status })) : undefined,
+              lodges:
+                c.programme === "AI Lodge"
+                  ? (await cohorts.listLodges(c.id))
+                      .filter((l) => a.role !== "lodge_head" || a.lodgeIds?.includes(l.id))
+                      .map((l) => ({ id: l.id, slug: l.slug, name: l.name, status: l.status }))
+                  : undefined,
               groups: c.programme === "DAP" ? (await cohorts.listGroups(c.id)).map((g) => ({ id: g.id, name: g.name, members: g.members.length, mentors: g.mentors.length })) : undefined,
             }))
           );
@@ -148,35 +205,45 @@ const handler = createMcpHandler(
       "list_projects",
       {
         title: "List projects",
-        description: "All projects (any status), optionally filtered.",
+        description: "Projects you can see (any status), optionally filtered. Lodge heads see their own lodges' projects.",
         inputSchema: z.object({
           programme: z.enum(PROGRAMMES).optional(),
           cohortId: z.string().optional(),
+          lodgeId: z.number().int().optional(),
+          trackId: z.number().int().optional(),
           status: z.enum(PROJECT_STATUSES).optional(),
           query: z.string().optional().describe("Matches title or description"),
         }),
       },
-      ({ programme, cohortId, status, query }) =>
+      ({ programme, cohortId, lodgeId, trackId, status, query }) =>
         tool(async () => {
           const q = query?.toLowerCase();
           return (await projects.listProjects())
+            .filter((p) => can.seeProject(actor(), { programme: p.badge, lodgeId: p.lodgeId }))
             .filter((p) => (!programme || p.badge === programme) && (!cohortId || p.cohortId === cohortId) && (!status || p.status === status))
+            .filter((p) => (!lodgeId || p.lodgeId === lodgeId) && (!trackId || p.trackId === trackId))
             .filter((p) => !q || `${p.title} ${p.description}`.toLowerCase().includes(q))
-            .map((p) => ({ slug: p.slug, title: p.title, programme: p.badge, cohort: p.cohortName, track: p.trackName, status: p.status, winner: p.winner, madeFor: p.madeFor, builtWith: p.builtWith, path: p.cohortSlug ? projectPath(p) : null }));
+            .map((p) => ({ slug: p.slug, title: p.title, programme: p.badge, cohort: p.cohortName, track: p.trackName, lodge: p.lodgeName, status: p.status, winner: p.winner, madeFor: p.madeFor, builtWith: p.builtWith, path: p.cohortSlug ? projectPath(p) : null }));
         })
     );
 
     server.registerTool(
       "get_project",
       { title: "Get project", description: "Every field of one project.", inputSchema: z.object({ slug: z.string() }) },
-      ({ slug }) => tool(async () => (await projects.getProject(slug)) ?? Promise.reject(new CmsError("Project not found")))
+      ({ slug }) =>
+        tool(async () => {
+          const p = await projects.getProject(slug);
+          if (!p || !can.seeProject(actor(), { programme: p.badge, lodgeId: p.lodgeId })) throw new CmsError("Project not found");
+          return p;
+        })
     );
 
     server.registerTool(
       "create_project",
       {
         title: "Create project",
-        description: "Creates a project as a draft (status 'draft' unless 'in_review' is given). The slug comes from the title. Publish with set_project_status after a human has checked it.",
+        description:
+          "Creates a project as a draft (status 'draft' unless 'in_review' is given). The slug comes from the title. Publish with set_project_status after a human has checked it. Lodge heads must pass the lodgeId of one of their lodges (from list_cohorts).",
         inputSchema: z.object({ ...projectFields, title: z.string(), status: z.enum(["draft", "in_review"]).optional() }),
       },
       (input) => tool(() => projects.createProject(actor(), input))
@@ -197,7 +264,7 @@ const handler = createMcpHandler(
       {
         title: "Set project status",
         description:
-          "draft, in_review or published. Published projects appear on smubia.com immediately, at /projects/ailodge/<semester>/<slug> or /projects/dap/<cohort>/<slug>, so a project needs a cohortId before it can be published.",
+          "draft, in_review or published. Published projects appear on smubia.com immediately, at /projects/ailodge/<semester>/<slug> or /projects/dap/<cohort>/<slug>, so a project needs a cohortId before it can be published. Lodge heads can only submit their drafts (in_review); after that the project is locked for them until AI Lodge exco returns it to draft.",
         inputSchema: z.object({ slug: z.string(), status: z.enum(PROJECT_STATUSES) }),
       },
       ({ slug, status }) => tool(async () => (await projects.setProjectStatus(actor(), slug, status), { slug, status }))
@@ -294,6 +361,11 @@ const handler = createMcpHandler(
             .describe("AI Lodge applications timeline shown on the AI Lodge site, e.g. Applications open, Deadline, Interviews. Mark the step applicants must act by with deadline."),
           shortName: z.string().optional().describe('AI Lodge: the AI Lodge site\'s name for the intake, e.g. "Fall 2026"'),
           revealNote: z.string().optional().describe('AI Lodge: read as "Details drop {revealNote}" on placeholder lodges, e.g. "soon" or "26 Oct"'),
+          startsOn: z
+            .string()
+            .nullable()
+            .optional()
+            .describe(`AI Lodge: first day of week 1 (YYYY-MM-DD). Lodge heads' access ends ${LODGE_HEAD_ACCESS_WEEKS} weeks after it by default.`),
         }),
       },
       ({ id, ...input }) => tool(() => cohorts.updateCohort(actor(), id, input))
@@ -488,8 +560,80 @@ const handler = createMcpHandler(
 
     server.registerTool(
       "whoami",
-      { title: "Who am I", description: "The CMS account this token acts as and its role.", inputSchema: z.object({}) },
-      () => tool(async () => ({ email: actor().email, name: actor().name, role: ROLE_LABEL[actor().role] }))
+      { title: "Who am I", description: "The CMS account this token acts as, its role and (lodge heads) its lodges.", inputSchema: z.object({}) },
+      () =>
+        tool(async () => {
+          const a = actor();
+          const lodges = a.role === "lodge_head" ? await lodgeOptions(a.lodgeIds ?? []) : [];
+          return {
+            email: a.email,
+            name: a.name,
+            role: a.superadmin ? SUPERADMIN_LABEL : ROLE_LABEL[a.role],
+            ...(a.role === "lodge_head" ? { lodges: lodges.map((l) => ({ id: l.id, name: l.name, semester: l.cohortName, cohortId: l.cohortId })) } : {}),
+          };
+        })
+    );
+
+    // ── People (superadmins) ──
+    server.registerTool(
+      "list_people",
+      {
+        title: "List people",
+        description: "Everyone with CMS access: role, lodges (lodge heads) and the last day of access. Superadmins come from CMS_BOOTSTRAP_ADMINS and aren't listed.",
+        inputSchema: z.object({}),
+      },
+      () =>
+        tool(async () => {
+          const [list, lodges] = await Promise.all([people.listPeople(), lodgeOptions()]);
+          return list
+            .filter((p) => !p.email.endsWith("@localhost"))
+            .map((p) => ({
+              email: p.email,
+              name: p.name,
+              role: p.role,
+              lodges: p.lodgeIds.map((id) => {
+                const l = lodges.find((x) => x.id === id);
+                return l ? { id, name: l.name, semester: l.cohortName } : { id, name: "Removed lodge" };
+              }),
+              accessEnds: p.accessEnds,
+              expired: people.accessExpired(p),
+            }));
+        })
+    );
+
+    server.registerTool(
+      "set_person",
+      {
+        title: "Add or update a person",
+        description: `Gives an @smu.edu.sg account CMS access with a role: ${ROLES.join(", ")}. Lodge heads need lodgeIds (from list_cohorts). Leave accessEnds out to use the default: ${LODGE_HEAD_ACCESS_WEEKS} weeks after the latest of their semesters' week 1 (no end if the semester has no start date). Pass null for no end date.`,
+        inputSchema: z.object({
+          email: z.string(),
+          name: z.string().optional(),
+          role: z.enum(ROLES),
+          lodgeIds: z.array(z.number().int()).optional(),
+          accessEnds: z.string().nullable().optional().describe("Last day of access, YYYY-MM-DD (lodge heads)"),
+        }),
+      },
+      (input) => tool(() => people.savePerson(actor(), input))
+    );
+
+    server.registerTool(
+      "remove_person",
+      { title: "Remove a person", description: "Ends a person's CMS access (and their access tokens) immediately.", inputSchema: z.object({ email: z.string() }) },
+      ({ email }) => tool(async () => (await people.removePerson(actor(), email), { removed: email }))
+    );
+
+    server.registerTool(
+      "set_lodge_heads",
+      {
+        title: "Set a semester's lodge heads",
+        description: `Paste-a-table setup for one AI Lodge semester: rows of lodge (name or slug) and email. Each listed lodge's heads become exactly the listed people (others lose that lodge); lodges not listed keep theirs. New people are added as lodge heads. Access ends on the default date, ${LODGE_HEAD_ACCESS_WEEKS} weeks after the semester's week 1 (set startsOn with update_cohort first). Existing exco keep their role and are reported as skipped.`,
+        inputSchema: z.object({
+          cohortId: z.string().describe("The AI Lodge semester, e.g. ai-lodge-ay2627-s1"),
+          heads: z.array(z.object({ lodge: z.string(), email: z.string(), name: z.string().optional() })),
+        }),
+      },
+      ({ cohortId, heads }) => tool(() => people.setLodgeHeads(actor(), cohortId, heads))
     );
 
     const profile = z.object({

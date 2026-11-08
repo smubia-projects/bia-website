@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  date,
   index,
   integer,
   jsonb,
@@ -113,6 +114,8 @@ export const cohorts = pgTable(
     shortName: text("short_name").notNull().default(""),
     /** When lodge details go live, read as "Details drop {revealNote}", e.g. "soon" or "26 Oct" */
     revealNote: text("reveal_note").notNull().default(""),
+    /** AI Lodge: first day of week 1; lodge heads' default access end counts from it */
+    startsOn: date("starts_on", { mode: "string" }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -254,6 +257,10 @@ export const people = pgTable("people", {
   email: text("email").primaryKey(),
   name: text("name").notNull().default(""),
   role: text("role").$type<Role>().notNull(),
+  /** Lodge heads: the lodges whose projects they manage (lodges are per semester) */
+  lodgeIds: jsonb("lodge_ids").$type<number[]>().notNull().default([]),
+  /** Last day of access (YYYY-MM-DD, Singapore time); null = no end */
+  accessEnds: date("access_ends", { mode: "string" }),
   createdAt: createdAt(),
 });
 

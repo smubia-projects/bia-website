@@ -9,9 +9,17 @@ export default async function EditProjectPage(props: { params: Promise<{ slug: s
   const params = await props.params;
   const actor = await requireActorPage();
   const project = await getProject(params.slug);
-  if (!project || !can.editProject(actor, { programme: project.badge })) notFound();
-  const { cohorts, tracks, lodges } = await editorOptions();
+  if (!project || !can.seeProject(actor, { programme: project.badge, lodgeId: project.lodgeId })) notFound();
+  const { cohorts, tracks, lodges } = await editorOptions(actor);
   return (
-    <ProjectEditor key={project.updatedAt} project={project} cohorts={cohorts} tracks={tracks} lodges={lodges} role={actor.role} />
+    <ProjectEditor
+      key={project.updatedAt}
+      project={project}
+      cohorts={cohorts}
+      tracks={tracks}
+      lodges={lodges}
+      role={actor.role}
+      locked={!can.editProject(actor, { programme: project.badge, lodgeId: project.lodgeId, status: project.status })}
+    />
   );
 }

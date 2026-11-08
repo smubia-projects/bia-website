@@ -135,19 +135,34 @@ export const LODGE_LEVELS = ["Open to all", "Beginner", "Beginner–Intermediate
 export const COHORT_VISIBILITY = ["live", "hidden", "archived"] as const;
 export type CohortVisibility = (typeof COHORT_VISIBILITY)[number];
 
-export const ROLES = ["exco", "dap_exco", "lodge_exco"] as const;
+export const ROLES = ["exco", "dap_exco", "lodge_exco", "lodge_head"] as const;
 export type Role = (typeof ROLES)[number];
 export const ROLE_LABEL: Record<Role, string> = {
   exco: "Exco admin",
   dap_exco: "DAP exco",
   lodge_exco: "AI Lodge exco",
+  lodge_head: "Lodge head",
 };
-/** The one programme a programme exco works on; exco admins have no limit. */
+/** Superadmins are the CMS_BOOTSTRAP_ADMINS emails: an exco admin who also manages People. */
+export const SUPERADMIN_LABEL = "Superadmin";
+/** The one programme a role works in; exco admins have no limit. Lodge heads only reach their own lodges. */
 export const ROLE_PROGRAMME: Record<Role, Programme | null> = {
   exco: null,
   dap_exco: "DAP",
   lodge_exco: "AI Lodge",
+  lodge_head: "AI Lodge",
 };
+/** A lodge head's default access runs this many weeks from their semester's first day of week 1. */
+export const LODGE_HEAD_ACCESS_WEEKS = 20;
+
+/** The default last day of a lodge head's access: the latest semester start + LODGE_HEAD_ACCESS_WEEKS. */
+export function suggestedAccessEnd(semesterStarts: (string | null | undefined)[]): string | null {
+  const latest = semesterStarts.filter((d): d is string => Boolean(d)).sort().pop();
+  if (!latest) return null;
+  const d = new Date(`${latest}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + LODGE_HEAD_ACCESS_WEEKS * 7);
+  return d.toISOString().slice(0, 10);
+}
 
 
 export const BLOCK_TYPES = ["Text", "Team updates", "Shout-outs", "Image"] as const;
