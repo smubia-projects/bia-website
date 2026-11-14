@@ -21,7 +21,7 @@ export default function AddGroupButton({ cohortId, cohortSlug, nextNumber }: { c
     setBusy(true);
     const id = handle(await saveProjectGroupAction({ cohortId, number, name, mentors }), "Group created");
     setBusy(false);
-    if (id !== undefined) router.push(runHref("DAP", cohortSlug, `tracker/${id}`));
+    if (id !== undefined) router.push(runHref("DAP", cohortSlug, `project-groups/${id}`));
   }
 
   return (

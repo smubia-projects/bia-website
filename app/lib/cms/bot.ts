@@ -67,7 +67,7 @@ async function cmsLink(c: Ctx, group?: { id: number; cohortId: string }): Promis
   const cohortId = group?.cohortId ?? (await tracker.trackerCohortId());
   const slug = cohortId && (await tracker.cohortSlug(cohortId));
   if (!slug) return "";
-  const path = `${runHref("DAP", slug, "tracker")}${group ? `/${group.id}` : ""}`;
+  const path = `${runHref("DAP", slug, "project-groups")}${group ? `/${group.id}` : ""}`;
   return `<tg-button-row><tg-button type="url" url="${SITE_URL}${path}">Open in CMS</tg-button></tg-button-row>`;
 }
 

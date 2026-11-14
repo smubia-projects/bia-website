@@ -3,11 +3,8 @@ import { shortDate, sgtDay } from "@/app/lib/cms/bot-text";
 import { todaySgt } from "@/app/lib/cms/people";
 import { getAllTimelines } from "@/app/lib/cms/tracker";
 import { buildChart, nextMeetingBy, summarise } from "@/app/lib/cms/tracker-view";
-import { expectedWebhookUrl } from "@/app/lib/cms/telegram-webhook";
-import { isPolling } from "@/app/lib/cms/telegram-polling";
 import AddGroupButton from "../../../_run/AddGroupButton";
 import TrackerChart from "../../../_run/TrackerChart";
-import WebhookPanel from "../../../_run/WebhookPanel";
 import { loadRun } from "../../../_run/load";
 import { PageHead } from "../../../../_components/ui";
 import { runHref } from "../../../../_components/runs";
@@ -36,13 +33,13 @@ export default async function TrackerPage(props: { params: Promise<{ run: string
 
   return (
     <div className={styles.stack}>
-      <PageHead title="Timeline Tracker" sub="Milestones, tasks, blockers and mentor meetings by project group. Members log updates in Telegram.">
+      <PageHead title="Project Groups" sub="Milestones, tasks, blockers and mentor meetings by project group. Members log updates in Telegram.">
         <AddGroupButton cohortId={cohort.id} cohortSlug={cohort.slug} nextNumber={nextNumber} />
       </PageHead>
 
       <div className={t.stats}>
         {stat("Groups", sum.groups)}
-        {stat("Chats Registered", sum.chatsRegistered, sum.groups)}
+        {stat("Chats Connected", sum.chatsConnected, sum.groups)}
         {stat("Milestones Done", sum.milestonesDone, sum.milestones)}
         {stat("Overdue Milestones", sum.overdue, undefined, true)}
         {stat("Open Blockers", sum.openBlockers, undefined, true)}
@@ -93,7 +90,7 @@ export default async function TrackerPage(props: { params: Promise<{ run: string
                 return (
                   <tr key={g.id}>
                     <td>
-                      <Link className={t.link} href={runHref("DAP", cohort.slug, `tracker/${g.id}`)}>
+                      <Link className={t.link} href={runHref("DAP", cohort.slug, `project-groups/${g.id}`)}>
                         Group {g.number}
                       </Link>
                       <div className={styles.hint}>{g.name || "Unnamed"}</div>
@@ -118,11 +115,10 @@ export default async function TrackerPage(props: { params: Promise<{ run: string
               })}
             </tbody>
           </table>
-          {data.length === 0 && <p className={styles.emptyRow}>No groups. Add one, then send /register &lt;number&gt; in its Telegram chat.</p>}
+          {data.length === 0 && <p className={styles.emptyRow}>No project groups. Add one, then connect its Telegram chat from its page.</p>}
         </div>
       </section>
 
-      <WebhookPanel expectedUrl={expectedWebhookUrl()} tokenConfigured={Boolean(process.env.TELEGRAM_BOT_TOKEN)} secretConfigured={Boolean(process.env.TELEGRAM_WEBHOOK_SECRET)} polling={isPolling()} />
     </div>
   );
 }

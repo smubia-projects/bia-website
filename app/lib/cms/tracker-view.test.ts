@@ -55,7 +55,7 @@ describe("summarise", () => {
       { group: group(2, { lastMeetingAt: "2026-09-01T00:00:00Z" }), milestones: [] },
     ];
     assert.deepEqual(summarise(data, today, now), {
-      groups: 2, chatsRegistered: 1, milestones: 2, milestonesDone: 1, overdue: 1, openBlockers: 0, meetingsOverdue: 1,
+      groups: 2, chatsConnected: 1, milestones: 2, milestonesDone: 1, overdue: 1, openBlockers: 0, meetingsOverdue: 1,
     });
   });
 });

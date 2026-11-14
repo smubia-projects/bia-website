@@ -42,7 +42,7 @@ async function telegram<T>(call: (api: Api) => Promise<T>): Promise<T> {
   }
 }
 
-const requireTracker = (actor: Actor) => ensure(can.tracker(actor), "This role cannot manage the Telegram webhook");
+const requireTracker = (actor: Actor) => ensure(can.manageTelegramBot(actor), "Only an exco admin can manage the Telegram webhook");
 
 /** Telegram's current webhook for the bot (a network call), plus whether the environment is ready to set one. */
 export async function getWebhookInfo(actor: Actor): Promise<WebhookInfo> {

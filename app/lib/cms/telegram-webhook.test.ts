@@ -6,7 +6,7 @@ import { telegramApi } from "./telegram";
 import { deleteWebhook, expectedWebhookUrl, getWebhookInfo, setWebhook } from "./telegram-webhook";
 
 const TOKEN = "123456:SECRET-BOT-TOKEN";
-const dap: Actor = { email: "m@smu.edu.sg", name: "M", role: "dap_exco" };
+const dap: Actor = { email: "m@smu.edu.sg", name: "M", role: "exco" };
 const rejects = (p: Promise<unknown>, re: RegExp) => assert.rejects(p, (e) => e instanceof CmsError && re.test(e.message));
 
 // A fake Telegram: every call on the shared client is recorded and answered by `answer`.
@@ -28,12 +28,12 @@ beforeEach(() => {
 });
 
 describe("webhook management", () => {
-  it("only DAP exco and above", async () => {
+  it("only exco admins", async () => {
     reply({ ok: true, result: {} });
-    for (const role of ["lodge_exco", "lodge_head"] as const) {
-      await rejects(getWebhookInfo({ ...dap, role }), /cannot manage/);
-      await rejects(setWebhook({ ...dap, role }), /cannot manage/);
-      await rejects(deleteWebhook({ ...dap, role }), /cannot manage/);
+    for (const role of ["dap_exco", "lodge_exco", "lodge_head"] as const) {
+      await rejects(getWebhookInfo({ ...dap, role }), /Only an exco admin/);
+      await rejects(setWebhook({ ...dap, role }), /Only an exco admin/);
+      await rejects(deleteWebhook({ ...dap, role }), /Only an exco admin/);
     }
     assert.equal(calls.length, 0);
   });

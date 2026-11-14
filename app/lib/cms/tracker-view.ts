@@ -107,7 +107,7 @@ export function buildChart(data: GroupTimeline[], today: string): Chart | null {
 
 export interface Summary {
   groups: number;
-  chatsRegistered: number;
+  chatsConnected: number;
   milestones: number;
   milestonesDone: number;
   overdue: number;
@@ -120,7 +120,7 @@ export function summarise(data: GroupTimeline[], today: string, now = new Date()
   const ms = data.flatMap((d) => d.milestones);
   return {
     groups: data.length,
-    chatsRegistered: data.filter((d) => d.group.telegramChatId != null).length,
+    chatsConnected: data.filter((d) => d.group.telegramChatId != null).length,
     milestones: ms.length,
     milestonesDone: ms.filter((m) => m.status === "done").length,
     overdue: ms.filter((m) => m.status !== "done" && m.dueOn < today).length,

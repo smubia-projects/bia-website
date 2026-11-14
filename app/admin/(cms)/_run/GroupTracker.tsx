@@ -156,7 +156,7 @@ export default function GroupTracker({ cohortId, cohortSlug, today, group, membe
   const [chatLink, setChatLink] = useState<string | null>(null);
   const dirty = form.number !== group.number || form.name !== group.name || form.mentors !== group.mentors;
   useUnsavedChanges(dirty && !busy);
-  const back = runHref("DAP", cohortSlug, "tracker");
+  const back = runHref("DAP", cohortSlug, "project-groups");
 
   /** Runs an action, shows its error or message, and refreshes the page data on success. */
   async function call(res: Promise<ActionResult<unknown>>, ok?: string) {
@@ -199,7 +199,7 @@ export default function GroupTracker({ cohortId, cohortSlug, today, group, membe
 
   return (
     <div className={styles.stack}>
-      <PageHead title={`Group ${group.number}${group.name ? ` · ${group.name}` : ""}`} sub="Project group timeline. Members log tasks, blockers and meetings in Telegram." crumbs={[{ href: back, label: "Timeline Tracker" }]}>
+      <PageHead title={`Group ${group.number}${group.name ? ` · ${group.name}` : ""}`} sub="Project group timeline. Members log tasks, blockers and meetings in Telegram." crumbs={[{ href: back, label: "Project Groups" }]}>
         <button type="button" className={`${styles.btn} ${styles.btnDanger}`} disabled={busy} onClick={removeGroup}>
           Delete Group
         </button>

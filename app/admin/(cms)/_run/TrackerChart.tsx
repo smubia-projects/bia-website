@@ -36,7 +36,7 @@ export default function TrackerChart({ chart, slug, today }: { chart: Chart; slu
           </div>
         </div>
         {chart.lanes.map((lane) => {
-          const href = runHref("DAP", slug, `tracker/${lane.group.id}`);
+          const href = runHref("DAP", slug, `project-groups/${lane.group.id}`);
           return (
             <div key={lane.group.id} className={t.lane}>
               <Link href={href} className={t.laneLabel}>
