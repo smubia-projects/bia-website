@@ -155,6 +155,22 @@ export async function connectChat(projectGroupId: number, chatId: number): Promi
   return row;
 }
 
+/** A cohort's slug, for links into the CMS. */
+export async function cohortSlug(cohortId: string): Promise<string | null> {
+  const db = await getDb();
+  const [row] = await db.select({ slug: cohorts.slug }).from(cohorts).where(eq(cohorts.id, cohortId));
+  return row?.slug ?? null;
+}
+
+/** One project group, if it is in scope (a member sees only their own). */
+export async function projectGroup(who: TrackerWho, id: number): Promise<ProjectGroup> {
+  ensure(inScope(who, id), "Group not found");
+  const db = await getDb();
+  const [row] = await db.select().from(projectGroups).where(eq(projectGroups.id, id));
+  ensure(row, "Group not found");
+  return row;
+}
+
 /** A group of the current cohort by its number, for admins naming a group in a command. */
 export async function groupByNumber(actor: Actor, number: number): Promise<ProjectGroup> {
   requireTracker(actor);

@@ -12,7 +12,7 @@ import { getDb } from "@/app/lib/db";
 import { cohorts, people, projectGroups } from "@/app/lib/db/schema";
 import type { Api } from "grammy";
 import type { Update } from "grammy/types";
-import { sendMeetingReminders } from "./bot";
+import { sendMeetingReminders, syncBotCommands } from "./bot";
 import { createBot, offlineBotInfo } from "./telegram-bot";
 import { createAccountLink, createChatLink } from "./telegram-link";
 import * as t from "./tracker";
@@ -35,6 +35,10 @@ bot.api.config.use(async (_prev, method, payload) => {
 const handleUpdate = (update: unknown) => bot.handleUpdate(update as Update);
 let nextId = 100;
 
+/** The text of a message the bot sent: ordinary or rich (its HTML); "" for any other call. */
+const sent = (c: { method: string; body: Record<string, unknown> }) =>
+  c.method === "sendMessage" ? String(c.body.text) : c.method === "sendRichMessage" ? String((c.body.rich_message as { html: string }).html) : "";
+
 /** Sends a message and returns the bot's reply text ("" when it stayed silent). */
 async function say(chat: number, from: number, text: string, type = chat > 0 ? "private" : "group") {
   calls = [];
@@ -43,7 +47,7 @@ async function say(chat: number, from: number, text: string, type = chat > 0 ? "
   const entities = command ? [{ type: "bot_command", offset: 0, length: command.length }] : undefined;
   const update = { update_id: nextId++, message: { message_id: nextId, from: { id: from, first_name: from === MINGDA ? "Mingda" : "Mia" }, chat: { id: chat, type }, text, entities } };
   await handleUpdate(update);
-  return calls.filter((c) => c.method === "sendMessage").map((c) => String(c.body.text)).join("\n");
+  return calls.map(sent).filter(Boolean).join("\n");
 }
 
 async function press(chat: number, from: number, data: string) {
@@ -99,8 +103,11 @@ describe("working in Group 1's chat", () => {
     assert.match(await say(CHAT, MIA, "/milestone Sneaky by 1 Dec"), /Only DAP exco/);
     assert.match(await say(CHAT, MIA, "/done 1"), /Only DAP exco/);
     const list = await say(CHAT, MIA, "/milestones");
-    assert.match(list, /Group 1 · Alpha/);
+    assert.match(list, /<h3>Group 1 \(Alpha\)<\/h3>/);
+    assert.match(list, /<table[^>]*><tr><th>#<\/th><th>Milestone<\/th>/); // a real table, not text chips
+    assert.doesNotMatch(list, / · /);
     assert.match(list, /Proposal/);
+    assert.match(list, /<td><tg-button type="callback_data" style="link" data="m:\d+">\d+<\/tg-button><\/td>/); // each row opens its milestone
   });
 
   it("members log tasks, blockers, assignees and meetings", async () => {
@@ -113,7 +120,7 @@ describe("working in Group 1's chat", () => {
     assert.match(await say(CHAT, MIA, `/blocker ${ms} Waiting on dataset access`), /Logged blocker/);
     calls = [];
     await press(CHAT, MIA, `m:${ms}`);
-    const detail = String(calls.find((c) => c.method === "sendMessage")?.body.text);
+    const detail = calls.map(sent).filter(Boolean).join("\n");
     assert.match(detail, /Draft deck/);
     assert.match(detail, /Mia Lim/);
     assert.match(detail, /Waiting on dataset access/);
@@ -132,14 +139,20 @@ describe("working in Group 1's chat", () => {
   it("deletes ask first, and buttons are authorised by who pressed", async () => {
     const reply = await say(CHAT, MIA, "/deltask 1");
     assert.match(reply, /Delete task #1\?/);
-    assert.equal((await press(OTHER_CHAT, STRANGER, "y:t:1")).find((c) => c.method === "answerCallbackQuery")?.body.text, "Not allowed");
+    assert.equal((await press(OTHER_CHAT, STRANGER, `y:t:1:${STRANGER}`)).find((c) => c.method === "answerCallbackQuery")?.body.text, "Not allowed");
     const ms = (await t.getTimeline(t.memberWho(g1.id, "x"), g1.id))[0].id;
-    assert.match(String((await press(CHAT, MIA, `y:m:${ms}`)).find((c) => c.method === "answerCallbackQuery")?.body.text), /Only DAP exco/);
+    assert.match(String((await press(CHAT, MIA, `y:m:${ms}:${MIA}`)).find((c) => c.method === "answerCallbackQuery")?.body.text), /Only DAP exco/);
     assert.equal((await t.getTimeline(t.memberWho(g1.id, "x"), g1.id)).length, 2); // the milestone survived
     assert.equal((await t.getMilestone(t.memberWho(g1.id, "x"), (await t.getTimeline(t.memberWho(g1.id, "x"), g1.id))[0].id)).subtasks.length, 1);
-    const done = await press(CHAT, MIA, "y:t:1");
+    // Only the person who asked can press Delete or Cancel; anyone else gets a notice, nothing changes.
+    for (const data of [`y:t:1:${MIA}`, `n:${MIA}`]) {
+      const other = await press(CHAT, MINGDA, data);
+      assert.equal(other.find((c) => c.method === "answerCallbackQuery")?.body.text, "Only the person who asked can do that.");
+      assert.ok(!other.some((c) => c.method === "editMessageText"));
+    }
+    const done = await press(CHAT, MIA, `y:t:1:${MIA}`);
     assert.match(String(done.find((c) => c.method === "editMessageText")?.body.text), /Deleted task #1/);
-    assert.match(String((await press(CHAT, MIA, "n")).find((c) => c.method === "editMessageText")?.body.text), /Cancelled/);
+    assert.match(String((await press(CHAT, MIA, `n:${MIA}`)).find((c) => c.method === "editMessageText")?.body.text), /Cancelled/);
   });
 });
 
@@ -156,11 +169,14 @@ describe("groups never see each other", () => {
   });
 
   it("admins reach every group from a private chat", async () => {
-    assert.match(await say(MINGDA, MINGDA, "/groups"), /Project groups[\s\S]*chat ✅[\s\S]*chat ❌/);
+    assert.match(await say(MINGDA, MINGDA, "/groups"), /Project Groups[\s\S]*<td>Alpha<\/td><td>Connected<\/td>[\s\S]*<td>Beta<\/td><td>Not connected<\/td>/);
     assert.match(await say(MINGDA, MINGDA, "/milestones 2"), /Secret plan/);
     assert.match(await say(MINGDA, MINGDA, `/done ${m2}`), /is now done/);
     assert.match(await say(MINGDA, MINGDA, "/reminders 2 off"), /Group 2 are off/);
-    assert.match(await say(MINGDA, MINGDA, "/milestones"), /Which group/);
+    assert.match(await say(MINGDA, MINGDA, "/milestones"), /Add the project group's number/);
+    // "Open in CMS" only in an admin's private chat: in a group chat everyone would see it.
+    assert.match(await say(MINGDA, MINGDA, "/milestones 2"), /<tg-button type="url" url="https:\/\/[^"]+\/project-groups\/\d+">Open in CMS<\/tg-button>/);
+    assert.doesNotMatch(await say(CHAT, MINGDA, "/milestones"), /Open in CMS/);
   });
 });
 
@@ -170,9 +186,18 @@ describe("housekeeping", () => {
     assert.match(await say(CHAT, MIA, "/nope"), /Unknown command/);
     assert.match(await say(CHAT, MIA, "/milestones@TestBot"), /Group 1/);
     assert.equal(await say(CHAT, MIA, "/milestones@OtherBot"), ""); // meant for another bot
-    assert.match(await say(CHAT, MIA, "/help"), /Tracker commands/);
-    assert.doesNotMatch(await say(CHAT, MIA, "/help"), /DAP exco/);
-    assert.match(await say(CHAT, MINGDA, "/help"), /DAP exco/);
+    assert.match(await say(CHAT, MIA, "/help"), /<h3>Tracker Commands<\/h3><table[^>]*><tr><th>Command<\/th><th>Description<\/th><\/tr><tr><td>\/milestones<\/td>/);
+    calls = [];
+    await syncBotCommands(bot.api);
+    const [groupMenu, privateMenu] = calls.map((c) => c.body as { commands: { command: string }[]; scope: { type: string } });
+    assert.equal(groupMenu.scope.type, "all_group_chats");
+    assert.ok(groupMenu.commands.some((c) => c.command === "task") && !groupMenu.commands.some((c) => c.command === "milestone"));
+    assert.equal(privateMenu.scope.type, "all_private_chats");
+    assert.ok(privateMenu.commands.some((c) => c.command === "milestone"));
+    // Admin commands and the g3 tip only in a private chat; a group chat sees member commands only.
+    assert.doesNotMatch(await say(CHAT, MIA, "/help"), /DAP Exco/);
+    assert.doesNotMatch(await say(CHAT, MINGDA, "/help"), /DAP Exco/);
+    assert.match(await say(MINGDA, MINGDA, "/help"), /DAP Exco Commands[\s\S]*\/milestone \[g3\][\s\S]*Add g3/);
     assert.doesNotMatch(await say(CHAT, MINGDA, "/help"), /\/register/);
   });
 
@@ -181,7 +206,7 @@ describe("housekeeping", () => {
     calls = [];
     await handleUpdate(update);
     await handleUpdate(update);
-    assert.equal(calls.filter((c) => c.method === "sendMessage").length, 1);
+    assert.equal(calls.map(sent).filter(Boolean).length, 1);
   });
 
   it("follows the group when Telegram upgrades it to a supergroup", async () => {
@@ -199,7 +224,7 @@ describe("meeting reminders", () => {
     const db = await getDb();
     await db.update(projectGroups).set({ lastMeetingAt: new Date(Date.now() - 22 * 86_400_000).toISOString() }).where(eq(projectGroups.id, g1.id));
     const failing = {
-      sendMessage: async () => {
+      sendRichMessage: async () => {
         throw new Error("bot was kicked");
       },
     } as unknown as Api;
@@ -208,7 +233,8 @@ describe("meeting reminders", () => {
     calls = [];
     assert.equal(await sendMeetingReminders(bot.api), 1);
     assert.equal(calls[0].body.chat_id, NEW);
-    assert.match(String(calls[0].body.text), /Group 1 · Alpha[\s\S]*Dr Tan[\s\S]*\/meeting/);
+    assert.equal(calls[0].method, "sendRichMessage");
+    assert.match(sent(calls[0]), /Group 1 \(Alpha\)[\s\S]*Dr Tan[\s\S]*\/meeting/);
     assert.equal(await sendMeetingReminders(bot.api), 0);
     await say(NEW, MIA, "/meeting", "supergroup"); // a new meeting restarts the cycle
     assert.equal((await t.dueMeetingReminders()).length, 0);

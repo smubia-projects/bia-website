@@ -1,5 +1,6 @@
 import { Composer, type Api, type Context } from "grammy";
-import type { Chat, User } from "grammy/types";
+import type { BotCommand as TgBotCommand, Chat, InlineKeyboardButton, User } from "grammy/types";
+import { runHref } from "@/app/admin/_components/runs";
 import { CmsError, ensure, type Actor } from "./actor";
 import {
   formatGroups,
@@ -12,9 +13,10 @@ import {
   shortDate,
   sgtDay,
   splitTitleAndDates,
+  table,
 } from "./bot-text";
 import { todaySgt } from "./people";
-import { escapeHtml as esc, telegramApi } from "./telegram";
+import { escapeHtml as esc, SITE_URL, telegramApi } from "./telegram";
 import { claimAccountLink, claimChatLink } from "./telegram-link";
 import * as tracker from "./tracker";
 import type { ProjectGroup, TrackerWho } from "./tracker";
@@ -36,6 +38,8 @@ type TgChat = Pick<Chat, "id" | "type">;
 
 interface Ctx {
   chatId: number;
+  /** The sender's Telegram user ID */
+  fromId: number;
   isPrivate: boolean;
   name: string;
   who: TrackerWho;
@@ -48,7 +52,23 @@ interface Ctx {
 
 interface Reply {
   text: string;
-  markup?: { inline_keyboard: { text: string; callback_data: string }[][] };
+  /** A rich message (tables, headings): for views that list several things */
+  rich?: boolean;
+  markup?: { inline_keyboard: InlineKeyboardButton[][] };
+}
+
+/**
+ * An "Open in CMS" button for a rich message, for admins in a private chat only: in a group chat
+ * everyone sees the reply, and members can't sign in to the CMS. Telegram refuses buttons to
+ * non-HTTPS addresses, so there is none on localhost.
+ */
+async function cmsLink(c: Ctx, group?: { id: number; cohortId: string }): Promise<string> {
+  if (!c.actor || !c.isPrivate || !SITE_URL.startsWith("https://")) return "";
+  const cohortId = group?.cohortId ?? (await tracker.trackerCohortId());
+  const slug = cohortId && (await tracker.cohortSlug(cohortId));
+  if (!slug) return "";
+  const path = `${runHref("DAP", slug, "tracker")}${group ? `/${group.id}` : ""}`;
+  return `<tg-button-row><tg-button type="url" url="${SITE_URL}${path}">Open in CMS</tg-button></tg-button-row>`;
 }
 
 // ── Commands ─────────────────────────────────────────────────────────────
@@ -70,7 +90,7 @@ async function groupFor(c: Ctx, explicit?: number): Promise<ProjectGroup> {
     ensure(c.isPrivate || explicit === c.group?.number, `This chat is Group ${c.group?.number}. Message me privately to work on another group.`);
     return c.group?.number === explicit ? c.group : tracker.groupByNumber(c.actor, explicit);
   }
-  ensure(c.group, "Which group? Add its number, e.g. /milestones g3");
+  ensure(c.group, "Add the project group's number, e.g. /milestones g3");
   return c.group;
 }
 
@@ -108,10 +128,7 @@ export const COMMANDS: BotCommand[] = [
       const [n] = leadingGroup(args, false);
       const group = await groupFor(c, n);
       const list = await tracker.getTimeline(c.scope, group.id);
-      const buttons = list.slice(0, 12).map((m) => ({ text: `#${m.id}`, callback_data: `m:${m.id}` }));
-      const rows = [];
-      for (let i = 0; i < buttons.length; i += 4) rows.push(buttons.slice(i, i + 4));
-      return { text: formatTimeline(group, list, c.today), ...(rows.length ? { markup: { inline_keyboard: rows } } : {}) };
+      return { text: formatTimeline(group, list, c.today) + (await cmsLink(c, group)), rich: true };
     },
   },
   {
@@ -174,9 +191,9 @@ export const COMMANDS: BotCommand[] = [
     admin: false,
     usage: "<task#>",
     description: "Delete a task",
-    async run(_c, args) {
+    async run(c, args) {
       const [id] = idArg(args, usageOf("deltask"));
-      return confirm(`Delete task #${id}?`, `t:${id}`);
+      return confirm(c, `Delete task #${id}?`, `t:${id}`);
     },
   },
   {
@@ -222,9 +239,9 @@ export const COMMANDS: BotCommand[] = [
     admin: false,
     usage: "<blocker#>",
     description: "Delete a blocker",
-    async run(_c, args) {
+    async run(c, args) {
       const [id] = idArg(args, usageOf("delblocker"));
-      return confirm(`Delete blocker #${id}?`, `b:${id}`);
+      return confirm(c, `Delete blocker #${id}?`, `b:${id}`);
     },
   },
   {
@@ -263,7 +280,7 @@ export const COMMANDS: BotCommand[] = [
       const actor = requireActor(c);
       ensure(c.isPrivate, "Use /groups in a private chat with me.");
       const cohortId = await tracker.trackerCohortId();
-      return formatGroups(cohortId ? await tracker.listProjectGroups(actor, cohortId) : [], c.today);
+      return { text: formatGroups(cohortId ? await tracker.listProjectGroups(actor, cohortId) : [], c.today) + (await cmsLink(c)), rich: true };
     },
   },
   {
@@ -328,7 +345,7 @@ export const COMMANDS: BotCommand[] = [
       requireActor(c);
       const [id] = idArg(args, usageOf("delmilestone"));
       await tracker.getMilestone(c.scope, id);
-      return confirm(`Delete milestone #${id} with all its tasks and blockers?`, `m:${id}`);
+      return confirm(c, `Delete milestone #${id} with all its tasks and blockers?`, `m:${id}`);
     },
   },
   {
@@ -371,20 +388,21 @@ async function setBlockerStatus(c: Ctx, args: string, cmd: "resolve" | "reopenbl
   return b.status === "resolved" ? `✔️ Blocker <b>#${b.id}</b> resolved.` : `🚧 Blocker <b>#${b.id}</b> reopened.`;
 }
 
-const helpLine = (cmd: BotCommand) => `${esc(usageOf(cmd.name))} — ${esc(cmd.description)}`;
-
-function helpText(c: Ctx) {
-  const lines = ["<b>Tracker commands</b>", ...COMMANDS.filter((x) => !x.admin).map(helpLine)];
-  if (c.actor) {
-    lines.push("", "<b>DAP exco</b>", ...COMMANDS.filter((x) => x.admin).map(helpLine));
-    lines.push("In a private chat with the bot, add g3 to reach another group.");
+/** /help: a table of commands (tap one to send it). Admin commands and the g3 tip only in a private chat. */
+function helpText(c: Ctx): Reply {
+  const rows = (admin: boolean) => COMMANDS.filter((x) => x.admin === admin).map((x) => [esc(usageOf(x.name)), esc(x.description)]);
+  const parts = ["<h3>Tracker Commands</h3>", table(["Command", "Description"], rows(false))];
+  if (c.actor && c.isPrivate) {
+    parts.push("<h3>DAP Exco Commands</h3>", table(["Command", "Description"], rows(true)));
+    parts.push("<p>Add g3 to a command to reach Group 3 of the current cohort (the live one, else the newest).</p>");
   }
-  return lines.join("\n");
+  return { text: parts.join(""), rich: true };
 }
 
-const confirm = (text: string, target: string): Reply => ({
+/** Delete and Cancel buttons only the person who asked can press: their Telegram ID ends the data. */
+const confirm = (c: Ctx, text: string, target: string): Reply => ({
   text,
-  markup: { inline_keyboard: [[{ text: "Delete", callback_data: `y:${target}` }, { text: "Cancel", callback_data: "n" }]] },
+  markup: { inline_keyboard: [[{ text: "Delete", callback_data: `y:${target}:${c.fromId}` }, { text: "Cancel", callback_data: `n:${c.fromId}` }]] },
 });
 
 // ── Handlers ─────────────────────────────────────────────────────────────
@@ -413,6 +431,7 @@ async function contextFor(chat: TgChat, from: User): Promise<Ctx | null> {
   if (!isPrivate && !sender.group) return null;
   return {
     chatId: chat.id,
+    fromId: from.id,
     isPrivate,
     name: sender.who.name,
     who: sender.who,
@@ -428,7 +447,12 @@ async function runCommand(ctx: Context, name: string, args: string) {
   if (!m?.from || m.from.is_bot) return;
   const isPrivate = m.chat.type === "private";
   const say = async (r: Reply | string) => {
-    const reply = typeof r === "string" ? { text: r } : r;
+    const reply: Reply = typeof r === "string" ? { text: r } : r;
+    const replyTo = { message_id: m.message_id, allow_sending_without_reply: true };
+    if (reply.rich) {
+      await ctx.replyWithRichMessage({ html: reply.text }, { reply_parameters: replyTo, ...(reply.markup ? { reply_markup: reply.markup } : {}) });
+      return;
+    }
     await ctx.reply(reply.text, {
       parse_mode: "HTML",
       link_preview_options: { is_disabled: true },
@@ -480,11 +504,14 @@ async function onCallback(ctx: Context & { callbackQuery: { data: string } }) {
 
   const edit = (text: string) => ctx.editMessageText(text, { parse_mode: "HTML" });
   try {
-    if (q.data === "n") await edit("Cancelled.");
+    // Delete and Cancel end with the Telegram ID of the person who asked; nobody else can press them.
+    if (/^[yn]:/.test(q.data) && Number(q.data.split(":").pop()) !== q.from.id) return answer("Only the person who asked can do that.");
+    if (q.data.startsWith("n:")) await edit("Cancelled.");
     else if (q.data.startsWith("m:")) {
       const m = await tracker.getMilestone(c.scope, Number(q.data.slice(2)));
       const members = await tracker.listMembers(c.scope, m.groupId);
-      await ctx.reply(formatMilestone(m, members, c.today), { parse_mode: "HTML" });
+      const link = await cmsLink(c, await tracker.projectGroup(c.scope, m.groupId));
+      await ctx.replyWithRichMessage({ html: formatMilestone(m, members, c.today) + link });
     } else if (q.data.startsWith("y:")) {
       const [, kind, raw] = q.data.split(":");
       const id = Number(raw);
@@ -514,7 +541,7 @@ export async function sendMeetingReminders(api: Api = telegramApi(), now = new D
   for (const group of await tracker.dueMeetingReminders(now)) {
     if (!(await tracker.claimMeetingReminder(group.id, now))) continue;
     try {
-      await api.sendMessage(group.telegramChatId!, formatMeetingReminder(group, today), { parse_mode: "HTML" });
+      await api.sendRichMessage(group.telegramChatId!, { html: formatMeetingReminder(group, today) });
       sent++;
     } catch (error) {
       await tracker.releaseMeetingReminder(group.id);
@@ -522,4 +549,18 @@ export async function sendMeetingReminders(api: Api = telegramApi(), now = new D
     }
   }
   return sent;
+}
+
+// ── Command menus ────────────────────────────────────────────────────────
+
+const menu = (list: BotCommand[]): TgBotCommand[] => list.map((c) => ({ command: c.name, description: c.description }));
+
+/**
+ * The "/" menus Telegram shows, from COMMANDS: member commands in every group chat, all commands
+ * in private chats (where only linked admins get answers). Two calls cover every chat, so nothing
+ * needs updating when a chat is connected or disconnected. Run from Set Webhook.
+ */
+export async function syncBotCommands(api: Api = telegramApi()) {
+  await api.setMyCommands(menu(COMMANDS.filter((c) => !c.admin)), { scope: { type: "all_group_chats" } });
+  await api.setMyCommands(menu(COMMANDS), { scope: { type: "all_private_chats" } });
 }

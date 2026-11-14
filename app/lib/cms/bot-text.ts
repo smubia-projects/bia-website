@@ -81,7 +81,6 @@ export function shortDate(iso: string, today: string) {
 /** A timestamp as a Singapore calendar date. */
 export const sgtDay = (when: string | Date) => new Date(new Date(when).getTime() + 8 * 3_600_000).toISOString().slice(0, 10);
 
-const STATUS_ICON = { todo: "⬜", in_progress: "⏳", done: "✅" } as const;
 const STATUS_LABEL = { todo: "To do", in_progress: "In progress", done: "Done" } as const;
 
 /** The words people type for a status: todo, doing, done. */
@@ -93,76 +92,118 @@ export function parseStatus(word: string): "todo" | "in_progress" | "done" | nul
   return null;
 }
 
-// ── Messages (Telegram HTML) ─────────────────────────────────────────────
+// ── Messages (Telegram rich messages) ────────────────────────────────────
+//
+// Views that list several things are rich messages (headings, tables, lists), so each value
+// has its own column or line instead of being strung together with dots. One-line
+// confirmations stay ordinary messages and are written in bot.ts.
 
-const MAX = 3900; // Telegram's limit is 4096 characters
-const cap = (lines: string[]) => {
-  const text = lines.join("\n");
-  return text.length <= MAX ? text : `${text.slice(0, MAX)}\n…`;
-};
+/** Rows per table, which keeps a message well under Telegram's 32,768 characters. */
+const ROWS = 60;
+const more = (n: number) => (n > ROWS ? `<p>Showing the first ${ROWS} of ${n}. The dashboard has the rest.</p>` : "");
 
+const groupTitle = (g: ProjectGroupRow) => `Group ${g.number}${g.name ? ` (${esc(g.name)})` : ""}`;
+export const table = (head: string[], rows: string[][]) =>
+  `<table bordered striped compact><tr>${head.map((h) => `<th>${h}</th>`).join("")}</tr>${rows
+    .map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`)
+    .join("")}</table>`;
+
+function meetingLine(group: ProjectGroupRow, today: string) {
+  const next = shortDate(sgtDay(meetingDeadline(group)), today);
+  return group.lastMeetingAt
+    ? `<p>Last mentor meeting ${shortDate(sgtDay(group.lastMeetingAt), today)}. Next meeting by ${next}.</p>`
+    : `<p>No mentor meeting logged yet. Next meeting by ${next}.</p>`;
+}
+
+/** /milestones: the group's timeline as a table, one row per milestone. */
 export function formatTimeline(group: ProjectGroupRow, milestones: MilestoneDetail[], today: string) {
-  const met = group.lastMeetingAt ? `last met ${shortDate(sgtDay(group.lastMeetingAt), today)}` : "no meeting logged";
-  const lines = [
-    `<b>Group ${group.number}${group.name ? ` · ${esc(group.name)}` : ""}</b>`,
-    `Mentor meeting: ${met}, next by ${shortDate(sgtDay(meetingDeadline(group)), today)}`,
-    "",
-  ];
-  if (!milestones.length) lines.push("No milestones yet.");
-  for (const m of milestones) {
-    const done = m.subtasks.filter((s) => s.status === "done").length;
-    const open = m.blockers.filter((b) => b.status === "open").length;
-    const overdue = m.status !== "done" && m.dueOn < today ? " · overdue" : "";
-    lines.push(
-      `${STATUS_ICON[m.status]} <b>#${m.id}</b> ${esc(m.title)} — due ${shortDate(m.dueOn, today)}${overdue}` +
-        (m.subtasks.length ? ` · ${done}/${m.subtasks.length} tasks` : "") +
-        (open ? ` · 🚧 ${open}` : "")
+  const parts = [`<h3>${groupTitle(group)}</h3>`, meetingLine(group, today)];
+  if (!milestones.length) parts.push("<p>No milestones yet.</p>");
+  else {
+    parts.push(
+      table(
+        ["#", "Milestone", "Due", "Status", "Tasks", "Open Blockers"],
+        milestones.slice(0, ROWS).map((m) => {
+          const overdue = m.status !== "done" && m.dueOn < today;
+          const done = m.subtasks.filter((s) => s.status === "done").length;
+          const open = m.blockers.filter((b) => b.status === "open").length;
+          return [
+            `<tg-button type="callback_data" style="link" data="m:${m.id}">${m.id}</tg-button>`,
+            esc(m.title),
+            overdue ? `<b>${shortDate(m.dueOn, today)}, overdue</b>` : shortDate(m.dueOn, today),
+            STATUS_LABEL[m.status],
+            m.subtasks.length ? `${done} of ${m.subtasks.length} done` : "None",
+            open ? String(open) : "None",
+          ];
+        })
+      ),
+      more(milestones.length),
+      "<footer>Tap a milestone's number to see its tasks and blockers.</footer>"
     );
   }
-  return cap(lines);
+  return parts.join("");
 }
 
+/** A milestone's tasks and blockers. */
 export function formatMilestone(m: MilestoneDetail, members: ProjectMemberRow[], today: string) {
-  const name = (id: number | null) => members.find((x) => x.id === id)?.name;
-  const lines = [
-    `<b>#${m.id} ${esc(m.title)}</b> — ${STATUS_ICON[m.status]} ${STATUS_LABEL[m.status]}`,
-    `Due ${shortDate(m.dueOn, today)}${m.startsOn ? ` (from ${shortDate(m.startsOn, today)})` : ""}`,
+  const assignee = (s: MilestoneDetail["subtasks"][number]) => {
+    const member = members.find((x) => x.id === s.assigneeId)?.name;
+    if (member) return esc(member);
+    return s.assigneeName ? `${esc(s.assigneeName)} <i>(not on the member list)</i>` : "Unassigned";
+  };
+  const overdue = m.status !== "done" && m.dueOn < today;
+  const dates = `${m.startsOn ? `From ${shortDate(m.startsOn, today)} to` : "Due"} ${shortDate(m.dueOn, today)}`;
+  const parts = [
+    `<h3>Milestone ${m.id}: ${esc(m.title)}</h3>`,
+    `<p>${STATUS_LABEL[m.status]}. ${dates}${overdue ? ", <b>overdue</b>" : ""}.</p>`,
   ];
-  if (m.notes) lines.push(esc(m.notes));
-  lines.push("", "<b>Tasks</b>");
-  if (!m.subtasks.length) lines.push("None. Add one: /task " + m.id + " title");
-  for (const s of m.subtasks) {
-    lines.push(
-      `${STATUS_ICON[s.status]} <b>#${s.id}</b> ${esc(s.title)}` +
-        (s.dueOn ? ` — due ${shortDate(s.dueOn, today)}` : "") +
-        ((name(s.assigneeId) ?? s.assigneeName) ? ` — ${esc((name(s.assigneeId) ?? s.assigneeName)!)}` : "")
+  if (m.notes) parts.push(`<blockquote>${esc(m.notes)}</blockquote>`);
+
+  parts.push("<h4>Tasks</h4>");
+  if (!m.subtasks.length) parts.push(`<p>None yet. Add one with /task ${m.id} and a title.</p>`);
+  else {
+    parts.push(
+      table(
+        ["#", "Task", "Status", "Due", "Assignee"],
+        m.subtasks.slice(0, ROWS).map((s) => [String(s.id), esc(s.title), STATUS_LABEL[s.status], s.dueOn ? shortDate(s.dueOn, today) : "None", assignee(s)])
+      ),
+      more(m.subtasks.length)
     );
   }
-  lines.push("", "<b>Blockers</b>");
-  if (!m.blockers.length) lines.push("None");
-  for (const b of m.blockers) lines.push(blockerLine(b));
-  return cap(lines);
+
+  const open = m.blockers.filter((b) => b.status === "open");
+  const resolved = m.blockers.filter((b) => b.status === "resolved");
+  parts.push("<h4>Open Blockers</h4>", open.length ? blockerList(open) : "<p>None.</p>");
+  if (resolved.length) parts.push(`<details><summary>Resolved Blockers (${resolved.length})</summary>${blockerList(resolved)}</details>`);
+  return parts.join("");
 }
 
-const blockerLine = (b: BlockerRow) => `${b.status === "open" ? "🚧" : "✔️"} <b>#${b.id}</b> ${esc(b.description)}${b.status === "resolved" ? " (resolved)" : ""}`;
+const blockerList = (list: BlockerRow[]) => `<ul>${list.map((b) => `<li>#${b.id} ${esc(b.description)}</li>`).join("")}</ul>`;
 
+/** /groups (private chat): every project group of the cohort. */
 export function formatGroups(groups: ProjectGroupRow[], today: string) {
-  if (!groups.length) return "No groups yet. Add them on the dashboard.";
-  return cap([
-    "<b>Project groups</b>",
-    ...groups.map((g) => {
-      const met = g.lastMeetingAt ? shortDate(sgtDay(g.lastMeetingAt), today) : "never";
-      return `<b>${g.number}</b> ${esc(g.name || "—")} · chat ${g.telegramChatId ? "✅" : "❌"} · met ${met} · reminders ${g.meetingRemindersOn ? "on" : "off"}`;
-    }),
-  ]);
+  if (!groups.length) return "<p>No project groups yet. Add them on the dashboard.</p>";
+  return (
+    `<h3>Project Groups</h3>${table(
+      ["Group", "Name", "Chat", "Last Meeting", "Reminders"],
+      groups.slice(0, ROWS).map((g) => [
+        String(g.number),
+        esc(g.name) || "None",
+        g.telegramChatId ? "Connected" : "Not connected",
+        g.lastMeetingAt ? shortDate(sgtDay(g.lastMeetingAt), today) : "None logged",
+        g.meetingRemindersOn ? "On" : "Off",
+      ])
+    )}${more(groups.length)}`
+  );
 }
 
 /** The 3-week nudge sent to a group's chat. */
 export function formatMeetingReminder(group: ProjectGroupRow, today: string) {
-  const since = group.lastMeetingAt ? `Your last meeting with your mentor${group.mentors ? "s" : ""} was on ${shortDate(sgtDay(group.lastMeetingAt), today)}.` : "No meeting with your mentors has been logged yet.";
+  const since = group.lastMeetingAt
+    ? `Your last meeting with your mentor${group.mentors ? "s" : ""} was on ${shortDate(sgtDay(group.lastMeetingAt), today)}.`
+    : "No meeting with your mentors has been logged yet.";
   return [
-    `⏰ <b>Group ${group.number}${group.name ? ` · ${esc(group.name)}` : ""}</b>`,
-    since,
-    `Please meet ${group.mentors ? esc(group.mentors) : "your mentors"} by <b>${shortDate(sgtDay(meetingDeadline(group)), today)}</b>, then log it with /meeting.`,
-  ].join("\n");
+    `<h3>Mentor Meeting Due: ${groupTitle(group)}</h3>`,
+    `<p>${since} Please meet ${group.mentors ? esc(group.mentors) : "your mentors"} by <b>${shortDate(sgtDay(meetingDeadline(group)), today)}</b>, then log it with /meeting.</p>`,
+  ].join("");
 }

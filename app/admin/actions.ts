@@ -16,6 +16,8 @@ import * as tracker from "@/app/lib/cms/tracker";
 import { noonSgt } from "@/app/lib/cms/bot-text";
 import { createAccountLink, createChatLink, unlinkTelegram } from "@/app/lib/cms/telegram-link";
 import * as webhook from "@/app/lib/cms/telegram-webhook";
+import { syncBotCommands } from "@/app/lib/cms/bot";
+import { telegramError } from "@/app/lib/cms/telegram";
 import type { Photo } from "@/app/lib/photos";
 import { UPLOAD_FOLDERS, uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
 import type { BlockerStatus, MilestoneStatus, Programme, ProjectStatus } from "@/app/lib/cms/taxonomy";
@@ -445,8 +447,12 @@ export async function getWebhookInfoAction() {
 export async function setWebhookAction() {
   return run(async (actor) => {
     await webhook.setWebhook(actor);
+    // The "/" command menus come from the bot's command table; setting the webhook refreshes them.
+    await syncBotCommands().catch((error) => {
+      throw new CmsError(`The webhook is set, but the command menus were not updated (${telegramError(error).message}). Select Set Webhook to retry.`);
+    });
     return webhook.getWebhookInfo(actor);
-  }, "Webhook set");
+  }, "Webhook and command menus set");
 }
 
 export async function deleteWebhookAction() {
