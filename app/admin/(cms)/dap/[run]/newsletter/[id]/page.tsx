@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { can } from "@/app/lib/cms/actor";
 import { getIssue, listIssues, listSessions } from "@/app/lib/cms/newsletter";
-import { botUsername } from "@/app/lib/cms/telegram";
+import { getBotUsername } from "@/app/lib/cms/telegram";
 import IssueEditor from "../../../../_run/IssueEditor";
 import { loadRun } from "../../../../_run/load";
 
@@ -31,7 +31,7 @@ export default async function IssueEditorPage(props: { params: Promise<{ run: st
       }}
       sessions={sessions.map((s) => ({ week: s.week, topic: s.topic, group: s.group?.name ?? "" }))}
       takenWeeks={siblings.map((s) => s.week)}
-      botUsername={botUsername()}
+      botUsername={await getBotUsername().catch(() => "")}
       telegramReady={Boolean(process.env.TELEGRAM_BOT_TOKEN)}
     />
   );

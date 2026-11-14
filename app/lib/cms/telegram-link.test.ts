@@ -5,7 +5,7 @@ import path from "node:path";
 import { before, describe, it } from "node:test";
 
 process.env.PGLITE_DIR = path.join(mkdtempSync(path.join(tmpdir(), "link-")), "db");
-process.env.TELEGRAM_BOT_USERNAME = "TestBot";
+process.env.TELEGRAM_BOT_TOKEN = "123:test";
 process.env.CMS_BOOTSTRAP_ADMINS = "boot@smu.edu.sg";
 
 import { eq } from "drizzle-orm";
@@ -13,7 +13,11 @@ import { getDb } from "@/app/lib/db";
 import { cohorts, people, projectGroups, telegramLinkCodes } from "@/app/lib/db/schema";
 import { CmsError, type Actor } from "./actor";
 import { claimAccountLink, claimChatLink, createAccountLink, createChatLink, forgetExpiredCodes, linkedTelegram, unlinkTelegram } from "./telegram-link";
+import { telegramApi } from "./telegram";
 import * as t from "./tracker";
+
+// The bot's username comes from getMe: the shared client answers every call with this bot.
+telegramApi().config.use(async () => ({ ok: true, result: { id: 123, is_bot: true, first_name: "Test", username: "TestBot" } as never }));
 
 const rejects = (p: Promise<unknown>, re: RegExp) => assert.rejects(p, (e) => e instanceof CmsError && re.test(e.message));
 const idOf = async (email: string) => (await (await getDb()).select().from(people).where(eq(people.email, email)))[0]?.telegramUserId;
@@ -76,7 +80,8 @@ describe("account link", () => {
   });
 
   it("unlinks, after which a fresh link works", async () => {
-    await rejects(unlinkTelegram(mingda, "other@smu.edu.sg"), /superadmin/);
+    await rejects(unlinkTelegram(mingda, "other@smu.edu.sg"), /Only an exco admin/);
+    await unlinkTelegram(boot, "other@smu.edu.sg"); // exco admins may unlink anyone
     await unlinkTelegram(mingda);
     assert.equal(await linkedTelegram(mingda.email), null);
     await claimAccountLink(codeOf(await createAccountLink(mingda)), tg(1865174434));

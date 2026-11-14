@@ -7,6 +7,7 @@ import { getCohort, type Cohort } from "./cohorts";
 import { issuePath } from "./paths";
 import { revalidateCms, TAGS } from "./revalidate";
 import { sendIssueToTelegram, SITE_URL } from "./telegram";
+import { getDapChannelId } from "./telegram-settings";
 import { BLOCK_DEFAULT_HEADING, BLOCK_TYPES, type BlockType } from "./taxonomy";
 
 /** A schedule row with the DAP group teaching it (members and mentors included). */
@@ -252,7 +253,7 @@ export async function publishIssue(actor: Actor, id: number): Promise<{ issue: I
 
   let telegram: TelegramOutcome = "skipped";
   if (current.postToTelegram && !current.telegramPostedAt) {
-    const channel = process.env.TELEGRAM_DAP_CHANNEL_ID;
+    const channel = await getDapChannelId();
     if (!channel && process.env.TELEGRAM_BOT_TOKEN) {
       telegram = "not-configured";
     } else {

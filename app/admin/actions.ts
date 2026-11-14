@@ -18,6 +18,7 @@ import { createAccountLink, createChatLink, unlinkTelegram } from "@/app/lib/cms
 import * as webhook from "@/app/lib/cms/telegram-webhook";
 import { syncBotCommands } from "@/app/lib/cms/bot";
 import { telegramError } from "@/app/lib/cms/telegram";
+import { setDapChannelId } from "@/app/lib/cms/telegram-settings";
 import type { Photo } from "@/app/lib/photos";
 import { UPLOAD_FOLDERS, uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
 import type { BlockerStatus, MilestoneStatus, Programme, ProjectStatus } from "@/app/lib/cms/taxonomy";
@@ -390,7 +391,7 @@ export async function createChatLinkAction(groupId: number) {
 /** Logs a meeting on a date (YYYY-MM-DD, Singapore); today or no date means now. */
 export async function logMeetingAction(groupId: number, date: string) {
   return track(async (_actor, who) => {
-    const today = new Date(Date.now() + 8 * 3_600_000).toISOString().slice(0, 10);
+    const today = people.todaySgt();
     await tracker.logMeeting(who, groupId, !date || date === today ? new Date() : noonSgt(date));
     return null;
   });
@@ -466,8 +467,13 @@ export async function createTelegramLinkAction() {
   return run((actor) => createAccountLink(actor));
 }
 
-export async function unlinkTelegramAction() {
-  return track((actor) => unlinkTelegram(actor).then(() => null), "Telegram unlinked");
+/** Unlinks the signed-in person's Telegram account, or (exco admins) someone else's. */
+export async function unlinkTelegramAction(email?: string) {
+  return track((actor) => unlinkTelegram(actor, email).then(() => null), "Telegram unlinked");
+}
+
+export async function setDapChannelAction(channelId: string) {
+  return track((actor) => setDapChannelId(actor, channelId).then(() => null), "DAP channel saved");
 }
 
 export async function signOutAction() {

@@ -1,7 +1,7 @@
 import { Bot, type Context, type NextFunction } from "grammy";
 import type { UserFromGetMe } from "grammy/types";
 import { trackerBot } from "./bot";
-import { botUsername, clientOptions, dryRun, telegramToken } from "./telegram";
+import { clientOptions, dryRun, telegramToken } from "./telegram";
 import { claimUpdate } from "./telegram-updates";
 
 /*
@@ -14,7 +14,7 @@ import { claimUpdate } from "./telegram-updates";
  */
 
 /** Stands in for getMe when there's no token (and in tests), so the bot runs without Telegram. */
-export const offlineBotInfo = (username = botUsername() || "smubia_offline_bot"): UserFromGetMe => ({
+export const offlineBotInfo = (username = "smubia_offline_bot"): UserFromGetMe => ({
   id: 0,
   is_bot: true,
   first_name: "SMUBIA (offline)",

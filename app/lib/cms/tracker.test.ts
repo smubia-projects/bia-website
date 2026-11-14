@@ -83,6 +83,12 @@ describe("timeline permissions and scoping", () => {
     await rejects(t.getMilestone(mem1(), m2), /not found/);
     assert.equal((await t.getMilestone(mem1(), m1)).title, "Proposal");
     assert.equal((await t.setMilestoneStatus(dapExco, m1, "in_progress")).status, "in_progress");
+    await rejects(t.saveMilestone(dapExco, { groupId: g1.id, title: "Bad", dueOn: "2030-13-01" }), /real date/);
+    // An edit that leaves the start date out is checked against the stored one.
+    const dated = await t.saveMilestone(dapExco, { groupId: g1.id, title: "Dated", startsOn: "2030-03-01", dueOn: "2030-03-10" });
+    await rejects(t.saveMilestone(dapExco, { id: dated.id, groupId: g1.id, title: "Dated", dueOn: "2030-02-01" }), /Start date must not be after/);
+    assert.equal((await t.saveMilestone(dapExco, { id: dated.id, groupId: g1.id, title: "Dated", dueOn: "2030-03-20" })).startsOn, "2030-03-01");
+    await t.deleteMilestone(dapExco, dated.id);
     await rejects(t.setMilestoneStatus(dapExco, m1, "finished" as never), /one of/);
   });
 

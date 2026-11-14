@@ -149,7 +149,7 @@ export default function IssueEditor({ cohortSlug, issue, sessions, takenWeeks, b
     if (!res.ok) return show(res.error, true);
     const t = res.data.telegram;
     const tg =
-      t === "sent" ? " and posted to Telegram" : t === "dry-run" ? ". Telegram not configured: message logged to the server console" : t === "not-configured" ? ". Telegram not posted: set TELEGRAM_DAP_CHANNEL_ID" : typeof t === "object" ? `. Telegram failed: ${t.error}` : "";
+      t === "sent" ? " and posted to Telegram" : t === "dry-run" ? ". Telegram not configured: message logged to the server console" : t === "not-configured" ? ". Telegram not posted: set the DAP channel in Settings › Telegram" : typeof t === "object" ? `. Telegram failed: ${t.error}` : "";
     show(`Week ${res.data.week} published${tg}`, typeof t === "object");
   }
 

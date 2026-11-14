@@ -65,7 +65,9 @@ function clean(value: string | undefined, label: string, max: number) {
 
 function cleanDate(value: string | null | undefined, label: string): string | null {
   if (value == null || value === "") return null;
-  const ok = /^\d{4}-\d{2}-\d{2}$/.test(value) && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
+  // Date.parse gives NaN for "2026-13-01"; toISOString would throw on it instead of failing the check.
+  const time = /^\d{4}-\d{2}-\d{2}$/.test(value) ? Date.parse(`${value}T00:00:00Z`) : NaN;
+  const ok = !Number.isNaN(time) && new Date(time).toISOString().slice(0, 10) === value;
   ensure(ok, `${label} must be a real date (YYYY-MM-DD)`);
   return value;
 }
@@ -315,7 +317,12 @@ export async function saveMilestone(actor: Actor, input: MilestoneInput): Promis
   const startsOn = cleanDate(input.startsOn, "Start date");
   const dueOn = cleanDate(input.dueOn, "Due date");
   ensure(dueOn, "Due date is required");
-  ensure(!startsOn || startsOn <= dueOn, "Start date must not be after the due date");
+  const db = await getDb();
+  const [current] = input.id ? await db.select().from(milestones).where(eq(milestones.id, input.id)) : [];
+  ensure(!input.id || current, "Milestone not found");
+  // On edit a start date left out keeps the stored one, so check the dates as they will be saved.
+  const effectiveStart = input.startsOn !== undefined ? startsOn : (current?.startsOn ?? null);
+  ensure(!effectiveStart || effectiveStart <= dueOn, "Start date must not be after the due date");
   const values = {
     title: clean(input.title, "Title", 200),
     // On edit, fields left out stay as they are.
@@ -326,7 +333,6 @@ export async function saveMilestone(actor: Actor, input: MilestoneInput): Promis
     updatedAt: new Date().toISOString(),
     updatedBy: actor.name,
   };
-  const db = await getDb();
   if (input.id) {
     const [row] = await db.update(milestones).set(values).where(eq(milestones.id, input.id)).returning();
     ensure(row, "Milestone not found");

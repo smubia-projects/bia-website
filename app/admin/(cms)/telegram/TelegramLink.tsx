@@ -12,7 +12,7 @@ import type { TelegramAccount } from "@/app/lib/cms/telegram-link";
  * Links the signed-in admin's Telegram account, so the tracker bot recognises them in group chats.
  * Only the numeric Telegram user ID is stored, never the username.
  */
-export default function TelegramLink({ account, botName }: { account: TelegramAccount | null; botName: string }) {
+export default function TelegramLink({ account, botName, children }: { account: TelegramAccount | null; botName: string; children?: React.ReactNode }) {
   const router = useRouter();
   const { handle, node } = useActionToast();
   const confirm = useConfirm();
@@ -55,7 +55,7 @@ export default function TelegramLink({ account, botName }: { account: TelegramAc
       <PageHead title="Telegram" sub="Links your Telegram account to the DAP timeline tracker bot. Admin commands then work in every connected project group chat." />
 
       <section className={styles.panel}>
-        <h2 className={styles.h2}>Account Link</h2>
+        <h2 className={styles.h2}>Your Account</h2>
         <div className={t.facts}>
           <div className={t.fact}>
             <span className={t.factTitle}>Status</span>
@@ -67,7 +67,7 @@ export default function TelegramLink({ account, botName }: { account: TelegramAc
           <div className={t.fact}>
             <span className={t.factTitle}>Bot</span>
             <span className={t.factValue}>{botName ? `@${botName}` : "Not configured"}</span>
-            <span className={styles.hint}>{botName ? "Set by TELEGRAM_BOT_USERNAME." : "TELEGRAM_BOT_USERNAME is not set."}</span>
+            <span className={styles.hint}>{botName ? "The account of TELEGRAM_BOT_TOKEN." : "TELEGRAM_BOT_TOKEN is not set."}</span>
           </div>
         </div>
 
@@ -102,6 +102,7 @@ export default function TelegramLink({ account, botName }: { account: TelegramAc
           </div>
         )}
       </section>
+      {children}
       {node}
     </div>
   );

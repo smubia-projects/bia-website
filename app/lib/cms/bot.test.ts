@@ -5,7 +5,7 @@ import path from "node:path";
 import { before, describe, it } from "node:test";
 
 process.env.PGLITE_DIR = path.join(mkdtempSync(path.join(tmpdir(), "bot-")), "db");
-process.env.TELEGRAM_BOT_USERNAME = "TestBot";
+process.env.TELEGRAM_BOT_TOKEN = "123:test";
 
 import { eq } from "drizzle-orm";
 import { getDb } from "@/app/lib/db";
@@ -13,6 +13,7 @@ import { cohorts, people, projectGroups } from "@/app/lib/db/schema";
 import type { Api } from "grammy";
 import type { Update } from "grammy/types";
 import { sendMeetingReminders, syncBotCommands } from "./bot";
+import { telegramApi } from "./telegram";
 import { createBot, offlineBotInfo } from "./telegram-bot";
 import { createAccountLink, createChatLink } from "./telegram-link";
 import * as t from "./tracker";
@@ -24,6 +25,9 @@ const MINGDA_EMAIL = "mingda.chen.2025@smu.edu.sg";
 const MIA = 2001; // a mentee in the chat
 const STRANGER = 9999;
 const OTHER_CHAT = -7770001; // some other group the bot was added to
+
+// The bot's username comes from getMe: the shared client answers every call with this bot.
+telegramApi().config.use(async () => ({ ok: true, result: { id: 123, is_bot: true, first_name: "Test", username: "TestBot" } as never }));
 
 let calls: { method: string; body: Record<string, unknown> }[] = [];
 // The real bot with a fake Telegram: every API call is recorded and answered with `true`.

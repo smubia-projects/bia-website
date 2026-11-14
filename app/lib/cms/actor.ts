@@ -60,6 +60,8 @@ export const can = {
   /** People, roles and other people's access tokens: superadmins only */
   managePeople: (a: Actor) => a.role === "exco" && Boolean(a.superadmin),
   editLinks: (a: Actor) => a.role === "exco",
+  /** The bot's settings (webhook, DAP channel) and other people's linked accounts: exco admins */
+  manageTelegramBot: (a: Actor) => a.role === "exco",
   /** The "applications open" switch: exco, and AI Lodge exco for AI Lodge */
   setApplications: (a: Actor, programme: Programme) => a.role === "exco" || (programme === "AI Lodge" && a.role === "lodge_exco"),
   /** smubia.com photos are exco's; the AI Lodge site's photos are AI Lodge exco's too */

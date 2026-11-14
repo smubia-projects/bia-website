@@ -4,7 +4,7 @@ import { getDb } from "@/app/lib/db";
 import { people, projectGroups, telegramLinkCodes, type TelegramLinkKind } from "@/app/lib/db/schema";
 import { can, CmsError, ensure, type Actor } from "./actor";
 import { findAccess } from "./people";
-import { botUsername } from "./telegram";
+import { getBotUsername } from "./telegram";
 import { connectChat, type ProjectGroup } from "./tracker";
 
 /*
@@ -45,15 +45,16 @@ async function createCode(actor: Actor, kind: TelegramLinkKind, target: { email?
   return code;
 }
 
-function botName() {
-  ensure(botUsername(), "TELEGRAM_BOT_USERNAME is not set");
-  return botUsername();
+async function botName() {
+  const name = await getBotUsername();
+  ensure(name, "The Telegram bot is not configured: TELEGRAM_BOT_TOKEN is not set");
+  return name;
 }
 
 /** The signed-in admin links their own Telegram account; nobody can make a link for someone else. */
 export async function createAccountLink(actor: Actor, now = Date.now()) {
   ensure(can.tracker(actor), "This role cannot use the timeline tracker");
-  const bot = botName();
+  const bot = await botName();
   return `https://t.me/${bot}?start=${await createCode(actor, "account", { email: actor.email.toLowerCase() }, now)}`;
 }
 
@@ -63,7 +64,7 @@ export async function createChatLink(actor: Actor, projectGroupId: number, now =
   const db = await getDb();
   const [group] = await db.select({ id: projectGroups.id }).from(projectGroups).where(eq(projectGroups.id, projectGroupId));
   ensure(group, "Project group not found");
-  const bot = botName();
+  const bot = await botName();
   return `https://t.me/${bot}?startgroup=${await createCode(actor, "chat", { projectGroupId }, now)}`;
 }
 
@@ -128,9 +129,9 @@ export async function forgetExpiredCodes(now = new Date()) {
   return rows.length;
 }
 
-/** Clears an admin's Telegram link: their own, or anyone's for superadmins. */
+/** Clears a Telegram link: anyone may unlink their own; exco admins may unlink anyone's. */
 export async function unlinkTelegram(actor: Actor, email = actor.email) {
-  ensure(email.toLowerCase() === actor.email.toLowerCase() || can.managePeople(actor), "Only a superadmin can unlink someone else");
+  ensure(email.toLowerCase() === actor.email.toLowerCase() || can.manageTelegramBot(actor), "Only an exco admin can unlink someone else");
   const db = await getDb();
   await db.update(people).set({ telegramUserId: null, telegramName: "", telegramUsername: "" }).where(eq(people.email, email.toLowerCase()));
 }

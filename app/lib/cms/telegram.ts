@@ -13,10 +13,6 @@ import { CmsError } from "./actor";
 
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.smubia.com").replace(/\/$/, "");
 
-export function botUsername() {
-  return process.env.TELEGRAM_BOT_USERNAME || "";
-}
-
 export function escapeHtml(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -47,6 +43,16 @@ export function telegramApi(): Api {
     api = { token, client };
   }
   return api.client;
+}
+
+let botUsername: { token: string; username: string } | undefined;
+
+/** The bot's @username (without the @), from Telegram's getMe: asked once per process and token. "" without a token. */
+export async function getBotUsername(): Promise<string> {
+  const token = telegramToken();
+  if (!token) return "";
+  if (botUsername?.token !== token) botUsername = { token, username: (await telegramApi().getMe()).username };
+  return botUsername.username;
 }
 
 /** A Telegram failure as an editor-readable message; the token never appears in it. */
@@ -105,9 +111,8 @@ export async function sendIssueToTelegram(chatId: string, issue: TelegramIssue, 
     else await client.sendMessage(target, text, { parse_mode: "HTML", link_preview_options: { is_disabled: false } });
   } catch (error) {
     if (error instanceof GrammyError && /chat not found|can't initiate|bot was blocked|user is deactivated/i.test(error.description)) {
-      throw new CmsError(
-        `Telegram couldn't deliver to ${target}. That person must send /start to ${botUsername() ? "@" + botUsername() : "the bot"} first.`
-      );
+      const bot = await getBotUsername().catch(() => "");
+      throw new CmsError(`Telegram couldn't deliver to ${target}. That person must send /start to ${bot ? `@${bot}` : "the bot"} first.`);
     }
     throw telegramError(error);
   }
