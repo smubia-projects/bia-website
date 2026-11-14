@@ -63,12 +63,16 @@ function clean(value: string | undefined, label: string, max: number) {
   return v;
 }
 
-function cleanDate(value: string | null | undefined, label: string): string | null {
-  if (value == null || value === "") return null;
+/** A real calendar date as YYYY-MM-DD ("2026-02-30" and "2026-13-01" are not). */
+export function isIsoDate(value: string) {
   // Date.parse gives NaN for "2026-13-01"; toISOString would throw on it instead of failing the check.
   const time = /^\d{4}-\d{2}-\d{2}$/.test(value) ? Date.parse(`${value}T00:00:00Z`) : NaN;
-  const ok = !Number.isNaN(time) && new Date(time).toISOString().slice(0, 10) === value;
-  ensure(ok, `${label} must be a real date (YYYY-MM-DD)`);
+  return !Number.isNaN(time) && new Date(time).toISOString().slice(0, 10) === value;
+}
+
+function cleanDate(value: string | null | undefined, label: string): string | null {
+  if (value == null || value === "") return null;
+  ensure(isIsoDate(value), `${label} must be a real date (YYYY-MM-DD)`);
   return value;
 }
 
