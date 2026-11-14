@@ -1,18 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { noonSgt, parseCommand, parseDate, parseStatus, shortDate, sgtDay, splitTitleAndDates } from "./bot-text";
+import { noonSgt, parseDate, parseStatus, shortDate, sgtDay, splitTitleAndDates } from "./bot-text";
 
 const today = "2026-11-13";
-
-describe("parseCommand", () => {
-  it("splits command and args, strips @bot, flags other bots", () => {
-    assert.deepEqual(parseCommand("/task 12 Draft the deck"), { cmd: "task", args: "12 Draft the deck", forOtherBot: false });
-    assert.deepEqual(parseCommand("/Milestones@MyBot"), { cmd: "milestones", args: "", forOtherBot: false });
-    assert.equal(parseCommand("/task@OtherBot 1 x", "MyBot")?.forOtherBot, true);
-    assert.equal(parseCommand("/task@mybot 1 x", "MyBot")?.forOtherBot, false);
-    assert.equal(parseCommand("hello /task"), null);
-  });
-});
 
 describe("parseDate", () => {
   it("reads the common spellings", () => {

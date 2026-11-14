@@ -1,5 +1,6 @@
 import { sendMeetingReminders } from "@/app/lib/cms/bot";
 import { publishDueIssues } from "@/app/lib/cms/newsletter";
+import { forgetOldUpdates } from "@/app/lib/cms/telegram-updates";
 
 /*
  * Daily Vercel Cron (vercel.json, 01:00 UTC = 09:00 SGT). Hobby-plan crons may
@@ -24,5 +25,9 @@ export async function GET(request: Request) {
     console.error("[cron] meeting reminders failed", error);
     return 0;
   });
-  return Response.json({ published, reminded });
+  const forgotUpdates = await forgetOldUpdates().catch((error) => {
+    console.error("[cron] telegram update cleanup failed", error);
+    return 0;
+  });
+  return Response.json({ published, reminded, forgotUpdates });
 }

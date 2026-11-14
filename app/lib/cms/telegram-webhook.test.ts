@@ -1,28 +1,30 @@
 import assert from "node:assert/strict";
-import { afterEach, beforeEach, describe, it } from "node:test";
+import { beforeEach, describe, it } from "node:test";
+import { HttpError } from "grammy";
 import { CmsError, type Actor } from "./actor";
+import { telegramApi } from "./telegram";
 import { deleteWebhook, expectedWebhookUrl, getWebhookInfo, setWebhook } from "./telegram-webhook";
 
 const TOKEN = "123456:SECRET-BOT-TOKEN";
 const dap: Actor = { email: "m@smu.edu.sg", name: "M", role: "dap_exco" };
 const rejects = (p: Promise<unknown>, re: RegExp) => assert.rejects(p, (e) => e instanceof CmsError && re.test(e.message));
 
-let calls: { url: string; body: Record<string, unknown> }[] = [];
-const realFetch = globalThis.fetch;
+// A fake Telegram: every call on the shared client is recorded and answered by `answer`.
+let calls: { method: string; body: Record<string, unknown> }[] = [];
+let answer: (method: string) => unknown = () => ({ ok: true, result: true });
 const reply = (json: unknown) => {
-  globalThis.fetch = (async (url: string, init: RequestInit) => {
-    calls.push({ url: String(url), body: JSON.parse(String(init.body)) });
-    return new Response(JSON.stringify(json));
-  }) as typeof fetch;
+  answer = () => json;
 };
 
 beforeEach(() => {
   calls = [];
   process.env.TELEGRAM_BOT_TOKEN = TOKEN;
   process.env.TELEGRAM_WEBHOOK_SECRET = "new-key_123";
-});
-afterEach(() => {
-  globalThis.fetch = realFetch;
+  // The client is rebuilt when the token changes; the newest fake runs first and never calls on.
+  telegramApi().config.use(async (_prev, method, payload) => {
+    calls.push({ method, body: payload as Record<string, unknown> });
+    return answer(method) as never;
+  });
 });
 
 describe("webhook management", () => {
@@ -42,7 +44,7 @@ describe("webhook management", () => {
     assert.deepEqual([info.registered, info.matches, info.pendingUpdates, info.maxConnections, info.secretConfigured], [true, true, 2, 1, true]);
     assert.equal(info.lastError, "Wrong response from the webhook: 500");
     assert.equal(info.lastErrorAt, "2023-11-14T22:13:20.000Z");
-    assert.ok(calls[0].url.endsWith("/getWebhookInfo"));
+    assert.equal(calls[0].method, "getWebhookInfo");
 
     reply({ ok: true, result: { url: "https://old.example/hook" } });
     const other = await getWebhookInfo(dap);
@@ -63,7 +65,7 @@ describe("webhook management", () => {
   it("deletes any existing webhook, then sets it with the current key, one connection and the update types the bot reads", async () => {
     reply({ ok: true, result: true });
     await setWebhook(dap);
-    assert.deepEqual(calls.map((c) => c.url.split("/").pop()), ["deleteWebhook", "setWebhook"]);
+    assert.deepEqual(calls.map((c) => c.method), ["deleteWebhook", "setWebhook"]);
     assert.deepEqual(calls[0].body, { drop_pending_updates: false });
     assert.deepEqual(calls[1].body, {
       url: expectedWebhookUrl(),
@@ -74,11 +76,7 @@ describe("webhook management", () => {
   });
 
   it("says so when the old webhook was removed but the new one could not be set", async () => {
-    let n = 0;
-    globalThis.fetch = (async (url: string, init: RequestInit) => {
-      calls.push({ url: String(url), body: JSON.parse(String(init.body)) });
-      return new Response(JSON.stringify(++n === 1 ? { ok: true, result: true } : { ok: false, description: "Bad Request: bad webhook: HTTPS url must be provided" }));
-    }) as typeof fetch;
+    answer = (method) => (method === "deleteWebhook" ? { ok: true, result: true } : { ok: false, error_code: 400, description: "Bad Request: bad webhook: HTTPS url must be provided" });
     await rejects(setWebhook(dap), /old webhook was removed but the new one was not set \(Telegram error: Bad Request: bad webhook[^)]*\)\. Select Set Webhook to retry/);
     assert.equal(calls.length, 2);
   });
@@ -97,16 +95,16 @@ describe("webhook management", () => {
   it("deletes the webhook and keeps pending updates by default", async () => {
     reply({ ok: true, result: true });
     await deleteWebhook(dap);
-    assert.ok(calls[0].url.endsWith("/deleteWebhook"));
+    assert.equal(calls[0].method, "deleteWebhook");
     assert.deepEqual(calls[0].body, { drop_pending_updates: false });
   });
 
   it("turns Telegram errors into messages, and a network failure never leaks the token", async () => {
-    reply({ ok: false, description: "Bad Request: bad webhook: HTTPS url must be provided for webhook" });
+    reply({ ok: false, error_code: 400, description: "Bad Request: bad webhook: HTTPS url must be provided for webhook" });
     await rejects(deleteWebhook(dap), /Telegram error: Bad Request: bad webhook/);
-    globalThis.fetch = (async (url: string) => {
-      throw new Error(`connect ECONNREFUSED for ${url}`);
-    }) as typeof fetch;
+    answer = () => {
+      throw new HttpError(`Network request for 'getWebhookInfo' failed! (connect ECONNREFUSED for https://api.telegram.org/bot${TOKEN}/getWebhookInfo)`, new Error("ECONNREFUSED"));
+    };
     await assert.rejects(getWebhookInfo(dap), (e) => e instanceof CmsError && /could not be reached/.test(e.message) && !e.message.includes(TOKEN));
   });
 });

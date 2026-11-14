@@ -4,24 +4,6 @@ import { escapeHtml as esc } from "./telegram";
 
 /** Parsing and formatting for the tracker bot's messages. Pure: no database, no network. */
 
-export interface ParsedCommand {
-  cmd: string;
-  args: string;
-  /** "/task@OtherBot": addressed to a different bot, which must not answer */
-  forOtherBot: boolean;
-}
-
-/** "/task@SmubiaBot 12 Draft deck" → { cmd: "task", args: "12 Draft deck" }; null when the text is not a command. */
-export function parseCommand(text: string, botName = ""): ParsedCommand | null {
-  const m = text.match(/^\/([A-Za-z_]+)(?:@(\w+))?(?:\s+([\s\S]*))?$/);
-  if (!m) return null;
-  return {
-    cmd: m[1].toLowerCase(),
-    args: (m[3] ?? "").trim(),
-    forOtherBot: Boolean(m[2] && botName && m[2].toLowerCase() !== botName.toLowerCase()),
-  };
-}
-
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 
 function isoDate(y: number, m: number, d: number) {

@@ -11,7 +11,10 @@ process.env.TELEGRAM_BOT_USERNAME = "TestBot";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/app/lib/db";
 import { cohorts, people, projectGroups } from "@/app/lib/db/schema";
-import { claimUpdate, handleUpdate, sendMeetingReminders, type TgUpdate } from "./bot";
+import type { Api } from "grammy";
+import type { Update } from "grammy/types";
+import { sendMeetingReminders } from "./bot";
+import { createBot, offlineBotInfo } from "./telegram-bot";
 import { makeLinkToken } from "./telegram-link";
 import * as t from "./tracker";
 
@@ -24,20 +27,29 @@ const STRANGER = 9999;
 const OTHER_CHAT = -7770001; // some other group the bot was added to
 
 let calls: { method: string; body: Record<string, unknown> }[] = [];
-const tg = async (method: string, body: Record<string, unknown>) => void calls.push({ method, body });
+// The real bot with a fake Telegram: every API call is recorded and answered with `true`.
+const bot = createBot("123:test", offlineBotInfo("TestBot"));
+bot.api.config.use(async (_prev, method, payload) => {
+  calls.push({ method, body: payload as Record<string, unknown> });
+  return { ok: true, result: true as never };
+});
+const handleUpdate = (update: unknown) => bot.handleUpdate(update as Update);
 let nextId = 100;
 
 /** Sends a message and returns the bot's reply text ("" when it stayed silent). */
 async function say(chat: number, from: number, text: string, type = chat > 0 ? "private" : "group") {
   calls = [];
-  const update: TgUpdate = { update_id: nextId++, message: { message_id: nextId, from: { id: from, first_name: from === MINGDA ? "Mingda" : "Mia" }, chat: { id: chat, type }, text } };
-  await handleUpdate(update, tg);
+  // Telegram marks a leading command as a bot_command entity; grammY's bot.command() matches on it.
+  const command = text.match(/^\/\S+/)?.[0];
+  const entities = command ? [{ type: "bot_command", offset: 0, length: command.length }] : undefined;
+  const update = { update_id: nextId++, message: { message_id: nextId, from: { id: from, first_name: from === MINGDA ? "Mingda" : "Mia" }, chat: { id: chat, type }, text, entities } };
+  await handleUpdate(update);
   return calls.filter((c) => c.method === "sendMessage").map((c) => String(c.body.text)).join("\n");
 }
 
 async function press(chat: number, from: number, data: string) {
   calls = [];
-  await handleUpdate({ update_id: nextId++, callback_query: { id: "q", from: { id: from, first_name: "X" }, message: { message_id: 1, chat: { id: chat, type: chat > 0 ? "private" : "group" } }, data } }, tg);
+  await handleUpdate({ update_id: nextId++, callback_query: { id: "q", from: { id: from, first_name: "X" }, message: { message_id: 1, chat: { id: chat, type: chat > 0 ? "private" : "group" } }, data } });
   return calls;
 }
 
@@ -152,19 +164,25 @@ describe("housekeeping", () => {
   it("ignores other bots' commands, answers unknown ones, dedupes updates", async () => {
     assert.equal(await say(CHAT, MIA, "/milestones@SomeOtherBot"), "");
     assert.match(await say(CHAT, MIA, "/nope"), /Unknown command/);
+    assert.match(await say(CHAT, MIA, "/milestones@TestBot"), /Group 1/);
+    assert.equal(await say(CHAT, MIA, "/milestones@OtherBot"), ""); // meant for another bot
     assert.match(await say(CHAT, MIA, "/help"), /Tracker commands/);
     assert.doesNotMatch(await say(CHAT, MIA, "/help"), /DAP exco/);
     assert.match(await say(CHAT, MINGDA, "/help"), /\/register/);
-    assert.equal(await claimUpdate(900_000), true);
-    assert.equal(await claimUpdate(900_000), false);
-    assert.equal(await claimUpdate(899_999), false);
-    assert.equal(await claimUpdate(900_001), true);
+  });
+
+  it("handles an update Telegram re-sends only once", async () => {
+    const update = { update_id: 777_000, message: { message_id: 1, date: 0, from: { id: MIA, is_bot: false, first_name: "Mia" }, chat: { id: CHAT, type: "group" }, text: "/help", entities: [{ type: "bot_command", offset: 0, length: 5 }] } };
+    calls = [];
+    await handleUpdate(update);
+    await handleUpdate(update);
+    assert.equal(calls.filter((c) => c.method === "sendMessage").length, 1);
   });
 
   it("follows the group when Telegram upgrades it to a supergroup", async () => {
     const NEW = -1005557514552;
     calls = [];
-    await handleUpdate({ update_id: nextId++, message: { message_id: 1, chat: { id: CHAT, type: "group" }, migrate_to_chat_id: NEW } }, tg);
+    await handleUpdate({ update_id: nextId++, message: { message_id: 1, chat: { id: CHAT, type: "group" }, migrate_to_chat_id: NEW } });
     assert.equal(await say(CHAT, MIA, "/milestones"), "");
     assert.match(await say(NEW, MIA, "/milestones", "supergroup"), /Group 1/);
   });
@@ -175,16 +193,18 @@ describe("meeting reminders", () => {
   it("sends once to the group's chat 3 weeks after the last meeting, and retries after a failed send", async () => {
     const db = await getDb();
     await db.update(projectGroups).set({ lastMeetingAt: new Date(Date.now() - 22 * 86_400_000).toISOString() }).where(eq(projectGroups.id, g1.id));
-    const failing = async () => {
-      throw new Error("bot was kicked");
-    };
+    const failing = {
+      sendMessage: async () => {
+        throw new Error("bot was kicked");
+      },
+    } as unknown as Api;
     assert.equal(await sendMeetingReminders(failing), 0);
     assert.equal((await t.dueMeetingReminders()).length, 1); // released, so tomorrow retries
     calls = [];
-    assert.equal(await sendMeetingReminders(tg), 1);
+    assert.equal(await sendMeetingReminders(bot.api), 1);
     assert.equal(calls[0].body.chat_id, NEW);
     assert.match(String(calls[0].body.text), /Group 1 · Alpha[\s\S]*Dr Tan[\s\S]*\/meeting/);
-    assert.equal(await sendMeetingReminders(tg), 0);
+    assert.equal(await sendMeetingReminders(bot.api), 0);
     await say(NEW, MIA, "/meeting", "supergroup"); // a new meeting restarts the cycle
     assert.equal((await t.dueMeetingReminders()).length, 0);
     assert.equal(g2.meetingRemindersOn && (await t.dueMeetingReminders()).some((g) => g.id === g2.id), false); // switched off in the DM test

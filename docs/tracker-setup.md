@@ -28,8 +28,9 @@ The Timeline Tracker page has the same thing as buttons (**Telegram Webhook**: C
 update `TELEGRAM_WEBHOOK_SECRET` in the environment, redeploy, then select Set Webhook (the old key stops working at once,
 and the page shows the last error if Telegram still posts with it). The token and key are never shown in the browser.
 
-`max_connections=1` makes Telegram deliver one update at a time, in order. The duplicate check keeps only the
-last handled `update_id`, so it relies on that. Leave the bot's **privacy mode on** (BotFather default): the bot
+`max_connections=1` makes Telegram deliver one update at a time. Re-sent updates are caught by the
+`telegram_updates` table (each `update_id` is handled once, in any order; the daily cron forgets IDs after two
+days). Leave the bot's **privacy mode on** (BotFather default): the bot
 then sees only `/commands`, replies to it and button presses, never the group's other messages.
 
 ## Go-live steps

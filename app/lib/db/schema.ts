@@ -471,6 +471,15 @@ export const issues = pgTable(
   (t) => [uniqueIndex("issues_cohort_week").on(t.cohortId, t.week)]
 );
 
+/**
+ * Telegram update IDs the bot has handled, so an update Telegram re-sends runs once. Any order
+ * works (a lower ID than the last one is still new). The daily cron deletes rows after 2 days.
+ */
+export const telegramUpdates = pgTable("telegram_updates", {
+  updateId: bigint("update_id", { mode: "number" }).primaryKey(),
+  receivedAt: timestamp("received_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
+});
+
 /** Club links editable in the CMS (join forms, socials). Unset keys fall back to app/lib/links.ts. */
 export const siteLinks = pgTable("site_links", {
   key: text("key").primaryKey(),

@@ -1,5 +1,6 @@
 import { can, CmsError, ensure, type Actor } from "./actor";
-import { SITE_URL } from "./telegram";
+import type { Api } from "grammy";
+import { SITE_URL, telegramApi, telegramError, telegramToken } from "./telegram";
 
 /*
  * Reading, setting and deleting the tracker bot's Telegram webhook from the dashboard.
@@ -32,23 +33,13 @@ export interface WebhookInfo {
 }
 
 /** One Bot API call. Failures become messages the editor can read; the token never appears in them. */
-async function telegram<T>(method: string, body: Record<string, unknown> = {}): Promise<T> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  ensure(token, "TELEGRAM_BOT_TOKEN is not set");
-  let json: { ok?: boolean; result?: T; description?: string };
+async function telegram<T>(call: (api: Api) => Promise<T>): Promise<T> {
+  ensure(telegramToken(), "TELEGRAM_BOT_TOKEN is not set");
   try {
-    const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(8000),
-    });
-    json = await res.json();
-  } catch {
-    throw new CmsError("Telegram could not be reached. Try again in a moment.");
+    return await call(telegramApi());
+  } catch (error) {
+    throw telegramError(error);
   }
-  if (!json.ok) throw new CmsError(`Telegram error: ${json.description ?? "request failed"}`);
-  return json.result as T;
 }
 
 const requireTracker = (actor: Actor) => ensure(can.tracker(actor), "This role cannot manage the Telegram webhook");
@@ -57,21 +48,14 @@ const requireTracker = (actor: Actor) => ensure(can.tracker(actor), "This role c
 export async function getWebhookInfo(actor: Actor): Promise<WebhookInfo> {
   requireTracker(actor);
   const base = {
-    tokenConfigured: Boolean(process.env.TELEGRAM_BOT_TOKEN),
+    tokenConfigured: Boolean(telegramToken()),
     secretConfigured: Boolean(process.env.TELEGRAM_WEBHOOK_SECRET),
     expectedUrl: expectedWebhookUrl(),
   };
   if (!base.tokenConfigured) {
     return { ...base, url: "", registered: false, matches: false, pendingUpdates: 0, maxConnections: null, allowedUpdates: [], lastError: null, lastErrorAt: null };
   }
-  const r = await telegram<{
-    url?: string;
-    pending_update_count?: number;
-    max_connections?: number;
-    allowed_updates?: string[];
-    last_error_date?: number;
-    last_error_message?: string;
-  }>("getWebhookInfo");
+  const r = await telegram((api) => api.getWebhookInfo());
   const url = r.url ?? "";
   return {
     ...base,
@@ -89,7 +73,7 @@ export async function getWebhookInfo(actor: Actor): Promise<WebhookInfo> {
 /**
  * Points Telegram at this site with the current TELEGRAM_WEBHOOK_SECRET: deletes any existing
  * webhook first (one that failed to clear properly can otherwise stay stuck), then sets it. One
- * connection at a time, so updates arrive in order (the duplicate check relies on it), and only
+ * connection at a time (updates arrive one by one; the duplicate check works in any order), and only
  * the update types the bot reads. This is also how a new key is adopted after the env var changed.
  * Everything is validated before the first call, so a bad environment never leaves the bot
  * without a webhook.
@@ -97,17 +81,17 @@ export async function getWebhookInfo(actor: Actor): Promise<WebhookInfo> {
 export async function setWebhook(actor: Actor) {
   requireTracker(actor);
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  ensure(process.env.TELEGRAM_BOT_TOKEN, "TELEGRAM_BOT_TOKEN is not set");
   ensure(secret, "TELEGRAM_WEBHOOK_SECRET is not set");
   ensure(SECRET_OK.test(secret), "TELEGRAM_WEBHOOK_SECRET must be 1–256 characters of A-Z, a-z, 0-9, _ or -");
-  await telegram("deleteWebhook", { drop_pending_updates: false });
+  await telegram((api) => api.deleteWebhook({ drop_pending_updates: false }));
   try {
-    await telegram("setWebhook", {
-      url: expectedWebhookUrl(),
-      secret_token: secret,
-      max_connections: 1,
-      allowed_updates: ["message", "callback_query"],
-    });
+    await telegram((api) =>
+      api.setWebhook(expectedWebhookUrl(), {
+        secret_token: secret,
+        max_connections: 1,
+        allowed_updates: ["message", "callback_query"],
+      })
+    );
   } catch (error) {
     const why = error instanceof CmsError ? error.message : "request failed";
     throw new CmsError(`The old webhook was removed but the new one was not set (${why}). Select Set Webhook to retry.`);
@@ -117,5 +101,5 @@ export async function setWebhook(actor: Actor) {
 /** Stops Telegram posting to the bot. Pending updates are kept unless asked to drop them. */
 export async function deleteWebhook(actor: Actor, dropPending = false) {
   requireTracker(actor);
-  await telegram("deleteWebhook", { drop_pending_updates: dropPending });
+  await telegram((api) => api.deleteWebhook({ drop_pending_updates: dropPending }));
 }
