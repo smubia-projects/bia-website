@@ -7,18 +7,19 @@ import { MILESTONE_STATUSES, type BlockerStatus, type MilestoneStatus } from "@/
 import {
   addBlockerAction,
   addSubtaskAction,
+  createChatLinkAction,
   deleteBlockerAction,
   deleteMemberAction,
   deleteMilestoneAction,
   deleteProjectGroupAction,
   deleteSubtaskAction,
+  disconnectChatAction,
   logMeetingAction,
   saveMemberAction,
   saveMilestoneAction,
   saveProjectGroupAction,
   setMeetingRemindersAction,
   setMilestoneStatusAction,
-  unregisterChatAction,
   updateBlockerAction,
   updateSubtaskAction,
   type ActionResult,
@@ -101,6 +102,7 @@ export default function GroupTracker({ cohortId, cohortSlug, today, group, membe
   const [meetingDate, setMeetingDate] = useState(today);
   const [editing, setEditing] = useState<(typeof blankMilestone & { id?: number }) | null>(null);
   const [busy, setBusy] = useState(false);
+  const [chatLink, setChatLink] = useState<string | null>(null);
   const dirty = form.number !== group.number || form.name !== group.name || form.mentors !== group.mentors;
   useUnsavedChanges(dirty && !busy);
   const back = runHref("DAP", cohortSlug, "tracker");
@@ -120,6 +122,13 @@ export default function GroupTracker({ cohortId, cohortSlug, today, group, membe
     const data = handle(await deleteProjectGroupAction(group.id), "Group deleted");
     setBusy(false);
     if (data !== undefined) router.push(back);
+  }
+
+  async function connectChat() {
+    setBusy(true);
+    const url = handle(await createChatLinkAction(group.id));
+    setBusy(false);
+    if (url) setChatLink(url);
   }
 
   async function removeMilestone(m: MilestoneView) {
@@ -151,7 +160,7 @@ export default function GroupTracker({ cohortId, cohortSlug, today, group, membe
           <label className={styles.fld}>
             Number
             <input className={styles.inp} type="number" min={1} value={form.number} onChange={(e) => setForm({ ...form, number: Number(e.target.value) })} />
-            <span className={styles.hint}>Used by bot commands, e.g. /register {form.number}.</span>
+            <span className={styles.hint}>DAP exco name it in a private chat with the bot, e.g. /milestones g{form.number}.</span>
           </label>
           <label className={styles.fld}>
             Name
@@ -176,16 +185,35 @@ export default function GroupTracker({ cohortId, cohortSlug, today, group, membe
         <div className={t.facts}>
           <div className={t.fact}>
             <span className={t.factTitle}>Telegram Chat</span>
-            <span className={t.factValue}>{group.chatId ? "Registered" : "Not registered"}</span>
+            <span className={t.factValue}>{group.chatId ? "Connected" : "Not connected"}</span>
             <span className={styles.hint}>
-              {group.chatId ? `Chat ID ${group.chatId}. Everyone in the chat has member access.` : `Send /register ${group.number} in the group's chat as DAP exco.`}
+              {group.chatId ? `Chat ID ${group.chatId}. Everyone in the chat has member access.` : "Connect the group's Telegram chat so its members can use the bot."}
             </span>
-            {group.chatId && (
-              <button type="button" className={styles.pill} disabled={busy} onClick={async () => (await confirm({ title: "Unregister Chat", body: "The bot stops listening in this chat until it is registered again.", action: "Unregister Chat", danger: true })) && call(unregisterChatAction(group.id), "Chat unregistered")}>
-                Unregister Chat
+            <div className={styles.row}>
+              <button type="button" className={styles.pill} disabled={busy} onClick={connectChat}>
+                {group.chatId ? "Connect Another Chat" : "Connect Telegram Chat"}
               </button>
-            )}
+              {group.chatId && (
+                <button type="button" className={styles.pill} disabled={busy} onClick={async () => (await confirm({ title: "Disconnect Chat", body: "The bot stops listening in this chat until it is connected again.", action: "Disconnect Chat", danger: true })) && call(disconnectChatAction(group.id), "Chat disconnected")}>
+                  Disconnect Chat
+                </button>
+              )}
+            </div>
           </div>
+          {chatLink && (
+            <div className={styles.subItem}>
+              <strong>Open this link and pick Group {group.number}&apos;s chat.</strong>
+              <span className={styles.hint}>Telegram adds the bot to the chat you pick and connects it to this group. Valid for 10 minutes and works once.</span>
+              <div className={styles.row}>
+                <a className={styles.btn} href={chatLink} target="_blank" rel="noopener noreferrer">
+                  Open in Telegram
+                </a>
+                <button type="button" className={styles.lnk} onClick={() => (setChatLink(null), router.refresh())}>
+                  Done
+                </button>
+              </div>
+            </div>
+          )}
           <div className={t.fact}>
             <span className={t.factTitle}>Last Mentor Meeting</span>
             <span className={t.factValue}>{group.lastMeeting}</span>

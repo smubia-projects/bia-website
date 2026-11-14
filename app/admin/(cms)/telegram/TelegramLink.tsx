@@ -6,12 +6,13 @@ import { createTelegramLinkAction, unlinkTelegramAction } from "../../actions";
 import { PageHead, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";
 import t from "../../tracker.module.css";
+import type { TelegramAccount } from "@/app/lib/cms/telegram-link";
 
 /**
  * Links the signed-in admin's Telegram account, so the tracker bot recognises them in group chats.
  * Only the numeric Telegram user ID is stored, never the username.
  */
-export default function TelegramLink({ telegramId, botName }: { telegramId: number | null; botName: string }) {
+export default function TelegramLink({ account, botName }: { account: TelegramAccount | null; botName: string }) {
   const router = useRouter();
   const { handle, node } = useActionToast();
   const confirm = useConfirm();
@@ -51,15 +52,17 @@ export default function TelegramLink({ telegramId, botName }: { telegramId: numb
 
   return (
     <div className={styles.stack}>
-      <PageHead title="Telegram" sub="Links your Telegram account to the DAP timeline tracker bot. Admin commands then work in every registered group chat." />
+      <PageHead title="Telegram" sub="Links your Telegram account to the DAP timeline tracker bot. Admin commands then work in every connected project group chat." />
 
       <section className={styles.panel}>
         <h2 className={styles.h2}>Account Link</h2>
         <div className={t.facts}>
           <div className={t.fact}>
             <span className={t.factTitle}>Status</span>
-            <span className={t.factValue}>{telegramId ? "Linked" : "Not linked"}</span>
-            <span className={styles.hint}>{telegramId ? `Telegram user ID ${telegramId}.` : "No Telegram account is linked to this CMS account."}</span>
+            <span className={t.factValue}>{account ? "Linked" : "Not linked"}</span>
+            <span className={styles.hint}>
+              {account ? `Linked as ${account.name}${account.username ? ` (@${account.username})` : ""}. Not you? Unlink it.` : "No Telegram account is linked to this CMS account."}
+            </span>
           </div>
           <div className={t.fact}>
             <span className={t.factTitle}>Bot</span>
@@ -69,7 +72,7 @@ export default function TelegramLink({ telegramId, botName }: { telegramId: numb
         </div>
 
         <div className={styles.row}>
-          {telegramId ? (
+          {account ? (
             <button type="button" className={`${styles.btn} ${styles.btnDanger}`} disabled={busy} onClick={unlink}>
               Unlink Telegram
             </button>

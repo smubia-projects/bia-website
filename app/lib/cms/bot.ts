@@ -15,14 +15,14 @@ import {
 } from "./bot-text";
 import { todaySgt } from "./people";
 import { escapeHtml as esc, telegramApi } from "./telegram";
-import { claimAdminLink } from "./telegram-link";
+import { claimAccountLink, claimChatLink } from "./telegram-link";
 import * as tracker from "./tracker";
 import type { ProjectGroup, TrackerWho } from "./tracker";
 
 /*
  * The DAP tracker bot's handlers, as a grammY Composer that telegram-bot.ts puts on the
  * site's one Bot. Telegram posts updates to /api/telegram/webhook. The bot only listens
- * in a registered group chat (or in a private chat with a linked admin). Permissions are
+ * in a connected group chat (or in a private chat with a linked admin). Permissions are
  * decided by tracker.ts; this file only reads commands and writes replies.
  *
  * Inside a group chat everything is scoped to that chat's group, admins
@@ -252,13 +252,6 @@ export const COMMANDS: BotCommand[] = [
 
   // ── DAP exco ──
   {
-    name: "register",
-    admin: true,
-    usage: "<group#>",
-    description: "Link this chat to a project group",
-    run: (c, args) => register(c, args),
-  },
-  {
     name: "groups",
     admin: true,
     usage: "",
@@ -386,14 +379,6 @@ function helpText(c: Ctx) {
   return lines.join("\n");
 }
 
-async function register(c: Ctx, args: string): Promise<string> {
-  const actor = requireActor(c);
-  const m = args.match(/^g?(\d+)$/i);
-  ensure(m, "Usage: /register <group#>, sent in the group's chat.");
-  const g = await tracker.registerChat(actor, c.chatId, Number(m[1]));
-  return `Registered: this chat is <b>Group ${g.number}</b>${g.name ? ` · ${esc(g.name)}` : ""}. Everyone here can log tasks, blockers and meetings. Send /help for commands.`;
-}
-
 const confirm = (text: string, target: string): Reply => ({
   text,
   markup: { inline_keyboard: [[{ text: "Delete", callback_data: `y:${target}` }, { text: "Cancel", callback_data: "n" }]] },
@@ -421,7 +406,7 @@ async function contextFor(chat: TgChat, from: User): Promise<Ctx | null> {
   const sender = await tracker.resolveSender(chat.id, from.id, displayName(from));
   if (!sender) return null;
   const isPrivate = chat.type === "private";
-  // Group chats other than a registered one are ignored; so are non-members.
+  // Group chats other than a connected one are ignored; so are non-members.
   if (!isPrivate && !sender.group) return null;
   return {
     chatId: chat.id,
@@ -450,20 +435,20 @@ async function runCommand(ctx: Context, name: string, args: string) {
   };
 
   try {
-    if (name === "start" && isPrivate && args) {
-      const actor = await claimAdminLink(args, m.from.id);
-      return say(`Linked. You are now a DAP tracker admin as <b>${esc(actor.name)}</b>. Add me to a group chat and send /register &lt;group#&gt;.`);
+    // /start <code>: a one-time link from the CMS (telegram-link.ts).
+    if (name === "start" && args && isPrivate) {
+      const actor = await claimAccountLink(args, { id: m.from.id, name: displayName(m.from), username: m.from.username ?? "" });
+      return say(`Linked. I know you as DAP exco now (<b>${esc(actor.name)}</b>). To use me in a project group's chat, press Connect Telegram Chat on that group's page in the CMS.`);
     }
-    if (name === "start" && !isPrivate && args) {
-      return say("Open the link in a private chat with me instead, and generate a new one in Settings › Telegram.");
+    if (name === "start" && args) {
+      const g = await claimChatLink(args, m.chat.id);
+      return say(`Connected: this chat is <b>Group ${g.number}</b>${g.name ? ` (${esc(g.name)})` : ""}. Everyone here can log tasks, blockers and meetings. Send /help for the commands.`);
     }
 
     const c = await contextFor(m.chat, m.from);
     if (!c) {
-      // A private chat gets an answer; group chats stay silent unless an admin is registering one.
-      if (isPrivate) return say("You are not registered. DAP exco: generate a link in the website's Settings › Telegram.");
-      const sender = await tracker.resolveSender(m.chat.id, m.from.id, displayName(m.from));
-      if (name === "register" && sender?.actor) return say(await register(adminOnly(sender.actor, m.chat.id, displayName(m.from)), args));
+      // A private chat gets an answer; a group chat that isn't connected stays silent.
+      if (isPrivate) return say("I don't know you yet. DAP exco: link your Telegram account in the CMS under Settings › Telegram.");
       return;
     }
     if (name === "start") return say(helpText(c));
@@ -475,18 +460,6 @@ async function runCommand(ctx: Context, name: string, args: string) {
     return say("Something went wrong. Try again in a moment.");
   }
 }
-
-/** /register is the one command an admin may send from a chat that is not registered yet. */
-const adminOnly = (actor: Actor, chatId: number, name: string): Ctx => ({
-  chatId,
-  isPrivate: false,
-  name,
-  who: tracker.adminWho(actor),
-  actor,
-  group: null,
-  scope: tracker.adminWho(actor),
-  today: todaySgt(),
-});
 
 // ── Buttons ──────────────────────────────────────────────────────────────
 

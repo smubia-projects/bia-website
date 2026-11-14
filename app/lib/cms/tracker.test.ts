@@ -40,22 +40,21 @@ after(async () => {
   await db.delete(cohorts).where(eq(cohorts.id, cohortId));
 });
 
-describe("chat registration and sender resolution", () => {
-  it("only admins register, only group chats, one chat per group", async () => {
-    await rejects(t.registerChat(actor("lodge_exco"), -100, 1), /cannot use/);
-    await rejects(t.registerChat(dapExco, 555, 1), /group chat/);
-    await rejects(t.registerChat(dapExco, -100, 99), /does not exist/);
-    assert.equal((await t.registerChat(dapExco, -1001, 1)).telegramChatId, -1001);
-    await rejects(t.registerChat(dapExco, -1001, 2), /already registered to Group 1/);
-    assert.equal((await t.registerChat(dapExco, -1002, 1)).telegramChatId, -1002); // chat replaced
-    await t.registerChat(dapExco, -1001, 1);
-    await t.registerChat(dapExco, -2002, 2);
+describe("chat connection and sender resolution", () => {
+  it("connects only group chats, one chat per group, moving a chat between groups", async () => {
+    await rejects(t.connectChat(g1.id, 555), /group chat/);
+    await rejects(t.connectChat(99_999, -100), /not found/);
+    assert.equal((await t.connectChat(g1.id, -1001)).telegramChatId, -1001);
+    assert.equal((await t.connectChat(g1.id, -1002)).telegramChatId, -1002); // chat replaced
+    await t.connectChat(g2.id, -1002); // moves to group 2
+    await t.connectChat(g1.id, -1001);
+    await t.connectChat(g2.id, -2002);
   });
 
-  it("admin by stored Telegram ID, member by registered chat, everyone else null", async () => {
+  it("admin by stored Telegram ID, member by connected chat, everyone else null", async () => {
     const admin = await t.resolveSender(-9999, 111, "Dana");
-    assert.ok(admin?.who.admin && admin.group === null); // admin works even in an unregistered chat
-    assert.equal(await t.resolveSender(-9999, 444, "Stranger"), null); // unregistered chat
+    assert.ok(admin?.who.admin && admin.group === null); // admin works even in a chat that is not connected
+    assert.equal(await t.resolveSender(-9999, 444, "Stranger"), null); // chat that is not connected
     assert.equal(await t.resolveSender(444, 444, "Stranger"), null); // private chat
     const member = await t.resolveSender(-1001, 444, "Mia");
     assert.deepEqual(member?.who, { admin: false, groupId: g1.id, name: "Mia" });
@@ -116,7 +115,7 @@ describe("meetings and reminders", () => {
   const at = (days: number) => new Date(Date.parse("2026-11-01T00:00:00Z") + days * DAY);
   const met = { ...base, lastMeetingAt: at(0).toISOString(), createdAt: at(-90).toISOString() };
 
-  it("reminder is due from day 21, once, unless off or unregistered", () => {
+  it("reminder is due from day 21, once, unless off or not connected", () => {
     assert.equal(t.reminderDue(met, at(20.9)), false);
     assert.equal(t.reminderDue(met, at(21)), true);
     assert.equal(t.reminderDue({ ...met, meetingRemindedAt: at(21).toISOString() }, at(30)), false);

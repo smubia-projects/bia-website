@@ -267,6 +267,9 @@ export const people = pgTable("people", {
   accessEnds: date("access_ends", { mode: "string" }),
   /** Telegram user ID (not the username): tells the DAP tracker bot who is an admin. Set by linking, never typed in. */
   telegramUserId: bigint("telegram_user_id", { mode: "number" }).unique(),
+  /** The linked Telegram account's name and @username when it was linked, shown in the CMS only */
+  telegramName: text("telegram_name").notNull().default(""),
+  telegramUsername: text("telegram_username").notNull().default(""),
   createdAt: createdAt(),
 });
 
@@ -355,7 +358,7 @@ export const projectGroups = pgTable(
     name: text("name").notNull().default(""),
     /** Mentor names, free text */
     mentors: text("mentors").notNull().default(""),
-    /** Telegram chat ID (negative for groups); null until an admin runs /register */
+    /** Telegram chat ID (negative for groups); null until the chat is connected with a link from the dashboard */
     telegramChatId: bigint("telegram_chat_id", { mode: "number" }).unique(),
     /** The only meeting data kept: when the group last met its mentors */
     lastMeetingAt: timestamp("last_meeting_at", { withTimezone: true, mode: "string" }),
@@ -479,6 +482,29 @@ export const telegramUpdates = pgTable("telegram_updates", {
   updateId: bigint("update_id", { mode: "number" }).primaryKey(),
   receivedAt: timestamp("received_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
 });
+
+export type TelegramLinkKind = "account" | "chat";
+
+/**
+ * One-time codes in Telegram deep links. `account` (t.me/<bot>?start=<code>, private chat) links
+ * the Telegram account that opens it to `email`; `chat` (t.me/<bot>?startgroup=<code>) connects
+ * the group chat it is added to to `project_group_id`. Only a SHA-256 hash is stored, a code
+ * works once, and it expires after 10 minutes (the daily cron deletes expired ones).
+ */
+export const telegramLinkCodes = pgTable(
+  "telegram_link_codes",
+  {
+    id: serial("id").primaryKey(),
+    codeHash: text("code_hash").notNull(),
+    kind: text("kind").$type<TelegramLinkKind>().notNull(),
+    email: text("email"),
+    projectGroupId: integer("project_group_id").references(() => projectGroups.id, { onDelete: "cascade" }),
+    createdBy: text("created_by").notNull().default(""),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("telegram_link_codes_hash").on(t.codeHash)]
+);
 
 /** Club links editable in the CMS (join forms, socials). Unset keys fall back to app/lib/links.ts. */
 export const siteLinks = pgTable("site_links", {

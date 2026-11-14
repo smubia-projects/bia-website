@@ -1,5 +1,6 @@
 import { sendMeetingReminders } from "@/app/lib/cms/bot";
 import { publishDueIssues } from "@/app/lib/cms/newsletter";
+import { forgetExpiredCodes } from "@/app/lib/cms/telegram-link";
 import { forgetOldUpdates } from "@/app/lib/cms/telegram-updates";
 
 /*
@@ -29,5 +30,9 @@ export async function GET(request: Request) {
     console.error("[cron] telegram update cleanup failed", error);
     return 0;
   });
-  return Response.json({ published, reminded, forgotUpdates });
+  const forgotCodes = await forgetExpiredCodes().catch((error) => {
+    console.error("[cron] link code cleanup failed", error);
+    return 0;
+  });
+  return Response.json({ published, reminded, forgotUpdates, forgotCodes });
 }

@@ -33,7 +33,7 @@ import {
  *
  * Two kinds of caller:
  *  - admins (DAP exco and exco admins, `can.tracker`) work on every group;
- *  - members are whoever is in a group's registered Telegram chat, and only ever
+ *  - members are whoever is in a group's connected Telegram chat, and only ever
  *    reach that group. Functions shared by both take a `TrackerWho`; admin-only
  *    ones take the Actor.
  * No db.transaction() (Neon HTTP has none): every write is one statement.
@@ -140,26 +140,19 @@ export async function setMeetingReminders(actor: Actor, groupId: number, on: boo
 }
 
 /**
- * /register <number>: binds the chat the command was sent in to a group of the
- * current cohort. The bot listens only in registered chats, and everyone in one
- * has member rights for that group. Registering again replaces the group's chat
- * (a group upgraded to a supergroup gets a new chat ID).
+ * Connects a group chat to a project group. Only called with a used one-time chat link
+ * (telegram-link.ts), which is what authorises it. The bot listens only in connected chats,
+ * and everyone in one has member rights for that project group. Connecting again replaces
+ * the group's chat, and a chat moved to another project group leaves the old one.
  */
-export async function registerChat(actor: Actor, chatId: number, groupNumber: number): Promise<ProjectGroup> {
-  requireTracker(actor);
-  ensure(Number.isSafeInteger(chatId) && chatId < 0, "Register a group chat, not a private chat");
-  const cohortId = await trackerCohortId();
-  ensure(cohortId, "No DAP cohort exists yet");
+export async function connectChat(projectGroupId: number, chatId: number): Promise<ProjectGroup> {
+  ensure(Number.isSafeInteger(chatId) && chatId < 0, "Connect a group chat, not a private chat");
   const db = await getDb();
-  const [group] = await db
-    .select()
-    .from(projectGroups)
-    .where(and(eq(projectGroups.cohortId, cohortId), eq(projectGroups.number, groupNumber)));
-  ensure(group, `Group ${groupNumber} does not exist. Add it on the dashboard first.`);
-  const [taken] = await db.select({ number: projectGroups.number }).from(projectGroups).where(eq(projectGroups.telegramChatId, chatId));
-  ensure(!taken || taken.number === groupNumber, `This chat is already registered to Group ${taken?.number}`);
-  const [row] = await db.update(projectGroups).set({ telegramChatId: chatId }).where(eq(projectGroups.id, group.id)).returning();
-  return row!;
+  // telegram_chat_id is unique: free the chat from any other project group first.
+  await db.update(projectGroups).set({ telegramChatId: null }).where(and(eq(projectGroups.telegramChatId, chatId), ne(projectGroups.id, projectGroupId)));
+  const [row] = await db.update(projectGroups).set({ telegramChatId: chatId }).where(eq(projectGroups.id, projectGroupId)).returning();
+  ensure(row, "Project group not found");
+  return row;
 }
 
 /** A group of the current cohort by its number, for admins naming a group in a command. */
@@ -183,7 +176,7 @@ export async function migrateChat(oldChatId: number, newChatId: number) {
   await db.update(projectGroups).set({ telegramChatId: newChatId }).where(eq(projectGroups.telegramChatId, oldChatId));
 }
 
-export async function unregisterChat(actor: Actor, groupId: number) {
+export async function disconnectChat(actor: Actor, groupId: number) {
   requireTracker(actor);
   const db = await getDb();
   await db.update(projectGroups).set({ telegramChatId: null }).where(eq(projectGroups.id, groupId));
@@ -192,7 +185,7 @@ export async function unregisterChat(actor: Actor, groupId: number) {
 /**
  * Who is speaking, and where. Admins are found by their stored Telegram user ID
  * (role re-read each time, so removal or an ended access date takes effect at once)
- * and may act in any chat. Anyone else is a member only inside a registered chat;
+ * and may act in any chat. Anyone else is a member only inside a connected chat;
  * everyone else gets null, and the bot stays silent.
  */
 export async function resolveSender(chatId: number, fromId: number, displayName: string) {
@@ -511,7 +504,7 @@ export function reminderDue(
   );
 }
 
-/** Groups to remind now: registered, reminders on, not in an archived cohort. */
+/** Groups to remind now: connected, reminders on, not in an archived cohort. */
 export async function dueMeetingReminders(now: Date = new Date()): Promise<ProjectGroup[]> {
   const db = await getDb();
   const rows = await db

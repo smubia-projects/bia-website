@@ -5,7 +5,6 @@ import path from "node:path";
 import { before, describe, it } from "node:test";
 
 process.env.PGLITE_DIR = path.join(mkdtempSync(path.join(tmpdir(), "bot-")), "db");
-process.env.AUTH_SECRET = "test-secret";
 process.env.TELEGRAM_BOT_USERNAME = "TestBot";
 
 import { eq } from "drizzle-orm";
@@ -15,7 +14,7 @@ import type { Api } from "grammy";
 import type { Update } from "grammy/types";
 import { sendMeetingReminders } from "./bot";
 import { createBot, offlineBotInfo } from "./telegram-bot";
-import { makeLinkToken } from "./telegram-link";
+import { createAccountLink, createChatLink } from "./telegram-link";
 import * as t from "./tracker";
 
 // Real IDs for the first live test: the team's group chat and Mingda's Telegram account.
@@ -68,21 +67,25 @@ before(async () => {
   await t.saveMember(admin, { groupId: g1.id, name: "Mia Lim" });
 });
 
-describe("linking and registering", () => {
-  it("DM /start <link> links Mingda; a group refuses links; strangers get nothing in groups", async () => {
-    assert.match(await say(MINGDA, MINGDA, "/start"), /not registered/);
-    assert.match(await say(CHAT, MINGDA, `/start ${makeLinkToken(MINGDA_EMAIL)}`), /private chat/);
-    assert.match(await say(MINGDA, MINGDA, `/start ${makeLinkToken(MINGDA_EMAIL)}`), /Linked/);
+const mingda = { email: MINGDA_EMAIL, name: "Mingda", role: "dap_exco" as const };
+const codeOf = (link: string) => link.split("=")[1];
+
+describe("linking and connecting", () => {
+  it("DM /start <code> links Mingda; an account link posted in a group stops working", async () => {
+    assert.match(await say(MINGDA, MINGDA, "/start"), /don't know you yet/);
+    assert.match(await say(CHAT, MINGDA, `/start ${codeOf(await createAccountLink(mingda))}`), /private chat with me, and it was posted here/);
+    assert.match(await say(MINGDA, MINGDA, `/start ${codeOf(await createAccountLink(mingda))}`), /Linked/);
     const [row] = await (await getDb()).select().from(people).where(eq(people.email, MINGDA_EMAIL));
     assert.equal(row.telegramUserId, MINGDA);
+    assert.equal(row.telegramName, "Mingda");
   });
 
-  it("the bot only listens in registered chats", async () => {
-    assert.equal(await say(CHAT, MIA, "/milestones"), ""); // not registered yet
-    assert.equal(await say(CHAT, STRANGER, "/register 1"), ""); // not an admin
-    assert.equal(await say(OTHER_CHAT, MINGDA, "/milestones"), ""); // admin, but unregistered group chat
-    assert.match(await say(CHAT, MINGDA, "/register 9"), /does not exist/);
-    assert.match(await say(CHAT, MINGDA, "/register 1"), /Registered: this chat is <b>Group 1<\/b> · Alpha/);
+  it("the bot only listens in connected chats; the connect link binds the exact group", async () => {
+    assert.equal(await say(CHAT, MIA, "/milestones"), ""); // not connected yet
+    assert.equal(await say(OTHER_CHAT, MINGDA, "/milestones"), ""); // admin, but a chat that isn't connected
+    assert.equal(await say(CHAT, STRANGER, "/register 1"), ""); // /register is gone
+    // Telegram sends this when the startgroup link adds the bot to the chat.
+    assert.match(await say(CHAT, MINGDA, `/start@TestBot ${codeOf(await createChatLink(mingda, g1.id))}`), /Connected: this chat is <b>Group 1<\/b> \(Alpha\)/);
     assert.equal((await (await getDb()).select().from(projectGroups).where(eq(projectGroups.id, g1.id)))[0].telegramChatId, CHAT);
     assert.match(await say(CHAT, MIA, "/milestones"), /No milestones yet/); // everyone in the chat is a member
   });
@@ -168,7 +171,8 @@ describe("housekeeping", () => {
     assert.equal(await say(CHAT, MIA, "/milestones@OtherBot"), ""); // meant for another bot
     assert.match(await say(CHAT, MIA, "/help"), /Tracker commands/);
     assert.doesNotMatch(await say(CHAT, MIA, "/help"), /DAP exco/);
-    assert.match(await say(CHAT, MINGDA, "/help"), /\/register/);
+    assert.match(await say(CHAT, MINGDA, "/help"), /DAP exco/);
+    assert.doesNotMatch(await say(CHAT, MINGDA, "/help"), /\/register/);
   });
 
   it("handles an update Telegram re-sends only once", async () => {

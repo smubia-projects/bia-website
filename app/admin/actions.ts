@@ -14,7 +14,7 @@ import { saveSitePhoto } from "@/app/lib/cms/photos";
 import { createToken, revokeToken } from "@/app/lib/cms/tokens";
 import * as tracker from "@/app/lib/cms/tracker";
 import { noonSgt } from "@/app/lib/cms/bot-text";
-import { createAdminLink, unlinkTelegram } from "@/app/lib/cms/telegram-link";
+import { createAccountLink, createChatLink, unlinkTelegram } from "@/app/lib/cms/telegram-link";
 import * as webhook from "@/app/lib/cms/telegram-webhook";
 import type { Photo } from "@/app/lib/photos";
 import { UPLOAD_FOLDERS, uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
@@ -376,8 +376,13 @@ export async function setMeetingRemindersAction(groupId: number, on: boolean) {
   return track((actor) => tracker.setMeetingReminders(actor, groupId, on).then(() => null));
 }
 
-export async function unregisterChatAction(groupId: number) {
-  return track((actor) => tracker.unregisterChat(actor, groupId).then(() => null));
+export async function disconnectChatAction(groupId: number) {
+  return track((actor) => tracker.disconnectChat(actor, groupId).then(() => null));
+}
+
+/** A one-time t.me link that adds the bot to a group chat and connects it to this project group. */
+export async function createChatLinkAction(groupId: number) {
+  return run((actor) => createChatLink(actor, groupId));
 }
 
 /** Logs a meeting on a date (YYYY-MM-DD, Singapore); today or no date means now. */
@@ -452,7 +457,7 @@ export async function deleteWebhookAction() {
 }
 
 export async function createTelegramLinkAction() {
-  return run(async (actor) => createAdminLink(actor));
+  return run((actor) => createAccountLink(actor));
 }
 
 export async function unlinkTelegramAction() {

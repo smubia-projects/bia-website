@@ -10,7 +10,6 @@ group chat; DAP exco (and exco admins) also set milestones and mark them done. C
 |---|---|
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` | Already used by the newsletter bot. Same bot. |
 | `TELEGRAM_WEBHOOK_SECRET` | New. Random string (A-Z a-z 0-9 _ -, up to 256 chars). The webhook rejects requests without it. Required on Vercel. |
-| `AUTH_SECRET` | Existing. Also signs the one-time admin link. |
 | `CRON_SECRET` | Existing. The daily cron also sends the 3-week meeting reminders. |
 
 ## Register the webhook (manual)
@@ -36,17 +35,21 @@ then sees only `/commands`, replies to it and button presses, never the group's 
 ## Go-live steps
 
 1. Deploy (the migration `0013` runs in `vercel-build`).
-2. **Link each admin.** Settings › Telegram generates a 10-minute link; opening it in a *private* chat with the bot
-   stores that person's Telegram user ID (not the username). One link, one account: it does nothing once the
-   account is linked. A superadmin with no People row gets one created.
+2. **Link each admin.** Settings › Telegram makes a one-time link (random code, stored hashed, 10 minutes). Opening
+   it in a *private* chat with the bot links that Telegram account at once: its user ID (never the username) is what
+   the bot checks; the name and @username are kept only to show "Linked as …" in the CMS. Posted in a group, the
+   link stops working. A superadmin with no People row gets one created.
 3. Create the project groups on the dashboard (group number, name, mentors).
-4. Add the bot to each group chat. A DAP exco sends **`/register <group#>`** in it. From then on the bot listens
-   in that chat only, and **everyone in the chat has member rights for that group**, so keep the chat membership tight.
+4. **Connect each group's chat.** On the project group's page, **Connect Telegram Chat** makes a one-time
+   `t.me/<bot>?startgroup=<code>` link. Telegram asks which group to add the bot to and sends `/start <code>` there
+   (also when the bot is already in it), which connects that chat to exactly this project group. From then on the
+   bot listens in that chat, and **everyone in the chat has member rights for that group**, so keep the chat
+   membership tight.
 5. Commands: `/help` in the chat lists them. Admins can also use a private chat with the bot to reach any group
    (`/groups`, `/milestones 3`, `g3` prefixes).
 
 If Telegram upgrades a group to a supergroup its chat ID changes; the bot follows the migration message on its own.
-If a chat ever needs re-registering, run `/register <group#>` again.
+To connect a different chat, make a new link. A chat connected to another project group moves over.
 
 ## Dashboard
 
@@ -55,9 +58,9 @@ DAP exco and exco admins only (`can.tracker`); AI Lodge roles and lodge heads ge
 - **Timeline Tracker** (`/admin/dap/<cohort>/tracker`): totals, a swimlane timeline (one lane per group, bars from start to
   due date, diamonds for milestones without a start date, overdue and open-blocker flags) and the groups table.
   `app/lib/cms/tracker-view.ts` computes the chart geometry; the page only draws it.
-- **Group page** (`/tracker/<group id>`): group details, chat status (unregister), last meeting (log or correct),
+- **Group page** (`/tracker/<group id>`): group details, chat status (connect or disconnect), last meeting (log or correct),
   reminders switch, roster, and milestones with their tasks and blockers.
-- **Settings › Telegram** (`/admin/telegram`): generate the one-time link, or unlink.
+- **Settings › Telegram** (`/admin/telegram`): make the one-time link, see which account is linked, or unlink.
 
 ## Meeting reminders
 
