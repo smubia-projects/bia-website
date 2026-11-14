@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test": "tsx --test app/lib/cms/*.test.ts",
     "vercel-build": "tsx scripts/db-migrate.ts && next build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db-migrate.ts",

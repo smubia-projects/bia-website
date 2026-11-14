@@ -37,6 +37,7 @@ export const RUN_SECTIONS: Record<Programme, RunSection[]> = {
     { key: "schedule", label: "Schedule" },
     { key: "newsletter", label: "Newsletter" },
     { key: "projects", label: "Projects" },
+    { key: "tracker", label: "Timeline Tracker" },
   ],
 };
 

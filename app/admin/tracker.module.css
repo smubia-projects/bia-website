@@ -1,0 +1,443 @@
+/* DAP timeline tracker (CMS). Light work area, emerald accent, status colours are semantic
+   (done = emerald, overdue and blockers = red) and never reused as decoration. */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.statLabel {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.statValue {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.statValue small {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+.statAlert {
+  color: var(--danger, #b91c1c);
+}
+
+/* ── Chart ─────────────────────────────────────────────────────────── */
+
+.chartScroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.chart {
+  --label: 168px;
+  position: relative;
+}
+.axis,
+.lane {
+  display: grid;
+  grid-template-columns: var(--label) 1fr;
+}
+.axis {
+  position: sticky;
+  top: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+.axisTrack {
+  position: relative;
+  height: 30px;
+}
+.tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  padding: 8px 0 0 6px;
+  border-left: 1px solid var(--border);
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+.lane {
+  border-bottom: 1px solid var(--border);
+}
+.lane:last-child {
+  border-bottom: 0;
+}
+.laneLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+.laneLabel:hover {
+  background: var(--surface-muted);
+}
+.laneMeta {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+.track {
+  position: relative;
+}
+.grid {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--hair, #edf5f1);
+}
+.today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 2px solid var(--emerald);
+  z-index: 1;
+}
+.bar {
+  position: absolute;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 8px;
+  overflow: hidden;
+  border-radius: 7px;
+  border: 1px solid var(--ink-faint);
+  background: var(--surface-muted);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+.bar:hover {
+  box-shadow: 0 0 0 2px var(--mint-soft);
+}
+.bar:focus-visible,
+.laneLabel:focus-visible {
+  outline: 2px solid var(--emerald);
+  outline-offset: 1px;
+}
+.barText {
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--mint-soft);
+}
+.s_in_progress {
+  border-color: var(--emerald);
+  background: #fff;
+}
+.s_in_progress .fill {
+  background: rgba(14, 124, 91, 0.2);
+}
+.s_done {
+  border-color: var(--emerald-strong);
+  background: var(--emerald);
+  color: #fff;
+}
+.overdue {
+  border-color: var(--danger, #b91c1c);
+  color: var(--danger, #b91c1c);
+  background: #fff;
+}
+.blocked::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger, #b91c1c);
+  box-shadow: 0 0 0 2px #fff;
+}
+
+/* A milestone with no start date: a marker on its due date, label to the right. */
+.point {
+  position: absolute;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+.diamond {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  transform: rotate(45deg);
+  border: 2px solid var(--ink-faint);
+  background: var(--surface-muted);
+  margin-left: -6px;
+}
+.point.s_in_progress .diamond {
+  border-color: var(--emerald);
+  background: #fff;
+}
+.point.s_done .diamond {
+  border-color: var(--emerald-strong);
+  background: var(--emerald);
+}
+.point.overdue .diamond {
+  border-color: var(--danger, #b91c1c);
+  background: #fff;
+}
+.point.s_done,
+.point.s_in_progress,
+.point.overdue {
+  background: transparent;
+  color: var(--ink);
+}
+.point.overdue {
+  color: var(--danger, #b91c1c);
+}
+.point.blocked::after {
+  display: none;
+}
+.pointBlock {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger, #b91c1c);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  width: 14px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1px solid var(--ink-faint);
+  background: var(--surface-muted);
+}
+.swatchDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger, #b91c1c);
+}
+
+/* ── Chips and group page ──────────────────────────────────────────── */
+
+.chip {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--surface);
+  color: var(--ink-soft);
+}
+.chipOk {
+  color: var(--emerald-strong);
+}
+.chipWarn {
+  color: var(--danger, #b91c1c);
+}
+.chipMuted {
+  color: var(--ink-faint);
+}
+.num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.link {
+  color: var(--emerald);
+  font-weight: 600;
+  text-decoration: none;
+}
+.link:hover {
+  color: var(--emerald-strong);
+  text-decoration: underline;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+.factTitle {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.factValue {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.milestone {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.msHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.msTitle {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.msMeta {
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+.msNotes {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}
+.cols2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+.listHead {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 6px;
+}
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--hair, #edf5f1);
+  flex-wrap: wrap;
+}
+.item:first-of-type {
+  border-top: 0;
+}
+.itemText {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+.itemId {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.addRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.addRow input {
+  flex: 1;
+  min-width: 0;
+}
+.none {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+.lead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Task and blocker rows: id, state, text and delete on the first line; assignee, date or action below. */
+.task {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  gap: 6px 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid var(--hair, #edf5f1);
+}
+.task:first-of-type {
+  border-top: 0;
+}
+.taskMeta {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.task .ctl {
+  width: auto;
+  flex: none;
+}

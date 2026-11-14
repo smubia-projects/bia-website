@@ -34,6 +34,7 @@ export default async function CmsLayout({ children }: { children: React.ReactNod
       seeLinks={can.editLinks(actor)}
       seePeople={can.managePeople(actor)}
       seePhotos={can.seePhotos(actor)}
+      seeTelegram={can.tracker(actor)}
       reviewCount={reviewCount}
       runs={runs}
       defaultRun={defaultRun}

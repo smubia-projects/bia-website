@@ -75,4 +75,6 @@ export const can = {
   /** Which admin sections a role sees */
   seeLodge: (a: Actor) => onProgramme(a, "AI Lodge"),
   seeDap: (a: Actor) => onProgramme(a, "DAP"),
+  /** DAP timeline tracker (dashboard, and admin rights in the Telegram chats): DAP exco and exco admins */
+  tracker: (a: Actor) => onProgramme(a, "DAP"),
 };

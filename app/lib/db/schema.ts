@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   date,
   index,
@@ -14,6 +15,7 @@ import {
 import type {
   BlockType,
   CohortVisibility,
+  BlockerStatus,
   IssueStatus,
   LodgeAmbient,
   LodgeBeltMode,
@@ -26,9 +28,11 @@ import type {
   LodgeParticles,
   LodgeShowpiece,
   LodgeStatus,
+  MilestoneStatus,
   Programme,
   ProjectStatus,
   Role,
+  SubtaskStatus,
 } from "@/app/lib/cms/taxonomy";
 import type { HighlightCard, TeamMember } from "@/app/projects/data/types";
 
@@ -261,6 +265,8 @@ export const people = pgTable("people", {
   lodgeIds: jsonb("lodge_ids").$type<number[]>().notNull().default([]),
   /** Last day of access (YYYY-MM-DD, Singapore time); null = no end */
   accessEnds: date("access_ends", { mode: "string" }),
+  /** Telegram user ID (not the username): tells the DAP tracker bot who is an admin. Set by linking, never typed in. */
+  telegramUserId: bigint("telegram_user_id", { mode: "number" }).unique(),
   createdAt: createdAt(),
 });
 
@@ -332,6 +338,103 @@ export const sessions = pgTable(
   (t) => [uniqueIndex("sessions_cohort_week").on(t.cohortId, t.week)]
 );
 
+/**
+ * A DAP project group (the teams building projects; not the co-learning groups above).
+ * One Telegram chat per group: the bot only listens in registered chats, and everyone in
+ * the chat has member rights for this group.
+ */
+export const projectGroups = pgTable(
+  "project_groups",
+  {
+    id: serial("id").primaryKey(),
+    cohortId: text("cohort_id")
+      .notNull()
+      .references(() => cohorts.id, { onDelete: "cascade" }),
+    /** "Group 3": what the bot's commands refer to; unique within a cohort */
+    number: integer("number").notNull(),
+    name: text("name").notNull().default(""),
+    /** Mentor names, free text */
+    mentors: text("mentors").notNull().default(""),
+    /** Telegram chat ID (negative for groups); null until an admin runs /register */
+    telegramChatId: bigint("telegram_chat_id", { mode: "number" }).unique(),
+    /** The only meeting data kept: when the group last met its mentors */
+    lastMeetingAt: timestamp("last_meeting_at", { withTimezone: true, mode: "string" }),
+    meetingRemindersOn: boolean("meeting_reminders_on").notNull().default(true),
+    /** Cleared whenever a meeting is logged, so each cycle reminds once */
+    meetingRemindedAt: timestamp("meeting_reminded_at", { withTimezone: true, mode: "string" }),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("project_groups_cohort_number").on(t.cohortId, t.number)]
+);
+
+/** A project group's roster, filled in from the dashboard. Informational: chat membership, not this list, grants bot access. */
+export const projectMembers = pgTable(
+  "project_members",
+  {
+    id: serial("id").primaryKey(),
+    groupId: integer("group_id")
+      .notNull()
+      .references(() => projectGroups.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("project_members_group").on(t.groupId)]
+);
+
+export const milestones = pgTable(
+  "milestones",
+  {
+    id: serial("id").primaryKey(),
+    groupId: integer("group_id")
+      .notNull()
+      .references(() => projectGroups.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    notes: text("notes").notNull().default(""),
+    /** YYYY-MM-DD; the timeline bar runs startsOn → dueOn (a point at dueOn when null) */
+    startsOn: date("starts_on", { mode: "string" }),
+    dueOn: date("due_on", { mode: "string" }).notNull(),
+    status: text("status").$type<MilestoneStatus>().notNull().default("todo"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    updatedBy: text("updated_by").notNull().default(""),
+  },
+  (t) => [index("milestones_group").on(t.groupId)]
+);
+
+export const subtasks = pgTable(
+  "subtasks",
+  {
+    id: serial("id").primaryKey(),
+    milestoneId: integer("milestone_id")
+      .notNull()
+      .references(() => milestones.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    status: text("status").$type<SubtaskStatus>().notNull().default("todo"),
+    dueOn: date("due_on", { mode: "string" }),
+    assigneeId: integer("assignee_id").references(() => projectMembers.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    updatedBy: text("updated_by").notNull().default(""),
+  },
+  (t) => [index("subtasks_milestone").on(t.milestoneId)]
+);
+
+export const blockers = pgTable(
+  "blockers",
+  {
+    id: serial("id").primaryKey(),
+    milestoneId: integer("milestone_id")
+      .notNull()
+      .references(() => milestones.id, { onDelete: "cascade" }),
+    description: text("description").notNull(),
+    status: text("status").$type<BlockerStatus>().notNull().default("open"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true, mode: "string" }),
+    createdAt: createdAt(),
+    updatedBy: text("updated_by").notNull().default(""),
+  },
+  (t) => [index("blockers_milestone").on(t.milestoneId)]
+);
+
 export interface IssueBlock {
   id: string;
   type: BlockType;
@@ -400,3 +503,8 @@ export type ProjectRow = typeof projects.$inferSelect;
 export type PersonRow = typeof people.$inferSelect;
 export type SessionRow = typeof sessions.$inferSelect;
 export type IssueRow = typeof issues.$inferSelect;
+export type ProjectGroupRow = typeof projectGroups.$inferSelect;
+export type ProjectMemberRow = typeof projectMembers.$inferSelect;
+export type MilestoneRow = typeof milestones.$inferSelect;
+export type SubtaskRow = typeof subtasks.$inferSelect;
+export type BlockerRow = typeof blockers.$inferSelect;

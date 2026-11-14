@@ -216,6 +216,17 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
   `AILODGE_REVALIDATE_URL` with `AILODGE_REVALIDATE_SECRET` (`app/lib/cms/revalidate.ts`), and the
   AI Lodge site rebuilds from the feed at once (it also refreshes hourly).
 
+### DAP timeline tracker (Telegram bot)
+Project groups (`project_groups`, not the co-learning `dap_groups`) with `milestones`, `subtasks` and
+`blockers`; there is no timeline table, a group's timeline is its milestones by due date. Rules and permissions
+live in `app/lib/cms/tracker.ts` (`can.tracker` = DAP exco and exco admins); `bot.ts` reads Telegram commands and
+only calls that service. Admins are recognised by `people.telegram_user_id` (the numeric ID, never the username),
+set by the signed one-time link in `telegram-link.ts`. The bot listens only in a chat registered to a group
+(`/register <n>`), and everyone in that chat has member rights for that group; inside it even admins are scoped to
+that group. The last meeting date is stored per group and the daily cron (`/api/cron/publish`) sends the 3-week
+reminder. The dashboard is under the DAP run's **Timeline Tracker** (`/admin/dap/<cohort>/tracker`) and Settings › Telegram.
+Setup, webhook command and commands: [docs/tracker-setup.md](docs/tracker-setup.md). Tests: `npm test`.
+
 ### URLs
 All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder names under
 `app/` match. Old forms (capitals, `/WorkWithUs`, `/workwithus`) redirect in `proxy.ts`.
@@ -248,6 +259,7 @@ All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder
 | `CRON_SECRET` | Authenticates the Vercel Cron call to `/api/cron/publish` |
 | `AILODGE_REVALIDATE_URL` | The AI Lodge site's revalidate route, e.g. `https://ailodge.smubia.com/api/revalidate` (unset = it refreshes hourly) |
 | `AILODGE_REVALIDATE_SECRET` | Shared secret for that route; the same value is set on the AI Lodge site |
+| `TELEGRAM_WEBHOOK_SECRET` | Secret the DAP tracker bot's webhook (`/api/telegram/webhook`) checks; set the same value in `setWebhook`. Required on Vercel |
 | `NEXT_PUBLIC_SITE_URL` | Absolute links in Telegram posts (default `https://www.smubia.com`) |
 
 ### Scripts

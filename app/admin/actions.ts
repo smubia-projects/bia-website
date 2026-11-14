@@ -12,9 +12,13 @@ import * as people from "@/app/lib/cms/people";
 import { saveSiteLinks, setApplicationsOpen, type SiteLinksInput } from "@/app/lib/cms/links";
 import { saveSitePhoto } from "@/app/lib/cms/photos";
 import { createToken, revokeToken } from "@/app/lib/cms/tokens";
+import * as tracker from "@/app/lib/cms/tracker";
+import { noonSgt } from "@/app/lib/cms/bot-text";
+import { createAdminLink, unlinkTelegram } from "@/app/lib/cms/telegram-link";
+import * as webhook from "@/app/lib/cms/telegram-webhook";
 import type { Photo } from "@/app/lib/photos";
 import { UPLOAD_FOLDERS, uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
-import type { Programme, ProjectStatus } from "@/app/lib/cms/taxonomy";
+import type { BlockerStatus, MilestoneStatus, Programme, ProjectStatus } from "@/app/lib/cms/taxonomy";
 
 export type ActionResult<T = null> = { ok: true; data: T; message?: string } | { ok: false; error: string };
 
@@ -347,6 +351,112 @@ export async function removePersonAction(email: string) {
     refreshAdmin();
     return null;
   }, "Removed");
+}
+
+
+// ── DAP timeline tracker ─────────────────────────────────────────────────
+
+/** Runs a tracker change as an admin and refreshes the dashboard. */
+const track = <T,>(fn: (actor: Actor, who: tracker.TrackerWho) => Promise<T>, message?: string) =>
+  run(async (actor) => {
+    const data = await fn(actor, tracker.adminWho(actor));
+    refreshAdmin();
+    return data;
+  }, message);
+
+export async function saveProjectGroupAction(input: tracker.ProjectGroupInput) {
+  return track(async (actor) => (await tracker.saveProjectGroup(actor, input)).id);
+}
+
+export async function deleteProjectGroupAction(id: number) {
+  return track((actor) => tracker.deleteProjectGroup(actor, id).then(() => null));
+}
+
+export async function setMeetingRemindersAction(groupId: number, on: boolean) {
+  return track((actor) => tracker.setMeetingReminders(actor, groupId, on).then(() => null));
+}
+
+export async function unregisterChatAction(groupId: number) {
+  return track((actor) => tracker.unregisterChat(actor, groupId).then(() => null));
+}
+
+/** Logs a meeting on a date (YYYY-MM-DD, Singapore); today or no date means now. */
+export async function logMeetingAction(groupId: number, date: string) {
+  return track(async (_actor, who) => {
+    const today = new Date(Date.now() + 8 * 3_600_000).toISOString().slice(0, 10);
+    await tracker.logMeeting(who, groupId, !date || date === today ? new Date() : noonSgt(date));
+    return null;
+  });
+}
+
+export async function saveMemberAction(input: { id?: number; groupId: number; name: string }) {
+  return track((actor) => tracker.saveMember(actor, input).then(() => null));
+}
+
+export async function deleteMemberAction(id: number) {
+  return track((actor) => tracker.deleteMember(actor, id).then(() => null));
+}
+
+export async function saveMilestoneAction(input: tracker.MilestoneInput) {
+  return track((actor) => tracker.saveMilestone(actor, input).then(() => null));
+}
+
+export async function setMilestoneStatusAction(id: number, status: MilestoneStatus) {
+  return track((actor) => tracker.setMilestoneStatus(actor, id, status).then(() => null));
+}
+
+export async function deleteMilestoneAction(id: number) {
+  return track((actor) => tracker.deleteMilestone(actor, id).then(() => null));
+}
+
+export async function addSubtaskAction(input: { milestoneId: number } & tracker.SubtaskPatch) {
+  return track((_a, who) => tracker.addSubtask(who, input).then(() => null));
+}
+
+export async function updateSubtaskAction(id: number, patch: tracker.SubtaskPatch) {
+  return track((_a, who) => tracker.updateSubtask(who, id, patch).then(() => null));
+}
+
+export async function deleteSubtaskAction(id: number) {
+  return track((_a, who) => tracker.deleteSubtask(who, id));
+}
+
+export async function addBlockerAction(input: { milestoneId: number; description: string }) {
+  return track((_a, who) => tracker.addBlocker(who, input).then(() => null));
+}
+
+export async function updateBlockerAction(id: number, patch: { description?: string; status?: BlockerStatus }) {
+  return track((_a, who) => tracker.updateBlocker(who, id, patch).then(() => null));
+}
+
+export async function deleteBlockerAction(id: number) {
+  return track((_a, who) => tracker.deleteBlocker(who, id));
+}
+
+export async function getWebhookInfoAction() {
+  return run((actor) => webhook.getWebhookInfo(actor));
+}
+
+export async function setWebhookAction() {
+  return run(async (actor) => {
+    await webhook.setWebhook(actor);
+    return webhook.getWebhookInfo(actor);
+  }, "Webhook set");
+}
+
+export async function deleteWebhookAction() {
+  return run(async (actor) => {
+    await webhook.deleteWebhook(actor);
+    return webhook.getWebhookInfo(actor);
+  }, "Webhook deleted");
+}
+
+export async function createTelegramLinkAction() {
+  return run(async (actor) => createAdminLink(actor));
+}
+
+export async function unlinkTelegramAction() {
+  return track((actor) => unlinkTelegram(actor).then(() => null), "Telegram unlinked");
 }
 
 export async function signOutAction() {

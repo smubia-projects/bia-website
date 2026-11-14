@@ -39,6 +39,17 @@ export const ISSUE_STATUS_LABEL: Record<IssueStatus, string> = {
   published: "Published",
 };
 
+export const MILESTONE_STATUSES = ["todo", "in_progress", "done"] as const;
+export type MilestoneStatus = (typeof MILESTONE_STATUSES)[number];
+export const SUBTASK_STATUSES = MILESTONE_STATUSES;
+export type SubtaskStatus = MilestoneStatus;
+export const BLOCKER_STATUSES = ["open", "resolved"] as const;
+export type BlockerStatus = (typeof BLOCKER_STATUSES)[number];
+
+/** DAP project groups must meet their mentors at least this often; the bot reminds after REMIND weeks. */
+export const MEETING_REMIND_DAYS = 21;
+export const MEETING_DEADLINE_DAYS = 28;
+
 export const LODGE_STATUSES = ["open", "closed"] as const;
 export type LodgeStatus = (typeof LODGE_STATUSES)[number];
 

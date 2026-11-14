@@ -1,9 +1,11 @@
+import { sendMeetingReminders } from "@/app/lib/cms/bot";
 import { publishDueIssues } from "@/app/lib/cms/newsletter";
 
 /*
  * Daily Vercel Cron (vercel.json, 01:00 UTC = 09:00 SGT). Hobby-plan crons may
  * fire any time within that hour, which is why the editor says "±1 hour".
  * Vercel sends `Authorization: Bearer $CRON_SECRET` when CRON_SECRET is set.
+ * Also sends the DAP tracker's 3-week meeting reminders.
  */
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -17,5 +19,10 @@ export async function GET(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const published = await publishDueIssues();
-  return Response.json({ published });
+  // Tracker meeting reminders ride on the same daily run; a failure there must not hide the newsletter result.
+  const reminded = await sendMeetingReminders().catch((error) => {
+    console.error("[cron] meeting reminders failed", error);
+    return 0;
+  });
+  return Response.json({ published, reminded });
 }

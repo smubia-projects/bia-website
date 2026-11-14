@@ -14,7 +14,7 @@ export function botUsername() {
   return process.env.TELEGRAM_BOT_USERNAME || "";
 }
 
-function escapeHtml(s: string) {
+export function escapeHtml(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
@@ -84,3 +84,22 @@ export async function sendIssueToTelegram(chatId: string, issue: TelegramIssue) 
   }
   return { dryRun: false };
 }
+
+/** Any Bot API method, for the tracker bot. Dry-run (logged, not sent) without a token. */
+export type TelegramCall = (method: string, body: Record<string, unknown>) => Promise<void>;
+
+export const callTelegram: TelegramCall = async (method, body) => {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) {
+    console.info(`[telegram:dry-run] ${method} ${JSON.stringify(body)}`);
+    return;
+  }
+  const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(8000),
+  });
+  const json = (await res.json().catch(() => ({}))) as { ok?: boolean; description?: string };
+  if (!json.ok) throw new Error(`Telegram ${method} failed: ${json.description ?? res.status}`);
+};
