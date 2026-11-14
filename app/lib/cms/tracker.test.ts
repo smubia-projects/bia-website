@@ -93,6 +93,19 @@ describe("timeline permissions and scoping", () => {
     await rejects(t.addSubtask(mem1(), { milestoneId: m2, title: "sneaky" }), /not found/);
     await rejects(t.addSubtask(mem1(), { milestoneId: m1, title: "x", assigneeId: other.id }), /not in this group/);
     assert.equal((await t.updateSubtask(mem1(), s.id, { status: "done", assigneeId: null })).assigneeId, null);
+
+    // Assigning by name: a member on the list, else the name as typed; never both.
+    await t.saveMember(dapExco, { groupId: g1.id, name: "Mia Tan" });
+    await t.saveMember(dapExco, { groupId: g1.id, name: "Jayden Tan" });
+    await rejects(t.assignSubtask(mem1(), s.id, "tan"), /More than one member matches "tan": Mia Tan, Jayden Tan/);
+    const exact = await t.assignSubtask(mem1(), s.id, "mia"); // the exact name beats a word match
+    assert.deepEqual([exact.assignee, exact.onList, exact.task.assigneeId], ["Mia", true, mia.id]);
+    assert.equal((await t.assignSubtask(mem1(), s.id, "jayden")).assignee, "Jayden Tan"); // a whole word
+    const typed = await t.assignSubtask(mem1(), s.id, "Jay"); // part of a word: not a match, kept as typed
+    assert.deepEqual([typed.assignee, typed.onList, typed.task.assigneeId, typed.task.assigneeName], ["Jay", false, null, "Jay"]);
+    const me = await t.assignSubtask(t.memberWho(g1.id, "Mia Tan"), s.id, "me");
+    assert.deepEqual([me.assignee, me.task.assigneeName], ["Mia Tan", ""]);
+    assert.equal((await t.assignSubtask(mem1(), s.id, null)).task.assigneeName, "");
     await rejects(t.updateSubtask(t.memberWho(g2.id, "Ben"), s.id, { title: "hijack" }), /Subtask not found/);
     await rejects(t.deleteSubtask(t.memberWho(g2.id, "Ben"), s.id), /Subtask not found/);
 

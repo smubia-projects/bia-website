@@ -346,8 +346,19 @@ export interface SubtaskPatch {
   status?: SubtaskStatus;
   /** null clears */
   dueOn?: string | null;
-  /** null clears */
+  /** A member on the list; null clears the assignee (also a typed name) */
   assigneeId?: number | null;
+  /** Someone not on the member list, as typed; "" clears it */
+  assigneeName?: string;
+}
+
+/** The assignee columns a patch writes: a member and a typed name never both. */
+function assigneeColumns(patch: SubtaskPatch) {
+  if (patch.assigneeId != null) return { assigneeId: patch.assigneeId, assigneeName: "" };
+  if (patch.assigneeName) return { assigneeId: null, assigneeName: clean(patch.assigneeName, "Assignee", 80) };
+  if (patch.assigneeId === null) return { assigneeId: null, assigneeName: "" };
+  if (patch.assigneeName === "") return { assigneeName: "" };
+  return {};
 }
 
 async function checkAssignee(groupId: number, assigneeId: number | null | undefined) {
@@ -368,7 +379,8 @@ export async function addSubtask(who: TrackerWho, input: { milestoneId: number }
       title: clean(input.title, "Title", 200),
       status: input.status ? oneOf(SUBTASK_STATUSES, input.status, "Status") : "todo",
       dueOn: cleanDate(input.dueOn, "Due date"),
-      assigneeId: input.assigneeId ?? null,
+      assigneeId: null,
+      ...assigneeColumns(input),
       updatedBy: who.name,
     })
     .returning();
@@ -387,7 +399,7 @@ export async function updateSubtask(who: TrackerWho, id: number, patch: SubtaskP
       ...(patch.title !== undefined ? { title: clean(patch.title, "Title", 200) } : {}),
       ...(patch.status !== undefined ? { status: oneOf(SUBTASK_STATUSES, patch.status, "Status") } : {}),
       ...(patch.dueOn !== undefined ? { dueOn: cleanDate(patch.dueOn, "Due date") } : {}),
-      ...(patch.assigneeId !== undefined ? { assigneeId: patch.assigneeId } : {}),
+      ...assigneeColumns(patch),
       updatedAt: new Date().toISOString(),
       updatedBy: who.name,
     })
@@ -396,20 +408,36 @@ export async function updateSubtask(who: TrackerWho, id: number, patch: SubtaskP
   return row!;
 }
 
-/** /assign: sets a task's assignee by roster name (exact, else a unique partial match); null clears. */
-export async function assignSubtask(who: TrackerWho, id: number, name: string | null): Promise<SubtaskRow> {
-  if (name === null) return updateSubtask(who, id, { assigneeId: null });
+export interface Assignment {
+  task: SubtaskRow;
+  /** Who it is assigned to now; "" when unassigned */
+  assignee: string;
+  /** False when the name isn't on the member list and was kept as typed */
+  onList: boolean;
+}
+
+/**
+ * /assign: sets a task's assignee from a name. An exact or unique whole-word match on the member
+ * list assigns that member; a name that matches nobody is kept as typed; one that matches
+ * several members is refused. "me" is the sender's Telegram name; null clears.
+ */
+export async function assignSubtask(who: TrackerWho, id: number, name: string | null): Promise<Assignment> {
+  if (name === null) return { task: await updateSubtask(who, id, { assigneeId: null }), assignee: "", onList: true };
+  const typed = /^me$/i.test(name.trim()) ? who.name : name.trim();
   const db = await getDb();
   const [cur] = await db.select({ milestoneId: subtasks.milestoneId }).from(subtasks).where(eq(subtasks.id, id));
   ensure(cur, "Subtask not found");
   const groupId = await scopedMilestoneGroup(who, cur.milestoneId, "Subtask");
   const roster = await db.select().from(projectMembers).where(eq(projectMembers.groupId, groupId));
-  const q = name.trim().toLowerCase();
-  const exact = roster.filter((m) => m.name.toLowerCase() === q);
-  const hits = exact.length ? exact : roster.filter((m) => m.name.toLowerCase().includes(q));
-  ensure(hits.length, `No member named "${name}" in this group. Members are added on the dashboard.`);
-  ensure(hits.length === 1, `More than one member matches "${name}": ${hits.map((m) => m.name).join(", ")}`);
-  return updateSubtask(who, id, { assigneeId: hits[0].id });
+  // Whole words only: "mia" or "lim" finds "Mia Lim", but "jay" never finds "Jayden", because a name
+  // that matches nobody is kept as typed and a partial match would quietly take it.
+  const words = (name: string) => name.toLowerCase().split(/\s+/).filter(Boolean);
+  const q = words(typed);
+  const exact = roster.filter((m) => words(m.name).join(" ") === q.join(" "));
+  const hits = exact.length ? exact : roster.filter((m) => q.every((w) => words(m.name).includes(w)));
+  ensure(hits.length <= 1, `More than one member matches "${typed}": ${hits.map((m) => m.name).join(", ")}`);
+  if (hits.length) return { task: await updateSubtask(who, id, { assigneeId: hits[0].id }), assignee: hits[0].name, onList: true };
+  return { task: await updateSubtask(who, id, { assigneeName: typed }), assignee: typed, onList: false };
 }
 
 export async function deleteSubtask(who: TrackerWho, id: number) {

@@ -135,7 +135,7 @@ export function formatMilestone(m: MilestoneDetail, members: ProjectMemberRow[],
     lines.push(
       `${STATUS_ICON[s.status]} <b>#${s.id}</b> ${esc(s.title)}` +
         (s.dueOn ? ` — due ${shortDate(s.dueOn, today)}` : "") +
-        (name(s.assigneeId) ? ` — ${esc(name(s.assigneeId)!)}` : "")
+        ((name(s.assigneeId) ?? s.assigneeName) ? ` — ${esc((name(s.assigneeId) ?? s.assigneeName)!)}` : "")
     );
   }
   lines.push("", "<b>Blockers</b>");

@@ -48,7 +48,7 @@ interface MilestoneView {
   dueOn: string;
   dates: string;
   overdue: boolean;
-  subtasks: { id: number; title: string; status: MilestoneStatus; dueOn: string | null; assigneeId: number | null }[];
+  subtasks: { id: number; title: string; status: MilestoneStatus; dueOn: string | null; assigneeId: number | null; assigneeName: string }[];
   blockers: { id: number; description: string; status: BlockerStatus }[];
 }
 interface Props {
@@ -75,6 +75,57 @@ function InlineText({ value, label, onCommit }: { value: string; label: string; 
       onBlur={() => (v.trim() && v.trim() !== value ? onCommit(v.trim()) : setV(value))}
       onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
     />
+  );
+}
+
+const OTHER = "other";
+
+/**
+ * A task's assignee: someone on the member list, or a name typed in for someone who isn't
+ * (shown as "Not on the list"). Picking "Someone Else" opens the name field.
+ */
+function AssigneePicker({ task, members, disabled, onChange }: {
+  task: { id: number; assigneeId: number | null; assigneeName: string };
+  members: { id: number; name: string }[];
+  disabled: boolean;
+  onChange: (patch: { assigneeId?: number | null; assigneeName?: string }) => void;
+}) {
+  const [typing, setTyping] = useState(Boolean(task.assigneeName));
+  const value = task.assigneeId ?? (typing ? OTHER : "");
+  return (
+    <>
+      <select
+        className={`${styles.inp} ${styles.inpSmall} ${t.ctl}`}
+        aria-label={`Assignee of task ${task.id}`}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => {
+          if (e.target.value === OTHER) return setTyping(true);
+          setTyping(false);
+          onChange({ assigneeId: e.target.value ? Number(e.target.value) : null });
+        }}
+      >
+        <option value="">Unassigned</option>
+        {members.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.name}
+          </option>
+        ))}
+        <option value={OTHER}>Someone Else</option>
+      </select>
+      {typing && (
+        <input
+          className={`${styles.inp} ${styles.inpSmall} ${t.ctl}`}
+          aria-label={`Assignee name for task ${task.id}`}
+          placeholder="Name (not on the list)"
+          defaultValue={task.assigneeName}
+          disabled={disabled}
+          autoFocus={!task.assigneeName}
+          onBlur={(e) => e.target.value.trim() !== task.assigneeName && onChange({ assigneeName: e.target.value.trim() })}
+          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+        />
+      )}
+    </>
   );
 }
 
@@ -297,7 +348,7 @@ export default function GroupTracker({ cohortId, cohortSlug, today, group, membe
               <div>
                 <div className={t.listHead}>Tasks · {m.subtasks.filter((s) => s.status === "done").length}/{m.subtasks.length} done</div>
                 {m.subtasks.map((s) => (
-                  <div key={`${s.id}-${s.title}`} className={t.task}>
+                  <div key={`${s.id}-${s.title}-${s.assigneeId}-${s.assigneeName}`} className={t.task}>
                     <span className={t.itemId}>#{s.id}</span>
                     <select className={`${styles.inp} ${styles.inpSmall} ${t.ctl}`} aria-label={`Status of task ${s.id}`} value={s.status} disabled={busy} onChange={(e) => call(updateSubtaskAction(s.id, { status: e.target.value as MilestoneStatus }))}>
                       {MILESTONE_STATUSES.map((o) => (
@@ -311,14 +362,7 @@ export default function GroupTracker({ cohortId, cohortSlug, today, group, membe
                       <X size={16} strokeWidth={1.75} aria-hidden="true" />
                     </button>
                     <div className={t.taskMeta}>
-                      <select className={`${styles.inp} ${styles.inpSmall} ${t.ctl}`} aria-label={`Assignee of task ${s.id}`} value={s.assigneeId ?? ""} disabled={busy} onChange={(e) => call(updateSubtaskAction(s.id, { assigneeId: e.target.value ? Number(e.target.value) : null }))}>
-                        <option value="">Unassigned</option>
-                        {members.map((o) => (
-                          <option key={o.id} value={o.id}>
-                            {o.name}
-                          </option>
-                        ))}
-                      </select>
+                      <AssigneePicker task={s} members={members} disabled={busy} onChange={(patch) => call(updateSubtaskAction(s.id, patch))} />
                       <input className={`${styles.inp} ${styles.inpSmall} ${t.ctl}`} type="date" aria-label={`Due date of task ${s.id}`} value={s.dueOn ?? ""} disabled={busy} onChange={(e) => call(updateSubtaskAction(s.id, { dueOn: e.target.value || null }))} />
                     </div>
                   </div>

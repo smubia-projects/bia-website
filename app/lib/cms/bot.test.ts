@@ -106,8 +106,9 @@ describe("working in Group 1's chat", () => {
   it("members log tasks, blockers, assignees and meetings", async () => {
     const ms = (await t.getTimeline(t.adminWho({ email: MINGDA_EMAIL, name: "Mingda", role: "dap_exco" }), g1.id))[0].id;
     assert.match(await say(CHAT, MIA, `/task ${ms} Draft deck by 20 Nov`), /Added task/);
-    assert.match(await say(CHAT, MIA, `/assign 1 mia`), /assigned/);
-    assert.match(await say(CHAT, MIA, `/assign 1 nobody-here`), /No member named/);
+    assert.match(await say(CHAT, MIA, `/assign 1 nobody-here`), /assigned to "nobody-here" \(not on the member list\)/);
+    assert.match(await say(CHAT, MIA, `/assign 1 me`), /assigned to Mia Lim\./); // her Telegram name, "Mia", matches the list
+    assert.match(await say(CHAT, MIA, `/assign 1 mia`), /assigned to Mia Lim\./); // a whole word of a name on the list
     assert.match(await say(CHAT, MIA, `/taskstatus 1 doing`), /in progress/);
     assert.match(await say(CHAT, MIA, `/blocker ${ms} Waiting on dataset access`), /Logged blocker/);
     calls = [];

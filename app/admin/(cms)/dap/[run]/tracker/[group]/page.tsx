@@ -44,7 +44,7 @@ export default async function TrackerGroupPage(props: { params: Promise<{ run: s
         dueOn: m.dueOn,
         dates: m.startsOn ? `${day(m.startsOn)} to ${day(m.dueOn)}` : `Due ${day(m.dueOn)}`,
         overdue: m.status !== "done" && m.dueOn < today,
-        subtasks: m.subtasks.map((s) => ({ id: s.id, title: s.title, status: s.status, dueOn: s.dueOn, assigneeId: s.assigneeId })),
+        subtasks: m.subtasks.map((s) => ({ id: s.id, title: s.title, status: s.status, dueOn: s.dueOn, assigneeId: s.assigneeId, assigneeName: s.assigneeName })),
         blockers: m.blockers.map((b) => ({ id: b.id, description: b.description, status: b.status })),
       }))}
     />

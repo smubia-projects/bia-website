@@ -16,5 +16,6 @@ CREATE TABLE "telegram_updates" (
 --> statement-breakpoint
 ALTER TABLE "people" ADD COLUMN "telegram_name" text DEFAULT '' NOT NULL;--> statement-breakpoint
 ALTER TABLE "people" ADD COLUMN "telegram_username" text DEFAULT '' NOT NULL;--> statement-breakpoint
+ALTER TABLE "subtasks" ADD COLUMN "assignee_name" text DEFAULT '' NOT NULL;--> statement-breakpoint
 ALTER TABLE "telegram_link_codes" ADD CONSTRAINT "telegram_link_codes_project_group_id_project_groups_id_fk" FOREIGN KEY ("project_group_id") REFERENCES "public"."project_groups"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "telegram_link_codes_hash" ON "telegram_link_codes" USING btree ("code_hash");

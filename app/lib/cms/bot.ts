@@ -157,13 +157,16 @@ export const COMMANDS: BotCommand[] = [
   {
     name: "assign",
     admin: false,
-    usage: "<task#> name|none",
+    usage: "<task#> name|me|none",
     description: "Assign a task",
     async run(c, args) {
       const [id, rest] = idArg(args, usageOf("assign"));
       ensure(rest, `Usage: ${usageOf("assign")}`);
-      const s = await tracker.assignSubtask(c.scope, id, /^(none|nobody|clear)$/i.test(rest) ? null : rest);
-      return s.assigneeId ? `Task <b>#${s.id}</b> assigned.` : `Task <b>#${s.id}</b> is unassigned.`;
+      const a = await tracker.assignSubtask(c.scope, id, /^(none|nobody|clear)$/i.test(rest) ? null : rest);
+      if (!a.assignee) return `Task <b>#${a.task.id}</b> is unassigned.`;
+      return a.onList
+        ? `Task <b>#${a.task.id}</b> assigned to ${esc(a.assignee)}.`
+        : `Task <b>#${a.task.id}</b> assigned to "${esc(a.assignee)}" (not on the member list).`;
     },
   },
   {

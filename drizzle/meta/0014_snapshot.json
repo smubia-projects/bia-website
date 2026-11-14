@@ -1,5 +1,5 @@
 {
-  "id": "3e672798-590e-4fe5-8795-9653fdedd34b",
+  "id": "3f13ed32-50ab-4b32-906c-de40a91ccabf",
   "prevId": "ba3ece34-64cd-481c-9b88-f667eb9d6ce4",
   "version": "7",
   "dialect": "postgresql",
@@ -1764,6 +1764,13 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": false
+        },
+        "assignee_name": {
+          "name": "assignee_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
         },
         "created_at": {
           "name": "created_at",

@@ -415,6 +415,8 @@ export const subtasks = pgTable(
     status: text("status").$type<SubtaskStatus>().notNull().default("todo"),
     dueOn: date("due_on", { mode: "string" }),
     assigneeId: integer("assignee_id").references(() => projectMembers.id, { onDelete: "set null" }),
+    /** An assignee who isn't on the member list, as typed. At most one of assigneeId and assigneeName is set. */
+    assigneeName: text("assignee_name").notNull().default(""),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
     updatedBy: text("updated_by").notNull().default(""),
