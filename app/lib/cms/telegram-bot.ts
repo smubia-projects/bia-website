@@ -53,10 +53,13 @@ async function onlyOnce(ctx: Context, next: NextFunction) {
   if (await claimUpdate(ctx.update.update_id)) await next();
 }
 
-/** A Bot with all handlers. Tests pass their own token and botInfo, then add a transformer to bot.api. */
-export function createBot(token = telegramToken(), botInfo?: UserFromGetMe) {
+/**
+ * A Bot with all handlers. Tests pass their own token and botInfo, then add a transformer to bot.api.
+ * Long polling (dev) passes a longer timeout, since each getUpdates call waits up to 30 seconds.
+ */
+export function createBot(token = telegramToken(), botInfo?: UserFromGetMe, timeoutSeconds = clientOptions.timeoutSeconds) {
   const info = botInfo ?? (token ? undefined : offlineBotInfo());
-  const bot = new Bot(token || "offline", { client: clientOptions, ...(info ? { botInfo: info } : {}) });
+  const bot = new Bot(token || "offline", { client: { ...clientOptions, timeoutSeconds }, ...(info ? { botInfo: info } : {}) });
   if (!token) bot.api.config.use(dryRun);
   bot.use(errorBoundary);
   bot.use(onlyOnce);

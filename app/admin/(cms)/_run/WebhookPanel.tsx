@@ -14,7 +14,7 @@ const when = (iso: string) => new Date(iso).toLocaleString("en-SG", { timeZone: 
  * secret stay on the server; this only shows whether each is configured. To change the key, update
  * TELEGRAM_WEBHOOK_SECRET in the environment, redeploy, then Set Webhook.
  */
-export default function WebhookPanel({ expectedUrl, tokenConfigured, secretConfigured }: { expectedUrl: string; tokenConfigured: boolean; secretConfigured: boolean }) {
+export default function WebhookPanel({ expectedUrl, tokenConfigured, secretConfigured, polling = false }: { expectedUrl: string; tokenConfigured: boolean; secretConfigured: boolean; polling?: boolean }) {
   const { handle, node } = useActionToast();
   const confirm = useConfirm();
   const [info, setInfo] = useState<WebhookInfo | null>(null);
@@ -74,7 +74,9 @@ export default function WebhookPanel({ expectedUrl, tokenConfigured, secretConfi
         </div>
         <div className={t.fact}>
           <span className={t.factTitle}>Telegram Status</span>
-          {!info ? (
+          {polling && <span className={t.factValue}>Polling (local)</span>}
+          {polling && <span className={styles.hint}>This dev server fetches the bot&apos;s updates itself, so no webhook is needed. Run reminders by opening /api/cron/daily.</span>}
+          {polling ? null : !info ? (
             <span className={styles.hint}>Not checked. Select Check Webhook.</span>
           ) : !info.tokenConfigured ? (
             <span className={styles.hint}>Bot token not set.</span>

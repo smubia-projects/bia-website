@@ -4,6 +4,7 @@ import { todaySgt } from "@/app/lib/cms/people";
 import { getAllTimelines } from "@/app/lib/cms/tracker";
 import { buildChart, nextMeetingBy, summarise } from "@/app/lib/cms/tracker-view";
 import { expectedWebhookUrl } from "@/app/lib/cms/telegram-webhook";
+import { isPolling } from "@/app/lib/cms/telegram-polling";
 import AddGroupButton from "../../../_run/AddGroupButton";
 import TrackerChart from "../../../_run/TrackerChart";
 import WebhookPanel from "../../../_run/WebhookPanel";
@@ -121,7 +122,7 @@ export default async function TrackerPage(props: { params: Promise<{ run: string
         </div>
       </section>
 
-      <WebhookPanel expectedUrl={expectedWebhookUrl()} tokenConfigured={Boolean(process.env.TELEGRAM_BOT_TOKEN)} secretConfigured={Boolean(process.env.TELEGRAM_WEBHOOK_SECRET)} />
+      <WebhookPanel expectedUrl={expectedWebhookUrl()} tokenConfigured={Boolean(process.env.TELEGRAM_BOT_TOKEN)} secretConfigured={Boolean(process.env.TELEGRAM_WEBHOOK_SECRET)} polling={isPolling()} />
     </div>
   );
 }
