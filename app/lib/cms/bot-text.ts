@@ -16,10 +16,11 @@ const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00
 
 /**
  * Reads "2026-11-20", "20 Nov", "Nov 20 2026", "20/11", "today", "tomorrow", "yesterday".
- * Without a year it uses the current one, or (for meetings, `past`) the last one that is not in the future.
+ * Without a year: the next such day from today (a due date), or with `past` the last one up to
+ * today (a meeting), or with `onOrBefore` the last one up to that date (a start before its due date).
  * `today` is Singapore's date as YYYY-MM-DD. Returns null when it is not a real date.
  */
-export function parseDate(text: string, today: string, past = false): string | null {
+export function parseDate(text: string, today: string, past = false, onOrBefore?: string): string | null {
   const t = text.trim().toLowerCase().replace(/,/g, "");
   if (t === "today") return today;
   if (t === "tomorrow") return addDays(today, 1);
@@ -35,36 +36,52 @@ export function parseDate(text: string, today: string, past = false): string | n
     [day, month, year] = [+m[2], MONTHS.indexOf(m[1].slice(0, 3)) + 1, m[3] ? +m[3] : undefined];
   else return null;
 
-  const thisYear = +today.slice(0, 4);
-  const iso = isoDate(year ?? thisYear, month, day);
-  if (iso && year === undefined && past && iso > today) return isoDate(thisYear - 1, month, day);
-  return iso;
+  if (year !== undefined) return isoDate(year, month, day);
+  const limit = onOrBefore ?? (past ? today : null);
+  if (limit) {
+    const y = +limit.slice(0, 4);
+    const iso = isoDate(y, month, day);
+    return iso && iso > limit ? isoDate(y - 1, month, day) : iso;
+  }
+  // "by 5 Jan" in November means next January, not a date that has already passed.
+  const y = +today.slice(0, 4);
+  const iso = isoDate(y, month, day);
+  return iso && iso < today ? isoDate(y + 1, month, day) : iso;
 }
+
+/** Whether the words after "by" were meant as a date: a number, or today, tomorrow or yesterday. */
+const looksLikeDate = (text: string) => /\d/.test(text) || /^(today|tomorrow|yesterday)$/i.test(text.trim());
 
 export interface TitleAndDates {
   title: string;
   startsOn: string | null;
   dueOn: string | null;
-  /** The text after "by" when it was not a date, so required-date commands can say so */
+  /** The text after "by" when it looks like a date but is not a real one ("31 Nov"), so commands can say so */
   badDue: string | null;
 }
 
-/** "Prototype from 1 Dec by 15 Dec" → title, start and due. A "by …" that is not a date stays part of the title. */
-export function splitTitleAndDates(args: string, today: string): TitleAndDates {
+/**
+ * "Prototype from 1 Dec by 15 Dec" → title, start and due. A "by …" that is not a date stays part of the
+ * title ("Presentation by the team"). Only milestones have a start date, so "from …" is read only with
+ * `withStart`; a task keeps it in its title.
+ */
+export function splitTitleAndDates(args: string, today: string, withStart = false): TitleAndDates {
   let title = args.trim();
   let dueOn: string | null = null;
   let startsOn: string | null = null;
   let badDue: string | null = null;
-  const by = title.match(/^([\s\S]*?)\s+by\s+(\S+(?:\s+\S+){0,2})$/i);
+  // "by …" may also be the whole text: /edittask 5 by 22 Nov changes only the due date.
+  const by = title.match(/^(?:([\s\S]*?)\s+)?by\s+(\S+(?:\s+\S+){0,2})$/i);
   if (by) {
     const d = parseDate(by[2], today);
-    if (d) [title, dueOn] = [by[1].trim(), d];
-    else badDue = by[2];
+    if (d) [title, dueOn] = [(by[1] ?? "").trim(), d];
+    else if (looksLikeDate(by[2])) badDue = by[2];
   }
-  const from = title.match(/^([\s\S]*?)\s+from\s+(\S+(?:\s+\S+){0,2})$/i);
+  const from = withStart ? title.match(/^(?:([\s\S]*?)\s+)?from\s+(\S+(?:\s+\S+){0,2})$/i) : null;
   if (from) {
-    const d = parseDate(from[2], today);
-    if (d) [title, startsOn] = [from[1].trim(), d];
+    // A start without a year is the last such day on or before the due date.
+    const d = parseDate(from[2], today, false, dueOn ?? undefined);
+    if (d) [title, startsOn] = [(from[1] ?? "").trim(), d];
   }
   return { title, startsOn, dueOn, badDue };
 }

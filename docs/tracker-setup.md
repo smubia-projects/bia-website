@@ -94,6 +94,11 @@ across groups, an admin in a private chat names the group too: `/done g3 2`.
 Mia Lim, "jay" does not find Jayden); a name that
 matches nobody is kept as typed (shown as not on the member list); one that matches several members is refused.
 
+Dates: `by 20 Nov`, `by 20/11`, `by 2026-11-20` or `by tomorrow`. Without a year a due date is the next such
+day (`by 5 Jan` in November means next January) and a meeting date the last one. A date that is not real
+(`by 31 Nov`) is refused; other words after "by" stay in the title ("Presentation by the team"). `/edittask 5 by
+22 Nov` changes only the due date. Only milestones take a start date (`from 1 Dec`).
+
 Lists (`/milestones`, a milestone's tasks and blockers, `/groups`, the reminder) are Telegram rich messages with
 tables. Each milestone's number in `/milestones` is a button that opens its tasks and blockers. In a private chat,
 admin views also have an **Open in CMS** button (never in a group chat, where members would see it; not on

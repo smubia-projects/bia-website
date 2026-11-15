@@ -148,6 +148,7 @@ export const COMMANDS: BotCommand[] = [
     async run(c, args) {
       const m = await item(c, args, "milestone", "task");
       const p = splitTitleAndDates(m.rest, c.today);
+      ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Try 20 Nov or 2026-11-20.`);
       ensure(p.title, `Usage: ${usageOf("task")}`);
       const s = await tracker.addSubtask(c.scope, { milestoneId: m.id, title: p.title, dueOn: p.dueOn });
       return `Added task <b>${label("task", s.number)}</b> to ${label("milestone", m.number)}: ${esc(s.title)}${s.dueOn ? `, due ${shortDate(s.dueOn, c.today)}` : ""}.`;
@@ -161,6 +162,7 @@ export const COMMANDS: BotCommand[] = [
     async run(c, args) {
       const t = await item(c, args, "task", "edittask");
       const p = splitTitleAndDates(t.rest, c.today);
+      ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Try 20 Nov or 2026-11-20.`);
       ensure(p.title || p.dueOn, "Give a new title, a new due date (by 20 Nov), or both.");
       const s = await tracker.updateSubtask(c.scope, t.id, { ...(p.title ? { title: p.title } : {}), ...(p.dueOn ? { dueOn: p.dueOn } : {}) });
       return `Updated task <b>${label("task", s.number)}</b>: ${esc(s.title)}.`;
@@ -300,7 +302,7 @@ export const COMMANDS: BotCommand[] = [
       const actor = requireActor(c);
       const [n, rest] = leadingGroup(args, true);
       const group = await groupFor(c, n);
-      const p = splitTitleAndDates(rest, c.today);
+      const p = splitTitleAndDates(rest, c.today, true);
       ensure(p.title, `Usage: ${usageOf("milestone")}`);
       ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Try 15 Dec or 2026-12-15.`);
       ensure(p.dueOn, "A milestone needs a due date: /milestone title by 15 Dec");
@@ -317,7 +319,7 @@ export const COMMANDS: BotCommand[] = [
       const actor = requireActor(c);
       const x = await item(c, args, "milestone", "editmilestone");
       const cur = await tracker.getMilestone(c.scope, x.id);
-      const p = splitTitleAndDates(x.rest, c.today);
+      const p = splitTitleAndDates(x.rest, c.today, true);
       ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Try 15 Dec or 2026-12-15.`);
       ensure(p.title || p.dueOn, "Give a new title, a new due date (by 15 Dec), or both.");
       const m = await tracker.saveMilestone(actor, {

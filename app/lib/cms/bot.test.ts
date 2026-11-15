@@ -120,6 +120,9 @@ describe("working in Group 1's chat", () => {
     const ms = (await t.getTimeline(t.adminWho({ email: MINGDA_EMAIL, name: "Mingda", role: "dap_exco" }), g1.id))[0].id;
     assert.match(await say(CHAT, MIA, "/task 1 Draft deck by 20 Nov"), /Added task <b>T1<\/b> to M1: Draft deck/);
     assert.match(await say(CHAT, MIA, "/taskstatus T1 todo"), /Task <b>T1<\/b> Draft deck is now todo/); // T1 works as well as 1
+    assert.match(await say(CHAT, MIA, "/task 1 Review by 31 Nov"), /Couldn't read the date "31 Nov"/); // a typo is refused, not kept in the title
+    assert.match(await say(CHAT, MIA, "/edittask 1 by 31 Nov"), /Couldn't read the date "31 Nov"/);
+    assert.match(await say(CHAT, MIA, "/edittask 1 by 25 Dec"), /Updated task <b>T1<\/b>: Draft deck\./); // only the date changes
     assert.match(await say(CHAT, MIA, `/assign 1 nobody-here`), /assigned to "nobody-here" \(not on the member list\)/);
     assert.match(await say(CHAT, MIA, `/assign 1 me`), /assigned to Mia Lim\./); // her Telegram name, "Mia", matches the list
     assert.match(await say(CHAT, MIA, `/assign 1 mia`), /assigned to Mia Lim\./); // a whole word of a name on the list
