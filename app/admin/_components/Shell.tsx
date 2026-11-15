@@ -20,6 +20,8 @@ interface Props {
   seePeople: boolean;
   /** Photos alone (AI Lodge exco edit the AI Lodge site's photos) */
   seePhotos: boolean;
+  /** DAP timeline tracker admins link their Telegram account here */
+  seeTelegram: boolean;
   reviewCount: number;
   /** Every semester and cohort this person can open */
   runs: RunOption[];
@@ -113,6 +115,7 @@ export default function Shell(props: Props) {
             <div className={styles.sideGroup}>Settings</div>
             {props.seeLinks && item("/admin/links", "Site Links", pathname.startsWith("/admin/links"))}
             {props.seePhotos && item("/admin/photos", "Photos", pathname.startsWith("/admin/photos"))}
+            {props.seeTelegram && item("/admin/telegram", "Telegram", pathname.startsWith("/admin/telegram"))}
             {props.seePeople && item("/admin/people", "People and Roles", pathname.startsWith("/admin/people"))}
             {item("/admin/tokens", "Access Tokens", pathname.startsWith("/admin/tokens"))}
 

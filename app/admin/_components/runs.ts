@@ -4,7 +4,7 @@ import type { CohortVisibility, Programme } from "@/app/lib/cms/taxonomy";
  * CMS addresses for a programme run (an AI Lodge semester or a DAP cohort).
  * The run is in the path, like a Vercel project:
  *   /admin/ailodge/<semester>[/projects]
- *   /admin/dap/<cohort>[/groups | /schedule | /newsletter[/<id>] | /projects]
+ *   /admin/dap/<cohort>[/co-learning-groups | /schedule | /newsletter[/<id>] | /projects | /project-groups[/<id>]]
  * Pure functions, safe in client components.
  */
 
@@ -33,10 +33,11 @@ export const RUN_SECTIONS: Record<Programme, RunSection[]> = {
   ],
   DAP: [
     { key: "", label: "Overview" },
-    { key: "groups", label: "Co-Learning Groups" },
+    { key: "co-learning-groups", label: "Co-Learning Groups" },
     { key: "schedule", label: "Schedule" },
     { key: "newsletter", label: "Newsletter" },
     { key: "projects", label: "Projects" },
+    { key: "project-groups", label: "Project Groups" },
   ],
 };
 
@@ -45,7 +46,7 @@ export const runHref = (programme: Programme, slug: string, section = "") =>
 
 export const newRunHref = (programme: Programme) => `/admin/${RUN_SEGMENT[programme]}/new`;
 
-/** Reads a run from a CMS path: /admin/dap/ay2627/groups → DAP, ay2627, groups. */
+/** Reads a run from a CMS path: /admin/dap/ay2627/schedule → DAP, ay2627, schedule. */
 export function parseRunPath(pathname: string): { programme: Programme; slug: string; section: string } | null {
   const m = pathname.match(/^\/admin\/(ailodge|dap)\/([a-z0-9-]+)(?:\/([a-z-]+))?/);
   if (!m || m[2] === "new") return null;

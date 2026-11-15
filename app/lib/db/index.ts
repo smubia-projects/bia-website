@@ -47,10 +47,22 @@ async function createDb(): Promise<Db> {
     console.warn(`[db] ${dir} is in use by another process; using an empty in-memory database here.`);
   }
   const client = onDisk ? new PGlite(dir) : new PGlite();
-  if (onDisk) closeOnExit(client, dir);
-  globalForDb.__cmsLocalClient = client;
+  const release = onDisk ? closeOnExit(client, dir) : () => undefined;
   const db = drizzle(client, { schema });
-  await migrate(db, { migrationsFolder: MIGRATIONS_DIR });
+  try {
+    await migrate(db, { migrationsFolder: MIGRATIONS_DIR });
+  } catch (error) {
+    // getDb() retries on the next call, so close this attempt first: otherwise every retry
+    // adds shutdown handlers and keeps the lock.
+    await client.close().catch(() => undefined);
+    release();
+    if (!onDisk) throw error;
+    throw new Error(
+      `[db] ${dir} could not be opened or migrated. If it is corrupted (an unclean stop can do that), stop the dev server, move the folder aside and start again for a fresh database.`,
+      { cause: error }
+    );
+  }
+  globalForDb.__cmsLocalClient = client;
   return db as unknown as Db;
 }
 
@@ -83,8 +95,11 @@ function isAlive(pid: number) {
   }
 }
 
-/** Flush and release on shutdown; an unclean stop can leave PGlite unreadable. */
-function closeOnExit(client: { close(): Promise<void> }, dir: string) {
+/**
+ * Flush and release on shutdown; an unclean stop can leave PGlite unreadable. Returns a
+ * function that removes these handlers and releases the lock, for a client that failed to open.
+ */
+function closeOnExit(client: { close(): Promise<void> }, dir: string): () => void {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const fs = require("fs") as typeof import("fs");
   const release = () => fs.rmSync(`${dir}.lock`, { force: true });
@@ -103,6 +118,12 @@ function closeOnExit(client: { close(): Promise<void> }, dir: string) {
   process.once("SIGINT", shutdown);
   process.once("SIGTERM", shutdown);
   process.once("exit", release);
+  return () => {
+    process.off("SIGINT", shutdown);
+    process.off("SIGTERM", shutdown);
+    process.off("exit", release);
+    release();
+  };
 }
 
 export function getDb(): Promise<Db> {

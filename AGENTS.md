@@ -1,6 +1,7 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for coding agents (Claude Code, Codex and others) and people working in this repository.
+It is the only instructions file: there is no CLAUDE.md.
 
 ## Quick Start
 
@@ -11,6 +12,7 @@ npm run dev      # Start development server on http://localhost:3000
 npm run build    # Build for production
 npm run start    # Start production server
 npm run lint     # Run ESLint
+npm test         # Unit and service tests (node:test via tsx, throwaway PGlite databases)
 ```
 
 ## Project Overview
@@ -53,7 +55,7 @@ app/
 │   ├── links.ts        # Club URL defaults + the list of CMS-editable links (read them with getSiteLinks/useSiteLinks)
 │   └── projects.ts     # Re-exports the public project reads from lib/cms
 ├── admin/              # CMS: (cms)/ route group behind Google sign-in, login/, actions.ts
-├── api/                # auth (Auth.js), mcp (Claude tools), cron/publish
+├── api/                # auth (Auth.js), mcp (Claude tools), cron/daily, telegram/webhook, public/ailodge
 ├── projects/
 │   ├── data/types.ts   # Project & TeamMember interfaces
 │   ├── page.tsx        # All projects (ISR 1h) + ProjectsExplorer (search, filter sidebar, wall/cards)
@@ -140,7 +142,7 @@ Use `useHydrated`, `useMediaQuery` or `useClientValue` from `app/components/ui/u
 ### Where content lives
 - **Neon Postgres** (Drizzle ORM) holds all CMS content: `projects`, `cohorts` (AI Lodge
   semesters + DAP cohorts), `tracks` (Hack Day tracks), `lodges` (AI Lodge lodges, served to
-  ailodge.smubia.com), `dap_groups` (DAP teaching groups with members and mentors), `people`
+  ailodge.smubia.com), `dap_groups` (DAP co-learning groups with members and mentors), `people`
   (CMS access + roles), `sessions` (DAP co-learning schedule, each linked to a group), `issues` ("This week in DAP"), `site_links` (club links), `site_settings` (switches such as applications open) and `site_photos` (replaced photos). Schema: `app/lib/db/schema.ts`;
   SQL migrations in `drizzle/` (generate with `npm run db:generate` after editing the schema).
 - **Local development needs no database account**: without `DATABASE_URL`, `app/lib/db`
@@ -161,12 +163,20 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
 ### CMS
 - Sign-in: Auth.js (`auth.ts`) with Google, `@smu.edu.sg` accounts only, plus the email must
   be on the People list (or in `CMS_BOOTSTRAP_ADMINS`). Roles are re-read from the database
-  on every request. Local dev also has a dev sign-in with a role picker (never in production).
-- Roles: **Exco admin** (everything), **DAP exco** (DAP only: cohorts, groups, schedule,
-  newsletter, DAP projects) and **AI Lodge exco** (AI Lodge only: semesters, tracks, lodges,
-  Hack Day winners, AI Lodge projects). Programme exco can't publish projects (an exco admin
-  approves them), edit Site links or manage people. Permissions live in `can` (`actor.ts`),
-  the role → programme map in `ROLE_PROGRAMME` (`taxonomy.ts`). There is no lodge head role.
+  on every request, and a person whose `access_ends` date has passed has no access. Local dev
+  also has a dev sign-in with a role picker, superadmin included (never in production).
+- Roles: **Superadmin** (the `CMS_BOOTSTRAP_ADMINS` emails, so it proves access to the
+  deployment: an exco admin who is also the only role that manages People and roles),
+  **Exco admin** (everything else), **DAP exco** (DAP only: cohorts, groups, schedule,
+  newsletter, DAP projects), **AI Lodge exco** (AI Lodge only: semesters, tracks, lodges,
+  Hack Day winners, AI Lodge projects) and **Lodge head** (only the projects of the lodges
+  picked for them on People: add and edit drafts, submit for review; submitted and published
+  projects are locked for them). Programme exco can't publish projects (an exco admin approves
+  them) or edit Site links. Permissions live in `can` (`actor.ts`: `seeProject` vs
+  `editProject`), the role → programme map in `ROLE_PROGRAMME` (`taxonomy.ts`).
+- Lodge head access ends by default `LODGE_HEAD_ACCESS_WEEKS` (20) weeks after the semester's
+  **Week 1 Start Date** (`cohorts.starts_on`, set on the semester's Overview); People prefills
+  that date (editable, or no end), and the MCP uses it when no date is given.
 - Project status: `draft` → `in_review` → `published` (replaces the Redis-era `hidden` flag;
   `Project.hidden` is now derived). Exco approves. A project needs a semester (AI Lodge) or
   cohort (DAP) before it can be published, because its page lives under it. Each AI Lodge
@@ -190,19 +200,58 @@ Public pages read through `unstable_cache` with those tags (ISR 1h, busted on ev
   `/admin/dap/<cohort>[/groups|/schedule|/newsletter|/projects]`; new runs at `/admin/<programme>/new`).
   Dashboard, All Projects, Site Links and People stay outside the switcher. Path helpers:
   `app/admin/_components/runs.ts`. The cohort slug `new` is reserved.
-- DAP **Groups** (a cohort's Groups page): its teaching groups, with members and 1–3 mentors
-  (name, optional photo, LinkedIn, email, Telegram). The schedule picks the group teaching each
-  week; groups show on the cohort's run page, the newsletter issues and `/dap`.
+- DAP **Co-learning groups** (a cohort's Co-learning groups page): the groups that teach sessions,
+  with members and 1–3 mentors (name, optional photo, LinkedIn, email, Telegram). The schedule picks
+  the group teaching each week; groups show on the cohort's run page and the newsletter issues.
+  Project groups are different people and aren't stored here: each is a project's `team`.
 - Newsletter: publish now, or schedule a date; the daily Vercel Cron
   (`vercel.json`, 01:00 UTC = 09:00 SGT, ±1 h on Hobby) publishes due issues. Publishing can
-  post once to the DAP Telegram channel; "Send test" sends to one Telegram user ID (they must
-  have sent /start to the bot). The bot is outbound-only: no webhook.
+  post once to the DAP Telegram channel (set in **Settings › Telegram**); "Send test" sends to one
+  Telegram user ID (they must have sent /start to the bot). The same bot runs the DAP timeline
+  tracker below, which receives updates on a webhook.
 - MCP: `/api/mcp` exposes the CMS as tools for Claude. Each person creates a personal access
   token under **Settings › Access tokens** (`app/lib/cms/tokens.ts`, stored hashed); the MCP acts
-  as that person with their current role. Locally (dev sign-in on) it also works without a token, as exco.
+  as that person with their current role, and lists only the tools that role can use
+  (`TOOL_ACCESS` in the route: a lodge head sees 8 tools, a superadmin all, including
+  `list_people`, `set_person`, `remove_person` and `set_lodge_heads`). Locally (dev sign-in on)
+  it also works without a token, as a superadmin.
 - AI Lodge site refresh: after any change to lodges, semesters, links or photos, the CMS calls
   `AILODGE_REVALIDATE_URL` with `AILODGE_REVALIDATE_SECRET` (`app/lib/cms/revalidate.ts`), and the
   AI Lodge site rebuilds from the feed at once (it also refreshes hourly).
+
+### DAP timeline tracker (Telegram bot)
+Names: **co-learning groups** are the teaching groups (`dap_groups`, the schedule); **project groups** are the
+tracker's teams (`project_groups`). Never write just "group" in code, UI or tool descriptions. A **cohort** is one
+DAP run (a `cohorts` row); AI Lodge's equivalent is a **semester**.
+
+- Data: `project_groups` with `milestones`, `subtasks` (assignee: a `project_members` row, or a typed
+  `assignee_name` for someone not on the list) and `blockers`. There is no timeline table: a project group's
+  timeline is its milestones by due date. Each milestone, task and blocker has a `number` within its project group
+  (M2, T5, B1; counters on `project_groups`, never reused): the bot's commands take it, everything else uses `id`.
+- Rules and permissions: `app/lib/cms/tracker.ts` (`can.tracker` = DAP exco and exco admins). The bot only parses
+  and replies; it never writes the database itself.
+- Telegram, all through grammY: `telegram.ts` is plumbing (one `Api` client, `getBotUsername()` from getMe,
+  error mapping) and imports no feature. `bot.ts` is the tracker's grammY `Composer`, driven by the `COMMANDS`
+  table (which also builds `/help` and the "/" menus). `telegram-bot.ts` is the only file that joins the two: the
+  site's one `Bot`, with an error boundary and the once-per-update check (`telegram-updates.ts`). Views that list
+  several things are Telegram rich messages (tables, headings), never text strung together with dots.
+- Webhook: `/api/telegram/webhook`, grammY's `webhookCallback` with `TELEGRAM_WEBHOOK_SECRET`. After a good
+  secret it always answers 200; errors are logged and answered in the chat.
+- Admins are recognised by `people.telegram_user_id` (the numeric ID, never the username), set by a one-time
+  link from **Settings › Telegram** (`telegram-link.ts`: random code, stored hashed, 10 minutes, single use).
+  A project group's chat is connected the same way, with **Connect Telegram Chat** on its page
+  (`t.me/<bot>?startgroup=<code>`). The bot listens only in connected chats, and everyone in one has member
+  rights for that project group; inside it even admins reach only that group (what the bot posts there, the
+  whole group sees). Admins reach every group from a private chat (`/groups`, `g3`, current cohort).
+- Local development: `instrumentation.ts` long-polls Telegram from the dev server (never when the bot has a
+  webhook), so the bot works on localhost.
+- Daily cron `/api/cron/daily` runs the jobs in `app/lib/cms/jobs.ts`, each on its own: publish due issues,
+  the 3-week meeting reminders, and cleanup of old update IDs and expired link codes.
+- CMS: the DAP run's **Project Groups** (`/admin/dap/<cohort>/project-groups[/<id>]`) and **Settings › Telegram**
+  (Your Account for everyone with tracker access; DAP channel, webhook and linked accounts for exco admins).
+  MCP tools: `list_project_groups`, `get_project_group_timeline`, `add_milestones`, `set_milestone_status`,
+  `log_project_group_meeting`, `set_meeting_reminders` (no delete tools).
+- Setup and commands: [docs/tracker-setup.md](docs/tracker-setup.md).
 
 ### URLs
 All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder names under
@@ -231,11 +280,12 @@ All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth client for CMS sign-in |
 | `CMS_BOOTSTRAP_ADMINS` | Comma-separated emails with exco access before anyone is on the People list |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob uploads |
-| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_BOT_USERNAME` | Club bot (unset = messages are logged, not sent) |
-| `TELEGRAM_DAP_CHANNEL_ID` | Where published issues are posted (`@channel` or `-100…`) |
-| `CRON_SECRET` | Authenticates the Vercel Cron call to `/api/cron/publish` |
+| `TELEGRAM_BOT_TOKEN` | Club bot (newsletter and tracker). Unset = messages are logged, not sent. Its username comes from getMe |
+| `CRON_SECRET` | Authenticates the Vercel Cron call to `/api/cron/daily` |
 | `AILODGE_REVALIDATE_URL` | The AI Lodge site's revalidate route, e.g. `https://ailodge.smubia.com/api/revalidate` (unset = it refreshes hourly) |
 | `AILODGE_REVALIDATE_SECRET` | Shared secret for that route; the same value is set on the AI Lodge site |
+| `TELEGRAM_WEBHOOK_SECRET` | Secret the bot's webhook (`/api/telegram/webhook`) checks; Set Webhook sends it to Telegram. Required on Vercel. Secrets stay environment variables, never in the database |
+| `TELEGRAM_DAP_CHANNEL_ID` | Deprecated: read only until the DAP channel is saved in Settings › Telegram, then remove it |
 | `NEXT_PUBLIC_SITE_URL` | Absolute links in Telegram posts (default `https://www.smubia.com`) |
 
 ### Scripts

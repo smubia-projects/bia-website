@@ -60,6 +60,8 @@ export const can = {
   /** People, roles and other people's access tokens: superadmins only */
   managePeople: (a: Actor) => a.role === "exco" && Boolean(a.superadmin),
   editLinks: (a: Actor) => a.role === "exco",
+  /** The bot's settings (webhook, DAP channel) and other people's linked accounts: exco admins */
+  manageTelegramBot: (a: Actor) => a.role === "exco",
   /** The "applications open" switch: exco, and AI Lodge exco for AI Lodge */
   setApplications: (a: Actor, programme: Programme) => a.role === "exco" || (programme === "AI Lodge" && a.role === "lodge_exco"),
   /** smubia.com photos are exco's; the AI Lodge site's photos are AI Lodge exco's too */
@@ -75,4 +77,6 @@ export const can = {
   /** Which admin sections a role sees */
   seeLodge: (a: Actor) => onProgramme(a, "AI Lodge"),
   seeDap: (a: Actor) => onProgramme(a, "DAP"),
+  /** DAP timeline tracker (dashboard, and admin rights in the Telegram chats): DAP exco and exco admins */
+  tracker: (a: Actor) => onProgramme(a, "DAP"),
 };

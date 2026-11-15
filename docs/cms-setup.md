@@ -162,4 +162,4 @@ Keep `ADMIN_PASSWORD` until step 9. Keep `UPSTASH_REDIS_REST_*` for good (server
   some time within that hour.
 - **Local builds** (`npm run build` without `DATABASE_URL`) prerender against an empty in-memory
   database. That's expected, and the real data appears at runtime. Vercel builds use Neon.
-- **URL rule:** never delete a public path; redirect it (see CLAUDE.md → URL Paths).
+- **URL rule:** never delete a public path; redirect it (see AGENTS.md → URL Paths).
