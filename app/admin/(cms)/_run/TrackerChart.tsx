@@ -2,6 +2,7 @@ import Link from "next/link";
 import { shortDate } from "@/app/lib/cms/bot-text";
 import type { Chart, ChartBar } from "@/app/lib/cms/tracker-view";
 import { runHref } from "../../_components/runs";
+import ScrollToToday from "./ScrollToToday";
 import t from "../../tracker.module.css";
 
 const STATUS = { todo: "To do", in_progress: "In progress", done: "Done" } as const;
@@ -23,7 +24,7 @@ function label(b: ChartBar, today: string) {
 export default function TrackerChart({ chart, slug, today }: { chart: Chart; slug: string; today: string }) {
   const trackWidth = Math.max(640, (chart.days / 7) * 72);
   return (
-    <div className={t.chartScroll}>
+    <ScrollToToday className={t.chartScroll} todayPct={chart.todayPct}>
       <div className={t.chart} style={{ minWidth: 168 + trackWidth }}>
         <div className={t.axis} aria-hidden="true">
           <div />
@@ -69,6 +70,6 @@ export default function TrackerChart({ chart, slug, today }: { chart: Chart; slu
           );
         })}
       </div>
-    </div>
+    </ScrollToToday>
   );
 }

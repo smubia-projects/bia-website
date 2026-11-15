@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Send } from "lucide-react";
 import { createTelegramLinkAction, unlinkTelegramAction } from "../../actions";
 import { PageHead, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";
@@ -52,44 +53,44 @@ export default function TelegramLink({ account, botName, children }: { account: 
 
   return (
     <div className={styles.stack}>
-      <PageHead title="Telegram" sub="Links your Telegram account to the DAP timeline tracker bot. Admin commands then work in every connected project group chat." />
+      <PageHead title="Telegram" sub="Account linking for the DAP timeline tracker bot. A linked account has DAP exco rights in every connected project group chat." />
 
       <section className={styles.panel}>
         <h2 className={styles.h2}>Your Account</h2>
-        <div className={t.facts}>
-          <div className={t.fact}>
-            <span className={t.factTitle}>Status</span>
-            <span className={t.factValue}>{account ? "Linked" : "Not linked"}</span>
-            <span className={styles.hint}>
-              {account ? `Linked as ${account.name}${account.username ? ` (@${account.username})` : ""}. Not you? Unlink it.` : "No Telegram account is linked to this CMS account."}
+        <div className={`${t.fact} ${t.factSolo}`}>
+          <span className={`${t.state} ${account ? t.stateOk : t.stateMuted}`}>{account ? "Linked" : "Not linked"}</span>
+          {account && (
+            <span className={t.factValue}>
+              {account.name}
+              {account.username ? ` (@${account.username})` : ""}
             </span>
-          </div>
-          <div className={t.fact}>
-            <span className={t.factTitle}>Bot</span>
-            <span className={t.factValue}>{botName ? `@${botName}` : "Not configured"}</span>
-            <span className={styles.hint}>{botName ? "The account of TELEGRAM_BOT_TOKEN." : "TELEGRAM_BOT_TOKEN is not set."}</span>
-          </div>
-        </div>
-
-        <div className={styles.row}>
-          {account ? (
-            <button type="button" className={`${styles.btn} ${styles.btnDanger}`} disabled={busy} onClick={unlink}>
-              Unlink Telegram
-            </button>
-          ) : (
-            <button type="button" className={styles.btn} disabled={busy || !botName} onClick={generate}>
-              {busy ? "Generating…" : "Generate Link"}
-            </button>
           )}
+          <dl className={t.kv}>
+            <dt>Bot</dt>
+            <dd>{botName ? `@${botName}` : "Not configured"}</dd>
+          </dl>
+          <div className={t.factActions}>
+            {account ? (
+              <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} disabled={busy} onClick={unlink}>
+                Unlink Telegram
+              </button>
+            ) : (
+              <button type="button" className={t.tgBtn} disabled={busy || !botName} onClick={generate}>
+                <Send size={16} strokeWidth={2} aria-hidden="true" />
+                {busy ? "Creating Link…" : "Link Telegram Account"}
+              </button>
+            )}
+          </div>
         </div>
 
         {link && (
           <div className={styles.subItem}>
-            <strong>Open this link in a private chat with the bot.</strong>
-            <span className={styles.hint}>Valid for 10 minutes and works once. Do not post it in a group chat.</span>
+            <strong>Open the link to finish linking</strong>
+            <span className={styles.hint}>It opens a private chat with @{botName}. The link works once, for 10 minutes. Never post it in a group chat.</span>
             <code style={{ display: "block", wordBreak: "break-all", fontSize: 13, lineHeight: 1.5 }}>{link}</code>
             <div className={styles.row}>
-              <a className={styles.btn} href={link} target="_blank" rel="noopener noreferrer">
+              <a className={t.tgBtn} href={link} target="_blank" rel="noopener noreferrer">
+                <Send size={16} strokeWidth={2} aria-hidden="true" />
                 Open in Telegram
               </a>
               <button type="button" className={styles.pill} onClick={copy}>

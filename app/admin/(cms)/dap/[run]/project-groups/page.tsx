@@ -21,8 +21,9 @@ export default async function TrackerPage(props: { params: Promise<{ run: string
   const sum = summarise(data, today, now);
   const nextNumber = Math.max(0, ...data.map((d) => d.group.number)) + 1;
 
+  // Figures that need action turn red when above zero; the others are progress.
   const stat = (label: string, value: number, of?: number, alert?: boolean) => (
-    <div className={t.stat}>
+    <div className={`${t.stat} ${alert && value > 0 ? t.statWarn : ""}`}>
       <span className={t.statLabel}>{label}</span>
       <span className={`${t.statValue} ${alert && value > 0 ? t.statAlert : ""}`}>
         {value}
@@ -38,7 +39,6 @@ export default async function TrackerPage(props: { params: Promise<{ run: string
       </PageHead>
 
       <div className={t.stats}>
-        {stat("Groups", sum.groups)}
         {stat("Chats Connected", sum.chatsConnected, sum.groups)}
         {stat("Milestones Done", sum.milestonesDone, sum.milestones)}
         {stat("Overdue Milestones", sum.overdue, undefined, true)}
@@ -64,14 +64,13 @@ export default async function TrackerPage(props: { params: Promise<{ run: string
             </div>
           </>
         ) : (
-          <p className={styles.emptyInline}>No milestones. DAP exco add them with /milestone in a group chat, or on a group&apos;s page.</p>
+          <p className={styles.emptyInline}>No milestones. Add them on a project group&apos;s page, or with /milestone in its chat.</p>
         )}
       </section>
 
-      <section className={styles.panel}>
-        <h2 className={styles.h2}>Project Groups</h2>
-        <div className={styles.tableWrap}>
-          <table className={styles.table} style={{ minWidth: 760 }}>
+      <section aria-label="Project groups">
+        <div className={`${styles.tableWrap} ${t.groupsWrap}`}>
+          <table className={`${styles.table} ${t.groupsTable}`}>
             <thead>
               <tr>
                 <th>Group</th>
@@ -89,33 +88,33 @@ export default async function TrackerPage(props: { params: Promise<{ run: string
                 const overdueMeeting = new Date(`${nextMeetingBy(g)}T23:59:59+08:00`).getTime() < now.getTime();
                 return (
                   <tr key={g.id}>
-                    <td>
+                    <td data-label="Group">
                       <Link className={t.link} href={runHref("DAP", cohort.slug, `project-groups/${g.id}`)}>
                         Group {g.number}
                       </Link>
                       <div className={styles.hint}>{g.name || "Unnamed"}</div>
                     </td>
-                    <td>{g.mentors || "None"}</td>
-                    <td>
-                      <span className={`${t.chip} ${g.telegramChatId ? t.chipOk : t.chipMuted}`}>{g.telegramChatId ? "Registered" : "Not registered"}</span>
+                    <td data-label="Mentors">{g.mentors || "None"}</td>
+                    <td data-label="Telegram Chat">
+                      <span className={`${t.state} ${g.telegramChatId ? t.stateOk : t.stateMuted}`}>{g.telegramChatId ? "Connected" : "Not connected"}</span>
                     </td>
-                    <td className={t.num}>{g.lastMeetingAt ? shortDate(sgtDay(g.lastMeetingAt), today) : "None logged"}</td>
-                    <td className={t.num}>
-                      {shortDate(nextMeetingBy(g), today)} {overdueMeeting && <span className={`${t.chip} ${t.chipWarn}`}>Overdue</span>}
+                    <td data-label="Last Meeting" className={t.num}>{g.lastMeetingAt ? shortDate(sgtDay(g.lastMeetingAt), today) : "None logged"}</td>
+                    <td data-label="Next Meeting By" className={t.num}>
+                      {overdueMeeting ? <span className={t.overdueText}>{shortDate(nextMeetingBy(g), today)}, overdue</span> : shortDate(nextMeetingBy(g), today)}
                     </td>
-                    <td className={t.num}>
-                      {milestones.filter((m) => m.status === "done").length}/{milestones.length} done
+                    <td data-label="Milestones" className={t.num}>
+                      {milestones.filter((m) => m.status === "done").length} of {milestones.length} done
                     </td>
-                    <td className={t.num}>{milestones.reduce((n, m) => n + m.blockers.filter((b) => b.status === "open").length, 0)}</td>
-                    <td>
-                      <span className={`${t.chip} ${g.meetingRemindersOn ? t.chipOk : t.chipMuted}`}>{g.meetingRemindersOn ? "On" : "Off"}</span>
+                    <td data-label="Open Blockers" className={t.num}>{milestones.reduce((n, m) => n + m.blockers.filter((b) => b.status === "open").length, 0)}</td>
+                    <td data-label="Reminders">
+                      <span className={`${t.state} ${g.meetingRemindersOn ? t.stateOk : t.stateMuted}`}>{g.meetingRemindersOn ? "On" : "Off"}</span>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-          {data.length === 0 && <p className={styles.emptyRow}>No project groups. Add one, then connect its Telegram chat from its page.</p>}
+          {data.length === 0 && <p className={styles.emptyRow}>No project groups. Add one, then connect its Telegram chat on its page.</p>}
         </div>
       </section>
 

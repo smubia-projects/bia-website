@@ -6,6 +6,7 @@ import type { LinkedAccount } from "@/app/lib/cms/telegram-settings";
 import { setDapChannelAction, unlinkTelegramAction } from "../../actions";
 import { UnsavedNote, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";
+import t from "../../tracker.module.css";
 
 /** Settings › Telegram › Bot (exco admins): the DAP channel and every linked Telegram account. */
 export default function BotSettings({ channelId, channelFromEnv, accounts, children }: {
@@ -40,15 +41,18 @@ export default function BotSettings({ channelId, channelFromEnv, accounts, child
 
   return (
     <>
+      <div className={t.groupHead}>
+        <h2 className={t.groupTitle}>Bot Settings</h2>
+        <p className={styles.sectionHint}>For the whole bot. Exco admins only.</p>
+      </div>
+
       <section className={styles.panel}>
         <h2 className={styles.h2}>DAP Channel</h2>
         <label className={styles.fld}>
           Channel
           <input className={styles.inp} value={channel} placeholder="@smubia_dap or -1001234567890" onChange={(e) => setChannel(e.target.value)} />
-          <span className={styles.hint}>
-            {channelFromEnv ? "Read from TELEGRAM_DAP_CHANNEL_ID until it is saved here. " : ""}
-            Published newsletter issues are posted here. The bot must be an admin of the channel.
-          </span>
+          <span className={styles.hint}>Newsletter issues are posted here when published. The bot must be an admin of the channel.</span>
+          {channelFromEnv && <span className={styles.hint}>Currently read from TELEGRAM_DAP_CHANNEL_ID. Save it here to stop using the variable.</span>}
         </label>
         <div className={styles.row}>
           <button type="button" className={styles.btn} disabled={busy || !dirty} onClick={save}>
@@ -63,39 +67,44 @@ export default function BotSettings({ channelId, channelFromEnv, accounts, child
       <section className={styles.panel}>
         <div className={styles.sectionHead}>
           <h2 className={styles.h2}>Linked Accounts</h2>
-          <p className={styles.sectionHint}>People the bot treats as DAP exco. Each links their own account under Your Account.</p>
+          <p className={styles.sectionHint}>Accounts the bot treats as DAP exco. Each person links their own under Your Account.</p>
         </div>
-        <div className={styles.tableWrap}>
-          <table className={styles.table} style={{ minWidth: 520 }}>
-            <thead>
-              <tr>
-                <th>Person</th>
-                <th>Telegram Account</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {accounts.map((a) => (
-                <tr key={a.email}>
-                  <td>
-                    <span className={styles.cellTitle}>{a.name || a.email}</span>
-                    <div className={styles.hint}>{a.email}</div>
-                  </td>
-                  <td>
-                    {a.telegramName || "Name not recorded"}
-                    {a.telegramUsername && <div className={styles.hint}>@{a.telegramUsername}</div>}
-                  </td>
-                  <td className={styles.actionsCell}>
-                    <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} disabled={busy} onClick={() => unlink(a)}>
-                      Unlink
-                    </button>
-                  </td>
+        {accounts.length === 0 ? (
+          <p className={styles.emptyInline}>No linked accounts.</p>
+        ) : (
+          <div className={styles.tableWrap}>
+            <table className={styles.table} style={{ minWidth: 520 }}>
+              <thead>
+                <tr>
+                  <th>Person</th>
+                  <th>Telegram Account</th>
+                  <th>
+                    <span className={t.srOnly}>Actions</span>
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {accounts.length === 0 && <p className={styles.emptyRow}>No linked accounts.</p>}
-        </div>
+              </thead>
+              <tbody>
+                {accounts.map((a) => (
+                  <tr key={a.email}>
+                    <td>
+                      <span className={styles.cellTitle}>{a.name || a.email}</span>
+                      <div className={styles.hint}>{a.email}</div>
+                    </td>
+                    <td>
+                      {a.telegramName || "Name not recorded"}
+                      {a.telegramUsername && <div className={styles.hint}>@{a.telegramUsername}</div>}
+                    </td>
+                    <td className={styles.actionsCell}>
+                      <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} disabled={busy} onClick={() => unlink(a)}>
+                        Unlink
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
       {node}
     </>

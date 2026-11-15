@@ -48,50 +48,75 @@ export default function WebhookPanel({ expectedUrl, tokenConfigured, secretConfi
   }
 
   const ready = tokenConfigured && secretConfigured;
-  const chip = (ok: boolean, yes: string, no: string) => <span className={`${t.chip} ${ok ? t.chipOk : t.chipWarn}`}>{ok ? yes : no}</span>;
+  const missing = [!tokenConfigured && "TELEGRAM_BOT_TOKEN", !secretConfigured && "TELEGRAM_WEBHOOK_SECRET"].filter(Boolean).join(" and ");
+  const state = (ok: boolean, yes: string, no: string) => <span className={`${t.state} ${ok ? t.stateOk : t.stateWarn}`}>{ok ? yes : no}</span>;
 
   return (
     <section className={styles.panel}>
       <div className={styles.sectionHead}>
         <h2 className={styles.h2}>Telegram Webhook</h2>
-        <p className={styles.sectionHint}>Where Telegram delivers the bot&apos;s messages. Set Webhook removes any existing webhook, then registers it with the key in the environment. After changing TELEGRAM_WEBHOOK_SECRET, redeploy and select Set Webhook.</p>
+        <p className={styles.sectionHint}>Where Telegram delivers the bot&apos;s messages. Set Webhook replaces any existing webhook and registers this site with the key in TELEGRAM_WEBHOOK_SECRET. After changing the key, redeploy, then set the webhook again.</p>
       </div>
 
       <div className={t.facts}>
         <div className={t.fact}>
           <span className={t.factTitle}>Environment</span>
-          <span className={styles.row}>
-            Bot token {chip(tokenConfigured, "Set", "Not set")}
-          </span>
-          <span className={styles.row}>
-            Webhook secret {chip(secretConfigured, "Set", "Not set")}
-          </span>
+          <dl className={t.kv}>
+            <dt>Bot token</dt>
+            <dd>{state(tokenConfigured, "Set", "Not set")}</dd>
+            <dt>Webhook secret</dt>
+            <dd>{state(secretConfigured, "Set", "Not set")}</dd>
+          </dl>
         </div>
         <div className={t.fact}>
           <span className={t.factTitle}>Target URL</span>
-          <span className={t.factValue} style={{ wordBreak: "break-all" }}>{expectedUrl}</span>
-          <span className={styles.hint}>Set by NEXT_PUBLIC_SITE_URL.</span>
+          {polling ? (
+            <>
+              <span className={t.factValue}>Not used while polling</span>
+              <span className={styles.hint} style={{ wordBreak: "break-all" }}>A deployed site registers {expectedUrl}.</span>
+            </>
+          ) : (
+            <>
+              <span className={t.factValue} style={{ wordBreak: "break-all" }}>{expectedUrl}</span>
+              <span className={styles.hint}>From NEXT_PUBLIC_SITE_URL.</span>
+            </>
+          )}
         </div>
         <div className={t.fact}>
           <span className={t.factTitle}>Telegram Status</span>
           {polling && <span className={t.factValue}>Polling (local)</span>}
-          {polling && <span className={styles.hint}>This dev server fetches the bot&apos;s updates itself, so no webhook is needed. Run reminders by opening /api/cron/daily.</span>}
+          {polling && <span className={styles.hint}>This dev server fetches the bot&apos;s updates itself; no webhook is needed. Reminders run when /api/cron/daily is opened.</span>}
           {polling ? null : !info ? (
-            <span className={styles.hint}>Not checked. Select Check Webhook.</span>
+            <span className={styles.hint}>Not checked yet.</span>
           ) : !info.tokenConfigured ? (
             <span className={styles.hint}>Bot token not set.</span>
           ) : (
             <>
-              <span className={styles.row}>
-                {chip(info.registered, "Registered", "Not registered")}
-                {info.registered && chip(info.matches, "Matches target", "Differs from target")}
-              </span>
+              <dl className={t.kv}>
+                <dt>Webhook</dt>
+                <dd>{state(info.registered, "Registered", "Not registered")}</dd>
+                {info.registered && (
+                  <>
+                    <dt>Target</dt>
+                    <dd>{state(info.matches, "Matches this site", "Another address")}</dd>
+                  </>
+                )}
+                <dt>Pending updates</dt>
+                <dd className={t.num}>{info.pendingUpdates}</dd>
+                {info.maxConnections ? (
+                  <>
+                    <dt>Connections</dt>
+                    <dd className={t.num}>{info.maxConnections}</dd>
+                  </>
+                ) : null}
+                {info.allowedUpdates.length > 0 && (
+                  <>
+                    <dt>Update types</dt>
+                    <dd>{info.allowedUpdates.join(", ")}</dd>
+                  </>
+                )}
+              </dl>
               {info.registered && !info.matches && <span className={styles.hint} style={{ wordBreak: "break-all" }}>Posts to {info.url}</span>}
-              <span className={styles.hint}>
-                {info.pendingUpdates} pending update{info.pendingUpdates === 1 ? "" : "s"}
-                {info.maxConnections ? ` · ${info.maxConnections} connection${info.maxConnections === 1 ? "" : "s"}` : ""}
-              </span>
-              {info.allowedUpdates.length > 0 && <span className={styles.hint}>Updates: {info.allowedUpdates.join(", ")}</span>}
               {info.lastError && (
                 <span className={styles.hint} style={{ color: "var(--danger, #b91c1c)" }}>
                   Last error{info.lastErrorAt ? ` (${when(info.lastErrorAt)})` : ""}: {info.lastError}
@@ -103,16 +128,17 @@ export default function WebhookPanel({ expectedUrl, tokenConfigured, secretConfi
       </div>
 
       <div className={styles.row}>
-        <button type="button" className={styles.btn} disabled={busy !== null || !tokenConfigured} onClick={check}>
-          {busy === "check" ? "Checking…" : "Check Webhook"}
-        </button>
-        <button type="button" className={styles.pill} disabled={busy !== null || !ready} onClick={set}>
+        <button type="button" className={styles.btn} disabled={busy !== null || !ready} onClick={set}>
           {busy === "set" ? "Setting…" : "Set Webhook"}
+        </button>
+        <button type="button" className={styles.pill} disabled={busy !== null || !tokenConfigured} onClick={check}>
+          {busy === "check" ? "Checking…" : "Check Webhook"}
         </button>
         <button type="button" className={`${styles.lnk} ${styles.lnkDanger}`} disabled={busy !== null || !tokenConfigured} onClick={remove}>
           {busy === "delete" ? "Deleting…" : "Delete Webhook"}
         </button>
       </div>
+      {!ready && <p className={styles.hint} style={{ margin: 0 }}>Set Webhook needs {missing} in the environment.</p>}
       {node}
     </section>
   );

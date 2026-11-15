@@ -19,7 +19,7 @@ export default function AddGroupButton({ cohortId, cohortSlug, nextNumber }: { c
 
   async function create() {
     setBusy(true);
-    const id = handle(await saveProjectGroupAction({ cohortId, number, name, mentors }), "Group created");
+    const id = handle(await saveProjectGroupAction({ cohortId, number, name, mentors }), "Project group created");
     setBusy(false);
     if (id !== undefined) router.push(runHref("DAP", cohortSlug, `project-groups/${id}`));
   }
@@ -27,11 +27,11 @@ export default function AddGroupButton({ cohortId, cohortSlug, nextNumber }: { c
   return (
     <>
       <button type="button" className={styles.btn} onClick={() => { setNumber(nextNumber); setOpen(true); }}>
-        Add Group
+        Add Project Group
       </button>
       {open && (
         <Modal
-          title="Add Group"
+          title="Add Project Group"
           onClose={() => setOpen(false)}
           onSubmit={() => !busy && create()}
           footer={
@@ -40,7 +40,7 @@ export default function AddGroupButton({ cohortId, cohortSlug, nextNumber }: { c
                 Cancel
               </button>
               <button type="submit" className={styles.btn} disabled={busy}>
-                {busy ? "Creating…" : "Create Group"}
+                {busy ? "Creating…" : "Create Project Group"}
               </button>
             </>
           }
@@ -48,7 +48,7 @@ export default function AddGroupButton({ cohortId, cohortSlug, nextNumber }: { c
           <label className={styles.fld}>
             Number
             <input className={styles.inp} type="number" min={1} required value={number} onChange={(e) => setNumber(Number(e.target.value))} />
-            <span className={styles.hint}>Used by the bot, e.g. /register {number}.</span>
+            <span className={styles.hint}>Used in bot commands, e.g. /milestones g{number}.</span>
           </label>
           <label className={styles.fld}>
             Name
