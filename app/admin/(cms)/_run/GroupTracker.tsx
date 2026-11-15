@@ -41,6 +41,8 @@ interface GroupView {
 }
 interface MilestoneView {
   id: number;
+  /** M1, M2, … within the project group, as the bot shows it */
+  number: number;
   title: string;
   notes: string;
   status: MilestoneStatus;
@@ -48,8 +50,8 @@ interface MilestoneView {
   dueOn: string;
   dates: string;
   overdue: boolean;
-  subtasks: { id: number; title: string; status: MilestoneStatus; dueOn: string | null; assigneeId: number | null; assigneeName: string }[];
-  blockers: { id: number; description: string; status: BlockerStatus }[];
+  subtasks: { id: number; number: number; title: string; status: MilestoneStatus; dueOn: string | null; assigneeId: number | null; assigneeName: string }[];
+  blockers: { id: number; number: number; description: string; status: BlockerStatus }[];
 }
 interface Props {
   cohortId: string;
@@ -321,7 +323,7 @@ export default function GroupTracker({ cohortId, cohortSlug, today, group, membe
             <div className={t.msHead}>
               <div className={t.lead}>
                 <h3 className={t.msTitle}>
-                  <span className={t.itemId}>#{m.id}</span> {m.title}
+                  <span className={t.itemId}>M{m.number}</span> {m.title}
                 </h3>
                 <span className={t.msMeta}>
                   {m.dates} {m.overdue && <span className={`${t.chip} ${t.chipWarn}`}>Overdue</span>}
@@ -349,21 +351,21 @@ export default function GroupTracker({ cohortId, cohortSlug, today, group, membe
                 <div className={t.listHead}>Tasks · {m.subtasks.filter((s) => s.status === "done").length}/{m.subtasks.length} done</div>
                 {m.subtasks.map((s) => (
                   <div key={`${s.id}-${s.title}-${s.assigneeId}-${s.assigneeName}`} className={t.task}>
-                    <span className={t.itemId}>#{s.id}</span>
-                    <select className={`${styles.inp} ${styles.inpSmall} ${t.ctl}`} aria-label={`Status of task ${s.id}`} value={s.status} disabled={busy} onChange={(e) => call(updateSubtaskAction(s.id, { status: e.target.value as MilestoneStatus }))}>
+                    <span className={t.itemId}>T{s.number}</span>
+                    <select className={`${styles.inp} ${styles.inpSmall} ${t.ctl}`} aria-label={`Status of task T${s.number}`} value={s.status} disabled={busy} onChange={(e) => call(updateSubtaskAction(s.id, { status: e.target.value as MilestoneStatus }))}>
                       {MILESTONE_STATUSES.map((o) => (
                         <option key={o} value={o}>
                           {STATUS_LABEL[o]}
                         </option>
                       ))}
                     </select>
-                    <InlineText value={s.title} label={`Title of task ${s.id}`} onCommit={(title) => call(updateSubtaskAction(s.id, { title }))} />
-                    <button type="button" className={styles.ico} aria-label={`Delete task ${s.id}`} title="Delete" disabled={busy} onClick={() => call(deleteSubtaskAction(s.id), "Task deleted")}>
+                    <InlineText value={s.title} label={`Title of task T${s.number}`} onCommit={(title) => call(updateSubtaskAction(s.id, { title }))} />
+                    <button type="button" className={styles.ico} aria-label={`Delete task T${s.number}`} title="Delete" disabled={busy} onClick={() => call(deleteSubtaskAction(s.id), "Task deleted")}>
                       <X size={16} strokeWidth={1.75} aria-hidden="true" />
                     </button>
                     <div className={t.taskMeta}>
                       <AssigneePicker task={s} members={members} disabled={busy} onChange={(patch) => call(updateSubtaskAction(s.id, patch))} />
-                      <input className={`${styles.inp} ${styles.inpSmall} ${t.ctl}`} type="date" aria-label={`Due date of task ${s.id}`} value={s.dueOn ?? ""} disabled={busy} onChange={(e) => call(updateSubtaskAction(s.id, { dueOn: e.target.value || null }))} />
+                      <input className={`${styles.inp} ${styles.inpSmall} ${t.ctl}`} type="date" aria-label={`Due date of task T${s.number}`} value={s.dueOn ?? ""} disabled={busy} onChange={(e) => call(updateSubtaskAction(s.id, { dueOn: e.target.value || null }))} />
                     </div>
                   </div>
                 ))}
@@ -374,10 +376,10 @@ export default function GroupTracker({ cohortId, cohortSlug, today, group, membe
                 <div className={t.listHead}>Blockers · {m.blockers.filter((b) => b.status === "open").length} open</div>
                 {m.blockers.map((b) => (
                   <div key={`${b.id}-${b.description}`} className={t.task}>
-                    <span className={t.itemId}>#{b.id}</span>
+                    <span className={t.itemId}>B{b.number}</span>
                     <span className={`${t.chip} ${b.status === "open" ? t.chipWarn : t.chipOk}`}>{b.status === "open" ? "Open" : "Resolved"}</span>
-                    <InlineText value={b.description} label={`Description of blocker ${b.id}`} onCommit={(description) => call(updateBlockerAction(b.id, { description }))} />
-                    <button type="button" className={styles.ico} aria-label={`Delete blocker ${b.id}`} title="Delete" disabled={busy} onClick={() => call(deleteBlockerAction(b.id), "Blocker deleted")}>
+                    <InlineText value={b.description} label={`Description of blocker B${b.number}`} onCommit={(description) => call(updateBlockerAction(b.id, { description }))} />
+                    <button type="button" className={styles.ico} aria-label={`Delete blocker B${b.number}`} title="Delete" disabled={busy} onClick={() => call(deleteBlockerAction(b.id), "Blocker deleted")}>
                       <X size={16} strokeWidth={1.75} aria-hidden="true" />
                     </button>
                     <div className={t.taskMeta}>

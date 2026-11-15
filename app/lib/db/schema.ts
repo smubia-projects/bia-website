@@ -365,6 +365,10 @@ export const projectGroups = pgTable(
     meetingRemindersOn: boolean("meeting_reminders_on").notNull().default(true),
     /** Cleared whenever a meeting is logged, so each cycle reminds once */
     meetingRemindedAt: timestamp("meeting_reminded_at", { withTimezone: true, mode: "string" }),
+    /** The last number given to this group's milestones, tasks and blockers (M1, T1, B1, …); never reused */
+    milestoneSeq: integer("milestone_seq").notNull().default(0),
+    taskSeq: integer("task_seq").notNull().default(0),
+    blockerSeq: integer("blocker_seq").notNull().default(0),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("project_groups_cohort_number").on(t.cohortId, t.number)]
@@ -391,6 +395,8 @@ export const milestones = pgTable(
     groupId: integer("group_id")
       .notNull()
       .references(() => projectGroups.id, { onDelete: "cascade" }),
+    /** M1, M2, …: numbered within the project group (projectGroups.milestoneSeq); what the bot's commands take */
+    number: integer("number").notNull(),
     title: text("title").notNull(),
     notes: text("notes").notNull().default(""),
     /** YYYY-MM-DD; the timeline bar runs startsOn → dueOn (a point at dueOn when null) */
@@ -411,6 +417,8 @@ export const subtasks = pgTable(
     milestoneId: integer("milestone_id")
       .notNull()
       .references(() => milestones.id, { onDelete: "cascade" }),
+    /** T1, T2, …: numbered within the project group (projectGroups.taskSeq) */
+    number: integer("number").notNull(),
     title: text("title").notNull(),
     status: text("status").$type<SubtaskStatus>().notNull().default("todo"),
     dueOn: date("due_on", { mode: "string" }),
@@ -431,6 +439,8 @@ export const blockers = pgTable(
     milestoneId: integer("milestone_id")
       .notNull()
       .references(() => milestones.id, { onDelete: "cascade" }),
+    /** B1, B2, …: numbered within the project group (projectGroups.blockerSeq) */
+    number: integer("number").notNull(),
     description: text("description").notNull(),
     status: text("status").$type<BlockerStatus>().notNull().default("open"),
     resolvedAt: timestamp("resolved_at", { withTimezone: true, mode: "string" }),

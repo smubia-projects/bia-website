@@ -129,6 +129,32 @@ describe("timeline permissions and scoping", () => {
   });
 });
 
+describe("numbers within a project group", () => {
+  it("count per group and kind, are never reused, and find only that group's items", async () => {
+    const admin = t.adminWho(dapExco);
+    const cohort2 = "dap-numbers";
+    await (await getDb()).insert(cohorts).values({ id: cohort2, programme: "DAP", slug: "numbers", name: "Numbers", visibility: "hidden" });
+    const a = await t.saveProjectGroup(dapExco, { cohortId: cohort2, number: 1, name: "A" });
+    const b = await t.saveProjectGroup(dapExco, { cohortId: cohort2, number: 2, name: "B" });
+    const ma = await t.saveMilestone(dapExco, { groupId: a.id, title: "A1", dueOn: "2030-01-01" });
+    const mb = await t.saveMilestone(dapExco, { groupId: b.id, title: "B1", dueOn: "2030-01-01" });
+    assert.deepEqual([ma.number, mb.number], [1, 1]); // each group starts at M1
+    const t1 = await t.addSubtask(admin, { milestoneId: ma.id, title: "one" });
+    const t2 = await t.addSubtask(admin, { milestoneId: ma.id, title: "two" });
+    const bl = await t.addBlocker(admin, { milestoneId: ma.id, description: "stuck" });
+    assert.deepEqual([t1.number, t2.number, bl.number], [1, 2, 1]); // tasks and blockers count separately
+    await t.deleteSubtask(admin, t2.id);
+    assert.equal((await t.addSubtask(admin, { milestoneId: ma.id, title: "three" })).number, 3); // T2 is not given out again
+    await rejects(t.addSubtask(admin, { milestoneId: ma.id, title: "" }), /Title is required/);
+    assert.equal((await t.addSubtask(admin, { milestoneId: ma.id, title: "four" })).number, 4); // a rejected task uses no number
+    assert.equal(await t.idByNumber(admin, a.id, "task", 1), t1.id);
+    assert.equal(await t.idByNumber(admin, b.id, "milestone", 1), mb.id);
+    await rejects(t.idByNumber(admin, b.id, "task", 1), /Task T1 not found/); // Group B has no tasks
+    await rejects(t.idByNumber(t.memberWho(b.id, "x"), a.id, "task", 1), /Group not found/); // members only reach their own
+    await (await getDb()).delete(cohorts).where(eq(cohorts.id, cohort2));
+  });
+});
+
 describe("meetings and reminders", () => {
   const base = { meetingRemindersOn: true, meetingRemindedAt: null, telegramChatId: -1 };
   const at = (days: number) => new Date(Date.parse("2026-11-01T00:00:00Z") + days * DAY);

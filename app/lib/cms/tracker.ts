@@ -249,6 +249,38 @@ export async function deleteMember(actor: Actor, id: number) {
 
 // ── Timeline: milestones, subtasks, blockers ─────────────────────────────
 
+const SEQ = { milestone: "milestoneSeq", task: "taskSeq", blocker: "blockerSeq" } as const;
+export type ItemKind = keyof typeof SEQ;
+/** How a number is shown: M2 for a milestone, T5 for a task, B1 for a blocker. */
+export const LABEL: Record<ItemKind, string> = { milestone: "M", task: "T", blocker: "B" };
+
+/**
+ * The next number in a project group for a milestone, task or blocker. One UPDATE … RETURNING,
+ * so two writers never get the same number; a number is never given out again after a delete.
+ */
+async function nextNumber(groupId: number, kind: ItemKind): Promise<number> {
+  const db = await getDb();
+  const column = projectGroups[SEQ[kind]];
+  const [row] = await db.update(projectGroups).set({ [SEQ[kind]]: sql`${column} + 1` }).where(eq(projectGroups.id, groupId)).returning({ n: column });
+  ensure(row, "Group not found");
+  return row.n;
+}
+
+/** A milestone, task or blocker's ID from the number its project group sees (M2, T5, B1). */
+export async function idByNumber(who: TrackerWho, groupId: number, kind: ItemKind, number: number): Promise<number> {
+  ensure(inScope(who, groupId), "Group not found");
+  const db = await getDb();
+  const inGroup = eq(milestones.groupId, groupId);
+  const [row] =
+    kind === "milestone"
+      ? await db.select({ id: milestones.id }).from(milestones).where(and(inGroup, eq(milestones.number, number)))
+      : kind === "task"
+        ? await db.select({ id: subtasks.id }).from(subtasks).innerJoin(milestones, eq(milestones.id, subtasks.milestoneId)).where(and(inGroup, eq(subtasks.number, number)))
+        : await db.select({ id: blockers.id }).from(blockers).innerJoin(milestones, eq(milestones.id, blockers.milestoneId)).where(and(inGroup, eq(blockers.number, number)));
+  ensure(row, `${kind[0].toUpperCase()}${kind.slice(1)} ${LABEL[kind]}${number} not found`);
+  return row.id;
+}
+
 export interface MilestoneDetail extends MilestoneRow {
   subtasks: SubtaskRow[];
   blockers: BlockerRow[];
@@ -342,9 +374,8 @@ export async function saveMilestone(actor: Actor, input: MilestoneInput): Promis
     ensure(row, "Milestone not found");
     return row;
   }
-  const [group] = await db.select({ id: projectGroups.id }).from(projectGroups).where(eq(projectGroups.id, input.groupId));
-  ensure(group, "Group not found");
-  const [row] = await db.insert(milestones).values({ groupId: input.groupId, ...values }).returning();
+  const number = await nextNumber(input.groupId, "milestone");
+  const [row] = await db.insert(milestones).values({ groupId: input.groupId, number, ...values }).returning();
   return row!;
 }
 
@@ -408,6 +439,8 @@ export async function addSubtask(who: TrackerWho, input: { milestoneId: number }
       assigneeId: null,
       ...assigneeColumns(input),
       updatedBy: who.name,
+      // Last, so a value that fails its check above doesn't use up a number.
+      number: await nextNumber(groupId, "task"),
     })
     .returning();
   return row!;
@@ -475,11 +508,12 @@ export async function deleteSubtask(who: TrackerWho, id: number) {
 }
 
 export async function addBlocker(who: TrackerWho, input: { milestoneId: number; description: string }): Promise<BlockerRow> {
-  await scopedMilestoneGroup(who, input.milestoneId);
+  const groupId = await scopedMilestoneGroup(who, input.milestoneId);
+  const description = clean(input.description, "Description", 500);
   const db = await getDb();
   const [row] = await db
     .insert(blockers)
-    .values({ milestoneId: input.milestoneId, description: clean(input.description, "Description", 500), updatedBy: who.name })
+    .values({ milestoneId: input.milestoneId, number: await nextNumber(groupId, "blocker"), description, updatedBy: who.name })
     .returning();
   return row!;
 }

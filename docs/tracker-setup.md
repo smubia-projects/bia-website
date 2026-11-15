@@ -85,6 +85,11 @@ Inside a group chat everything is scoped to that chat's project group, admins in
 the whole group sees. In a private chat an admin reaches any project group of the current cohort (the live one,
 else the newest) with `g3`.
 
+Milestones, tasks and blockers are numbered within each project group: M1, M2, … for milestones, T1, T2, … for
+tasks and B1, B2, … for blockers, as the bot, the dashboard and the MCP tools show them. Commands take the number
+(`/taskdone 3` or `/taskdone T3`). A number is never given out again after a delete. Because the numbers repeat
+across groups, an admin in a private chat names the group too: `/done g3 2`.
+
 `/assign` takes a name: an exact or unique whole-word match on the member list assigns that member ("mia" finds
 Mia Lim, "jay" does not find Jayden); a name that
 matches nobody is kept as typed (shown as not on the member list); one that matches several members is refused.

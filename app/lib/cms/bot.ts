@@ -78,11 +78,20 @@ const requireActor = (c: Ctx): Actor => {
   return c.actor;
 };
 
-function idArg(args: string, usage: string): [number, string] {
-  const m = args.match(/^#?(\d+)\s*([\s\S]*)$/);
-  ensure(m, `Usage: ${usage}`);
-  return [Number(m[1]), m[2].trim()];
+/**
+ * "[g3] 5 rest": the project group's milestone, task or blocker number 5 (M5, T5 or B5 work too),
+ * looked up as its ID. In a group chat it is that chat's group; an admin in a private chat adds g3.
+ */
+async function item(c: Ctx, args: string, kind: tracker.ItemKind, cmd: string) {
+  const m = args.match(/^(?:g(\d+)\s+)?[#mtb]?(\d+)\b\s*([\s\S]*)$/i);
+  ensure(m, `Usage: ${usageOf(cmd)}`);
+  const group = await groupFor(c, m[1] ? Number(m[1]) : undefined);
+  const number = Number(m[2]);
+  return { id: await tracker.idByNumber(c.scope, group.id, kind, number), number, rest: m[3].trim(), group };
 }
+
+/** How a number reads in replies: M2, T5, B1. */
+const label = (kind: tracker.ItemKind, number: number) => `${tracker.LABEL[kind]}${number}`;
 
 /** The group a command is about: this chat's, or an admin's explicit one from a private chat. */
 async function groupFor(c: Ctx, explicit?: number): Promise<ProjectGroup> {
@@ -137,11 +146,11 @@ export const COMMANDS: BotCommand[] = [
     usage: "<milestone#> title [by 20 Nov]",
     description: "Add a task",
     async run(c, args) {
-      const [id, rest] = idArg(args, usageOf("task"));
-      const p = splitTitleAndDates(rest, c.today);
+      const m = await item(c, args, "milestone", "task");
+      const p = splitTitleAndDates(m.rest, c.today);
       ensure(p.title, `Usage: ${usageOf("task")}`);
-      const s = await tracker.addSubtask(c.scope, { milestoneId: id, title: p.title, dueOn: p.dueOn });
-      return `Added task <b>#${s.id}</b> to #${id}: ${esc(s.title)}${s.dueOn ? `, due ${shortDate(s.dueOn, c.today)}` : ""}.`;
+      const s = await tracker.addSubtask(c.scope, { milestoneId: m.id, title: p.title, dueOn: p.dueOn });
+      return `Added task <b>${label("task", s.number)}</b> to ${label("milestone", m.number)}: ${esc(s.title)}${s.dueOn ? `, due ${shortDate(s.dueOn, c.today)}` : ""}.`;
     },
   },
   {
@@ -150,11 +159,11 @@ export const COMMANDS: BotCommand[] = [
     usage: "<task#> new title [by 20 Nov]",
     description: "Rename a task or change its due date",
     async run(c, args) {
-      const [id, rest] = idArg(args, usageOf("edittask"));
-      const p = splitTitleAndDates(rest, c.today);
+      const t = await item(c, args, "task", "edittask");
+      const p = splitTitleAndDates(t.rest, c.today);
       ensure(p.title || p.dueOn, "Give a new title, a new due date (by 20 Nov), or both.");
-      const s = await tracker.updateSubtask(c.scope, id, { ...(p.title ? { title: p.title } : {}), ...(p.dueOn ? { dueOn: p.dueOn } : {}) });
-      return `Updated task <b>#${s.id}</b>: ${esc(s.title)}.`;
+      const s = await tracker.updateSubtask(c.scope, t.id, { ...(p.title ? { title: p.title } : {}), ...(p.dueOn ? { dueOn: p.dueOn } : {}) });
+      return `Updated task <b>${label("task", s.number)}</b>: ${esc(s.title)}.`;
     },
   },
   {
@@ -177,13 +186,12 @@ export const COMMANDS: BotCommand[] = [
     usage: "<task#> name|me|none",
     description: "Assign a task",
     async run(c, args) {
-      const [id, rest] = idArg(args, usageOf("assign"));
-      ensure(rest, `Usage: ${usageOf("assign")}`);
-      const a = await tracker.assignSubtask(c.scope, id, /^(none|nobody|clear)$/i.test(rest) ? null : rest);
-      if (!a.assignee) return `Task <b>#${a.task.id}</b> is unassigned.`;
-      return a.onList
-        ? `Task <b>#${a.task.id}</b> assigned to ${esc(a.assignee)}.`
-        : `Task <b>#${a.task.id}</b> assigned to "${esc(a.assignee)}" (not on the member list).`;
+      const t = await item(c, args, "task", "assign");
+      ensure(t.rest, `Usage: ${usageOf("assign")}`);
+      const a = await tracker.assignSubtask(c.scope, t.id, /^(none|nobody|clear)$/i.test(t.rest) ? null : t.rest);
+      const task = `Task <b>${label("task", a.task.number)}</b>`;
+      if (!a.assignee) return `${task} is unassigned.`;
+      return a.onList ? `${task} assigned to ${esc(a.assignee)}.` : `${task} assigned to "${esc(a.assignee)}" (not on the member list).`;
     },
   },
   {
@@ -192,8 +200,8 @@ export const COMMANDS: BotCommand[] = [
     usage: "<task#>",
     description: "Delete a task",
     async run(c, args) {
-      const [id] = idArg(args, usageOf("deltask"));
-      return confirm(c, `Delete task #${id}?`, `t:${id}`);
+      const t = await item(c, args, "task", "deltask");
+      return confirm(c, `Delete task ${label("task", t.number)}?`, `t:${t.id}:${t.number}`);
     },
   },
   {
@@ -202,10 +210,10 @@ export const COMMANDS: BotCommand[] = [
     usage: "<milestone#> what is blocking you",
     description: "Log a blocker",
     async run(c, args) {
-      const [id, rest] = idArg(args, usageOf("blocker"));
-      ensure(rest, `Usage: ${usageOf("blocker")}`);
-      const b = await tracker.addBlocker(c.scope, { milestoneId: id, description: rest });
-      return `🚧 Logged blocker <b>#${b.id}</b> on #${id}. Close it with /resolve ${b.id}.`;
+      const m = await item(c, args, "milestone", "blocker");
+      ensure(m.rest, `Usage: ${usageOf("blocker")}`);
+      const b = await tracker.addBlocker(c.scope, { milestoneId: m.id, description: m.rest });
+      return `🚧 Logged blocker <b>${label("blocker", b.number)}</b> on ${label("milestone", m.number)}. Close it with /resolve ${c.isPrivate ? `g${m.group.number} ` : ""}${b.number}.`;
     },
   },
   {
@@ -214,10 +222,10 @@ export const COMMANDS: BotCommand[] = [
     usage: "<blocker#> text",
     description: "Edit a blocker",
     async run(c, args) {
-      const [id, rest] = idArg(args, usageOf("editblocker"));
-      ensure(rest, `Usage: ${usageOf("editblocker")}`);
-      const b = await tracker.updateBlocker(c.scope, id, { description: rest });
-      return `Updated blocker <b>#${b.id}</b>.`;
+      const x = await item(c, args, "blocker", "editblocker");
+      ensure(x.rest, `Usage: ${usageOf("editblocker")}`);
+      const b = await tracker.updateBlocker(c.scope, x.id, { description: x.rest });
+      return `Updated blocker <b>${label("blocker", b.number)}</b>.`;
     },
   },
   {
@@ -240,8 +248,8 @@ export const COMMANDS: BotCommand[] = [
     usage: "<blocker#>",
     description: "Delete a blocker",
     async run(c, args) {
-      const [id] = idArg(args, usageOf("delblocker"));
-      return confirm(c, `Delete blocker #${id}?`, `b:${id}`);
+      const b = await item(c, args, "blocker", "delblocker");
+      return confirm(c, `Delete blocker ${label("blocker", b.number)}?`, `b:${b.id}:${b.number}`);
     },
   },
   {
@@ -297,7 +305,7 @@ export const COMMANDS: BotCommand[] = [
       ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Try 15 Dec or 2026-12-15.`);
       ensure(p.dueOn, "A milestone needs a due date: /milestone title by 15 Dec");
       const m = await tracker.saveMilestone(actor, { groupId: group.id, title: p.title, startsOn: p.startsOn, dueOn: p.dueOn });
-      return `Added milestone <b>#${m.id}</b> ${esc(m.title)}, due ${shortDate(m.dueOn, c.today)} (Group ${group.number}).`;
+      return `Added milestone <b>${label("milestone", m.number)}</b> ${esc(m.title)}, due ${shortDate(m.dueOn, c.today)} (Group ${group.number}).`;
     },
   },
   {
@@ -307,19 +315,19 @@ export const COMMANDS: BotCommand[] = [
     description: "Edit a milestone",
     async run(c, args) {
       const actor = requireActor(c);
-      const [id, rest] = idArg(args, usageOf("editmilestone"));
-      const cur = await tracker.getMilestone(c.scope, id);
-      const p = splitTitleAndDates(rest, c.today);
+      const x = await item(c, args, "milestone", "editmilestone");
+      const cur = await tracker.getMilestone(c.scope, x.id);
+      const p = splitTitleAndDates(x.rest, c.today);
       ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Try 15 Dec or 2026-12-15.`);
       ensure(p.title || p.dueOn, "Give a new title, a new due date (by 15 Dec), or both.");
       const m = await tracker.saveMilestone(actor, {
-        id,
+        id: x.id,
         groupId: cur.groupId,
         title: p.title || cur.title,
         dueOn: p.dueOn ?? cur.dueOn,
         ...(p.startsOn ? { startsOn: p.startsOn } : {}),
       });
-      return `Updated <b>#${m.id}</b> ${esc(m.title)}, due ${shortDate(m.dueOn, c.today)}.`;
+      return `Updated <b>${label("milestone", m.number)}</b> ${esc(m.title)}, due ${shortDate(m.dueOn, c.today)}.`;
     },
   },
   {
@@ -343,9 +351,8 @@ export const COMMANDS: BotCommand[] = [
     description: "Delete a milestone",
     async run(c, args) {
       requireActor(c);
-      const [id] = idArg(args, usageOf("delmilestone"));
-      await tracker.getMilestone(c.scope, id);
-      return confirm(c, `Delete milestone #${id} with all its tasks and blockers?`, `m:${id}`);
+      const m = await item(c, args, "milestone", "delmilestone");
+      return confirm(c, `Delete milestone ${label("milestone", m.number)} with all its tasks and blockers?`, `m:${m.id}:${m.number}`);
     },
   },
   {
@@ -365,27 +372,27 @@ export const COMMANDS: BotCommand[] = [
 ];
 
 async function setTaskStatus(c: Ctx, args: string, fixed: "done" | null) {
-  const [id, rest] = idArg(args, usageOf(fixed ? "taskdone" : "taskstatus"));
-  const status = fixed ?? parseStatus(rest);
+  const t = await item(c, args, "task", fixed ? "taskdone" : "taskstatus");
+  const status = fixed ?? parseStatus(t.rest);
   ensure(status, "Status must be todo, doing or done.");
-  const s = await tracker.updateSubtask(c.scope, id, { status });
-  return `${status === "done" ? "✅" : status === "in_progress" ? "⏳" : "⬜"} Task <b>#${s.id}</b> ${esc(s.title)} is now ${status.replace("_", " ")}.`;
+  const s = await tracker.updateSubtask(c.scope, t.id, { status });
+  return `${status === "done" ? "✅" : status === "in_progress" ? "⏳" : "⬜"} Task <b>${label("task", s.number)}</b> ${esc(s.title)} is now ${status.replace("_", " ")}.`;
 }
 
 async function setMilestoneStatus(c: Ctx, args: string, fixed: "done" | null) {
   const actor = requireActor(c);
-  const [id, rest] = idArg(args, usageOf(fixed ? "done" : "status"));
-  const status = fixed ?? parseStatus(rest);
+  const x = await item(c, args, "milestone", fixed ? "done" : "status");
+  const status = fixed ?? parseStatus(x.rest);
   ensure(status, "Status must be todo, doing or done.");
-  await tracker.getMilestone(c.scope, id);
-  const m = await tracker.setMilestoneStatus(actor, id, status);
-  return `${m.status === "done" ? "✅" : "⏳"} <b>#${m.id}</b> ${esc(m.title)} is now ${m.status.replace("_", " ")}.`;
+  const m = await tracker.setMilestoneStatus(actor, x.id, status);
+  return `${m.status === "done" ? "✅" : "⏳"} <b>${label("milestone", m.number)}</b> ${esc(m.title)} is now ${m.status.replace("_", " ")}.`;
 }
 
 async function setBlockerStatus(c: Ctx, args: string, cmd: "resolve" | "reopenblocker") {
-  const [id] = idArg(args, usageOf(cmd));
-  const b = await tracker.updateBlocker(c.scope, id, { status: cmd === "resolve" ? "resolved" : "open" });
-  return b.status === "resolved" ? `✔️ Blocker <b>#${b.id}</b> resolved.` : `🚧 Blocker <b>#${b.id}</b> reopened.`;
+  const x = await item(c, args, "blocker", cmd);
+  const b = await tracker.updateBlocker(c.scope, x.id, { status: cmd === "resolve" ? "resolved" : "open" });
+  const name = label("blocker", b.number);
+  return b.status === "resolved" ? `✔️ Blocker <b>${name}</b> resolved.` : `🚧 Blocker <b>${name}</b> reopened.`;
 }
 
 /** /help: a table of commands (tap one to send it). Admin commands and the g3 tip only in a private chat. */
@@ -513,7 +520,7 @@ async function onCallback(ctx: Context & { callbackQuery: { data: string } }) {
       const link = await cmsLink(c, await tracker.projectGroup(c.scope, m.groupId));
       await ctx.replyWithRichMessage({ html: formatMilestone(m, members, c.today) + link });
     } else if (q.data.startsWith("y:")) {
-      const [, kind, raw] = q.data.split(":");
+      const [, kind, raw, number] = q.data.split(":");
       const id = Number(raw);
       if (kind === "m") {
         const actor = requireActor(c);
@@ -522,7 +529,8 @@ async function onCallback(ctx: Context & { callbackQuery: { data: string } }) {
       }
       else if (kind === "t") await tracker.deleteSubtask(c.scope, id);
       else if (kind === "b") await tracker.deleteBlocker(c.scope, id);
-      await edit(`Deleted ${{ m: "milestone", t: "task", b: "blocker" }[kind] ?? "item"} #${id}.`);
+      const what = ({ m: "milestone", t: "task", b: "blocker" } as const)[kind as "m" | "t" | "b"];
+      await edit(`Deleted ${what} ${label(what, Number(number))}.`);
     }
     return answer();
   } catch (error) {

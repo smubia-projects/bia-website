@@ -37,6 +37,7 @@ export default async function TrackerGroupPage(props: { params: Promise<{ run: s
       members={members.map((m) => ({ id: m.id, name: m.name }))}
       milestones={milestones.map((m) => ({
         id: m.id,
+        number: m.number,
         title: m.title,
         notes: m.notes,
         status: m.status,
@@ -44,8 +45,8 @@ export default async function TrackerGroupPage(props: { params: Promise<{ run: s
         dueOn: m.dueOn,
         dates: m.startsOn ? `${day(m.startsOn)} to ${day(m.dueOn)}` : `Due ${day(m.dueOn)}`,
         overdue: m.status !== "done" && m.dueOn < today,
-        subtasks: m.subtasks.map((s) => ({ id: s.id, title: s.title, status: s.status, dueOn: s.dueOn, assigneeId: s.assigneeId, assigneeName: s.assigneeName })),
-        blockers: m.blockers.map((b) => ({ id: b.id, description: b.description, status: b.status })),
+        subtasks: m.subtasks.map((s) => ({ id: s.id, number: s.number, title: s.title, status: s.status, dueOn: s.dueOn, assigneeId: s.assigneeId, assigneeName: s.assigneeName })),
+        blockers: m.blockers.map((b) => ({ id: b.id, number: b.number, description: b.description, status: b.status })),
       }))}
     />
   );

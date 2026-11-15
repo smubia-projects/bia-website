@@ -5,11 +5,11 @@ import type { MilestoneDetail, ProjectGroup } from "./tracker";
 
 const group = (id: number, extra: Partial<ProjectGroup> = {}): ProjectGroup => ({
   id, cohortId: "c", number: id, name: `G${id}`, mentors: "", telegramChatId: null, lastMeetingAt: null,
-  meetingRemindersOn: true, meetingRemindedAt: null, createdAt: "2026-10-01T00:00:00Z", ...extra,
+  meetingRemindersOn: true, meetingRemindedAt: null, milestoneSeq: 0, taskSeq: 0, blockerSeq: 0, createdAt: "2026-10-01T00:00:00Z", ...extra,
 });
 let nextId = 1;
 const ms = (groupId: number, startsOn: string | null, dueOn: string, extra: Partial<MilestoneDetail> = {}): MilestoneDetail => ({
-  id: nextId++, groupId, title: `M${nextId}`, notes: "", startsOn, dueOn, status: "todo", createdAt: "", updatedAt: "", updatedBy: "",
+  id: nextId, number: nextId++, groupId, title: `M${nextId}`, notes: "", startsOn, dueOn, status: "todo", createdAt: "", updatedAt: "", updatedBy: "",
   subtasks: [], blockers: [], ...extra,
 });
 const today = "2026-11-13"; // a Friday

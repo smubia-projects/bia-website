@@ -101,7 +101,7 @@ describe("linking and connecting", () => {
 
 describe("working in Group 1's chat", () => {
   it("admins set milestones; members cannot", async () => {
-    assert.match(await say(CHAT, MINGDA, "/milestone Proposal from 1 Dec by 15 Dec"), /Added milestone <b>#\d+<\/b> Proposal, due 15 Dec/);
+    assert.match(await say(CHAT, MINGDA, "/milestone Proposal from 1 Dec by 15 Dec"), /Added milestone <b>M1<\/b> Proposal, due 15 Dec/);
     assert.match(await say(CHAT, MINGDA, "/milestone G1 Prototype by 20 Dec"), /Added milestone/);
     assert.match(await say(CHAT, MINGDA, "/milestone Nodate"), /needs a due date/);
     assert.match(await say(CHAT, MIA, "/milestone Sneaky by 1 Dec"), /Only DAP exco/);
@@ -111,24 +111,29 @@ describe("working in Group 1's chat", () => {
     assert.match(list, /<table[^>]*><tr><th>#<\/th><th>Milestone<\/th>/); // a real table, not text chips
     assert.doesNotMatch(list, / · /);
     assert.match(list, /Proposal/);
-    assert.match(list, /<td><tg-button type="callback_data" style="link" data="m:\d+">\d+<\/tg-button><\/td>/); // each row opens its milestone
+    assert.match(list, /<td><tg-button type="callback_data" style="link" data="m:\d+">M\d+<\/tg-button><\/td>/); // each row opens its milestone
   });
 
   it("members log tasks, blockers, assignees and meetings", async () => {
+    // Numbers count within the project group: Group 1's first milestone is M1 and its first task T1,
+    // even though Group 2 made a milestone first.
     const ms = (await t.getTimeline(t.adminWho({ email: MINGDA_EMAIL, name: "Mingda", role: "dap_exco" }), g1.id))[0].id;
-    assert.match(await say(CHAT, MIA, `/task ${ms} Draft deck by 20 Nov`), /Added task/);
+    assert.match(await say(CHAT, MIA, "/task 1 Draft deck by 20 Nov"), /Added task <b>T1<\/b> to M1: Draft deck/);
+    assert.match(await say(CHAT, MIA, "/taskstatus T1 todo"), /Task <b>T1<\/b> Draft deck is now todo/); // T1 works as well as 1
     assert.match(await say(CHAT, MIA, `/assign 1 nobody-here`), /assigned to "nobody-here" \(not on the member list\)/);
     assert.match(await say(CHAT, MIA, `/assign 1 me`), /assigned to Mia Lim\./); // her Telegram name, "Mia", matches the list
     assert.match(await say(CHAT, MIA, `/assign 1 mia`), /assigned to Mia Lim\./); // a whole word of a name on the list
     assert.match(await say(CHAT, MIA, `/taskstatus 1 doing`), /in progress/);
-    assert.match(await say(CHAT, MIA, `/blocker ${ms} Waiting on dataset access`), /Logged blocker/);
+    assert.match(await say(CHAT, MIA, "/blocker 1 Waiting on dataset access"), /Logged blocker <b>B1<\/b> on M1\. Close it with \/resolve 1\./);
     calls = [];
     await press(CHAT, MIA, `m:${ms}`);
     const detail = calls.map(sent).filter(Boolean).join("\n");
     assert.match(detail, /Draft deck/);
     assert.match(detail, /Mia Lim/);
     assert.match(detail, /Waiting on dataset access/);
-    assert.match(await say(CHAT, MIA, "/resolve 1"), /resolved/);
+    assert.match(detail, /<td>T1<\/td>/);
+    assert.match(detail, /<li>B1 Waiting on dataset access<\/li>/);
+    assert.match(await say(CHAT, MIA, "/resolve 1"), /Blocker <b>B1<\/b> resolved/);
     assert.match(await say(CHAT, MIA, "/meeting yesterday"), /Group 1 met its mentors/);
     assert.match(await say(CHAT, MIA, "/meeting 2 Jan 2020"), /earlier than the last logged meeting/);
     assert.match(await say(CHAT, MIA, "/meeting tomorrow"), /future/);
@@ -136,36 +141,36 @@ describe("working in Group 1's chat", () => {
   });
 
   it("an admin marks a milestone done", async () => {
-    const ms = (await t.getTimeline(t.adminWho({ email: MINGDA_EMAIL, name: "Mingda", role: "dap_exco" }), g1.id))[0].id;
-    assert.match(await say(CHAT, MINGDA, `/done ${ms}`), /✅ .*is now done/);
+    assert.match(await say(CHAT, MINGDA, "/done 1"), /✅ <b>M1<\/b> Proposal is now done/);
   });
 
   it("deletes ask first, and buttons are authorised by who pressed", async () => {
     const reply = await say(CHAT, MIA, "/deltask 1");
-    assert.match(reply, /Delete task #1\?/);
-    assert.equal((await press(OTHER_CHAT, STRANGER, `y:t:1:${STRANGER}`)).find((c) => c.method === "answerCallbackQuery")?.body.text, "Not allowed");
+    assert.match(reply, /Delete task T1\?/);
+    const task = (await t.getTimeline(t.memberWho(g1.id, "x"), g1.id))[0].subtasks[0].id;
+    assert.equal((await press(OTHER_CHAT, STRANGER, `y:t:${task}:1:${STRANGER}`)).find((c) => c.method === "answerCallbackQuery")?.body.text, "Not allowed");
     const ms = (await t.getTimeline(t.memberWho(g1.id, "x"), g1.id))[0].id;
-    assert.match(String((await press(CHAT, MIA, `y:m:${ms}:${MIA}`)).find((c) => c.method === "answerCallbackQuery")?.body.text), /Only DAP exco/);
+    assert.match(String((await press(CHAT, MIA, `y:m:${ms}:1:${MIA}`)).find((c) => c.method === "answerCallbackQuery")?.body.text), /Only DAP exco/);
     assert.equal((await t.getTimeline(t.memberWho(g1.id, "x"), g1.id)).length, 2); // the milestone survived
     assert.equal((await t.getMilestone(t.memberWho(g1.id, "x"), (await t.getTimeline(t.memberWho(g1.id, "x"), g1.id))[0].id)).subtasks.length, 1);
     // Only the person who asked can press Delete or Cancel; anyone else gets a notice, nothing changes.
-    for (const data of [`y:t:1:${MIA}`, `n:${MIA}`]) {
+    for (const data of [`y:t:${task}:1:${MIA}`, `n:${MIA}`]) {
       const other = await press(CHAT, MINGDA, data);
       assert.equal(other.find((c) => c.method === "answerCallbackQuery")?.body.text, "Only the person who asked can do that.");
       assert.ok(!other.some((c) => c.method === "editMessageText"));
     }
-    const done = await press(CHAT, MIA, `y:t:1:${MIA}`);
-    assert.match(String(done.find((c) => c.method === "editMessageText")?.body.text), /Deleted task #1/);
+    const done = await press(CHAT, MIA, `y:t:${task}:1:${MIA}`);
+    assert.match(String(done.find((c) => c.method === "editMessageText")?.body.text), /Deleted task T1\./);
     assert.match(String((await press(CHAT, MIA, `n:${MIA}`)).find((c) => c.method === "editMessageText")?.body.text), /Cancelled/);
   });
 });
 
 describe("groups never see each other", () => {
   it("another group's milestone is out of reach from Group 1's chat, even for an admin", async () => {
-    assert.match(await say(CHAT, MIA, `/task ${m2} sneaky`), /not found/);
-    assert.match(await say(CHAT, MIA, `/blocker ${m2} sneaky`), /not found/);
-    assert.match(await say(CHAT, MINGDA, `/done ${m2}`), /not found/);
-    assert.match(await say(CHAT, MINGDA, `/editmilestone ${m2} Leak by 1 Jan`), /not found/);
+    // Numbers only ever mean this chat's group, and naming another group is refused.
+    assert.match(await say(CHAT, MIA, "/blocker 9 sneaky"), /Milestone M9 not found/);
+    assert.match(await say(CHAT, MINGDA, "/done g2 1"), /This chat is Group 1/);
+    assert.match(await say(CHAT, MINGDA, "/editmilestone g2 1 Leak by 1 Jan"), /This chat is Group 1/);
     assert.match(await say(CHAT, MINGDA, "/milestones 2"), /This chat is Group 1/);
     assert.match(await say(CHAT, MINGDA, "/groups"), /private chat/);
     assert.equal((await press(CHAT, MINGDA, `m:${m2}`)).find((c) => c.method === "answerCallbackQuery")?.body.text, "Milestone not found");
@@ -175,7 +180,8 @@ describe("groups never see each other", () => {
   it("admins reach every group from a private chat", async () => {
     assert.match(await say(MINGDA, MINGDA, "/groups"), /Project Groups[\s\S]*<td>Alpha<\/td><td>Connected<\/td>[\s\S]*<td>Beta<\/td><td>Not connected<\/td>/);
     assert.match(await say(MINGDA, MINGDA, "/milestones 2"), /Secret plan/);
-    assert.match(await say(MINGDA, MINGDA, `/done ${m2}`), /is now done/);
+    assert.match(await say(MINGDA, MINGDA, "/done 1"), /Add the project group's number/); // which group's M1?
+    assert.match(await say(MINGDA, MINGDA, "/done g2 1"), /<b>M1<\/b> Secret plan is now done/);
     assert.match(await say(MINGDA, MINGDA, "/reminders 2 off"), /Group 2 are off/);
     assert.match(await say(MINGDA, MINGDA, "/milestones"), /Add the project group's number/);
     // "Open in CMS" only in an admin's private chat: in a group chat everyone would see it.

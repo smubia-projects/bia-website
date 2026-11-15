@@ -226,7 +226,8 @@ DAP run (a `cohorts` row); AI Lodge's equivalent is a **semester**.
 
 - Data: `project_groups` with `milestones`, `subtasks` (assignee: a `project_members` row, or a typed
   `assignee_name` for someone not on the list) and `blockers`. There is no timeline table: a project group's
-  timeline is its milestones by due date.
+  timeline is its milestones by due date. Each milestone, task and blocker has a `number` within its project group
+  (M2, T5, B1; counters on `project_groups`, never reused): the bot's commands take it, everything else uses `id`.
 - Rules and permissions: `app/lib/cms/tracker.ts` (`can.tracker` = DAP exco and exco admins). The bot only parses
   and replies; it never writes the database itself.
 - Telegram, all through grammY: `telegram.ts` is plumbing (one `Api` client, `getBotUsername()` from getMe,

@@ -1,5 +1,5 @@
 import type { BlockerRow, ProjectGroupRow, ProjectMemberRow } from "@/app/lib/db/schema";
-import { meetingDeadline, type MilestoneDetail } from "./tracker";
+import { LABEL, meetingDeadline, type MilestoneDetail } from "./tracker";
 import { escapeHtml as esc } from "./telegram";
 
 /** Parsing and formatting for the tracker bot's messages. Pure: no database, no network. */
@@ -128,7 +128,7 @@ export function formatTimeline(group: ProjectGroupRow, milestones: MilestoneDeta
           const done = m.subtasks.filter((s) => s.status === "done").length;
           const open = m.blockers.filter((b) => b.status === "open").length;
           return [
-            `<tg-button type="callback_data" style="link" data="m:${m.id}">${m.id}</tg-button>`,
+            `<tg-button type="callback_data" style="link" data="m:${m.id}">${LABEL.milestone}${m.number}</tg-button>`,
             esc(m.title),
             overdue ? `<b>${shortDate(m.dueOn, today)}, overdue</b>` : shortDate(m.dueOn, today),
             STATUS_LABEL[m.status],
@@ -154,18 +154,18 @@ export function formatMilestone(m: MilestoneDetail, members: ProjectMemberRow[],
   const overdue = m.status !== "done" && m.dueOn < today;
   const dates = `${m.startsOn ? `From ${shortDate(m.startsOn, today)} to` : "Due"} ${shortDate(m.dueOn, today)}`;
   const parts = [
-    `<h3>Milestone ${m.id}: ${esc(m.title)}</h3>`,
+    `<h3>Milestone ${LABEL.milestone}${m.number}: ${esc(m.title)}</h3>`,
     `<p>${STATUS_LABEL[m.status]}. ${dates}${overdue ? ", <b>overdue</b>" : ""}.</p>`,
   ];
   if (m.notes) parts.push(`<blockquote>${esc(m.notes)}</blockquote>`);
 
   parts.push("<h4>Tasks</h4>");
-  if (!m.subtasks.length) parts.push(`<p>None yet. Add one with /task ${m.id} and a title.</p>`);
+  if (!m.subtasks.length) parts.push(`<p>None yet. Add one with /task ${m.number} and a title.</p>`);
   else {
     parts.push(
       table(
         ["#", "Task", "Status", "Due", "Assignee"],
-        m.subtasks.slice(0, ROWS).map((s) => [String(s.id), esc(s.title), STATUS_LABEL[s.status], s.dueOn ? shortDate(s.dueOn, today) : "None", assignee(s)])
+        m.subtasks.slice(0, ROWS).map((s) => [`${LABEL.task}${s.number}`, esc(s.title), STATUS_LABEL[s.status], s.dueOn ? shortDate(s.dueOn, today) : "None", assignee(s)])
       ),
       more(m.subtasks.length)
     );
@@ -178,7 +178,7 @@ export function formatMilestone(m: MilestoneDetail, members: ProjectMemberRow[],
   return parts.join("");
 }
 
-const blockerList = (list: BlockerRow[]) => `<ul>${list.map((b) => `<li>#${b.id} ${esc(b.description)}</li>`).join("")}</ul>`;
+const blockerList = (list: BlockerRow[]) => `<ul>${list.map((b) => `<li>${LABEL.blocker}${b.number} ${esc(b.description)}</li>`).join("")}</ul>`;
 
 /** /groups (private chat): every project group of the cohort. */
 export function formatGroups(groups: ProjectGroupRow[], today: string) {

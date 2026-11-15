@@ -86,6 +86,8 @@ export async function projectGroupTimeline(actor: Actor, projectGroupId: number)
     members: members.map((m) => ({ id: m.id, name: m.name })),
     milestones: milestones.map((m) => ({
       id: m.id,
+      // What the project group and the bot call it (M2); tools take the id.
+      label: `${tracker.LABEL.milestone}${m.number}`,
       title: m.title,
       notes: m.notes,
       status: m.status,
@@ -94,6 +96,7 @@ export async function projectGroupTimeline(actor: Actor, projectGroupId: number)
       overdue: m.status !== "done" && m.dueOn < today,
       tasks: m.subtasks.map((s) => ({
         id: s.id,
+        label: `${tracker.LABEL.task}${s.number}`,
         title: s.title,
         status: s.status,
         dueOn: s.dueOn,
@@ -101,7 +104,7 @@ export async function projectGroupTimeline(actor: Actor, projectGroupId: number)
         assignee: memberName(s.assigneeId) ?? (s.assigneeName || null),
         assigneeOnMemberList: s.assigneeId !== null,
       })),
-      blockers: m.blockers.map((b) => ({ id: b.id, description: b.description, status: b.status, resolvedAt: b.resolvedAt })),
+      blockers: m.blockers.map((b) => ({ id: b.id, label: `${tracker.LABEL.blocker}${b.number}`, description: b.description, status: b.status, resolvedAt: b.resolvedAt })),
     })),
   };
 }
@@ -139,11 +142,11 @@ export async function addMilestones(actor: Actor, cohortId: string, list: NewMil
     targets = groups.filter((g) => projectGroupIds.includes(g.id));
   }
 
-  const added: { projectGroupId: number; number: number; milestoneId: number; title: string; dueOn: string }[] = [];
+  const added: { projectGroupId: number; number: number; milestoneId: number; label: string; title: string; dueOn: string }[] = [];
   for (const group of targets) {
     for (const m of list) {
       const row = await tracker.saveMilestone(actor, { groupId: group.id, title: m.title.trim(), startsOn: m.startsOn || null, dueOn: m.dueOn });
-      added.push({ projectGroupId: group.id, number: group.number, milestoneId: row.id, title: row.title, dueOn: row.dueOn });
+      added.push({ projectGroupId: group.id, number: group.number, milestoneId: row.id, label: `${tracker.LABEL.milestone}${row.number}`, title: row.title, dueOn: row.dueOn });
     }
   }
   return { cohortId: id, added };
@@ -152,7 +155,7 @@ export async function addMilestones(actor: Actor, cohortId: string, list: NewMil
 /** set_milestone_status */
 export async function setMilestoneStatus(actor: Actor, milestoneId: number, status: MilestoneStatus) {
   const row = await tracker.setMilestoneStatus(actor, milestoneId, status);
-  return { id: row.id, title: row.title, status: row.status };
+  return { id: row.id, label: `${tracker.LABEL.milestone}${row.number}`, title: row.title, status: row.status };
 }
 
 /** log_project_group_meeting: today (or no date) means now; a past date is logged at noon Singapore time, like the dashboard. */
