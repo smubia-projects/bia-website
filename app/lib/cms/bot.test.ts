@@ -44,19 +44,19 @@ const sent = (c: { method: string; body: Record<string, unknown> }) =>
   c.method === "sendMessage" ? String(c.body.text) : c.method === "sendRichMessage" ? String((c.body.rich_message as { html: string }).html) : "";
 
 /** Sends a message and returns the bot's reply text ("" when it stayed silent). */
-async function say(chat: number, from: number, text: string, type = chat > 0 ? "private" : "group") {
+async function say(chat: number, from: number, text: string, type = chat > 0 ? "private" : "group", extra: Record<string, unknown> = {}) {
   calls = [];
   // Telegram marks a leading command as a bot_command entity; grammY's bot.command() matches on it.
   const command = text.match(/^\/\S+/)?.[0];
   const entities = command ? [{ type: "bot_command", offset: 0, length: command.length }] : undefined;
-  const update = { update_id: nextId++, message: { message_id: nextId, from: { id: from, first_name: from === MINGDA ? "Mingda" : "Mia" }, chat: { id: chat, type }, text, entities } };
+  const update = { update_id: nextId++, message: { message_id: nextId, from: { id: from, first_name: from === MINGDA ? "Mingda" : "Mia" }, chat: { id: chat, type }, text, entities, ...extra } };
   await handleUpdate(update);
   return calls.map(sent).filter(Boolean).join("\n");
 }
 
-async function press(chat: number, from: number, data: string) {
+async function press(chat: number, from: number, data: string, extra: Record<string, unknown> = {}) {
   calls = [];
-  await handleUpdate({ update_id: nextId++, callback_query: { id: "q", from: { id: from, first_name: "X" }, message: { message_id: 1, chat: { id: chat, type: chat > 0 ? "private" : "group" } }, data } });
+  await handleUpdate({ update_id: nextId++, callback_query: { id: "q", from: { id: from, first_name: "X" }, message: { message_id: 1, chat: { id: chat, type: chat > 0 ? "private" : "group" }, ...extra }, data } });
   return calls;
 }
 
@@ -118,9 +118,9 @@ describe("working in Group 1's chat", () => {
     // Numbers count within the project group: Group 1's first milestone is M1 and its first task T1,
     // even though Group 2 made a milestone first.
     const ms = (await t.getTimeline(t.adminWho({ email: MINGDA_EMAIL, name: "Mingda", role: "dap_exco" }), g1.id))[0].id;
-    assert.match(await say(CHAT, MIA, "/task 1 Draft deck by 20 Nov"), /Added task <b>T1<\/b> to M1: Draft deck/);
+    assert.match(await say(CHAT, MIA, "/addtask 1 Draft deck by 20 Nov"), /Added task <b>T1<\/b> to M1: Draft deck/);
     assert.match(await say(CHAT, MIA, "/taskstatus T1 todo"), /Task <b>T1<\/b> Draft deck is now todo/); // T1 works as well as 1
-    assert.match(await say(CHAT, MIA, "/task 1 Review by 31 Nov"), /Couldn't read the date "31 Nov"/); // a typo is refused, not kept in the title
+    assert.match(await say(CHAT, MIA, "/addtask 1 Review by 31 Nov"), /Couldn't read the date "31 Nov"/); // a typo is refused, not kept in the title
     assert.match(await say(CHAT, MIA, "/edittask 1 by 31 Nov"), /Couldn't read the date "31 Nov"/);
     assert.match(await say(CHAT, MIA, "/edittask 1 by 25 Dec"), /Updated task <b>T1<\/b>: Draft deck\./); // only the date changes
     assert.match(await say(CHAT, MIA, `/assign 1 nobody-here`), /assigned to "nobody-here" \(not on the member list\)/);
@@ -204,7 +204,7 @@ describe("housekeeping", () => {
     await syncBotCommands(bot.api);
     const [groupMenu, privateMenu] = calls.map((c) => c.body as { commands: { command: string }[]; scope: { type: string } });
     assert.equal(groupMenu.scope.type, "all_group_chats");
-    assert.ok(groupMenu.commands.some((c) => c.command === "task") && !groupMenu.commands.some((c) => c.command === "milestone"));
+    assert.ok(groupMenu.commands.some((c) => c.command === "addtask") && groupMenu.commands.some((c) => c.command === "listtask") && !groupMenu.commands.some((c) => c.command === "task" || c.command === "milestone"));
     assert.equal(privateMenu.scope.type, "all_private_chats");
     assert.ok(privateMenu.commands.some((c) => c.command === "milestone"));
     // Admin commands and the g3 tip only in a private chat; a group chat sees member commands only.
@@ -252,5 +252,289 @@ describe("meeting reminders", () => {
     await say(NEW, MIA, "/meeting", "supergroup"); // a new meeting restarts the cycle
     assert.equal((await t.dueMeetingReminders()).length, 0);
     assert.equal(g2.meetingRemindersOn && (await t.dueMeetingReminders()).some((g) => g.id === g2.id), false); // switched off in the DM test
+  });
+});
+
+// ── Button flows ─────────────────────────────────────────────────────────
+
+type Call = { method: string; body: Record<string, any> }; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+describe("button flows: commands without everything they need list the options", () => {
+  const FLOW_CHAT = -8880003;
+  const MIA_NAME = "Mia"; // her Telegram first name
+  let g3: t.ProjectGroup;
+  let scope: t.TrackerWho;
+  const timeline = () => t.getTimeline(scope, g3.id);
+  /** A milestone by its number (the timeline itself is in due-date order). */
+  const milestone = async (n: number) => (await timeline()).find((m) => m.number === n)!;
+
+  /** The bot's last message or edit, its text without tags, and its buttons. */
+  const lastCall = () => [...calls].reverse().find((c) => c.method === "sendMessage" || c.method === "editMessageText") as Call;
+  const textOf = (c: Call) => String(c.body.text).replace(/<[^>]+>/g, "");
+  const buttonsOf = (c: Call): { text: string; callback_data: string }[] => (c.body.reply_markup?.inline_keyboard ?? []).flat();
+  const dataOf = (c: Call, label: RegExp) => {
+    const b = buttonsOf(c).find((x) => label.test(x.text));
+    assert.ok(b, `no button matching ${label} in: ${buttonsOf(c).map((x) => x.text).join(" | ")}`);
+    return b.callback_data;
+  };
+  const answerOf = () => calls.find((c) => c.method === "answerCallbackQuery")?.body.text;
+  /** Presses a button on a message that replies to `replyText` (the command or the person's typed answer). */
+  const tap = (from: number, data: string, replyText = "/x", chat = FLOW_CHAT) => press(chat, from, data, { reply_to_message: { message_id: 5, text: replyText } });
+  /** Replies to a prompt the bot sent, the way Telegram delivers it. */
+  const answer = (from: number, prompt: Call, text: string, chat = FLOW_CHAT) =>
+    say(chat, from, text, "group", { reply_to_message: { message_id: 9, from: { id: 0, is_bot: true }, text: textOf(prompt) } });
+
+  before(async () => {
+    const db = await getDb();
+    await db.update(people).set({ telegramUserId: MINGDA }).where(eq(people.email, MINGDA_EMAIL));
+    g3 = await t.saveProjectGroup(mingda, { cohortId: "dap-test", number: 3, name: "Gamma" });
+    await t.connectChat(g3.id, FLOW_CHAT);
+    scope = t.adminWho(mingda);
+    await t.saveMilestone(mingda, { groupId: g3.id, title: "Scope", dueOn: "2030-02-01" });
+    await t.saveMilestone(mingda, { groupId: g3.id, title: "Build", dueOn: "2030-03-01" });
+    await t.saveMember(mingda, { groupId: g3.id, name: "Mia Lim" });
+    await t.saveMember(mingda, { groupId: g3.id, name: "Ben Koh" });
+  });
+
+  it("/addtask on its own: pick the milestone, reply with the title, Confirm", async () => {
+    await say(FLOW_CHAT, MIA, "/addtask");
+    const picker = lastCall();
+    assert.match(textOf(picker), /Add task\nChoose a milestone\./);
+    assert.deepEqual(buttonsOf(picker).map((b) => b.text), ["M1 Scope", "M2 Build", "Cancel"]);
+    for (const b of buttonsOf(picker)) assert.ok(Buffer.byteLength(b.callback_data) <= 64, b.callback_data); // Telegram's limit
+    assert.ok(buttonsOf(picker).slice(0, 2).every((b) => b.callback_data.endsWith(`:${MIA}`)));
+
+    await tap(MIA, dataOf(picker, /M2/), "/addtask");
+    assert.match(textOf(calls.find((c) => c.method === "editMessageText") as Call), /Add task\nM2 Build/); // the buttons go away
+    const prompt = calls.find((c) => c.method === "sendMessage") as Call;
+    assert.deepEqual([prompt.body.reply_markup.force_reply, prompt.body.reply_markup.selective], [true, true]);
+    assert.match(String(prompt.body.text), new RegExp(`tg://user\\?id=${MIA}`)); // the box opens for her only
+    assert.match(textOf(prompt), new RegExp(`reply with the task title[\\s\\S]*ref f:at:g3:2:${MIA}$`));
+
+    // Someone else's reply to her prompt is ignored; a typo is caught before Confirm.
+    assert.equal(await answer(MINGDA, prompt, "Not for you"), "");
+    assert.match(await answer(MIA, prompt, "Wire the demo by 31 Nov"), /Couldn't read the date "31 Nov"[\s\S]*Reply to my message above/);
+    assert.equal((await milestone(2)).subtasks.length, 0);
+
+    await answer(MIA, prompt, "Wire the demo by 20 Dec");
+    const confirm = lastCall();
+    assert.match(textOf(confirm), /Add task\nAdd task “Wire the demo”, due 20 Dec to M2 “Build”\?/);
+    assert.equal((await milestone(2)).subtasks.length, 0); // nothing yet: Confirm comes first
+    assert.deepEqual(buttonsOf(confirm).map((b) => b.text), ["Confirm", "Cancel"]);
+
+    const ok = dataOf(confirm, /Confirm/);
+    await tap(MINGDA, ok, "Wire the demo by 20 Dec");
+    assert.equal(answerOf(), "Only the person who asked can do that.");
+    assert.equal((await milestone(2)).subtasks.length, 0);
+    await tap(MIA, ok, "Wire the demo by 20 Dec");
+    assert.match(textOf(lastCall()), /Added task T1 to M2: Wire the demo, due 20 Dec\./);
+    assert.equal((await milestone(2)).subtasks[0].dueOn, `${new Date().getFullYear()}-12-20`);
+  });
+
+  it("a partly typed command skips the steps already answered", async () => {
+    await say(FLOW_CHAT, MIA, "/addtask 1"); // milestone given: asks for the title at once
+    assert.match(textOf(lastCall()), /reply with the task title[\s\S]*M1 Scope[\s\S]*ref f:at:g3:1:/);
+    assert.equal(lastCall().body.reply_markup.force_reply, true);
+
+    await say(FLOW_CHAT, MIA, "/addtask Do the thing by 28 Dec"); // title given: only the milestone is missing
+    const picker = lastCall();
+    const data = dataOf(picker, /M1/);
+    assert.match(data, /^f:at:g3:1:x:\d+$/); // the flag says the typed answer is in the command message
+    await tap(MIA, data, "/addtask Do the thing by 28 Dec");
+    assert.match(textOf(lastCall()), /Add task “Do the thing”, due 28 Dec to M1 “Scope”\?/); // straight to Confirm, no prompt
+    assert.ok(!calls.some((c) => c.method === "sendMessage"));
+    await tap(MIA, dataOf(lastCall(), /Confirm/), "/addtask Do the thing by 28 Dec");
+    assert.match(textOf(lastCall()), /Added task T2 to M1: Do the thing/);
+
+    // Nothing missing: it just runs, as before.
+    assert.match(await say(FLOW_CHAT, MIA, "/addtask 1 Straight through"), /Added task <b>T3<\/b> to M1/);
+  });
+
+  it("task status, done and assign: pick the task, then the status or person", async () => {
+    await say(FLOW_CHAT, MIA, "/taskstatus");
+    const tasks = lastCall(); // two milestones have tasks: choose the milestone first
+    assert.match(textOf(tasks), /Choose the milestone the task is in/);
+    assert.deepEqual(buttonsOf(tasks).map((b) => b.text), ["M1 Scope (2)", "M2 Build (1)", "Cancel"]);
+    await tap(MIA, dataOf(tasks, /M2/));
+    const list = lastCall();
+    assert.match(textOf(list), /Choose a task in M2/);
+    await tap(MIA, dataOf(list, /T1 Wire the demo/));
+    const status = lastCall();
+    assert.deepEqual(buttonsOf(status).map((b) => b.text), ["To do", "In progress", "Done", "Cancel"]);
+    await tap(MIA, dataOf(status, /In progress/));
+    assert.match(textOf(lastCall()), /Set T1 “Wire the demo” to in progress\?/);
+    await tap(MIA, dataOf(lastCall(), /Confirm/));
+    assert.match(textOf(lastCall()), /Task T1 Wire the demo is now in progress/);
+
+    await say(FLOW_CHAT, MIA, "/taskstatus 1"); // number given: straight to the status buttons
+    assert.deepEqual(buttonsOf(lastCall()).map((b) => b.text), ["To do", "In progress", "Done", "Cancel"]);
+    assert.match(await say(FLOW_CHAT, MIA, "/taskstatus 1 banana"), /Status must be todo, doing or done/); // a wrong word is still an error
+
+    await say(FLOW_CHAT, MIA, "/taskdone 1");
+    assert.match(await say(FLOW_CHAT, MIA, "/taskdone 1"), /is now done/); // a number is enough: no flow
+    await say(FLOW_CHAT, MIA, "/taskdone"); // only tasks that are not done, and they are all in M1: no milestone step
+    assert.deepEqual(buttonsOf(lastCall()).map((b) => b.text.replace(/^\S+ /, "")), ["T2 Do the thing", "T3 Straight through", "Cancel"]);
+
+    await say(FLOW_CHAT, MIA, "/assign 2");
+    const people = lastCall();
+    assert.deepEqual(buttonsOf(people).map((b) => b.text), ["Ben Koh", "Mia Lim", `Me (${MIA_NAME})`, "Unassigned", "Cancel"]);
+    await tap(MIA, dataOf(people, /Ben Koh/));
+    assert.match(textOf(lastCall()), /Assign T2 “Do the thing” to Ben Koh\?/);
+    await tap(MIA, dataOf(lastCall(), /Confirm/));
+    assert.match(textOf(lastCall()), /Task T2 assigned to Ben Koh\./);
+    await say(FLOW_CHAT, MIA, "/assign 2");
+    await tap(MIA, dataOf(lastCall(), /Unassigned/));
+    assert.match(textOf(lastCall()), /Unassign T2/);
+    await tap(MIA, dataOf(lastCall(), /Confirm/));
+    assert.match(textOf(lastCall()), /Task T2 is unassigned/);
+  });
+
+  it("/edittask and blockers: typed answers go through Confirm too", async () => {
+    await say(FLOW_CHAT, MIA, "/edittask 3");
+    const prompt = lastCall();
+    assert.match(textOf(prompt), /new title, a new due date[\s\S]*T3 Straight through/);
+    await answer(MIA, prompt, "Straight through, renamed");
+    assert.match(textOf(lastCall()), /Update T3 “Straight through”: rename to “Straight through, renamed”\?/);
+    await tap(MIA, dataOf(lastCall(), /Confirm/), "Straight through, renamed");
+    assert.match(textOf(lastCall()), /Updated task T3: Straight through, renamed\./);
+
+    await say(FLOW_CHAT, MIA, "/blocker");
+    await tap(MIA, dataOf(lastCall(), /M2/));
+    const ask = calls.find((c) => c.method === "sendMessage") as Call;
+    await answer(MIA, ask, "Waiting on the dataset");
+    await tap(MIA, dataOf(lastCall(), /Confirm/), "Waiting on the dataset");
+    assert.match(textOf(lastCall()), /Logged blocker B1 on M2/);
+
+    await say(FLOW_CHAT, MIA, "/resolve"); // one open blocker: no milestone step
+    assert.match(textOf(lastCall()), /Choose a blocker in M2/);
+    await tap(MIA, dataOf(lastCall(), /B1/));
+    assert.match(textOf(lastCall()), /Resolve B1 “Waiting on the dataset”\?/);
+    await tap(MIA, dataOf(lastCall(), /Confirm/));
+    assert.match(textOf(lastCall()), /Blocker B1 resolved/);
+    await say(FLOW_CHAT, MIA, "/resolve");
+    assert.match(textOf(lastCall()), /There are no open blockers to choose from/);
+    await say(FLOW_CHAT, MIA, "/reopenblocker");
+    assert.match(textOf(lastCall()), /Choose a blocker in M2/);
+  });
+
+  it("deletes keep their own Delete/Cancel step at the end of the flow", async () => {
+    await say(FLOW_CHAT, MIA, "/deltask");
+    await tap(MIA, dataOf(lastCall(), /M1/));
+    await tap(MIA, dataOf(lastCall(), /T3/));
+    assert.match(textOf(lastCall()), /Delete task T3\?/);
+    assert.deepEqual(buttonsOf(lastCall()).map((b) => b.text), ["Delete", "Cancel"]);
+    assert.equal((await milestone(1)).subtasks.length, 2); // still there
+    await tap(MIA, dataOf(lastCall(), /Delete/));
+    assert.match(textOf(lastCall()), /Deleted task T3\./);
+  });
+
+  it("Cancel stops a flow, and only the person who asked can press its buttons", async () => {
+    await say(FLOW_CHAT, MIA, "/addtask");
+    const picker = lastCall();
+    await tap(MINGDA, dataOf(picker, /M1/));
+    assert.equal(answerOf(), "Only the person who asked can do that.");
+    assert.ok(!calls.some((c) => c.method === "editMessageText"));
+    await tap(MIA, dataOf(picker, /Cancel/));
+    assert.match(textOf(lastCall()), /Cancelled/);
+  });
+
+  it("admin flows: milestones, status and reminders; members get no buttons for them", async () => {
+    assert.match(await say(FLOW_CHAT, MIA, "/done"), /Only DAP exco/);
+    assert.match(await say(FLOW_CHAT, MIA, "/milestone"), /Only DAP exco/);
+
+    await say(FLOW_CHAT, MINGDA, "/done"); // only milestones that are not done
+    assert.deepEqual(buttonsOf(lastCall()).map((b) => b.text), ["M1 Scope", "M2 Build", "Cancel"]);
+    await tap(MINGDA, dataOf(lastCall(), /M1/));
+    assert.match(textOf(lastCall()), /Mark M1 “Scope” as done\?/);
+    await tap(MINGDA, dataOf(lastCall(), /Confirm/));
+    assert.match(textOf(lastCall()), /M1 Scope is now done/);
+    await say(FLOW_CHAT, MINGDA, "/done");
+    assert.deepEqual(buttonsOf(lastCall()).map((b) => b.text), ["M2 Build", "Cancel"]);
+
+    await say(FLOW_CHAT, MINGDA, "/milestone");
+    const ask = lastCall();
+    assert.match(textOf(ask), /reply with the milestone[\s\S]*Group 3 \(Gamma\)[\s\S]*ref f:ms:g3:/);
+    assert.match(await answer(MINGDA, ask, "Review"), /A milestone needs a due date/);
+    await answer(MINGDA, ask, "Review from 1 Dec by 30 Dec");
+    assert.match(textOf(lastCall()), /Add milestone “Review” from 1 Dec, due 30 Dec to Group 3\?/);
+    await tap(MINGDA, dataOf(lastCall(), /Confirm/), "Review from 1 Dec by 30 Dec");
+    assert.match(textOf(lastCall()), /Added milestone M3 Review, due 30 Dec/);
+
+    await say(FLOW_CHAT, MINGDA, "/editmilestone 3");
+    await answer(MINGDA, lastCall(), "by 31 Dec");
+    assert.match(textOf(lastCall()), /Update M3 “Review”: due 31 Dec\?/);
+
+    await say(FLOW_CHAT, MINGDA, "/reminders");
+    assert.deepEqual(buttonsOf(lastCall()).map((b) => b.text), ["On", "Off", "Cancel"]);
+    await tap(MINGDA, dataOf(lastCall(), /Off/));
+    assert.match(textOf(lastCall()), /Turn meeting reminders off for Group 3\?/);
+    await tap(MINGDA, dataOf(lastCall(), /Confirm/));
+    assert.match(textOf(lastCall()), /Meeting reminders for Group 3 are off/);
+
+    await say(FLOW_CHAT, MINGDA, "/status");
+    await tap(MINGDA, dataOf(lastCall(), /M2/));
+    await tap(MINGDA, dataOf(lastCall(), /Done/));
+    assert.match(textOf(lastCall()), /Set M2 “Build” to done\?/);
+    await tap(MINGDA, dataOf(lastCall(), /Cancel/));
+    assert.equal((await milestone(2)).status, "todo"); // cancelled: unchanged
+  });
+
+  it("forged buttons never reach past the person's own scope", async () => {
+    // A member can't run an admin flow by crafting its buttons.
+    await tap(MIA, `ok:ms:g3:${MIA}`, "Sneaky by 1 Dec");
+    assert.match(textOf(lastCall()), /Only DAP exco/);
+    assert.equal((await timeline()).length, 3);
+    // Another group's number is refused in this chat, even for an admin.
+    await tap(MINGDA, `f:addtask:g1:${MINGDA}`.replace("addtask", "at"));
+    assert.match(String(answerOf()), /This chat is Group 3/);
+    await tap(MINGDA, `f:dn:g1:${MINGDA}`);
+    assert.match(String(answerOf()), /This chat is Group 3/);
+    // A stranger in a chat that isn't connected gets nothing.
+    await tap(STRANGER, `f:at:g3:${STRANGER}`, "/x", OTHER_CHAT);
+    assert.equal(answerOf(), "Not allowed");
+  });
+
+  it("an admin's private chat starts with the group", async () => {
+    await say(MINGDA, MINGDA, "/addtask");
+    assert.deepEqual(buttonsOf(lastCall()).map((b) => b.text), ["Group 1 · Alpha", "Group 2 · Beta", "Group 3 · Gamma", "Cancel"]);
+    await tap(MINGDA, dataOf(lastCall(), /Gamma/), "/addtask", MINGDA);
+    assert.deepEqual(buttonsOf(lastCall()).map((b) => b.text), ["M3 Review", "M1 Scope", "M2 Build", "Cancel"]); // due-date order, like /milestones
+    await tap(MINGDA, dataOf(lastCall(), /M3/), "/addtask", MINGDA);
+    assert.match(textOf(calls.find((c) => c.method === "sendMessage") as Call), /reply with the task title[\s\S]*M3 Review/);
+    assert.match(await say(MINGDA, MINGDA, "/addtask 1 Missing group"), /Add the project group's number/); // a number alone is still ambiguous here
+    assert.match(await say(MINGDA, MINGDA, "/addtask g3 9"), /Milestone M9 not found/); // a wrong number fails now, not after the buttons
+  });
+});
+
+describe("/listtask and the renamed commands", () => {
+  const FLOW_CHAT = -8880003;
+  it("/listtask lists the group's tasks, or one milestone's", async () => {
+    const all = await say(FLOW_CHAT, MIA, "/listtask");
+    assert.match(all, /<h3>Tasks: Group 3 \(Gamma\)<\/h3>/);
+    assert.match(all, /<h4>M1: Scope<\/h4>/);
+    assert.match(all, /<td>T1<\/td><td>Wire the demo<\/td><td>Done<\/td>/);
+    assert.match(all, /<td>T2<\/td><td>Do the thing<\/td><td>To do<\/td><td>28 Dec<\/td><td>Unassigned<\/td>/);
+    const one = await say(FLOW_CHAT, MIA, "/listtask 1");
+    assert.match(one, /<h4>M1: Scope<\/h4>/);
+    assert.doesNotMatch(one, /<h4>M2/);
+    assert.match(await say(FLOW_CHAT, MIA, "/listtask 9"), /Milestone M9 not found/);
+    assert.match(await say(FLOW_CHAT, MIA, "/listtask banana"), /Usage: \/listtask/);
+    assert.match(await say(FLOW_CHAT, MINGDA, "/listtask g1"), /This chat is Group 3/); // an admin naming another group is refused
+    assert.match(await say(FLOW_CHAT, MIA, "/listtask g1"), /Tasks: Group 3/); // a member always gets their own group
+    assert.match(await say(MINGDA, MINGDA, "/listtask g3 2"), /<h4>M2: Build<\/h4>/);
+    assert.match(await say(MINGDA, MINGDA, "/listtask g2"), /No tasks yet\. Add one with \/addtask/);
+    assert.match(await say(MINGDA, MINGDA, "/listtask"), /Add the project group's number/);
+  });
+
+  it("/task points to the new names, and command names ignore case", async () => {
+    assert.match(await say(FLOW_CHAT, MIA, "/task 1 Old habit"), /\/task is now \/addtask[\s\S]*\/listtask/);
+    assert.match(await say(FLOW_CHAT, MIA, "/addTask 1 Camel case"), /Added task <b>T\d+<\/b> to M1: Camel case/);
+    assert.match(await say(FLOW_CHAT, MIA, "/ADDTASK@TestBot 1 Shouting"), /Added task/);
+    assert.match(await say(FLOW_CHAT, MIA, "/listTask 1"), /Camel case/);
+    const help = await say(FLOW_CHAT, MIA, "/help");
+    assert.match(help, /<td>\/addtask \[milestone#\] title \[by 20 Nov\]<\/td><td>Add a task<\/td>/);
+    assert.match(help, /<td>\/listtask \[g3\] \[milestone#\]<\/td><td>List tasks<\/td>/);
+    assert.doesNotMatch(help, /<td>\/task /);
+    assert.match(help, /Send a command on its own, such as \/addtask/);
   });
 });

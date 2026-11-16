@@ -1,11 +1,14 @@
 import { Composer, type Api, type Context } from "grammy";
-import type { BotCommand as TgBotCommand, Chat, InlineKeyboardButton, User } from "grammy/types";
+import type { BotCommand as TgBotCommand, Chat, User } from "grammy/types";
 import { runHref } from "@/app/admin/_components/runs";
-import { CmsError, ensure, type Actor } from "./actor";
+import { CmsError, ensure } from "./actor";
+import { groupFor, requireActor, type Ctx, type Reply } from "./bot-core";
+import { FLOWS, flowCommand, flowScreen, parseFlowData, parseRef, typedText, type FlowId } from "./bot-flows";
 import {
   formatGroups,
   formatMeetingReminder,
   formatMilestone,
+  formatTasks,
   formatTimeline,
   noonSgt,
   parseDate,
@@ -19,7 +22,6 @@ import { todaySgt } from "./people";
 import { escapeHtml as esc, SITE_URL, telegramApi } from "./telegram";
 import { claimAccountLink, claimChatLink } from "./telegram-link";
 import * as tracker from "./tracker";
-import type { ProjectGroup, TrackerWho } from "./tracker";
 
 /*
  * The DAP tracker bot's handlers, as a grammY Composer that telegram-bot.ts puts on the
@@ -35,27 +37,6 @@ import type { ProjectGroup, TrackerWho } from "./tracker";
 type TgChat = Pick<Chat, "id" | "type">;
 
 // ── Context ──────────────────────────────────────────────────────────────
-
-interface Ctx {
-  chatId: number;
-  /** The sender's Telegram user ID */
-  fromId: number;
-  isPrivate: boolean;
-  name: string;
-  who: TrackerWho;
-  actor: Actor | null;
-  group: ProjectGroup | null;
-  /** What data commands run as: in a group chat, always that chat's group (never wider, even for admins) */
-  scope: TrackerWho;
-  today: string;
-}
-
-interface Reply {
-  text: string;
-  /** A rich message (tables, headings): for views that list several things */
-  rich?: boolean;
-  markup?: { inline_keyboard: InlineKeyboardButton[][] };
-}
 
 /**
  * An "Open in CMS" button for a rich message, for admins in a private chat only: in a group chat
@@ -73,11 +54,6 @@ async function cmsLink(c: Ctx, group?: { id: number; cohortId: string }): Promis
 
 // ── Commands ─────────────────────────────────────────────────────────────
 
-const requireActor = (c: Ctx): Actor => {
-  ensure(c.actor, "Only DAP exco can do that.");
-  return c.actor;
-};
-
 /**
  * "[g3] 5 rest": the project group's milestone, task or blocker number 5 (M5, T5 or B5 work too),
  * looked up as its ID. In a group chat it is that chat's group; an admin in a private chat adds g3.
@@ -93,24 +69,58 @@ async function item(c: Ctx, args: string, kind: tracker.ItemKind, cmd: string) {
 /** How a number reads in replies: M2, T5, B1. */
 const label = (kind: tracker.ItemKind, number: number) => `${tracker.LABEL[kind]}${number}`;
 
-/** The group a command is about: this chat's, or an admin's explicit one from a private chat. */
-async function groupFor(c: Ctx, explicit?: number): Promise<ProjectGroup> {
-  if (explicit !== undefined && c.actor) {
-    ensure(c.isPrivate || explicit === c.group?.number, `This chat is Group ${c.group?.number}. Message me privately to work on another group.`);
-    return c.group?.number === explicit ? c.group : tracker.groupByNumber(c.actor, explicit);
-  }
-  ensure(c.group, "Add the project group's number, e.g. /milestones g3");
-  return c.group;
-}
-
 /** An optional leading "g3" or "3" naming a group. */
 function leadingGroup(args: string, needG: boolean): [number | undefined, string] {
   const m = args.match(needG ? /^g(\d+)\b\s*([\s\S]*)$/i : /^g?(\d+)\b\s*([\s\S]*)$/i);
   return m ? [Number(m[1]), m[2].trim()] : [undefined, args];
 }
 
+/** What a command was given, without insisting on any of it: "[g3] [5] rest". */
+function peek(args: string) {
+  const m = args.match(/^(?:g(\d+)\b\s*)?(?:[#mtb]?(\d+)\b\s*)?([\s\S]*)$/i)!;
+  return { group: m[1] ? Number(m[1]) : undefined, number: m[2] ? Number(m[2]) : undefined, rest: m[3].trim() };
+}
+
+const ITEM = { m: "milestone", t: "task", b: "blocker" } as const;
+
+/**
+ * A command sent without everything it needs starts a button flow (bot-flows.ts) instead of failing:
+ * the options as buttons, a reply for any typed answer, then Confirm. Returns null when the command
+ * has all it needs, so it just runs. A command with everything typed in keeps its one-line speed.
+ */
+async function begin(c: Ctx, id: FlowId, args: string): Promise<Reply | string | null> {
+  const def = FLOWS[id];
+  let group: number | undefined;
+  let picks: string[] = [];
+  let typed = false;
+  if (id === "rm") {
+    if (/^(?:g?\d+\s+)?(on|off)$/i.test(args)) return null;
+    group = args.match(/^g?(\d+)$/i) ? Number(args.replace(/\D/g, "")) : undefined;
+  } else {
+    const p = peek(args);
+    const first = def.pick[0] as keyof typeof ITEM | undefined;
+    const hasItem = first !== undefined && first in ITEM;
+    const needsRest = Boolean(def.ask) || def.pick.includes("s") || def.pick.includes("w");
+    if (hasItem ? p.number !== undefined && (!needsRest || p.rest !== "") : p.rest !== "") return null;
+    group = p.group;
+    if (hasItem && p.number !== undefined) {
+      // A number that doesn't exist is an error now, not after the person has picked everything else.
+      await tracker.idByNumber(c.scope, (await groupFor(c, group)).id, ITEM[first], p.number);
+      picks = [String(p.number)];
+    } else typed = Boolean(def.ask) && p.rest !== "";
+  }
+  const step = await flowScreen(c, { flow: id, g: group, picks, typed });
+  if ("reply" in step) return step.reply;
+  if ("prompt" in step) return step.prompt.reply;
+  return runNamed(step.run.name, c, step.run.args);
+}
+
+const runNamed = async (name: string, c: Ctx, args: string) => COMMANDS.find((x) => x.name === name)!.run(c, args);
+
 export interface BotCommand {
   name: string;
+  /** Still answers, but is left out of /help and the command menus (an old name that points to the new one) */
+  hidden?: boolean;
   /** Admin commands are for DAP exco and exco admins; member commands for everyone in a connected chat */
   admin: boolean;
   /** Arguments as shown in /help, e.g. "<task#> todo|doing|done" */
@@ -141,25 +151,53 @@ export const COMMANDS: BotCommand[] = [
     },
   },
   {
-    name: "task",
+    name: "addtask",
     admin: false,
-    usage: "<milestone#> title [by 20 Nov]",
+    usage: "[milestone#] title [by 20 Nov]",
     description: "Add a task",
     async run(c, args) {
-      const m = await item(c, args, "milestone", "task");
+      const flow = await begin(c, "at", args);
+      if (flow) return flow;
+      const m = await item(c, args, "milestone", "addtask");
       const p = splitTitleAndDates(m.rest, c.today);
       ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Try 20 Nov or 2026-11-20.`);
-      ensure(p.title, `Usage: ${usageOf("task")}`);
+      ensure(p.title, `Usage: ${usageOf("addtask")}`);
       const s = await tracker.addSubtask(c.scope, { milestoneId: m.id, title: p.title, dueOn: p.dueOn });
       return `Added task <b>${label("task", s.number)}</b> to ${label("milestone", m.number)}: ${esc(s.title)}${s.dueOn ? `, due ${shortDate(s.dueOn, c.today)}` : ""}.`;
     },
   },
   {
+    name: "task",
+    hidden: true,
+    admin: false,
+    usage: "",
+    description: "Renamed",
+    run: async () => "/task is now /addtask (add a task) and /listtask (list tasks).",
+  },
+  {
+    name: "listtask",
+    admin: false,
+    usage: "[g3] [milestone#]",
+    description: "List tasks",
+    async run(c, args) {
+      const [n, rest] = leadingGroup(args, true);
+      const only = rest.match(/^[#m]?(\d+)$/i);
+      ensure(!rest || only, `Usage: ${usageOf("listtask")}`);
+      const group = await groupFor(c, n);
+      const list = await tracker.getTimeline(c.scope, group.id);
+      if (only) await tracker.idByNumber(c.scope, group.id, "milestone", Number(only[1])); // not found → a clear error
+      const members = await tracker.listMembers(c.scope, group.id);
+      return { text: formatTasks(group, list, members, c.today, only ? Number(only[1]) : undefined) + (await cmsLink(c, group)), rich: true };
+    },
+  },
+  {
     name: "edittask",
     admin: false,
-    usage: "<task#> new title [by 20 Nov]",
+    usage: "[task#] new title [by 20 Nov]",
     description: "Rename a task or change its due date",
     async run(c, args) {
+      const flow = await begin(c, "et", args);
+      if (flow) return flow;
       const t = await item(c, args, "task", "edittask");
       const p = splitTitleAndDates(t.rest, c.today);
       ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Try 20 Nov or 2026-11-20.`);
@@ -171,23 +209,25 @@ export const COMMANDS: BotCommand[] = [
   {
     name: "taskstatus",
     admin: false,
-    usage: "<task#> todo|doing|done",
+    usage: "[task#] todo|doing|done",
     description: "Set a task's status",
     run: (c, args) => setTaskStatus(c, args, null),
   },
   {
     name: "taskdone",
     admin: false,
-    usage: "<task#>",
+    usage: "[task#]",
     description: "Mark a task done",
     run: (c, args) => setTaskStatus(c, args, "done"),
   },
   {
     name: "assign",
     admin: false,
-    usage: "<task#> name|me|none",
+    usage: "[task#] name|me|none",
     description: "Assign a task",
     async run(c, args) {
+      const flow = await begin(c, "as", args);
+      if (flow) return flow;
       const t = await item(c, args, "task", "assign");
       ensure(t.rest, `Usage: ${usageOf("assign")}`);
       const a = await tracker.assignSubtask(c.scope, t.id, /^(none|nobody|clear)$/i.test(t.rest) ? null : t.rest);
@@ -199,9 +239,11 @@ export const COMMANDS: BotCommand[] = [
   {
     name: "deltask",
     admin: false,
-    usage: "<task#>",
+    usage: "[task#]",
     description: "Delete a task",
     async run(c, args) {
+      const flow = await begin(c, "dt", args);
+      if (flow) return flow;
       const t = await item(c, args, "task", "deltask");
       return confirm(c, `Delete task ${label("task", t.number)}?`, `t:${t.id}:${t.number}`);
     },
@@ -209,9 +251,11 @@ export const COMMANDS: BotCommand[] = [
   {
     name: "blocker",
     admin: false,
-    usage: "<milestone#> what is blocking you",
+    usage: "[milestone#] what is blocking you",
     description: "Log a blocker",
     async run(c, args) {
+      const flow = await begin(c, "ab", args);
+      if (flow) return flow;
       const m = await item(c, args, "milestone", "blocker");
       ensure(m.rest, `Usage: ${usageOf("blocker")}`);
       const b = await tracker.addBlocker(c.scope, { milestoneId: m.id, description: m.rest });
@@ -221,9 +265,11 @@ export const COMMANDS: BotCommand[] = [
   {
     name: "editblocker",
     admin: false,
-    usage: "<blocker#> text",
+    usage: "[blocker#] text",
     description: "Edit a blocker",
     async run(c, args) {
+      const flow = await begin(c, "eb", args);
+      if (flow) return flow;
       const x = await item(c, args, "blocker", "editblocker");
       ensure(x.rest, `Usage: ${usageOf("editblocker")}`);
       const b = await tracker.updateBlocker(c.scope, x.id, { description: x.rest });
@@ -233,23 +279,25 @@ export const COMMANDS: BotCommand[] = [
   {
     name: "resolve",
     admin: false,
-    usage: "<blocker#>",
+    usage: "[blocker#]",
     description: "Resolve a blocker",
     run: (c, args) => setBlockerStatus(c, args, "resolve"),
   },
   {
     name: "reopenblocker",
     admin: false,
-    usage: "<blocker#>",
+    usage: "[blocker#]",
     description: "Reopen a blocker",
     run: (c, args) => setBlockerStatus(c, args, "reopenblocker"),
   },
   {
     name: "delblocker",
     admin: false,
-    usage: "<blocker#>",
+    usage: "[blocker#]",
     description: "Delete a blocker",
     async run(c, args) {
+      const flow = await begin(c, "db", args);
+      if (flow) return flow;
       const b = await item(c, args, "blocker", "delblocker");
       return confirm(c, `Delete blocker ${label("blocker", b.number)}?`, `b:${b.id}:${b.number}`);
     },
@@ -299,6 +347,8 @@ export const COMMANDS: BotCommand[] = [
     usage: "[g3] title [from 1 Dec] by 15 Dec",
     description: "Add a milestone",
     async run(c, args) {
+      const flow = await begin(c, "ms", args);
+      if (flow) return flow;
       const actor = requireActor(c);
       const [n, rest] = leadingGroup(args, true);
       const group = await groupFor(c, n);
@@ -313,9 +363,11 @@ export const COMMANDS: BotCommand[] = [
   {
     name: "editmilestone",
     admin: true,
-    usage: "<milestone#> title [from …] [by …]",
+    usage: "[milestone#] title [from …] [by …]",
     description: "Edit a milestone",
     async run(c, args) {
+      const flow = await begin(c, "em", args);
+      if (flow) return flow;
       const actor = requireActor(c);
       const x = await item(c, args, "milestone", "editmilestone");
       const cur = await tracker.getMilestone(c.scope, x.id);
@@ -335,23 +387,25 @@ export const COMMANDS: BotCommand[] = [
   {
     name: "done",
     admin: true,
-    usage: "<milestone#>",
+    usage: "[milestone#]",
     description: "Mark a milestone done",
     run: (c, args) => setMilestoneStatus(c, args, "done"),
   },
   {
     name: "status",
     admin: true,
-    usage: "<milestone#> todo|doing|done",
+    usage: "[milestone#] todo|doing|done",
     description: "Set a milestone's status",
     run: (c, args) => setMilestoneStatus(c, args, null),
   },
   {
     name: "delmilestone",
     admin: true,
-    usage: "<milestone#>",
+    usage: "[milestone#]",
     description: "Delete a milestone",
     async run(c, args) {
+      const flow = await begin(c, "dm", args);
+      if (flow) return flow;
       requireActor(c);
       const m = await item(c, args, "milestone", "delmilestone");
       return confirm(c, `Delete milestone ${label("milestone", m.number)} with all its tasks and blockers?`, `m:${m.id}:${m.number}`);
@@ -363,6 +417,8 @@ export const COMMANDS: BotCommand[] = [
     usage: "[g3] on|off",
     description: "Turn meeting reminders on or off",
     async run(c, args) {
+      const flow = await begin(c, "rm", args);
+      if (flow) return flow;
       const actor = requireActor(c);
       const m = args.match(/^(?:g?(\d+)\s+)?(on|off)$/i);
       ensure(m, `Usage: ${usageOf("reminders")}`);
@@ -374,6 +430,8 @@ export const COMMANDS: BotCommand[] = [
 ];
 
 async function setTaskStatus(c: Ctx, args: string, fixed: "done" | null) {
+  const flow = await begin(c, fixed ? "td" : "ts", args);
+  if (flow) return flow;
   const t = await item(c, args, "task", fixed ? "taskdone" : "taskstatus");
   const status = fixed ?? parseStatus(t.rest);
   ensure(status, "Status must be todo, doing or done.");
@@ -382,6 +440,8 @@ async function setTaskStatus(c: Ctx, args: string, fixed: "done" | null) {
 }
 
 async function setMilestoneStatus(c: Ctx, args: string, fixed: "done" | null) {
+  const flow = await begin(c, fixed ? "dn" : "sm", args);
+  if (flow) return flow;
   const actor = requireActor(c);
   const x = await item(c, args, "milestone", fixed ? "done" : "status");
   const status = fixed ?? parseStatus(x.rest);
@@ -391,6 +451,8 @@ async function setMilestoneStatus(c: Ctx, args: string, fixed: "done" | null) {
 }
 
 async function setBlockerStatus(c: Ctx, args: string, cmd: "resolve" | "reopenblocker") {
+  const flow = await begin(c, cmd === "resolve" ? "rb" : "ub", args);
+  if (flow) return flow;
   const x = await item(c, args, "blocker", cmd);
   const b = await tracker.updateBlocker(c.scope, x.id, { status: cmd === "resolve" ? "resolved" : "open" });
   const name = label("blocker", b.number);
@@ -399,8 +461,8 @@ async function setBlockerStatus(c: Ctx, args: string, cmd: "resolve" | "reopenbl
 
 /** /help: a table of commands (tap one to send it). Admin commands and the g3 tip only in a private chat. */
 function helpText(c: Ctx): Reply {
-  const rows = (admin: boolean) => COMMANDS.filter((x) => x.admin === admin).map((x) => [esc(usageOf(x.name)), esc(x.description)]);
-  const parts = ["<h3>Tracker Commands</h3>", table(["Command", "Description"], rows(false))];
+  const rows = (admin: boolean) => COMMANDS.filter((x) => x.admin === admin && !x.hidden).map((x) => [esc(usageOf(x.name)), esc(x.description)]);
+  const parts = ["<h3>Tracker Commands</h3>", table(["Command", "Description"], rows(false)), "<p>Send a command on its own, such as /addtask, and I'll list the options to choose from, then ask you to confirm.</p>"];
   if (c.actor && c.isPrivate) {
     parts.push("<h3>DAP Exco Commands</h3>", table(["Command", "Description"], rows(true)));
     parts.push("<p>Add g3 to a command to reach Group 3 of the current cohort (the live one, else the newest).</p>");
@@ -418,6 +480,15 @@ const confirm = (c: Ctx, text: string, target: string): Reply => ({
 
 export const trackerBot = new Composer<Context>();
 
+// Commands are matched in lower case (the menu needs it), so /addTask and /ADDTASK work like /addtask.
+trackerBot.use((ctx, next) => {
+  const m = ctx.message;
+  const e = m?.entities?.[0];
+  if (m?.text && e?.type === "bot_command" && e.offset === 0) {
+    m.text = m.text.slice(0, e.length).replace(/^\/[^@\s]*/, (name) => name.toLowerCase()) + m.text.slice(e.length);
+  }
+  return next();
+});
 trackerBot.on("message:migrate_to_chat_id", (ctx) => tracker.migrateChat(ctx.chat.id, ctx.msg.migrate_to_chat_id));
 trackerBot.on("message:migrate_from_chat_id", (ctx) => tracker.migrateChat(ctx.msg.migrate_from_chat_id, ctx.chat.id));
 trackerBot.command("start", (ctx) => runCommand(ctx, "start", ctx.match.trim()));
@@ -427,6 +498,8 @@ trackerBot.hears(/^\/\w+(?:@(\w+))?/, (ctx) => {
   const to = ctx.match[1];
   if (!to || to.toLowerCase() === ctx.me.username.toLowerCase()) return runCommand(ctx, "", "");
 });
+// A typed answer to one of the button flows' prompts (a reply to the bot's message).
+trackerBot.on("message:text", onReply);
 trackerBot.on("callback_query:data", onCallback);
 trackerBot.on("callback_query", (ctx) => ctx.answerCallbackQuery());
 
@@ -458,6 +531,14 @@ async function runCommand(ctx: Context, name: string, args: string) {
   const say = async (r: Reply | string) => {
     const reply: Reply = typeof r === "string" ? { text: r } : r;
     const replyTo = { message_id: m.message_id, allow_sending_without_reply: true };
+    if (reply.forceReply) {
+      await ctx.reply(reply.text, {
+        parse_mode: "HTML",
+        reply_parameters: replyTo,
+        reply_markup: { force_reply: true, selective: true, input_field_placeholder: reply.forceReply },
+      });
+      return;
+    }
     if (reply.rich) {
       await ctx.replyWithRichMessage({ html: reply.text }, { reply_parameters: replyTo, ...(reply.markup ? { reply_markup: reply.markup } : {}) });
       return;
@@ -513,6 +594,8 @@ async function onCallback(ctx: Context & { callbackQuery: { data: string } }) {
 
   const edit = (text: string) => ctx.editMessageText(text, { parse_mode: "HTML" });
   try {
+    const flow = parseFlowData(q.data);
+    if (flow) return await onFlowCallback(ctx, c, flow, msg, answer);
     // Delete and Cancel end with the Telegram ID of the person who asked; nobody else can press them.
     if (/^[yn]:/.test(q.data) && Number(q.data.split(":").pop()) !== q.from.id) return answer("Only the person who asked can do that.");
     if (q.data.startsWith("n:")) await edit("Cancelled.");
@@ -542,6 +625,71 @@ async function onCallback(ctx: Context & { callbackQuery: { data: string } }) {
   }
 }
 
+/** The text of the message a button's message replies to (the person's command or typed answer). */
+const repliedText = (msg: object) => ("reply_to_message" in msg ? (msg.reply_to_message as { text?: string } | undefined)?.text : undefined);
+
+/** Shows a command's result in place of the buttons. */
+const showResult = (ctx: Context, r: Reply | string) => {
+  const reply = typeof r === "string" ? { text: r } : r;
+  return ctx.editMessageText(reply.text, { parse_mode: "HTML", link_preview_options: { is_disabled: true }, ...(reply.markup ? { reply_markup: reply.markup } : {}) });
+};
+
+/** A step button ("f:…") or Confirm ("ok:…") of a button flow. Only the person who started it can press them. */
+async function onFlowCallback(ctx: Context, c: Ctx, flow: NonNullable<ReturnType<typeof parseFlowData>>, msg: object, answer: (text?: string) => Promise<void>) {
+  if (flow.from !== c.fromId) return answer("Only the person who asked can do that.");
+  const { state } = flow;
+  try {
+    if (flow.prefix === "ok") {
+      const cmd = await flowCommand(c, state, FLOWS[state.flow].ask ? typedText(repliedText(msg)) : undefined);
+      await showResult(ctx, await runNamed(cmd.name, c, cmd.args));
+      return answer();
+    }
+    const step = await flowScreen(c, state, state.typed ? typedText(repliedText(msg)) || undefined : undefined);
+    if ("reply" in step) await showResult(ctx, step.reply);
+    else if ("prompt" in step) {
+      await showResult(ctx, step.prompt.left);
+      await ctx.reply(step.prompt.reply.text, {
+        parse_mode: "HTML",
+        reply_markup: { force_reply: true, selective: true, input_field_placeholder: step.prompt.reply.forceReply },
+      });
+    } else await showResult(ctx, await runNamed(step.run.name, c, step.run.args));
+    return answer();
+  } catch (error) {
+    if (!(error instanceof CmsError)) throw error;
+    // On Confirm the reason replaces the buttons, so it is not lost with the popup; elsewhere it is a notice.
+    if (flow.prefix === "ok") await showResult(ctx, `⚠️ ${esc(error.message)}`);
+    return answer(flow.prefix === "ok" ? undefined : error.message.slice(0, 190));
+  }
+}
+
+/**
+ * The person's typed answer to a prompt: checked, then shown back with a Confirm button. Only a reply
+ * to the bot's own prompt counts, and only from the person it asked; anything else is ignored.
+ */
+async function onReply(ctx: Context) {
+  const m = ctx.message;
+  const prompt = m?.reply_to_message;
+  if (!m?.text || !m.from || m.from.is_bot || !prompt || prompt.from?.id !== ctx.me.id) return;
+  const ref = parseRef(prompt.text);
+  if (!ref || ref.from !== m.from.id) return;
+  const c = await contextFor(m.chat, m.from);
+  if (!c) return;
+  const say = (text: string, markup?: Reply["markup"]) =>
+    ctx.reply(text, {
+      parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
+      reply_parameters: { message_id: m.message_id, allow_sending_without_reply: true },
+      ...(markup ? { reply_markup: markup } : {}),
+    });
+  try {
+    const step = await flowScreen(c, ref.state, m.text.trim());
+    if ("reply" in step) await say(step.reply.text, step.reply.markup);
+  } catch (error) {
+    if (!(error instanceof CmsError)) throw error;
+    await say(`⚠️ ${esc(error.message)}\nReply to my message above to try again.`);
+  }
+}
+
 // ── Meeting reminders (called by the daily cron) ─────────────────────────
 
 /** Sends the 3-week reminder to each due group's chat; a failed send is released so tomorrow's run retries. */
@@ -563,7 +711,7 @@ export async function sendMeetingReminders(api: Api = telegramApi(), now = new D
 
 // ── Command menus ────────────────────────────────────────────────────────
 
-const menu = (list: BotCommand[]): TgBotCommand[] => list.map((c) => ({ command: c.name, description: c.description }));
+const menu = (list: BotCommand[]): TgBotCommand[] => list.filter((c) => !c.hidden).map((c) => ({ command: c.name, description: c.description }));
 
 /**
  * The "/" menus Telegram shows, from COMMANDS: member commands in every group chat, all commands

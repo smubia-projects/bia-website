@@ -161,13 +161,38 @@ export function formatTimeline(group: ProjectGroupRow, milestones: MilestoneDeta
   return parts.join("");
 }
 
+const assigneeOf = (s: MilestoneDetail["subtasks"][number], members: ProjectMemberRow[]) => {
+  const member = members.find((x) => x.id === s.assigneeId)?.name;
+  if (member) return esc(member);
+  return s.assigneeName ? `${esc(s.assigneeName)} <i>(not on the member list)</i>` : "Unassigned";
+};
+
+/** /listtask: every task of the group (or of one milestone), a table per milestone. */
+export function formatTasks(group: ProjectGroupRow, milestones: MilestoneDetail[], members: ProjectMemberRow[], today: string, only?: number) {
+  const parts = [`<h3>Tasks: ${groupTitle(group)}</h3>`];
+  const shown = milestones.filter((m) => m.subtasks.length && (only === undefined || m.number === only));
+  if (!shown.length) {
+    parts.push(`<p>No tasks yet. Add one with /addtask.</p>`);
+    return parts.join("");
+  }
+  let rows = 0;
+  for (const m of shown) {
+    if (rows >= ROWS) break;
+    const list = m.subtasks.slice(0, ROWS - rows);
+    rows += list.length;
+    parts.push(
+      `<h4>${LABEL.milestone}${m.number}: ${esc(m.title)}</h4>`,
+      table(["#", "Task", "Status", "Due", "Assignee"], list.map((s) => [`${LABEL.task}${s.number}`, esc(s.title), STATUS_LABEL[s.status], s.dueOn ? shortDate(s.dueOn, today) : "None", assigneeOf(s, members)]))
+    );
+  }
+  const total = shown.reduce((n, m) => n + m.subtasks.length, 0);
+  parts.push(more(total), "<footer>Change a task with /edittask, /taskstatus or /assign; add one with /addtask.</footer>");
+  return parts.join("");
+}
+
 /** A milestone's tasks and blockers. */
 export function formatMilestone(m: MilestoneDetail, members: ProjectMemberRow[], today: string) {
-  const assignee = (s: MilestoneDetail["subtasks"][number]) => {
-    const member = members.find((x) => x.id === s.assigneeId)?.name;
-    if (member) return esc(member);
-    return s.assigneeName ? `${esc(s.assigneeName)} <i>(not on the member list)</i>` : "Unassigned";
-  };
+  const assignee = (s: MilestoneDetail["subtasks"][number]) => assigneeOf(s, members);
   const overdue = m.status !== "done" && m.dueOn < today;
   const dates = `${m.startsOn ? `From ${shortDate(m.startsOn, today)} to` : "Due"} ${shortDate(m.dueOn, today)}`;
   const parts = [
@@ -177,7 +202,7 @@ export function formatMilestone(m: MilestoneDetail, members: ProjectMemberRow[],
   if (m.notes) parts.push(`<blockquote>${esc(m.notes)}</blockquote>`);
 
   parts.push("<h4>Tasks</h4>");
-  if (!m.subtasks.length) parts.push(`<p>None yet. Add one with /task ${m.number} and a title.</p>`);
+  if (!m.subtasks.length) parts.push(`<p>None yet. Add one with /addtask ${m.number} and a title.</p>`);
   else {
     parts.push(
       table(

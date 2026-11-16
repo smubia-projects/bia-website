@@ -75,11 +75,29 @@ If Telegram upgrades a group to a supergroup its chat ID changes; the bot follow
 `/help` lists them in a table (tap a command to send it); admin commands and the `g3` tip show only in a private
 chat. The "/" menu shows member commands in group chats and all commands in private chats.
 
-- **Everyone in a connected chat:** `/milestones`, `/task <milestone#> title [by 20 Nov]`, `/edittask`,
-  `/taskstatus <task#> todo|doing|done`, `/taskdone`, `/assign <task#> name|me|none`, `/deltask`,
-  `/blocker <milestone#> text`, `/editblocker`, `/resolve`, `/reopenblocker`, `/delblocker`, `/meeting [date]`.
+- **Everyone in a connected chat:** `/milestones`, `/addtask [milestone#] title [by 20 Nov]`, `/listtask [g3] [milestone#]`,
+  `/edittask`, `/taskstatus [task#] todo|doing|done`, `/taskdone`, `/assign [task#] name|me|none`, `/deltask`,
+  `/blocker [milestone#] text`, `/editblocker`, `/resolve`, `/reopenblocker`, `/delblocker`, `/meeting [date]`.
+  (`/task` was renamed: it now replies with a pointer to `/addtask` and `/listtask`.)
 - **DAP exco:** `/milestone [g3] title [from 1 Dec] by 15 Dec`, `/editmilestone`, `/done`, `/status`,
   `/delmilestone`, `/reminders [g3] on|off`, and `/groups` in a private chat.
+
+Command names ignore case (`/addTask` works like `/addtask`); the "/" menu shows them in lower case, which Telegram requires.
+
+### Button flows
+
+A command sent without everything it needs doesn't fail: it lists the options as buttons, asks for any typed answer
+(a title) as a reply, and ends with a **Confirm** button. `/addtask` on its own lists the milestones, then asks for
+the title, then confirms. Whatever is already typed is kept and its step skipped: `/addtask 3` goes straight to the
+title, `/addtask Draft the deck by 20 Nov` only asks for the milestone, `/taskstatus 5` only for the status. A
+command with everything typed in (`/addtask 3 Draft the deck`) still runs at once with no Confirm. Deletes end in
+their usual Delete/Cancel step. Lists show only what applies (`/taskdone` lists tasks that aren't done, `/resolve`
+open blockers), and an admin in a private chat picks the project group first.
+
+Nothing is stored for a flow. The buttons carry the choices (group, item numbers, status) and end with the Telegram
+ID of the person who started, so only they can press them; a typed answer is the person's reply to the bot's prompt
+(`ref …` on its last line says which flow it belongs to), and Confirm reads it back from the message it replies to.
+In a group chat, privacy mode can stay on: replies to the bot's own messages are delivered.
 
 Inside a group chat everything is scoped to that chat's project group, admins included: what the bot posts there,
 the whole group sees. In a private chat an admin reaches any project group of the current cohort (the live one,
