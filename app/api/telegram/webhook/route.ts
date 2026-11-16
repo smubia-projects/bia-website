@@ -1,4 +1,6 @@
 import { webhookCallback } from "grammy";
+import { after } from "next/server";
+import { ensureBotCommands } from "@/app/lib/cms/bot";
 import { getBot } from "@/app/lib/cms/telegram-bot";
 
 /*
@@ -11,10 +13,18 @@ import { getBot } from "@/app/lib/cms/telegram-bot";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
+/** The "/" menus are checked once per server start, after the first update that passes the secret check. */
+let menusChecked = false;
+
 export async function POST(request: Request) {
   const secretToken = process.env.TELEGRAM_WEBHOOK_SECRET || undefined;
   if (!secretToken && process.env.VERCEL) {
     return Response.json({ error: "TELEGRAM_WEBHOOK_SECRET is not set" }, { status: 500 });
   }
-  return webhookCallback(getBot(), "std/http", { secretToken })(request);
+  const response = await webhookCallback(getBot(), "std/http", { secretToken })(request);
+  if (response.ok && !menusChecked) {
+    menusChecked = true;
+    after(() => ensureBotCommands().catch((error) => console.error("[bot] could not check the command menus", error)));
+  }
+  return response;
 }

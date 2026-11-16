@@ -12,7 +12,7 @@ import { getDb } from "@/app/lib/db";
 import { cohorts, people, projectGroups } from "@/app/lib/db/schema";
 import type { Api } from "grammy";
 import type { Update } from "grammy/types";
-import { sendMeetingReminders, syncBotCommands } from "./bot";
+import { botMenus, ensureBotCommands, sendMeetingReminders, syncBotCommands } from "./bot";
 import { telegramApi } from "./telegram";
 import { createBot, offlineBotInfo } from "./telegram-bot";
 import { createAccountLink, createChatLink } from "./telegram-link";
@@ -212,6 +212,28 @@ describe("housekeeping", () => {
     assert.doesNotMatch(await say(CHAT, MINGDA, "/help"), /DAP Exco/);
     assert.match(await say(MINGDA, MINGDA, "/help"), /DAP Exco Commands[\s\S]*\/milestone \[g3\][\s\S]*Add g3/);
     assert.doesNotMatch(await say(CHAT, MINGDA, "/help"), /\/register/);
+  });
+
+  it("fixes the \"/\" menus only when Telegram's differ from the command list", async () => {
+    const menus = botMenus();
+    const stale = [{ command: "task", description: "Add a task" }, { command: "milestones", description: "Timeline and progress" }];
+    const set: string[] = [];
+    const fake = (have: Record<string, unknown>) =>
+      ({
+        getMyCommands: async ({ scope }: { scope: { type: string } }) => have[scope.type],
+        setMyCommands: async (_cmds: unknown, o: { scope: { type: string } }) => void set.push(o.scope.type),
+      }) as unknown as Api;
+    // Up to date: nothing is sent.
+    assert.equal(await ensureBotCommands(fake({ all_group_chats: menus.group, all_private_chats: menus.private })), false);
+    assert.deepEqual(set, []);
+    // The group menu still has /task (nobody pressed Set Webhook after the rename): both menus are sent.
+    assert.equal(await ensureBotCommands(fake({ all_group_chats: stale, all_private_chats: menus.private })), true);
+    assert.deepEqual(set, ["all_group_chats", "all_private_chats"]);
+    // Never set at all: same.
+    set.length = 0;
+    assert.equal(await ensureBotCommands(fake({ all_group_chats: [], all_private_chats: [] })), true);
+    assert.equal(set.length, 2);
+    assert.ok(!menus.group.some((c) => c.command === "task") && menus.group.some((c) => c.command === "addtask"));
   });
 
   it("handles an update Telegram re-sends only once", async () => {

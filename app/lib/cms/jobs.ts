@@ -1,4 +1,4 @@
-import { sendMeetingReminders } from "./bot";
+import { ensureBotCommands, sendMeetingReminders } from "./bot";
 import { publishDueIssues } from "./newsletter";
 import { forgetExpiredCodes } from "./telegram-link";
 import { forgetOldUpdates } from "./telegram-updates";
@@ -12,6 +12,8 @@ export const DAILY_JOBS = {
   publishedIssues: () => publishDueIssues(),
   /** The tracker's 3-week mentor meeting reminders */
   meetingReminders: () => sendMeetingReminders(),
+  /** The bot's "/" menus, if Telegram's differ from the command list */
+  botCommands: () => ensureBotCommands(),
   /** Telegram update IDs older than two days */
   forgottenUpdates: () => forgetOldUpdates(),
   /** One-time Telegram link codes nobody used */

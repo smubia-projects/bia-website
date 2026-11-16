@@ -74,6 +74,9 @@ If Telegram upgrades a group to a supergroup its chat ID changes; the bot follow
 
 `/help` lists them in a table (tap a command to send it); admin commands and the `g3` tip show only in a private
 chat. The "/" menu shows member commands in group chats and all commands in private chats.
+The menus follow the command list on their own: after a deploy, the first update the bot receives (and the daily job as a
+backstop) compares Telegram's menus with it and fixes any difference, so a renamed command shows up without anyone
+pressing Set Webhook (which also syncs them). Telegram apps cache the menu: reopen the chat or restart the app to see it.
 
 - **Everyone in a connected chat:** `/milestones`, `/addtask [milestone#] title [by 20 Nov]`, `/listtask [g3] [milestone#]`,
   `/edittask`, `/taskstatus [task#] todo|doing|done`, `/taskdone`, `/assign [task#] name|me|none`, `/deltask`,

@@ -19,7 +19,7 @@ import {
   table,
 } from "./bot-text";
 import { todaySgt } from "./people";
-import { escapeHtml as esc, SITE_URL, telegramApi } from "./telegram";
+import { escapeHtml as esc, SITE_URL, telegramApi, telegramToken } from "./telegram";
 import { claimAccountLink, claimChatLink } from "./telegram-link";
 import * as tracker from "./tracker";
 
@@ -713,12 +713,33 @@ export async function sendMeetingReminders(api: Api = telegramApi(), now = new D
 
 const menu = (list: BotCommand[]): TgBotCommand[] => list.filter((c) => !c.hidden).map((c) => ({ command: c.name, description: c.description }));
 
+/** The "/" menus Telegram should show, from COMMANDS: member commands in group chats, all commands in private chats. */
+export const botMenus = () => ({
+  group: menu(COMMANDS.filter((c) => !c.admin)),
+  private: menu(COMMANDS),
+});
+
 /**
- * The "/" menus Telegram shows, from COMMANDS: member commands in every group chat, all commands
- * in private chats (where only linked admins get answers). Two calls cover every chat, so nothing
- * needs updating when a chat is connected or disconnected. Run from Set Webhook.
+ * Sends the "/" menus to Telegram. Two calls cover every chat, so nothing needs updating when a chat
+ * is connected or disconnected. Run from Set Webhook, and by ensureBotCommands.
  */
 export async function syncBotCommands(api: Api = telegramApi()) {
-  await api.setMyCommands(menu(COMMANDS.filter((c) => !c.admin)), { scope: { type: "all_group_chats" } });
-  await api.setMyCommands(menu(COMMANDS), { scope: { type: "all_private_chats" } });
+  const menus = botMenus();
+  await api.setMyCommands(menus.group, { scope: { type: "all_group_chats" } });
+  await api.setMyCommands(menus.private, { scope: { type: "all_private_chats" } });
+}
+
+/**
+ * Makes sure Telegram shows the current menus: asks what it has and syncs only when that differs from
+ * COMMANDS, so a renamed command shows up after a deploy without anyone pressing Set Webhook. Returns
+ * whether it had to sync. Without a bot token there is nothing to check.
+ */
+export async function ensureBotCommands(api: Api = telegramApi()) {
+  if (!telegramToken()) return false;
+  const menus = botMenus();
+  const [group, direct] = await Promise.all([api.getMyCommands({ scope: { type: "all_group_chats" } }), api.getMyCommands({ scope: { type: "all_private_chats" } })]);
+  const same = (have: TgBotCommand[], want: TgBotCommand[]) => JSON.stringify(have.map((c) => [c.command, c.description])) === JSON.stringify(want.map((c) => [c.command, c.description]));
+  if (same(group, menus.group) && same(direct, menus.private)) return false;
+  await syncBotCommands(api);
+  return true;
 }
