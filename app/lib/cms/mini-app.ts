@@ -2,9 +2,10 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Api } from "grammy";
 import type { ChatMember } from "grammy/types";
 import { CmsError, ensure, type Actor } from "./actor";
+import { noonSgt, sgtDay } from "./bot-text";
 import { telegramToken } from "./telegram";
 import * as tracker from "./tracker";
-import type { ProjectGroup } from "./tracker";
+import type { ProjectGroup, TrackerWho } from "./tracker";
 
 /*
  * The tracker Mini App's server side. Telegram opens the app with `initData`, a query string it signs
@@ -206,36 +207,168 @@ export async function handleSession(request: Request, api: Api, token = telegram
   }
 }
 
+/** One project group's timeline as the app shows it. `manage` is what only a DAP exco may do (milestones, reminders). */
+async function timelinePayload(who: TrackerWho, group: ProjectGroup, manage: boolean) {
+  const [timeline, members, row] = await Promise.all([tracker.getTimeline(who, group.id), tracker.listMembers(who, group.id), tracker.projectGroup(who, group.id)]);
+  return {
+    group: { number: row.number, name: row.name },
+    can: { manage },
+    meeting: { lastOn: row.lastMeetingAt ? sgtDay(row.lastMeetingAt) : null, dueBy: sgtDay(tracker.meetingDeadline(row)), reminders: row.meetingRemindersOn },
+    members: members.map((m) => ({ id: m.id, name: m.name })),
+    milestones: timeline.map((m) => ({
+      number: m.number,
+      title: m.title,
+      notes: m.notes,
+      status: m.status,
+      startsOn: m.startsOn,
+      dueOn: m.dueOn,
+      blockers: m.blockers.map((b) => ({ number: b.number, description: b.description, status: b.status })),
+      tasks: m.subtasks.map((s) => ({
+        number: s.number,
+        title: s.title,
+        status: s.status,
+        dueOn: s.dueOn,
+        assigneeId: s.assigneeId,
+        assignee: members.find((x) => x.id === s.assigneeId)?.name ?? s.assigneeName,
+      })),
+    })),
+  };
+}
+
+/** The project group a request is about, if this person may open it. */
+async function opened(request: Request, api: Api, token: string, now: number, raw: unknown) {
+  const launch = validateInitData(initDataOf(request), token, now);
+  ensure(/^\d+$/.test(String(raw ?? "")), "Choose a project group.");
+  const number = Number(raw);
+  const access = await resolveAccess(launch, api, { only: number, now });
+  const entry = access.groups.find((g) => g.group.number === number);
+  if (!entry) return null;
+  const who = access.admin ? tracker.adminWho(access.admin) : tracker.memberWho(entry.group.id, launch.user.name);
+  return { who, actor: access.admin, group: entry.group };
+}
+
+const NOT_IN_CHAT = "You are not in that project group's chat.";
+
 /** GET /api/mini-app/timeline?group=3: one project group's milestones and tasks, if this person may open it. */
 export async function handleTimeline(request: Request, api: Api, token = telegramToken(), now = Date.now()) {
   try {
-    const launch = validateInitData(initDataOf(request), token, now);
-    const raw = new URL(request.url).searchParams.get("group") ?? "";
-    ensure(/^\d+$/.test(raw), "Choose a project group.");
-    const number = Number(raw);
-    const access = await resolveAccess(launch, api, { only: number, now });
-    const entry = access.groups.find((g) => g.group.number === number);
-    if (!entry) return json({ error: "You are not in that project group's chat." }, 403);
-    const who = access.admin ? tracker.adminWho(access.admin) : tracker.memberWho(entry.group.id, launch.user.name);
-    const [timeline, members] = await Promise.all([tracker.getTimeline(who, entry.group.id), tracker.listMembers(who, entry.group.id)]);
-    return json({
-      group: { number: entry.group.number, name: entry.group.name },
-      milestones: timeline.map((m) => ({
-        number: m.number,
-        title: m.title,
-        status: m.status,
-        startsOn: m.startsOn,
-        dueOn: m.dueOn,
-        openBlockers: m.blockers.filter((b) => b.status === "open").length,
-        tasks: m.subtasks.map((s) => ({
-          number: s.number,
-          title: s.title,
-          status: s.status,
-          dueOn: s.dueOn,
-          assignee: members.find((x) => x.id === s.assigneeId)?.name ?? s.assigneeName,
-        })),
-      })),
+    const open = await opened(request, api, token, now, new URL(request.url).searchParams.get("group"));
+    if (!open) return json({ error: NOT_IN_CHAT }, 403);
+    return json(await timelinePayload(open.who, open.group, Boolean(open.actor)));
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+// ── Changes ──────────────────────────────────────────────────────────────
+
+type Body = Record<string, unknown>;
+interface Step {
+  who: TrackerWho;
+  actor: Actor | null;
+  group: ProjectGroup;
+}
+
+const text = (b: Body, key: string) => (typeof b[key] === "string" ? (b[key] as string) : undefined);
+/** A field the caller may leave out (undefined), clear ("" or null → null) or set. */
+function maybe(b: Body, key: string): string | null | undefined {
+  if (!(key in b)) return undefined;
+  const v = b[key];
+  ensure(v === null || typeof v === "string", `${key} must be text`);
+  return v === "" ? null : (v as string | null);
+}
+const number = (b: Body, key: string, label: string) => {
+  ensure(typeof b[key] === "number" && Number.isSafeInteger(b[key]), `${label} is required`);
+  return b[key] as number;
+};
+const admin = (s: Step) => {
+  ensure(s.actor, "Only DAP exco can do that.");
+  return s.actor;
+};
+const tag = (kind: tracker.ItemKind, n: number) => `${tracker.LABEL[kind]}${n}`;
+
+/** What the app may change: the same service calls the bot makes, so the same rules (scope, due dates, numbering) apply. */
+const ACTIONS: Record<string, (s: Step, b: Body) => Promise<string>> = {
+  "milestone.save": async (s, b) => {
+    const actor = admin(s);
+    const n = typeof b.number === "number" ? b.number : undefined;
+    const id = n === undefined ? undefined : await tracker.idByNumber(s.who, s.group.id, "milestone", n);
+    const row = await tracker.saveMilestone(actor, {
+      id,
+      groupId: s.group.id,
+      title: text(b, "title") ?? "",
+      notes: text(b, "notes"),
+      startsOn: maybe(b, "startsOn"),
+      dueOn: text(b, "dueOn") ?? "",
+      status: text(b, "status") as never,
     });
+    return `Milestone ${tag("milestone", row.number)} ${id ? "saved" : "added"}`;
+  },
+  "milestone.delete": async (s, b) => {
+    const actor = admin(s);
+    const n = number(b, "number", "Milestone");
+    await tracker.deleteMilestone(actor, await tracker.idByNumber(s.who, s.group.id, "milestone", n));
+    return `Milestone ${tag("milestone", n)} deleted`;
+  },
+  "task.save": async (s, b) => {
+    const patch = {
+      ...(text(b, "title") !== undefined ? { title: text(b, "title") } : {}),
+      ...(text(b, "status") !== undefined ? { status: text(b, "status") as never } : {}),
+      ...("dueOn" in b ? { dueOn: maybe(b, "dueOn") } : {}),
+      ...("assigneeId" in b ? { assigneeId: b.assigneeId === null ? null : number(b, "assigneeId", "Assignee") } : {}),
+      ...(text(b, "assigneeName") !== undefined ? { assigneeName: text(b, "assigneeName") } : {}),
+    };
+    if (typeof b.number === "number") {
+      const row = await tracker.updateSubtask(s.who, await tracker.idByNumber(s.who, s.group.id, "task", b.number), patch);
+      return `Task ${tag("task", row.number)} saved`;
+    }
+    const milestoneId = await tracker.idByNumber(s.who, s.group.id, "milestone", number(b, "milestone", "Milestone"));
+    const row = await tracker.addSubtask(s.who, { milestoneId, title: patch.title ?? "", ...patch });
+    return `Task ${tag("task", row.number)} added`;
+  },
+  "task.delete": async (s, b) => {
+    const n = number(b, "number", "Task");
+    await tracker.deleteSubtask(s.who, await tracker.idByNumber(s.who, s.group.id, "task", n));
+    return `Task ${tag("task", n)} deleted`;
+  },
+  "blocker.save": async (s, b) => {
+    if (typeof b.number === "number") {
+      const row = await tracker.updateBlocker(s.who, await tracker.idByNumber(s.who, s.group.id, "blocker", b.number), { description: text(b, "description"), status: text(b, "status") as never });
+      return `Blocker ${tag("blocker", row.number)} saved`;
+    }
+    const milestoneId = await tracker.idByNumber(s.who, s.group.id, "milestone", number(b, "milestone", "Milestone"));
+    const row = await tracker.addBlocker(s.who, { milestoneId, description: text(b, "description") ?? "" });
+    return `Blocker ${tag("blocker", row.number)} added`;
+  },
+  "blocker.delete": async (s, b) => {
+    const n = number(b, "number", "Blocker");
+    await tracker.deleteBlocker(s.who, await tracker.idByNumber(s.who, s.group.id, "blocker", n));
+    return `Blocker ${tag("blocker", n)} deleted`;
+  },
+  "meeting.log": async (s, b) => {
+    const day = maybe(b, "date");
+    ensure(!day || tracker.isIsoDate(day), "Meeting date must be a real date");
+    await tracker.logMeeting(s.who, s.group.id, day && day !== sgtDay(new Date()) ? noonSgt(day) : new Date());
+    return "Meeting logged";
+  },
+  "reminders.set": async (s, b) => {
+    ensure(typeof b.on === "boolean", "Choose on or off");
+    await tracker.setMeetingReminders(admin(s), s.group.id, b.on);
+    return `Reminders ${b.on ? "on" : "off"}`;
+  },
+};
+
+/** POST /api/mini-app/action: { group, action, …fields }. Returns what happened and the project group's fresh timeline. */
+export async function handleAction(request: Request, api: Api, token = telegramToken(), now = Date.now()) {
+  try {
+    const body: Body = await request.json().catch(() => ({}));
+    ensure(body && typeof body === "object" && !Array.isArray(body), "The request was not understood.");
+    const open = await opened(request, api, token, now, body.group);
+    if (!open) return json({ error: NOT_IN_CHAT }, 403);
+    const run = typeof body.action === "string" && Object.hasOwn(ACTIONS, body.action) ? ACTIONS[body.action] : undefined;
+    ensure(run, "That change is not available.");
+    const message = await run(open, body);
+    return json({ message, timeline: await timelinePayload(open.who, open.group, Boolean(open.actor)) });
   } catch (error) {
     return failure(error);
   }

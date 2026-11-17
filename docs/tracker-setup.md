@@ -128,8 +128,18 @@ localhost, which Telegram refuses). Delete and Cancel only work for the person w
 
 ## Mini App (spike)
 
-`/start` opens the tracker as a Telegram Mini App (`/mini-app`), alongside the commands, which stay. Today it is read-only:
-who you are, the project groups you may open, their milestones and tasks, and (for DAP exco) what Telegram says about
+`/start` opens the tracker as a Telegram Mini App (`/mini-app`), alongside the commands, which stay. It shows a project group's summary (milestones, tasks, open blockers, last mentor
+meeting) and its milestones with their tasks and blockers, and does what the bot does with buttons and forms:
+
+| Who | Can do |
+|---|---|
+| Members (in the project group's chat) | Add, edit, complete and delete tasks and blockers; assign tasks; log a mentor meeting |
+| DAP exco | The same in every project group, plus add, edit and delete milestones (with status) and switch Reminders |
+
+Every change goes through `POST /api/mini-app/action` (`{ group, action, … }`), which checks the launch and chat membership like
+every other request, then calls the same `tracker.ts` functions as the bot, so the rules are the same: the task due date can't
+pass its milestone's, numbers (M2, T5, B1) are per project group and never reused, and a member can't change milestones.
+Deleting asks for confirmation inside the form. DAP exco also see **Membership Check**: what Telegram says about their
 membership in each connected chat.
 
 **Set it up**

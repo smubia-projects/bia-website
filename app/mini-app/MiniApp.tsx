@@ -1,13 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Script from "next/script";
+import { CircleAlert, CircleCheck, RefreshCw, ShieldCheck } from "lucide-react";
+import { call, failed, type Loaded, type Session, type Timeline } from "./api";
+import type { Act } from "./forms";
+import GroupView from "./GroupView";
 import styles from "./mini-app.module.css";
 
 interface TelegramWebApp {
   initData: string;
+  colorScheme: "light" | "dark";
   ready(): void;
   expand(): void;
+  setHeaderColor?(color: string): void;
+  setBackgroundColor?(color: string): void;
+  onEvent?(event: "themeChanged", handler: () => void): void;
+  offEvent?(event: "themeChanged", handler: () => void): void;
+  HapticFeedback?: { notificationOccurred(kind: "success" | "error"): void };
 }
 declare global {
   interface Window {
@@ -15,49 +25,57 @@ declare global {
   }
 }
 
-interface Session {
-  user: { id: number; name: string };
-  admin: boolean;
-  chatType: string;
-  startParam: string;
-  groups: { number: number; name: string; how: "admin" | "member" }[];
-  checks?: { group: number; chatId: number; status?: string; error?: string }[];
-}
-interface Timeline {
-  group: { number: number; name: string };
-  milestones: {
-    number: number;
-    title: string;
-    status: "todo" | "in_progress" | "done";
-    startsOn: string | null;
-    dueOn: string;
-    openBlockers: number;
-    tasks: { number: number; title: string; status: "todo" | "in_progress" | "done"; dueOn: string | null; assignee: string }[];
-  }[];
-}
-type Loaded<T extends object> = T | { error: string };
+/** The page colour of each scheme, so Telegram's own header and overscroll match. */
+const PAGE = { light: "#f6faf8", dark: "#0c211c" } as const;
 
-const STATUS = { todo: "To do", in_progress: "In progress", done: "Done" } as const;
-/** DD/MM/YYYY, the format the bot asks for. */
-const day = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-SG", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" });
-const failed = <T extends object>(x: Loaded<T> | null | undefined): x is { error: string } => Boolean(x && "error" in x);
+function Skeleton() {
+  return (
+    <div className={styles.skeleton} role="status" aria-label="Loading project group">
+      <div className={styles.tiles}>
+        {[0, 1, 2, 3].map((i) => (
+          <span key={i} className={styles.skeletonBlock} />
+        ))}
+      </div>
+      <span className={`${styles.skeletonBlock} ${styles.skeletonCard}`} />
+      <span className={`${styles.skeletonBlock} ${styles.skeletonCard}`} />
+    </div>
+  );
+}
 
-async function call<T extends object>(path: string, initData: string): Promise<Loaded<T>> {
-  try {
-    const res = await fetch(path, { headers: { authorization: `tma ${initData}` }, cache: "no-store" });
-    const body = await res.json();
-    return res.ok ? (body as T) : { error: String(body.error ?? "The request failed.") };
-  } catch {
-    return { error: "The server could not be reached." };
-  }
+function Notice({ title, children, retry }: { title: string; children: React.ReactNode; retry?: () => void }) {
+  return (
+    <section className={styles.notice} role="alert">
+      <CircleAlert size={22} strokeWidth={1.75} aria-hidden />
+      <div>
+        <h2 className={styles.rowTitle}>{title}</h2>
+        <p className={styles.caption}>{children}</p>
+        {retry && (
+          <button type="button" className={styles.buttonSmall} onClick={retry}>
+            <RefreshCw size={16} strokeWidth={1.75} aria-hidden />
+            Retry
+          </button>
+        )}
+      </div>
+    </section>
+  );
 }
 
 export default function MiniApp() {
   // null until Telegram's script has loaded; "" when the page is open outside Telegram.
   const [initData, setInitData] = useState<string | null>(null);
+  const [scheme, setScheme] = useState<"light" | "dark">("light");
+  const [attempt, setAttempt] = useState(0);
   const [session, setSession] = useState<Loaded<Session> | null>(null);
   const [picked, setPicked] = useState<number | null>(null);
   const [timelines, setTimelines] = useState<Record<number, Loaded<Timeline>>>({});
+  const [toast, setToast] = useState<{ text: string; id: number; error: boolean } | null>(null);
+
+  const notify = useCallback((text: string, error = false) => setToast({ text, id: Date.now(), error }), []);
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   useEffect(() => {
     if (!initData) return;
@@ -66,7 +84,7 @@ export default function MiniApp() {
     return () => {
       live = false;
     };
-  }, [initData]);
+  }, [initData, attempt]);
 
   const ok = session && !failed(session) ? session : null;
   // The project group the launch link named, else the first this person may open.
@@ -84,8 +102,26 @@ export default function MiniApp() {
 
   const timeline = current === undefined ? undefined : timelines[current];
 
+  const act: Act = async (action, fields) => {
+    const result = await call<{ message: string; timeline: Timeline }>("/api/mini-app/action", initData ?? "", { group: current, action, ...fields });
+    if (failed(result)) {
+      window.Telegram?.WebApp.HapticFeedback?.notificationOccurred("error");
+      return result.error;
+    }
+    setTimelines((all) => ({ ...all, [current as number]: result.timeline }));
+    notify(result.message);
+    window.Telegram?.WebApp.HapticFeedback?.notificationOccurred("success");
+    return null;
+  };
+
+  const retry = () => {
+    setSession(null);
+    setTimelines({});
+    setAttempt((n) => n + 1);
+  };
+
   return (
-    <main className={styles.app}>
+    <main className={styles.app} data-scheme={scheme}>
       <Script
         src="https://telegram.org/js/telegram-web-app.js"
         strategy="afterInteractive"
@@ -93,91 +129,106 @@ export default function MiniApp() {
           const app = window.Telegram?.WebApp;
           app?.ready();
           app?.expand();
+          const apply = () => {
+            if (!app) return;
+            setScheme(app.colorScheme === "dark" ? "dark" : "light");
+            app.setHeaderColor?.(PAGE[app.colorScheme === "dark" ? "dark" : "light"]);
+            app.setBackgroundColor?.(PAGE[app.colorScheme === "dark" ? "dark" : "light"]);
+          };
+          apply();
+          app?.onEvent?.("themeChanged", apply);
           setInitData(app?.initData ?? "");
         }}
       />
+
       <header className={styles.head}>
-        <h1 className={styles.h1}>Project Tracker</h1>
+        <p className={styles.eyebrow}>DAP Project Tracker</p>
+        <h1 className={styles.h1}>
+          {timeline && !failed(timeline) ? `Group ${timeline.group.number}` : "Project Group"}
+          {timeline && !failed(timeline) && timeline.group.name && <span className={styles.groupName}>{timeline.group.name}</span>}
+        </h1>
         {ok && (
-          <p className={styles.hint}>
-            {ok.user.name} <span className={styles.chip}>{ok.admin ? "DAP exco" : "Member"}</span>
+          <p className={styles.identity}>
+            <span>{ok.user.name}</span>
+            <span className={styles.badge}>{ok.admin ? "DAP Exco" : "Member"}</span>
           </p>
         )}
       </header>
 
-      {initData === null && <p className={styles.hint}>Loading…</p>}
-      {initData === "" && <p className={styles.note}>Telegram session not found. Open this page from the bot&apos;s /start button.</p>}
-      {initData && session === null && <p className={styles.hint}>Verifying Telegram sign-in…</p>}
-      {failed(session) && <p className={styles.note}>{session.error}</p>}
+      {initData === "" && <Notice title="Telegram session not found">Open this page from the Tracker button the bot sends with /start.</Notice>}
+      {failed(session) && (
+        <Notice title="Sign-in could not be completed" retry={retry}>
+          {session.error}
+        </Notice>
+      )}
+
+      {initData && session === null && <Skeleton />}
 
       {ok && ok.groups.length === 0 && (
-        <p className={styles.note}>No project group found for this account. Open the app from your project group&apos;s chat, and ask a DAP exco to connect the chat if the bot does not answer there.</p>
+        <Notice title="No project group found">This account is not in a connected project group chat. Open the app from the group chat, or ask a DAP exco to connect the chat.</Notice>
       )}
 
       {ok && ok.groups.length > 1 && (
         <nav className={styles.tabs} aria-label="Project groups">
           {ok.groups.map((g) => (
-            <button key={g.number} type="button" className={styles.tab} aria-pressed={g.number === current} onClick={() => setPicked(g.number)}>
+            <button key={g.number} type="button" className={styles.tab} aria-current={g.number === current ? "true" : undefined} onClick={() => setPicked(g.number)}>
               Group {g.number}
             </button>
           ))}
         </nav>
       )}
 
-      {failed(timeline) && <p className={styles.note}>{timeline.error}</p>}
-      {timeline && !failed(timeline) && (
-        <section aria-label={`Group ${timeline.group.number}`}>
-          <h2 className={styles.h2}>
-            Group {timeline.group.number}
-            {timeline.group.name ? ` · ${timeline.group.name}` : ""}
-          </h2>
-          {timeline.milestones.length === 0 && <p className={styles.hint}>No milestones.</p>}
-          {timeline.milestones.map((m) => (
-            <article key={m.number} className={styles.card}>
-              <div className={styles.row}>
-                <h3 className={styles.h3}>
-                  M{m.number} {m.title}
-                </h3>
-                <span className={`${styles.chip} ${m.status === "done" ? styles.done : ""}`}>{STATUS[m.status]}</span>
-              </div>
-              <p className={styles.hint}>
-                {m.startsOn ? `${day(m.startsOn)} to ` : "Due "}
-                {day(m.dueOn)}
-                {m.openBlockers > 0 ? ` · ${m.openBlockers} open blocker${m.openBlockers > 1 ? "s" : ""}` : ""}
-              </p>
-              <ul className={styles.tasks}>
-                {m.tasks.map((t) => (
-                  <li key={t.number}>
-                    <span className={styles.hint}>T{t.number}</span> {t.title}
-                    <span className={styles.hint}>
-                      {" "}
-                      · {STATUS[t.status]}
-                      {t.dueOn ? ` · ${day(t.dueOn)}` : ""}
-                      {t.assignee ? ` · ${t.assignee}` : ""}
-                    </span>
-                  </li>
-                ))}
-                {m.tasks.length === 0 && <li className={styles.hint}>No tasks.</li>}
-              </ul>
-            </article>
-          ))}
-        </section>
+      {ok && ok.groups.length > 0 && !timeline && <Skeleton />}
+      {failed(timeline) && (
+        <Notice
+          title="Project group unavailable"
+          retry={() => setTimelines((all) => Object.fromEntries(Object.entries(all).filter(([n]) => Number(n) !== current)))}
+        >
+          {timeline.error}
+        </Notice>
       )}
+      {timeline && !failed(timeline) && <GroupView key={current} timeline={timeline} act={act} notify={notify} />}
 
       {ok?.checks && (
-        <section className={styles.card} aria-label="Membership check">
-          <h2 className={styles.h2}>Membership Check</h2>
-          <p className={styles.hint}>What Telegram answers when the bot asks whether you are in each connected chat (getChatMember). Shown to DAP exco only.</p>
-          {ok.checks.length === 0 && <p className={styles.hint}>No connected chats.</p>}
-          <ul className={styles.tasks}>
-            {ok.checks.map((c) => (
-              <li key={c.group}>
-                Group {c.group} <span className={styles.hint}>(chat {c.chatId})</span>: {c.status ? <strong>{c.status}</strong> : <span className={styles.bad}>{c.error ?? "no answer"}</span>}
-              </li>
-            ))}
-          </ul>
-          <p className={styles.hint}>Opened from: {ok.chatType || "not a link launch"}{ok.startParam ? ` · link names ${ok.startParam}` : ""}</p>
-        </section>
+        <details className={styles.diagnostics}>
+          <summary>
+            <ShieldCheck size={18} strokeWidth={1.75} aria-hidden />
+            Membership Check
+          </summary>
+          <p className={styles.caption}>Telegram&apos;s answer (getChatMember) for each connected chat. Shown to DAP exco only.</p>
+          {ok.checks.length === 0 ? (
+            <p className={styles.none}>No connected chats</p>
+          ) : (
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th scope="col">Group</th>
+                  <th scope="col">Chat ID</th>
+                  <th scope="col">Answer</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ok.checks.map((c) => (
+                  <tr key={c.group}>
+                    <td>{c.group}</td>
+                    <td className={styles.mono}>{c.chatId}</td>
+                    <td className={c.status ? undefined : styles.metaAlert}>{c.status ?? c.error ?? "No answer"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <p className={styles.caption}>
+            Opened from: {ok.chatType || "direct launch"}. Link names: {ok.startParam || "none"}.
+          </p>
+        </details>
+      )}
+
+      {toast && (
+        <div className={`${styles.toast} ${toast.error ? styles.toastError : ""}`} role={toast.error ? "alert" : "status"} key={toast.id}>
+          {toast.error ? <CircleAlert size={18} strokeWidth={1.75} aria-hidden /> : <CircleCheck size={18} strokeWidth={1.75} aria-hidden />}
+          {toast.text}
+        </div>
       )}
     </main>
   );

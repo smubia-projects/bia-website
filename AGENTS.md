@@ -243,12 +243,13 @@ DAP run (a `cohorts` row); AI Lodge's equivalent is a **semester**.
   (`t.me/<bot>?startgroup=<code>`). The bot listens only in connected chats, and everyone in one has member
   rights for that project group; inside it even admins reach only that group (what the bot posts there, the
   whole group sees). Admins reach every group from a private chat (`/groups`, `g3`, current cohort).
-- Mini App (`/mini-app`, `app/lib/cms/mini-app.ts`, `/api/mini-app/{session,timeline}`): opened by `/start` (a `web_app`
+- Mini App (`/mini-app`, `app/lib/cms/mini-app.ts`, `/api/mini-app/{session,timeline,action}`): opened by `/start` (a `web_app`
   button for linked admins in a private chat; a `t.me/<bot>/<name>?startapp=g3` link in a connected group chat). Every
   request carries Telegram's signed `initData` (`Authorization: tma …`), verified with the bot token. Access is never taken
   from the link: a linked DAP exco opens every project group; anyone else only a project group whose connected chat Telegram
-  confirms they are in (`getChatMember`, so the bot must be an admin there). It reads through the same `tracker.ts` rules as
-  the bot, and complements the commands.
+  confirms they are in (`getChatMember`, so the bot must be an admin there). It shows the timeline and makes the bot's changes
+  (tasks, blockers, meetings for members; milestones and reminders for DAP exco) through `POST /api/mini-app/action`, an
+  allowlist of `ACTIONS` in `mini-app.ts` that calls the same `tracker.ts` rules as the bot. UI copy follows `SKILL.md`.
 - Local development: `instrumentation.ts` long-polls Telegram from the dev server (never when the bot has a
   webhook), so the bot works on localhost.
 - Daily cron `/api/cron/daily` runs the jobs in `app/lib/cms/jobs.ts`, each on its own: publish due issues,

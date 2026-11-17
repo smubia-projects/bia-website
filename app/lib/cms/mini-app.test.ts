@@ -10,7 +10,7 @@ process.env.PGLITE_DIR = path.join(mkdtempSync(path.join(tmpdir(), "miniapp-")),
 import type { Api } from "grammy";
 import { getDb } from "@/app/lib/db";
 import { cohorts, people } from "@/app/lib/db/schema";
-import { clearMembershipCache, handleSession, handleTimeline, MAX_AGE_SECONDS, resolveAccess, validateInitData, type Launch } from "./mini-app";
+import { clearMembershipCache, handleAction, handleSession, handleTimeline, MAX_AGE_SECONDS, resolveAccess, validateInitData, type Launch } from "./mini-app";
 import * as t from "./tracker";
 
 const TOKEN = "123456:TEST-TOKEN";
@@ -236,8 +236,15 @@ describe("the Mini App endpoints", () => {
     const r = await body(await handleTimeline(request("/api/mini-app/timeline?group=1", FRESH(MIA)), api, TOKEN, NOW));
     assert.equal(r.status, 200);
     assert.deepEqual(r.json.group, { number: 1, name: "Alpha" });
+    assert.deepEqual(r.json.can, { manage: false });
+    assert.deepEqual(r.json.members, [{ id: r.json.members[0].id, name: "Mia Lim" }]);
+    assert.deepEqual(r.json.meeting.lastOn, null);
     assert.deepEqual(r.json.milestones, [
-      { number: 1, title: "Proposal", status: "todo", startsOn: null, dueOn: "2030-01-15", openBlockers: 1, tasks: [{ number: 1, title: "Draft deck", status: "todo", dueOn: "2030-01-10", assignee: "Visiting mentor" }] },
+      {
+        number: 1, title: "Proposal", notes: "", status: "todo", startsOn: null, dueOn: "2030-01-15",
+        blockers: [{ number: 1, description: "Waiting on data", status: "open" }],
+        tasks: [{ number: 1, title: "Draft deck", status: "todo", dueOn: "2030-01-10", assigneeId: null, assignee: "Visiting mentor" }],
+      },
     ]);
     // Another project group's data never comes back, however the request is phrased.
     for (const group of ["2", "02", "3"]) {
@@ -255,5 +262,110 @@ describe("the Mini App endpoints", () => {
     assert.equal(r.status, 200);
     assert.equal(r.json.milestones[0].title, "Secret plan");
     assert.deepEqual(asked, []); // an admin's request doesn't ask Telegram anything
+  });
+});
+
+describe("changes from the Mini App", () => {
+  let g1: t.ProjectGroup;
+  const post = (init: string | undefined, body: object) =>
+    new Request("https://x.test/api/mini-app/action", { method: "POST", headers: { "content-type": "application/json", ...(init ? { authorization: `tma ${init}` } : {}) }, body: JSON.stringify(body) });
+  const send = async (user: object | null, body: object, chats: Record<string, string> = { "-1001:2001": "member" }) => {
+    const r = await handleAction(post(user ? launchData(user) : undefined, body), telegram(chats).api, TOKEN, NOW);
+    return { status: r.status, json: await r.json() };
+  };
+  const timeline = async () => (await t.getTimeline(t.adminWho(admin), g1.id));
+
+  before(async () => {
+    [g1] = await t.listProjectGroups(admin, "dap-test");
+  });
+  beforeEach(() => clearMembershipCache());
+
+  it("a member adds, edits, completes and deletes tasks and blockers in their own project group", async () => {
+    const added = await send(MIA, { group: 1, action: "task.save", milestone: 1, title: "Interview users", dueOn: "2030-01-12", assigneeName: "Visiting mentor" });
+    assert.deepEqual([added.status, added.json.message], [200, "Task T2 added"]);
+    const m = added.json.timeline.milestones[0];
+    assert.deepEqual(m.tasks.map((x: { number: number }) => x.number), [1, 2]);
+    assert.equal(m.tasks[1].assignee, "Visiting mentor");
+
+    const mia = added.json.timeline.members[0];
+    const edited = await send(MIA, { group: 1, action: "task.save", number: 2, status: "done", assigneeId: mia.id });
+    assert.equal(edited.json.message, "Task T2 saved");
+    assert.deepEqual(edited.json.timeline.milestones[0].tasks[1], { number: 2, title: "Interview users", status: "done", dueOn: "2030-01-12", assigneeId: mia.id, assignee: "Mia Lim" });
+
+    const cleared = await send(MIA, { group: 1, action: "task.save", number: 2, dueOn: "", assigneeId: null });
+    assert.deepEqual([cleared.json.timeline.milestones[0].tasks[1].dueOn, cleared.json.timeline.milestones[0].tasks[1].assignee], [null, ""]);
+
+    const blocker = await send(MIA, { group: 1, action: "blocker.save", milestone: 1, description: "Venue unavailable" });
+    assert.equal(blocker.json.message, "Blocker B2 added");
+    const resolved = await send(MIA, { group: 1, action: "blocker.save", number: 2, status: "resolved" });
+    assert.equal(resolved.json.timeline.milestones[0].blockers[1].status, "resolved");
+    await send(MIA, { group: 1, action: "blocker.delete", number: 2 });
+    const gone = await send(MIA, { group: 1, action: "task.delete", number: 2 });
+    assert.deepEqual([gone.json.message, gone.json.timeline.milestones[0].tasks.length, gone.json.timeline.milestones[0].blockers.length], ["Task T2 deleted", 1, 1]);
+  });
+
+  it("the bot's rules still apply: a task can't be due after its milestone, and numbers are never reused", async () => {
+    const late = await send(MIA, { group: 1, action: "task.save", milestone: 1, title: "Too late", dueOn: "2030-02-01" });
+    assert.equal(late.status, 400);
+    assert.match(late.json.error, /can't be due after its milestone: M1 is due 15 Jan 2030/);
+    const next = await send(MIA, { group: 1, action: "task.save", milestone: 1, title: "On time", dueOn: "2030-01-14" });
+    assert.equal(next.json.message, "Task T3 added"); // T2 was used and deleted, the refused one used nothing
+    assert.equal((await send(MIA, { group: 1, action: "task.save", milestone: 1, title: "  " })).status, 400);
+    assert.equal((await send(MIA, { group: 1, action: "task.save", number: 99, status: "done" })).json.error, "Task T99 not found");
+  });
+
+  it("a member cannot change milestones or reminders; a DAP exco can", async () => {
+    for (const body of [
+      { group: 1, action: "milestone.save", title: "Sneaky", dueOn: "2030-03-01" },
+      { group: 1, action: "milestone.delete", number: 1 },
+      { group: 1, action: "reminders.set", on: false },
+    ]) {
+      const r = await send(MIA, body);
+      assert.deepEqual([r.status, r.json.error], [400, "Only DAP exco can do that."]);
+    }
+    assert.equal((await timeline()).length, 1);
+
+    const exco = (body: object) => send(MINGDA, body, {});
+    const added = await exco({ group: 1, action: "milestone.save", title: "Prototype", startsOn: "2030-01-16", dueOn: "2030-03-01", notes: "Working demo" });
+    assert.deepEqual([added.status, added.json.message], [200, "Milestone M2 added"]);
+    const edited = await exco({ group: 1, action: "milestone.save", number: 2, title: "Prototype v1", dueOn: "2030-03-01", startsOn: "", status: "in_progress" });
+    assert.deepEqual([edited.json.timeline.milestones[1].title, edited.json.timeline.milestones[1].startsOn, edited.json.timeline.milestones[1].status, edited.json.timeline.milestones[1].notes], ["Prototype v1", null, "in_progress", "Working demo"]);
+    assert.equal((await exco({ group: 1, action: "reminders.set", on: false })).json.timeline.meeting.reminders, false);
+    assert.equal((await exco({ group: 1, action: "reminders.set", on: "yes" })).status, 400);
+    assert.equal((await exco({ group: 1, action: "milestone.delete", number: 2 })).json.timeline.milestones.length, 1);
+  });
+
+  it("a meeting is logged for today or a past day, never the future", async () => {
+    const today = new Date(NOW + 8 * 3_600_000).toISOString().slice(0, 10);
+    const now = await send(MIA, { group: 1, action: "meeting.log" });
+    assert.deepEqual([now.status, now.json.message, now.json.timeline.meeting.lastOn], [200, "Meeting logged", today]);
+    const future = await send(MIA, { group: 1, action: "meeting.log", date: "2999-01-01" });
+    assert.match(future.json.error, /future/);
+    const earlier = await send(MIA, { group: 1, action: "meeting.log", date: "2020-01-01" });
+    assert.match(earlier.json.error, /earlier than the last logged meeting/);
+    assert.equal((await send(MIA, { group: 1, action: "meeting.log", date: "2030-02-30" })).status, 400);
+  });
+
+  it("nothing changes without a valid launch, outside the chat, or for another project group", async () => {
+    assert.equal((await send(null, { group: 1, action: "task.save", milestone: 1, title: "x" })).status, 401);
+    assert.equal((await send(BEN, { group: 1, action: "task.save", milestone: 1, title: "Outsider" }, {})).status, 403);
+    // Mia is in chat 1 only: group 2 stays closed, however the request names it.
+    const other = await send(MIA, { group: 2, action: "task.save", milestone: 1, title: "Cross-group" });
+    assert.equal(other.status, 403);
+    assert.ok(!JSON.stringify(other.json).includes("Secret"));
+    assert.equal((await send(MIA, { action: "task.save", title: "x" })).status, 400); // no group named
+    // Numbers are per project group: M1 of group 1 is not reachable through group 2's numbers.
+    const titles = (await timeline()).flatMap((m) => m.subtasks.map((s) => s.title));
+    assert.ok(!titles.includes("Outsider") && !titles.includes("Cross-group"));
+  });
+
+  it("unknown or malformed requests are refused plainly", async () => {
+    for (const action of ["milestone.nuke", "__proto__", "constructor", undefined]) {
+      const r = await send(MIA, { group: 1, action });
+      assert.deepEqual([r.status, r.json.error], [400, "That change is not available."]);
+    }
+    const bad = await handleAction(new Request("https://x.test/api/mini-app/action", { method: "POST", headers: { authorization: `tma ${launchData(MIA)}` }, body: "not json" }), telegram({ "-1001:2001": "member" }).api, TOKEN, NOW);
+    assert.equal(bad.status, 400);
+    assert.equal((await send(MIA, { group: 1, action: "task.save", milestone: 1, title: 5 })).status, 400);
   });
 });
