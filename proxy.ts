@@ -5,7 +5,7 @@ import { canonicalPath } from "@/app/lib/canonical-path";
 /**
  * Canonical URLs are lower-case and kebab-case (/projects, /dap, /work-with-us).
  * Every older form redirects here in one 308 hop. Old paths are never removed,
- * only redirected (see CLAUDE.md → URL Paths).
+ * only redirected (see AGENTS.md → URL Paths).
  *
  * These live here rather than in `next.config.mjs` because redirect `source`
  * matching there is case-INsensitive: a "/DAP" -> "/dap" rule also matches

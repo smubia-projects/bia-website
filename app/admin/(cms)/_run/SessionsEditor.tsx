@@ -52,7 +52,7 @@ export default function SessionsEditor({
         sub={
           <>
             Co-learning sessions for the cohort page and each issue&apos;s session box. Groups are managed in{" "}
-            <Link className={`${styles.lnk} ${styles.lnkInline}`} href={runHref("DAP", cohortSlug, "groups")}>
+            <Link className={`${styles.lnk} ${styles.lnkInline}`} href={runHref("DAP", cohortSlug, "co-learning-groups")}>
               Co-Learning Groups
             </Link>
             .

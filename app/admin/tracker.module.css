@@ -1,0 +1,795 @@
+/* DAP timeline tracker (CMS). Light work area, emerald accent, status colours are semantic
+   (done = emerald, overdue and blockers = red) and never reused as decoration. */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.statLabel {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.statValue {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.statValue small {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+.statAlert {
+  color: var(--danger, #b91c1c);
+}
+
+/* ── Chart ─────────────────────────────────────────────────────────── */
+
+.chartScroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.chart {
+  --label: 168px;
+  position: relative;
+}
+.axis,
+.lane {
+  display: grid;
+  grid-template-columns: var(--label) 1fr;
+}
+.axis {
+  position: sticky;
+  top: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+.axisTrack {
+  position: relative;
+  height: 30px;
+}
+.tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  padding: 8px 0 0 6px;
+  border-left: 1px solid var(--border);
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+.lane {
+  border-bottom: 1px solid var(--border);
+}
+.lane:last-child {
+  border-bottom: 0;
+}
+.laneLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+.laneLabel:hover {
+  background: var(--surface-muted);
+}
+.laneMeta {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+.track {
+  position: relative;
+}
+.grid {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--hair, #edf5f1);
+}
+.today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 2px solid var(--emerald);
+  z-index: 1;
+}
+.bar {
+  position: absolute;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 8px;
+  overflow: hidden;
+  border-radius: 7px;
+  border: 1px solid var(--ink-faint);
+  background: var(--surface-muted);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+.bar:hover {
+  box-shadow: 0 0 0 2px var(--mint-soft);
+}
+.bar:focus-visible,
+.laneLabel:focus-visible {
+  outline: 2px solid var(--emerald);
+  outline-offset: 1px;
+}
+.barText {
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--mint-soft);
+}
+.s_in_progress {
+  border-color: var(--emerald);
+  background: #fff;
+}
+.s_in_progress .fill {
+  background: rgba(14, 124, 91, 0.2);
+}
+.s_done {
+  border-color: var(--emerald-strong);
+  background: var(--emerald);
+  color: #fff;
+}
+.overdue {
+  border-color: var(--danger, #b91c1c);
+  color: var(--danger, #b91c1c);
+  background: #fff;
+}
+.blocked::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger, #b91c1c);
+  box-shadow: 0 0 0 2px #fff;
+}
+
+/* A milestone with no start date: a marker on its due date, label to the right. */
+.point {
+  position: absolute;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+.diamond {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  transform: rotate(45deg);
+  border: 2px solid var(--ink-faint);
+  background: var(--surface-muted);
+  margin-left: -6px;
+}
+.point.s_in_progress .diamond {
+  border-color: var(--emerald);
+  background: #fff;
+}
+.point.s_done .diamond {
+  border-color: var(--emerald-strong);
+  background: var(--emerald);
+}
+.point.overdue .diamond {
+  border-color: var(--danger, #b91c1c);
+  background: #fff;
+}
+.point.s_done,
+.point.s_in_progress,
+.point.overdue {
+  background: transparent;
+  color: var(--ink);
+}
+.point.overdue {
+  color: var(--danger, #b91c1c);
+}
+.point.blocked::after {
+  display: none;
+}
+.pointBlock {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger, #b91c1c);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  width: 14px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1px solid var(--ink-faint);
+  background: var(--surface-muted);
+}
+.swatchDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger, #b91c1c);
+}
+
+/* ── Chips and group page ──────────────────────────────────────────── */
+
+.chip {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--surface);
+  color: var(--ink-soft);
+}
+.chipOk {
+  color: var(--emerald-strong);
+}
+.chipWarn {
+  color: var(--danger, #b91c1c);
+}
+.chipMuted {
+  color: var(--ink-faint);
+}
+.num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.link {
+  color: var(--emerald);
+  font-weight: 600;
+  text-decoration: none;
+}
+.link:hover {
+  color: var(--emerald-strong);
+  text-decoration: underline;
+}
+
+/* Facts sit inside a panel: plain columns grouped by space alone (no cards, no dividers). */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+.fact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+@media (max-width: 760px) {
+  .facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+}
+.factTitle {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.factValue {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.milestone {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.msTop {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.msTitle {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.msMeta {
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+.notesLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  margin-bottom: 2px;
+}
+.msNotes {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}
+.listHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.listTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.listCount {
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--hair, #edf5f1);
+  flex-wrap: wrap;
+}
+.item:first-of-type {
+  border-top: 0;
+}
+.itemText {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+.itemId {
+  font-family: var(--font-roboto-mono), monospace;
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.msNumber {
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.addRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.addRow input {
+  flex: 1;
+  min-width: 0;
+}
+.none {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+.lead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Tasks and blockers ────────────────────────────────────────────── */
+
+/* One aligned row per task: number, title, assignee, due date, status, delete. */
+.task {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 170px 150px 130px 34px;
+  grid-template-areas: "id title who due state del";
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+}
+.task + .task,
+.blocker + .blocker {
+  border-top: 1px solid var(--hair, #edf5f1);
+}
+/* The column labels are not a row: no line under them. */
+.taskHead + .task {
+  border-top: 0;
+}
+.taskHead {
+  composes: task;
+  padding: 2px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+/* One row per blocker: number, state, description, resolve or reopen, delete. */
+.blocker {
+  display: grid;
+  grid-template-columns: 28px 88px minmax(0, 1fr) auto 34px;
+  grid-template-areas: "id state text act del";
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+}
+.aId { grid-area: id; }
+.aTitle { grid-area: title; }
+.aWho { grid-area: who; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.aDue { grid-area: due; min-width: 0; }
+.aState { grid-area: state; min-width: 0; }
+.aText { grid-area: text; min-width: 0; }
+.aAct { grid-area: act; }
+.aDel { grid-area: del; }
+.ctl {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .task {
+    grid-template-columns: 28px minmax(0, 1fr) minmax(0, 1fr) 34px;
+    grid-template-areas:
+      "id title title del"
+      ". who due ."
+      ". state state .";
+  }
+  .taskHead {
+    display: none;
+  }
+  .blocker {
+    grid-template-columns: 28px minmax(0, 1fr) 34px;
+    grid-template-areas:
+      "id text del"
+      ". state ."
+      ". act .";
+  }
+  .aAct {
+    justify-self: start;
+  }
+}
+@media (max-width: 640px) {
+  /* Phones: one control per line under the title. */
+  .task {
+    grid-template-columns: 28px minmax(0, 1fr) 34px;
+    grid-template-areas:
+      "id title del"
+      ". who ."
+      ". due ."
+      ". state .";
+  }
+}
+
+/* ── Status text: a coloured dot and a word, never a pill ─────────── */
+
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ink-soft);
+}
+.state::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.stateOk {
+  color: var(--emerald-strong);
+}
+.stateWarn {
+  color: var(--danger, #b91c1c);
+}
+.stateMuted {
+  color: var(--ink-faint);
+}
+.overdueText {
+  color: var(--danger, #b91c1c);
+  font-weight: 600;
+}
+
+/* ── Telegram actions: Telegram's blue, darkened to pass AA with white text (4.8:1) ── */
+
+.tgBtn {
+  font: 600 14px var(--font-inter), sans-serif;
+  background: #1877bd;
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 20px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  box-sizing: border-box;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tgBtn:hover {
+  background: #125f98;
+  color: #fff;
+}
+.tgBtn:active {
+  transform: scale(0.97);
+}
+.tgBtn:disabled {
+  background: #9fc0d9;
+  cursor: not-allowed;
+  transform: none;
+}
+.tgBtn:focus-visible {
+  outline: 2px solid #1877bd;
+  outline-offset: 2px;
+}
+
+/* ── On/off switch (a checkbox with role="switch") ─────────────────── */
+
+.toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.toggleTrack {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 24px;
+  border-radius: 999px;
+  background: #c5d4ce;
+  transition: background-color 160ms ease-out;
+}
+.toggleTrack::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(12, 33, 28, 0.25);
+  transition: transform 160ms ease-out;
+}
+.toggle input:checked + .toggleTrack {
+  background: var(--emerald);
+}
+.toggle input:checked + .toggleTrack::after {
+  transform: translateX(16px);
+}
+.toggle input:focus-visible + .toggleTrack {
+  outline: 2px solid var(--emerald);
+  outline-offset: 2px;
+}
+.toggle input:disabled + .toggleTrack {
+  opacity: 0.55;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toggleTrack,
+  .toggleTrack::after,
+  .tgBtn {
+    transition: none;
+  }
+}
+
+/* ── Fact cards ────────────────────────────────────────────────────── */
+
+.kv {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 12px;
+  margin: 0;
+  font-size: 13px;
+  align-items: center;
+}
+.kv dt {
+  color: var(--ink-soft);
+}
+.kv dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.factActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.factField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+/* ── Settings › Telegram: the exco-only group ──────────────────────── */
+
+.groupHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+}
+.groupTitle {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 22px;
+  color: var(--ink);
+}
+
+/* ── Project Groups list ───────────────────────────────────────────── */
+
+.statWarn {
+  border-color: rgba(185, 28, 28, 0.35);
+  background: #fdf6f6;
+}
+.groupsTable {
+  min-width: 760px;
+}
+@media (max-width: 640px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .stat {
+    padding: 10px 12px;
+  }
+  .statValue {
+    font-size: 22px;
+  }
+  .chart {
+    --label: 112px;
+  }
+  /* Each project group as a card: each column's name sits beside its value. */
+  .groupsTable {
+    min-width: 0;
+  }
+  .groupsTable thead {
+    display: none;
+  }
+  .groupsTable,
+  .groupsTable tbody,
+  .groupsTable tr {
+    display: block;
+  }
+  .groupsTable tr {
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .groupsTable tr:first-child {
+    border-top: 0;
+  }
+  .groupsTable td {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 8px;
+    padding: 3px 0 !important;
+    border: 0 !important;
+  }
+  .groupsTable td::before {
+    content: attr(data-label);
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+  .groupsTable td:first-child {
+    display: block;
+    margin-bottom: 4px;
+  }
+  .groupsTable td:first-child::before {
+    content: none;
+  }
+}
+
+/* Text for screen readers only */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.msStatus {
+  width: 150px;
+}
+
+.groupsWrap {
+  margin-top: 0;
+}
+
+/* A single fact on its own: no divider to separate it from anything. */
+.factSolo,
+.factSolo:first-child {
+  padding: 0;
+  margin: 0;
+  border: 0;
+}

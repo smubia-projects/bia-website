@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   date,
   index,
@@ -14,6 +15,7 @@ import {
 import type {
   BlockType,
   CohortVisibility,
+  BlockerStatus,
   IssueStatus,
   LodgeAmbient,
   LodgeBeltMode,
@@ -26,9 +28,11 @@ import type {
   LodgeParticles,
   LodgeShowpiece,
   LodgeStatus,
+  MilestoneStatus,
   Programme,
   ProjectStatus,
   Role,
+  SubtaskStatus,
 } from "@/app/lib/cms/taxonomy";
 import type { HighlightCard, TeamMember } from "@/app/projects/data/types";
 
@@ -261,6 +265,11 @@ export const people = pgTable("people", {
   lodgeIds: jsonb("lodge_ids").$type<number[]>().notNull().default([]),
   /** Last day of access (YYYY-MM-DD, Singapore time); null = no end */
   accessEnds: date("access_ends", { mode: "string" }),
+  /** Telegram user ID (not the username): tells the DAP tracker bot who is an admin. Set by linking, never typed in. */
+  telegramUserId: bigint("telegram_user_id", { mode: "number" }).unique(),
+  /** The linked Telegram account's name and @username when it was linked, shown in the CMS only */
+  telegramName: text("telegram_name").notNull().default(""),
+  telegramUsername: text("telegram_username").notNull().default(""),
   createdAt: createdAt(),
 });
 
@@ -332,6 +341,119 @@ export const sessions = pgTable(
   (t) => [uniqueIndex("sessions_cohort_week").on(t.cohortId, t.week)]
 );
 
+/**
+ * A DAP project group (the teams building projects; not the co-learning groups above).
+ * One Telegram chat per group: the bot only listens in registered chats, and everyone in
+ * the chat has member rights for this group.
+ */
+export const projectGroups = pgTable(
+  "project_groups",
+  {
+    id: serial("id").primaryKey(),
+    cohortId: text("cohort_id")
+      .notNull()
+      .references(() => cohorts.id, { onDelete: "cascade" }),
+    /** "Group 3": what the bot's commands refer to; unique within a cohort */
+    number: integer("number").notNull(),
+    name: text("name").notNull().default(""),
+    /** Mentor names, free text */
+    mentors: text("mentors").notNull().default(""),
+    /** Telegram chat ID (negative for groups); null until the chat is connected with a link from the dashboard */
+    telegramChatId: bigint("telegram_chat_id", { mode: "number" }).unique(),
+    /** The only meeting data kept: when the group last met its mentors */
+    lastMeetingAt: timestamp("last_meeting_at", { withTimezone: true, mode: "string" }),
+    meetingRemindersOn: boolean("meeting_reminders_on").notNull().default(true),
+    /** Cleared whenever a meeting is logged, so each cycle reminds once */
+    meetingRemindedAt: timestamp("meeting_reminded_at", { withTimezone: true, mode: "string" }),
+    /** The last number given to this group's milestones, tasks and blockers (M1, T1, B1, …); never reused */
+    milestoneSeq: integer("milestone_seq").notNull().default(0),
+    taskSeq: integer("task_seq").notNull().default(0),
+    blockerSeq: integer("blocker_seq").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("project_groups_cohort_number").on(t.cohortId, t.number)]
+);
+
+/** A project group's roster, filled in from the dashboard. Informational: chat membership, not this list, grants bot access. */
+export const projectMembers = pgTable(
+  "project_members",
+  {
+    id: serial("id").primaryKey(),
+    groupId: integer("group_id")
+      .notNull()
+      .references(() => projectGroups.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("project_members_group").on(t.groupId)]
+);
+
+export const milestones = pgTable(
+  "milestones",
+  {
+    id: serial("id").primaryKey(),
+    groupId: integer("group_id")
+      .notNull()
+      .references(() => projectGroups.id, { onDelete: "cascade" }),
+    /** M1, M2, …: numbered within the project group (projectGroups.milestoneSeq); what the bot's commands take */
+    number: integer("number").notNull(),
+    title: text("title").notNull(),
+    notes: text("notes").notNull().default(""),
+    /** YYYY-MM-DD; the timeline bar runs startsOn → dueOn (a point at dueOn when null) */
+    startsOn: date("starts_on", { mode: "string" }),
+    dueOn: date("due_on", { mode: "string" }).notNull(),
+    status: text("status").$type<MilestoneStatus>().notNull().default("todo"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    updatedBy: text("updated_by").notNull().default(""),
+  },
+  (t) => [index("milestones_group").on(t.groupId)]
+);
+
+export const subtasks = pgTable(
+  "subtasks",
+  {
+    id: serial("id").primaryKey(),
+    milestoneId: integer("milestone_id")
+      .notNull()
+      .references(() => milestones.id, { onDelete: "cascade" }),
+    /** T1, T2, …: numbered within the project group (projectGroups.taskSeq) */
+    number: integer("number").notNull(),
+    title: text("title").notNull(),
+    status: text("status").$type<SubtaskStatus>().notNull().default("todo"),
+    dueOn: date("due_on", { mode: "string" }),
+    assigneeId: integer("assignee_id").references(() => projectMembers.id, { onDelete: "set null" }),
+    /** An assignee who isn't on the member list, as typed. At most one of assigneeId and assigneeName is set. */
+    assigneeName: text("assignee_name").notNull().default(""),
+    /** When the "due within a week" alert went out for the current due date (cleared when the due date changes) */
+    remindedWeekAt: timestamp("reminded_week_at", { withTimezone: true, mode: "string" }),
+    /** When the "overdue" alert went out for the current due date */
+    remindedOverdueAt: timestamp("reminded_overdue_at", { withTimezone: true, mode: "string" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    updatedBy: text("updated_by").notNull().default(""),
+  },
+  (t) => [index("subtasks_milestone").on(t.milestoneId)]
+);
+
+export const blockers = pgTable(
+  "blockers",
+  {
+    id: serial("id").primaryKey(),
+    milestoneId: integer("milestone_id")
+      .notNull()
+      .references(() => milestones.id, { onDelete: "cascade" }),
+    /** B1, B2, …: numbered within the project group (projectGroups.blockerSeq) */
+    number: integer("number").notNull(),
+    description: text("description").notNull(),
+    status: text("status").$type<BlockerStatus>().notNull().default("open"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true, mode: "string" }),
+    createdAt: createdAt(),
+    updatedBy: text("updated_by").notNull().default(""),
+  },
+  (t) => [index("blockers_milestone").on(t.milestoneId)]
+);
+
 export interface IssueBlock {
   id: string;
   type: BlockType;
@@ -368,6 +490,38 @@ export const issues = pgTable(
   (t) => [uniqueIndex("issues_cohort_week").on(t.cohortId, t.week)]
 );
 
+/**
+ * Telegram update IDs the bot has handled, so an update Telegram re-sends runs once. Any order
+ * works (a lower ID than the last one is still new). The daily cron deletes rows after 2 days.
+ */
+export const telegramUpdates = pgTable("telegram_updates", {
+  updateId: bigint("update_id", { mode: "number" }).primaryKey(),
+  receivedAt: timestamp("received_at", { withTimezone: true, mode: "string" }).notNull().defaultNow(),
+});
+
+export type TelegramLinkKind = "account" | "chat";
+
+/**
+ * One-time codes in Telegram deep links. `account` (t.me/<bot>?start=<code>, private chat) links
+ * the Telegram account that opens it to `email`; `chat` (t.me/<bot>?startgroup=<code>) connects
+ * the group chat it is added to to `project_group_id`. Only a SHA-256 hash is stored, a code
+ * works once, and it expires after 10 minutes (the daily cron deletes expired ones).
+ */
+export const telegramLinkCodes = pgTable(
+  "telegram_link_codes",
+  {
+    id: serial("id").primaryKey(),
+    codeHash: text("code_hash").notNull(),
+    kind: text("kind").$type<TelegramLinkKind>().notNull(),
+    email: text("email"),
+    projectGroupId: integer("project_group_id").references(() => projectGroups.id, { onDelete: "cascade" }),
+    createdBy: text("created_by").notNull().default(""),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("telegram_link_codes_hash").on(t.codeHash)]
+);
+
 /** Club links editable in the CMS (join forms, socials). Unset keys fall back to app/lib/links.ts. */
 export const siteLinks = pgTable("site_links", {
   key: text("key").primaryKey(),
@@ -400,3 +554,8 @@ export type ProjectRow = typeof projects.$inferSelect;
 export type PersonRow = typeof people.$inferSelect;
 export type SessionRow = typeof sessions.$inferSelect;
 export type IssueRow = typeof issues.$inferSelect;
+export type ProjectGroupRow = typeof projectGroups.$inferSelect;
+export type ProjectMemberRow = typeof projectMembers.$inferSelect;
+export type MilestoneRow = typeof milestones.$inferSelect;
+export type SubtaskRow = typeof subtasks.$inferSelect;
+export type BlockerRow = typeof blockers.$inferSelect;

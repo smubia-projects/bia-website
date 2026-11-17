@@ -43,3 +43,7 @@ next-env.d.ts
 /.data/
 # Local CMS uploads when BLOB_READ_WRITE_TOKEN is unset
 /public/uploads/
+
+# local working copies, not part of this site
+/ailodge-infosite/
+/_curriculum/
