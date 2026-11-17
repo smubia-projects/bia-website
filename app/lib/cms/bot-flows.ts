@@ -38,8 +38,8 @@ interface FlowDef {
 }
 
 export const FLOWS: Record<FlowId, FlowDef> = {
-  at: { cmd: "addtask", title: "Add task", pick: ["m"], ask: "reply with the task title. Add “by 20 Nov” to set a due date.", hint: "Task title" },
-  et: { cmd: "edittask", title: "Edit task", pick: ["t"], ask: "reply with the new title, a new due date (by 20 Nov), or both.", hint: "New title or by 20 Nov" },
+  at: { cmd: "addtask", title: "Add task", pick: ["m"], ask: "reply with the task title. Add “by DD/MM/YYYY” to set a due date.", hint: "Task title" },
+  et: { cmd: "edittask", title: "Edit task", pick: ["t"], ask: "reply with the new title, a new due date (by DD/MM/YYYY), or both.", hint: "New title or by DD/MM/YYYY" },
   ts: { cmd: "taskstatus", title: "Set task status", pick: ["t", "s"] },
   td: { cmd: "taskdone", title: "Mark task done", pick: ["t"], only: "active" },
   as: { cmd: "assign", title: "Assign task", pick: ["t", "w"] },
@@ -49,8 +49,8 @@ export const FLOWS: Record<FlowId, FlowDef> = {
   rb: { cmd: "resolve", title: "Resolve blocker", pick: ["b"], only: "active" },
   ub: { cmd: "reopenblocker", title: "Reopen blocker", pick: ["b"], only: "closed" },
   db: { cmd: "delblocker", title: "Delete blocker", pick: ["b"], own: true },
-  ms: { cmd: "milestone", title: "Add milestone", admin: true, pick: [], ask: "reply with the milestone: a title, then “from 1 Dec” (optional) and “by 15 Dec”.", hint: "Title by 15 Dec" },
-  em: { cmd: "editmilestone", title: "Edit milestone", admin: true, pick: ["m"], ask: "reply with the new title, a new due date (by 15 Dec), or both.", hint: "New title or by 15 Dec" },
+  ms: { cmd: "milestone", title: "Add milestone", admin: true, pick: [], ask: "reply with the milestone: a title, then “from DD/MM/YYYY” (optional) and “by DD/MM/YYYY”.", hint: "Title by DD/MM/YYYY" },
+  em: { cmd: "editmilestone", title: "Edit milestone", admin: true, pick: ["m"], ask: "reply with the new title, a new due date (by DD/MM/YYYY), or both.", hint: "New title or by DD/MM/YYYY" },
   dn: { cmd: "done", title: "Mark milestone done", admin: true, pick: ["m"], only: "active" },
   sm: { cmd: "status", title: "Set milestone status", admin: true, pick: ["m", "s"] },
   dm: { cmd: "delmilestone", title: "Delete milestone", admin: true, pick: ["m"], own: true },
@@ -250,12 +250,12 @@ function parseTyped(flow: FlowId, text: string, today: string) {
     return null;
   }
   const p = splitTitleAndDates(text, today, flow === "ms" || flow === "em");
-  ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Try 20 Nov or 2026-11-20.`);
+  ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Use DD/MM/YYYY, for example 20/11/2026.`);
   if (flow === "at") ensure(p.title, "Type the task title.");
-  if (flow === "et" || flow === "em") ensure(p.title || p.dueOn, "Give a new title, a new due date (by 20 Nov), or both.");
+  if (flow === "et" || flow === "em") ensure(p.title || p.dueOn, "Give a new title, a new due date (by DD/MM/YYYY), or both.");
   if (flow === "ms") {
     ensure(p.title, "Type the milestone title.");
-    ensure(p.dueOn, "A milestone needs a due date: add “by 15 Dec”.");
+    ensure(p.dueOn, "A milestone needs a due date: add “by DD/MM/YYYY”.");
   }
   return p;
 }

@@ -243,6 +243,12 @@ DAP run (a `cohorts` row); AI Lodge's equivalent is a **semester**.
   (`t.me/<bot>?startgroup=<code>`). The bot listens only in connected chats, and everyone in one has member
   rights for that project group; inside it even admins reach only that group (what the bot posts there, the
   whole group sees). Admins reach every group from a private chat (`/groups`, `g3`, current cohort).
+- Mini App (`/mini-app`, `app/lib/cms/mini-app.ts`, `/api/mini-app/{session,timeline}`): opened by `/start` (a `web_app`
+  button for linked admins in a private chat; a `t.me/<bot>/<name>?startapp=g3` link in a connected group chat). Every
+  request carries Telegram's signed `initData` (`Authorization: tma …`), verified with the bot token. Access is never taken
+  from the link: a linked DAP exco opens every project group; anyone else only a project group whose connected chat Telegram
+  confirms they are in (`getChatMember`, so the bot must be an admin there). It reads through the same `tracker.ts` rules as
+  the bot, and complements the commands.
 - Local development: `instrumentation.ts` long-polls Telegram from the dev server (never when the bot has a
   webhook), so the bot works on localhost.
 - Daily cron `/api/cron/daily` runs the jobs in `app/lib/cms/jobs.ts`, each on its own: publish due issues,
@@ -284,6 +290,7 @@ All paths are lower-case and kebab-case (`/work-with-us`, `/contact-us`); folder
 | `CRON_SECRET` | Authenticates the Vercel Cron call to `/api/cron/daily` |
 | `AILODGE_REVALIDATE_URL` | The AI Lodge site's revalidate route, e.g. `https://ailodge.smubia.com/api/revalidate` (unset = it refreshes hourly) |
 | `AILODGE_REVALIDATE_SECRET` | Shared secret for that route; the same value is set on the AI Lodge site |
+| `TELEGRAM_MINI_APP_NAME` | The tracker Mini App's short name from BotFather (`/newapp`). Unset = `/start` in a group chat shows the command list instead of the app link |
 | `TELEGRAM_WEBHOOK_SECRET` | Secret the bot's webhook (`/api/telegram/webhook`) checks; Set Webhook sends it to Telegram. Required on Vercel. Secrets stay environment variables, never in the database |
 | `TELEGRAM_DAP_CHANNEL_ID` | Deprecated: read only until the DAP channel is saved in Settings › Telegram, then remove it |
 | `NEXT_PUBLIC_SITE_URL` | Absolute links in Telegram posts (default `https://www.smubia.com`) |

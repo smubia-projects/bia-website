@@ -204,6 +204,26 @@ export async function disconnectChat(actor: Actor, groupId: number) {
   await db.update(projectGroups).set({ telegramChatId: null }).where(eq(projectGroups.id, groupId));
 }
 
+/** The admin a Telegram user ID belongs to (role and access end re-read now), or null. */
+export async function adminByTelegramId(fromId: number): Promise<Actor | null> {
+  const db = await getDb();
+  const [person] = await db.select({ email: people.email }).from(people).where(eq(people.telegramUserId, fromId));
+  const actor = person ? await findAccess(person.email) : null;
+  return actor && can.tracker(actor) ? actor : null;
+}
+
+/** The project groups of the current cohort that have a connected chat: where a Mini App user's membership is checked. */
+export async function connectedGroups(): Promise<ProjectGroup[]> {
+  const cohortId = await trackerCohortId();
+  if (!cohortId) return [];
+  const db = await getDb();
+  return db
+    .select()
+    .from(projectGroups)
+    .where(and(eq(projectGroups.cohortId, cohortId), isNotNull(projectGroups.telegramChatId)))
+    .orderBy(asc(projectGroups.number));
+}
+
 /**
  * Who is speaking, and where. Admins are found by their stored Telegram user ID
  * (role re-read each time, so removal or an ended access date takes effect at once)
@@ -213,9 +233,8 @@ export async function disconnectChat(actor: Actor, groupId: number) {
 export async function resolveSender(chatId: number, fromId: number, displayName: string) {
   const db = await getDb();
   const [group] = await db.select().from(projectGroups).where(eq(projectGroups.telegramChatId, chatId));
-  const [person] = await db.select({ email: people.email }).from(people).where(eq(people.telegramUserId, fromId));
-  const actor = person ? await findAccess(person.email) : null;
-  if (actor && can.tracker(actor)) return { who: adminWho(actor), actor, group: group ?? null };
+  const actor = await adminByTelegramId(fromId);
+  if (actor) return { who: adminWho(actor), actor, group: group ?? null };
   if (group) return { who: memberWho(group.id, displayName), actor: null, group };
   return null;
 }

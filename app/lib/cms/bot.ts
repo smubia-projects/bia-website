@@ -154,14 +154,14 @@ export const COMMANDS: BotCommand[] = [
   {
     name: "addtask",
     admin: false,
-    usage: "[milestone#] title [by 20 Nov]",
+    usage: "[milestone#] title [by DD/MM/YYYY]",
     description: "Add a task",
     async run(c, args) {
       const flow = await begin(c, "at", args);
       if (flow) return flow;
       const m = await item(c, args, "milestone", "addtask");
       const p = splitTitleAndDates(m.rest, c.today);
-      ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Try 20 Nov or 2026-11-20.`);
+      ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Use DD/MM/YYYY, for example 20/11/2026.`);
       ensure(p.title, `Usage: ${usageOf("addtask")}`);
       const s = await tracker.addSubtask(c.scope, { milestoneId: m.id, title: p.title, dueOn: p.dueOn });
       return `Added task <b>${label("task", s.number)}</b> to ${label("milestone", m.number)}: ${esc(s.title)}${s.dueOn ? `, due ${shortDate(s.dueOn, c.today)}` : ""}.`;
@@ -194,15 +194,15 @@ export const COMMANDS: BotCommand[] = [
   {
     name: "edittask",
     admin: false,
-    usage: "[task#] new title [by 20 Nov]",
+    usage: "[task#] new title [by DD/MM/YYYY]",
     description: "Rename a task or change its due date",
     async run(c, args) {
       const flow = await begin(c, "et", args);
       if (flow) return flow;
       const t = await item(c, args, "task", "edittask");
       const p = splitTitleAndDates(t.rest, c.today);
-      ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Try 20 Nov or 2026-11-20.`);
-      ensure(p.title || p.dueOn, "Give a new title, a new due date (by 20 Nov), or both.");
+      ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Use DD/MM/YYYY, for example 20/11/2026.`);
+      ensure(p.title || p.dueOn, "Give a new title, a new due date (by DD/MM/YYYY), or both.");
       const s = await tracker.updateSubtask(c.scope, t.id, { ...(p.title ? { title: p.title } : {}), ...(p.dueOn ? { dueOn: p.dueOn } : {}) });
       return `Updated task <b>${label("task", s.number)}</b>: ${esc(s.title)}.`;
     },
@@ -306,7 +306,7 @@ export const COMMANDS: BotCommand[] = [
   {
     name: "meeting",
     admin: false,
-    usage: "[date]",
+    usage: "[DD/MM/YYYY]",
     description: "Log a meeting with your mentors",
     async run(c, args) {
       const [n, rest] = leadingGroup(args, true);
@@ -314,7 +314,7 @@ export const COMMANDS: BotCommand[] = [
       let at = new Date();
       if (rest) {
         const day = parseDate(rest, c.today, true);
-        ensure(day, `Couldn't read the date "${rest}". Try 12 Nov, 2026-11-12 or yesterday.`);
+        ensure(day, `Couldn't read the date "${rest}". Use DD/MM/YYYY, for example 12/11/2026, or yesterday.`);
         if (day !== c.today) at = noonSgt(day);
       }
       const g = await tracker.logMeeting(c.scope, group.id, at);
@@ -345,7 +345,7 @@ export const COMMANDS: BotCommand[] = [
   {
     name: "milestone",
     admin: true,
-    usage: "[g3] title [from 1 Dec] by 15 Dec",
+    usage: "[g3] title [from DD/MM/YYYY] by DD/MM/YYYY",
     description: "Add a milestone",
     async run(c, args) {
       const flow = await begin(c, "ms", args);
@@ -355,8 +355,8 @@ export const COMMANDS: BotCommand[] = [
       const group = await groupFor(c, n);
       const p = splitTitleAndDates(rest, c.today, true);
       ensure(p.title, `Usage: ${usageOf("milestone")}`);
-      ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Try 15 Dec or 2026-12-15.`);
-      ensure(p.dueOn, "A milestone needs a due date: /milestone title by 15 Dec");
+      ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Use DD/MM/YYYY, for example 15/12/2026.`);
+      ensure(p.dueOn, "A milestone needs a due date: /milestone title by DD/MM/YYYY");
       const m = await tracker.saveMilestone(actor, { groupId: group.id, title: p.title, startsOn: p.startsOn, dueOn: p.dueOn });
       return `Added milestone <b>${label("milestone", m.number)}</b> ${esc(m.title)}, due ${shortDate(m.dueOn, c.today)} (Group ${group.number}).`;
     },
@@ -373,8 +373,8 @@ export const COMMANDS: BotCommand[] = [
       const x = await item(c, args, "milestone", "editmilestone");
       const cur = await tracker.getMilestone(c.scope, x.id);
       const p = splitTitleAndDates(x.rest, c.today, true);
-      ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Try 15 Dec or 2026-12-15.`);
-      ensure(p.title || p.dueOn, "Give a new title, a new due date (by 15 Dec), or both.");
+      ensure(!p.badDue, `Couldn't read the date "${p.badDue}". Use DD/MM/YYYY, for example 15/12/2026.`);
+      ensure(p.title || p.dueOn, "Give a new title, a new due date (by DD/MM/YYYY), or both.");
       const m = await tracker.saveMilestone(actor, {
         id: x.id,
         groupId: cur.groupId,
@@ -469,6 +469,25 @@ function helpText(c: Ctx): Reply {
     parts.push("<p>Add g3 to a command to reach Group 3 of the current cohort (the live one, else the newest).</p>");
   }
   return { text: parts.join(""), rich: true };
+}
+
+/**
+ * /start: the button that opens the tracker Mini App. In a private chat (admins only get this far) it opens
+ * the app directly; Telegram allows that only there. A group chat gets a link to the app's direct link
+ * (TELEGRAM_MINI_APP_NAME, the short name from BotFather's /newapp) that names this project group; the app
+ * still checks the person is in the chat. Telegram refuses buttons to non-HTTPS addresses, so on localhost
+ * and until the app is set up, /start shows the command list as before.
+ */
+function startReply(ctx: Context, c: Ctx): Reply {
+  if (!SITE_URL.startsWith("https://")) return helpText(c);
+  const more = "Send /help for the commands.";
+  if (c.isPrivate) {
+    return { text: `<b>Project tracker</b>\nOpen it to see and update every project group. ${more}`, markup: { inline_keyboard: [[{ text: "Open tracker", web_app: { url: `${SITE_URL}/mini-app` } }]] } };
+  }
+  const app = process.env.TELEGRAM_MINI_APP_NAME;
+  if (!app || !c.group) return helpText(c);
+  const url = `https://t.me/${ctx.me.username}/${app}?startapp=g${c.group.number}`;
+  return { text: `<b>Project tracker: Group ${c.group.number}${c.group.name ? ` (${esc(c.group.name)})` : ""}</b>\nOpen it to see and update this project group. ${more}`, markup: { inline_keyboard: [[{ text: "Open tracker", url }]] } };
 }
 
 /** Delete and Cancel buttons only the person who asked can press: their Telegram ID ends the data. */
@@ -569,7 +588,7 @@ async function runCommand(ctx: Context, name: string, args: string) {
       if (isPrivate) return say("I don't know you yet. DAP exco: link your Telegram account in the CMS under Settings › Telegram.");
       return;
     }
-    if (name === "start") return say(helpText(c));
+    if (name === "start") return say(startReply(ctx, c));
     const cmd = COMMANDS.find((x) => x.name === name);
     return say(cmd ? await cmd.run(c, args) : "Unknown command. Send /help for the list.");
   } catch (error) {

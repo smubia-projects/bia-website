@@ -335,7 +335,8 @@ describe("button flows: commands without everything they need list the options",
     const prompt = calls.find((c) => c.method === "sendMessage") as Call;
     assert.deepEqual([prompt.body.reply_markup.force_reply, prompt.body.reply_markup.selective], [true, true]);
     assert.match(String(prompt.body.text), new RegExp(`tg://user\\?id=${MIA}`)); // the box opens for her only
-    assert.match(textOf(prompt), new RegExp(`reply with the task title[\\s\\S]*ref f:at:g3:2:${MIA}$`));
+    assert.match(textOf(prompt), new RegExp(`reply with the task title\\. Add “by DD/MM/YYYY” to set a due date\\.[\\s\\S]*ref f:at:g3:2:${MIA}$`));
+    assert.equal(prompt.body.reply_markup.input_field_placeholder, "Task title");
 
     // Someone else's reply to her prompt is ignored; a typo is caught before Confirm.
     assert.equal(await answer(MINGDA, prompt, "Not for you"), "");
@@ -355,6 +356,16 @@ describe("button flows: commands without everything they need list the options",
     await tap(MIA, ok, "Wire the demo by 20 Dec");
     assert.match(textOf(lastCall()), /Added task T1 to M2: Wire the demo, due 20 Dec\./);
     assert.equal((await milestone(2)).subtasks[0].dueOn, `${new Date().getFullYear()}-12-20`);
+  });
+
+  it("deadlines in DD/MM/YYYY, including next year, are read as typed and shown with their year", async () => {
+    await say(FLOW_CHAT, MIA, "/addtask 1");
+    const prompt = lastCall();
+    const nextYear = new Date().getFullYear() + 1;
+    await answer(MIA, prompt, `Plan the launch by 05/01/${nextYear}`);
+    assert.match(textOf(lastCall()), new RegExp(`Add task “Plan the launch”, due 5 Jan ${nextYear} to M1 “Scope”\\?`));
+    assert.match(await answer(MIA, prompt, "Plan by 31/11/2027"), /Couldn't read the date "31\/11\/2027"[\s\S]*Use DD\/MM\/YYYY, for example 20\/11\/2026/);
+    assert.equal((await milestone(1)).subtasks.length, 0); // only Confirm adds it
   });
 
   it("a task deadline after the milestone's is caught before Confirm", async () => {
@@ -569,7 +580,7 @@ describe("/listtask and the renamed commands", () => {
     assert.match(await say(FLOW_CHAT, MIA, "/ADDTASK@TestBot 1 Shouting"), /Added task/);
     assert.match(await say(FLOW_CHAT, MIA, "/listTask 1"), /Camel case/);
     const help = await say(FLOW_CHAT, MIA, "/help");
-    assert.match(help, /<td>\/addtask \[milestone#\] title \[by 20 Nov\]<\/td><td>Add a task<\/td>/);
+    assert.match(help, /<td>\/addtask \[milestone#\] title \[by DD\/MM\/YYYY\]<\/td><td>Add a task<\/td>/);
     assert.match(help, /<td>\/listtask \[g3\] \[milestone#\]<\/td><td>List tasks<\/td>/);
     assert.doesNotMatch(help, /<td>\/task /);
     assert.match(help, /Send a command on its own, such as \/addtask/);
@@ -659,5 +670,41 @@ describe("task deadline alerts", () => {
     assert.equal(await sendTaskDeadlineAlerts(bot.api, now0), 0);
     await t.setMeetingReminders(mingda, g4.id, true);
     assert.deepEqual((await t.dueTaskAlerts(today)).flatMap((x) => x.soon.map((a) => a.task.id)), [id]);
+  });
+});
+
+// ── /start opens the Mini App ────────────────────────────────────────────
+
+describe("/start opens the tracker Mini App", () => {
+  const GROUP_CHAT = -8880003; // Group 3's connected chat from the flow tests
+  const buttonsOf = () => calls.flatMap((c) => (c.body.reply_markup as { inline_keyboard?: Record<string, string>[][] } | undefined)?.inline_keyboard?.flat() ?? []);
+
+  it("a linked admin's private chat gets a button that opens the app directly", async () => {
+    const reply = await say(MINGDA, MINGDA, "/start");
+    assert.match(reply, /Project tracker/);
+    assert.match(reply, /Send \/help for the commands/);
+    assert.deepEqual(buttonsOf(), [{ text: "Open tracker", web_app: { url: "https://www.smubia.com/mini-app" } } as never]);
+  });
+
+  it("a group chat gets a link naming its project group, once the app is set up", async () => {
+    delete process.env.TELEGRAM_MINI_APP_NAME;
+    assert.match(await say(GROUP_CHAT, MIA, "/start"), /<h3>Tracker Commands<\/h3>/); // not set up: the command list, as before
+    assert.deepEqual(buttonsOf(), []);
+
+    process.env.TELEGRAM_MINI_APP_NAME = "tracker";
+    try {
+      const reply = await say(GROUP_CHAT, MIA, "/start");
+      assert.match(reply, /Project tracker: Group 3 \(Gamma\)/);
+      // A link button: Telegram only allows a button that opens an app directly in a private chat.
+      assert.deepEqual(buttonsOf(), [{ text: "Open tracker", url: "https://t.me/TestBot/tracker?startapp=g3" }]);
+      assert.equal(await say(OTHER_CHAT, MIA, "/start"), ""); // a chat that isn't connected stays silent
+    } finally {
+      delete process.env.TELEGRAM_MINI_APP_NAME;
+    }
+  });
+
+  it("someone the bot doesn't know gets no button in a private chat", async () => {
+    assert.match(await say(STRANGER, STRANGER, "/start"), /I don't know you yet/);
+    assert.deepEqual(buttonsOf(), []);
   });
 });

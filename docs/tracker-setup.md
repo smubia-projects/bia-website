@@ -78,11 +78,11 @@ The menus follow the command list on their own: after a deploy, the first update
 backstop) compares Telegram's menus with it and fixes any difference, so a renamed command shows up without anyone
 pressing Set Webhook (which also syncs them). Telegram apps cache the menu: reopen the chat or restart the app to see it.
 
-- **Everyone in a connected chat:** `/milestones`, `/addtask [milestone#] title [by 20 Nov]`, `/listtask [g3] [milestone#]`,
+- **Everyone in a connected chat:** `/milestones`, `/addtask [milestone#] title [by DD/MM/YYYY]`, `/listtask [g3] [milestone#]`,
   `/edittask`, `/taskstatus [task#] todo|doing|done`, `/taskdone`, `/assign [task#] name|me|none`, `/deltask`,
   `/blocker [milestone#] text`, `/editblocker`, `/resolve`, `/reopenblocker`, `/delblocker`, `/meeting [date]`.
   (`/task` was renamed: it now replies with a pointer to `/addtask` and `/listtask`.)
-- **DAP exco:** `/milestone [g3] title [from 1 Dec] by 15 Dec`, `/editmilestone`, `/done`, `/status`,
+- **DAP exco:** `/milestone [g3] title [from DD/MM/YYYY] by DD/MM/YYYY`, `/editmilestone`, `/done`, `/status`,
   `/delmilestone`, `/reminders [g3] on|off`, and `/groups` in a private chat.
 
 Command names ignore case (`/addTask` works like `/addtask`); the "/" menu shows them in lower case, which Telegram requires.
@@ -92,7 +92,7 @@ Command names ignore case (`/addTask` works like `/addtask`); the "/" menu shows
 A command sent without everything it needs doesn't fail: it lists the options as buttons, asks for any typed answer
 (a title) as a reply, and ends with a **Confirm** button. `/addtask` on its own lists the milestones, then asks for
 the title, then confirms. Whatever is already typed is kept and its step skipped: `/addtask 3` goes straight to the
-title, `/addtask Draft the deck by 20 Nov` only asks for the milestone, `/taskstatus 5` only for the status. A
+title, `/addtask Draft the deck by 20/11/2026` only asks for the milestone, `/taskstatus 5` only for the status. A
 command with everything typed in (`/addtask 3 Draft the deck`) still runs at once with no Confirm. Deletes end in
 their usual Delete/Cancel step. Lists show only what applies (`/taskdone` lists tasks that aren't done, `/resolve`
 open blockers), and an admin in a private chat picks the project group first.
@@ -115,15 +115,50 @@ across groups, an admin in a private chat names the group too: `/done g3 2`.
 Mia Lim, "jay" does not find Jayden); a name that
 matches nobody is kept as typed (shown as not on the member list); one that matches several members is refused.
 
-Dates: `by 20 Nov`, `by 20/11`, `by 2026-11-20` or `by tomorrow`. Without a year a due date is the next such
-day (`by 5 Jan` in November means next January) and a meeting date the last one. A date that is not real
-(`by 31 Nov`) is refused; other words after "by" stay in the title ("Presentation by the team"). `/edittask 5 by
-22 Nov` changes only the due date. Only milestones take a start date (`from 1 Dec`).
+Dates: the bot asks for **DD/MM/YYYY** with the year (`by 20/11/2026`), so deadlines that run into next year are never
+ambiguous. It still reads `by 20 Nov`, `by 20/11`, `by 2026-11-20` and `by tomorrow`; without a year a due date is the
+next such day (`by 5 Jan` in November means next January) and a meeting date the last one. A date that is not real
+(`by 31/11/2026`) is refused; other words after "by" stay in the title ("Presentation by the team"). `/edittask 5 by
+22/11/2026` changes only the due date. Only milestones take a start date (`from 01/12/2026`).
 
 Lists (`/milestones`, a milestone's tasks and blockers, `/groups`, the reminder) are Telegram rich messages with
 tables. Each milestone's number in `/milestones` is a button that opens its tasks and blockers. In a private chat,
 admin views also have an **Open in CMS** button (never in a group chat, where members would see it; not on
 localhost, which Telegram refuses). Delete and Cancel only work for the person who asked.
+
+## Mini App (spike)
+
+`/start` opens the tracker as a Telegram Mini App (`/mini-app`), alongside the commands, which stay. Today it is read-only:
+who you are, the project groups you may open, their milestones and tasks, and (for DAP exco) what Telegram says about
+membership in each connected chat.
+
+**Set it up**
+
+1. Make the bot an **admin of each project group's chat**. Telegram only guarantees `getChatMember` for other users when
+   the bot is an admin (no extra rights are needed).
+2. In BotFather: `/newapp`, pick the bot, give it a title, description and a 640×360 image, set the web app URL to
+   `https://www.smubia.com/mini-app` (your `NEXT_PUBLIC_SITE_URL` + `/mini-app`), and a short name such as `tracker`.
+3. Set `TELEGRAM_MINI_APP_NAME` to that short name and redeploy.
+
+**How it behaves**
+
+- A linked DAP exco sends `/start` in a private chat with the bot and gets an **Open tracker** button that opens the app
+  directly (Telegram allows that only in private chats). Anyone else is answered as before ("I don't know you yet").
+- In a connected project group's chat `/start` posts an **Open tracker** link to `https://t.me/<bot>/<short name>?startapp=g3`.
+  Without `TELEGRAM_MINI_APP_NAME`, or on localhost (Telegram refuses non-HTTPS buttons), `/start` shows the command list.
+- **Telegram signs every launch** (`initData`); the server checks the signature on each request
+  (`Authorization: tma <initData>`) and refuses one older than an hour, so there is no session to steal.
+- **Access never comes from the link.** A link can be forwarded or typed by hand, so `startapp=g3` is only a hint for which
+  project group to open first. A DAP exco (linked Telegram ID) may open every project group. Anyone else gets a project
+  group only if Telegram confirms (`getChatMember`) they are in its connected chat: the same "everyone in the chat is a member"
+  rule as the bot. Answers are reused for a minute, so someone who leaves a chat loses access within a minute.
+- The app calls the same service layer as the bot and dashboard (`tracker.ts`), so permissions and rules (project group scope,
+  the task-deadline limit, numbering) are the same.
+
+**The spike's question: does `getChatMember` work in your chats?** Open the app as a DAP exco and read **Membership Check**:
+it lists, per connected chat, Telegram's answer for you (`creator`, `administrator`, `member`…) or its error, for example
+`member list is inaccessible` when the bot is not an admin there. A status means members can be checked; an error means the bot
+needs admin rights in that chat (or that chat can't be used this way).
 
 ## Dashboard
 
@@ -139,8 +174,8 @@ DAP exco and exco admins only (`can.tracker`); AI Lodge roles and lodge heads ge
 
 ## Task deadlines
 
-A task gets a deadline with `by 20 Nov`: `/addtask 3 Draft deck by 20 Nov`, `/edittask T5 by 20 Nov` (changes only the
-date), or in the typed answer of the button flows. On the dashboard it is the date field on the task. **A task can't be
+A task gets a deadline with `by DD/MM/YYYY`: `/addtask 3 Draft deck by 20/11/2026`, `/edittask T5 by 20/11/2026` (changes
+only the date), or in the typed answer of the button flows. On the dashboard it is the date field on the task. **A task can't be
 due after its milestone**: the service refuses it, so the bot, the dashboard and the MCP tools all follow the rule, and
 the button flows catch it before Confirm. The other way round, moving a milestone's deadline earlier than one of its
 tasks' is refused with the tasks to change first. Only a due date being set is checked, so editing the title or status

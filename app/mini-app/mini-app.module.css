@@ -1,0 +1,113 @@
+/* The tracker Mini App. Colours come from Telegram's theme variables (set by telegram-web-app.js), so it matches
+   light and dark Telegram; the site tokens are the fallback when the script is missing. */
+
+.app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  padding: 16px 16px 32px;
+  background: var(--tg-theme-bg-color, var(--bg));
+  color: var(--tg-theme-text-color, var(--ink));
+  font-family: var(--font-inter), system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.h1 {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+.h3 {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--tg-theme-hint-color, var(--ink-faint));
+}
+.note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--tg-theme-secondary-bg-color, var(--surface-muted));
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--tg-theme-secondary-bg-color, var(--surface));
+}
+.row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.chip {
+  flex: none;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--tg-theme-hint-color, var(--ink-soft));
+}
+.done {
+  color: var(--emerald);
+}
+.bad {
+  color: #b91c1c;
+}
+.tasks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+.tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+.tab {
+  flex: none;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tg-theme-secondary-bg-color, var(--surface-muted));
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tab[aria-pressed="true"] {
+  background: var(--tg-theme-button-color, var(--emerald));
+  color: var(--tg-theme-button-text-color, #fff);
+}

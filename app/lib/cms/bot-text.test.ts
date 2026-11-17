@@ -16,6 +16,17 @@ describe("parseDate", () => {
     assert.equal(parseDate("yesterday", today), "2026-11-12");
     assert.equal(parseDate("today", "2026-03-01"), "2026-03-01");
   });
+  it("reads DD/MM/YYYY day first, with a four-digit year", () => {
+    assert.equal(parseDate("05/01/2027", today), "2027-01-05"); // 5 January, not 1 May
+    assert.equal(parseDate("31/12/2026", today), "2026-12-31");
+    assert.equal(parseDate("1/2/2028", today), "2028-02-01");
+    assert.equal(parseDate("29/02/2028", today), "2028-02-29"); // a leap day
+    for (const bad of ["29/02/2027", "31/11/2026", "12/13/2026", "00/01/2027"]) assert.equal(parseDate(bad, today), null, bad);
+    const p = splitTitleAndDates("Plan the launch by 05/01/2027", today);
+    assert.deepEqual([p.title, p.dueOn], ["Plan the launch", "2027-01-05"]);
+    const m = splitTitleAndDates("Review from 01/12/2026 by 05/01/2027", today, true);
+    assert.deepEqual([m.title, m.startsOn, m.dueOn], ["Review", "2026-12-01", "2027-01-05"]);
+  });
   it("rejects what is not a real date", () => {
     for (const bad of ["31 Feb", "2026-02-30", "soon", "13/13", "32 Nov", "20 Foo"]) assert.equal(parseDate(bad, today), null, bad);
   });
