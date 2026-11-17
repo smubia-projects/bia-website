@@ -482,12 +482,12 @@ function startReply(ctx: Context, c: Ctx): Reply {
   if (!SITE_URL.startsWith("https://")) return helpText(c);
   const more = "Send /help for the commands.";
   if (c.isPrivate) {
-    return { text: `<b>Project tracker</b>\nOpen it to see and update every project group. ${more}`, markup: { inline_keyboard: [[{ text: "Open tracker", web_app: { url: `${SITE_URL}/mini-app` } }]] } };
+    return { text: `<b>Project tracker</b>\nOpen it to see every project group's milestones and tasks. ${more}`, markup: { inline_keyboard: [[{ text: "Open tracker", web_app: { url: `${SITE_URL}/mini-app` } }]] } };
   }
   const app = process.env.TELEGRAM_MINI_APP_NAME;
   if (!app || !c.group) return helpText(c);
   const url = `https://t.me/${ctx.me.username}/${app}?startapp=g${c.group.number}`;
-  return { text: `<b>Project tracker: Group ${c.group.number}${c.group.name ? ` (${esc(c.group.name)})` : ""}</b>\nOpen it to see and update this project group. ${more}`, markup: { inline_keyboard: [[{ text: "Open tracker", url }]] } };
+  return { text: `<b>Project tracker: Group ${c.group.number}${c.group.name ? ` (${esc(c.group.name)})` : ""}</b>\nOpen it to see this project group's milestones and tasks. ${more}`, markup: { inline_keyboard: [[{ text: "Open tracker", url }]] } };
 }
 
 /** Delete and Cancel buttons only the person who asked can press: their Telegram ID ends the data. */

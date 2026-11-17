@@ -128,26 +128,33 @@ const hinted = (startParam: string) => {
 };
 
 /**
- * What a launch may open. `diagnose` also asks Telegram about every connected chat, so an admin can see
- * whether the bot is able to check membership there (the answer, or the error, is shown to admins only).
+ * What a launch may open. `only` asks about that one project group (a timeline request needs nothing else).
+ * `diagnose` also asks Telegram about every connected chat, so an admin can see whether the bot is able to
+ * check membership there; members never trigger it, since they are never shown the answers.
  */
-export async function resolveAccess(launch: Launch, api: Api, opts: { diagnose?: boolean; now?: number } = {}): Promise<Access> {
+export async function resolveAccess(launch: Launch, api: Api, opts: { diagnose?: boolean; only?: number; now?: number } = {}): Promise<Access> {
   const now = opts.now ?? Date.now();
   const admin = await tracker.adminByTelegramId(launch.user.id);
   const connected = await tracker.connectedGroups();
   const checks: Access["checks"] = [];
 
-  if (opts.diagnose) {
-    for (const g of connected) {
-      const r = await membership(api, g.telegramChatId!, launch.user.id, now);
-      checks.push({ group: g.number, chatId: g.telegramChatId!, ...(r.status ? { status: r.status } : {}), ...(r.error ? { error: r.error } : {}) });
-    }
-  }
-
   if (admin) {
+    if (opts.diagnose) {
+      for (const g of connected) {
+        const r = await membership(api, g.telegramChatId!, launch.user.id, now);
+        checks.push({ group: g.number, chatId: g.telegramChatId!, ...(r.status ? { status: r.status } : {}), ...(r.error ? { error: r.error } : {}) });
+      }
+    }
     const cohortId = await tracker.trackerCohortId();
     const groups = cohortId ? await tracker.listProjectGroups(admin, cohortId) : [];
     return { launch, admin, groups: groups.map((group) => ({ group, how: "admin" as const })), checks };
+  }
+
+  // One project group asked for: one question to Telegram, about that group's chat only.
+  if (opts.only !== undefined) {
+    const group = connected.find((g) => g.number === opts.only);
+    const member = group && (await membership(api, group.telegramChatId!, launch.user.id, now)).member;
+    return { launch, admin: null, groups: member ? [{ group, how: "member" }] : [], checks };
   }
 
   // The linked group first: one question to Telegram in the usual case. Only a member of it gets it.
@@ -206,7 +213,7 @@ export async function handleTimeline(request: Request, api: Api, token = telegra
     const raw = new URL(request.url).searchParams.get("group") ?? "";
     ensure(/^\d+$/.test(raw), "Choose a project group.");
     const number = Number(raw);
-    const access = await resolveAccess(launch, api, { now });
+    const access = await resolveAccess(launch, api, { only: number, now });
     const entry = access.groups.find((g) => g.group.number === number);
     if (!entry) return json({ error: "You are not in that project group's chat." }, 403);
     const who = access.admin ? tracker.adminWho(access.admin) : tracker.memberWho(entry.group.id, launch.user.name);

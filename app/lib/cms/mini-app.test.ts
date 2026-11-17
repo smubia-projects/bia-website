@@ -149,11 +149,25 @@ describe("who may open which project group", () => {
       assert.equal(numbers(a).includes(1), expected, JSON.stringify(answer));
     }
     clearMembershipCache();
-    const broken = telegram({ "-1001:2001": new Error(`Forbidden at https://api.telegram.org/bot${TOKEN}/getChatMember`), "-1002:2001": new Error("Bad Request: chat not found") });
-    const a = await resolveAccess(as(MIA, "g1"), broken.api, { diagnose: true, now: NOW });
-    assert.deepEqual(numbers(a), []);
+    const forbidden = () => new Error(`Forbidden at https://api.telegram.org/bot${TOKEN}/getChatMember`);
+    const broken = telegram({ "-1001:2001": forbidden(), "-1002:2001": new Error("Bad Request: chat not found"), "-1001:111": forbidden() });
+    assert.deepEqual(numbers(await resolveAccess(as(MIA, "g1"), broken.api, { now: NOW })), []);
+    const a = await resolveAccess(as(MINGDA), broken.api, { diagnose: true, now: NOW });
     assert.match(a.checks[0].error!, /bot<token>/);
     assert.ok(!JSON.stringify(a.checks).includes("TEST-TOKEN"));
+  });
+
+  it("a member never asks about chats they don't need: no diagnostics, and one question for one project group", async () => {
+    const { api, asked } = telegram({ "-1001:2001": "member" });
+    const a = await resolveAccess(as(MIA, "g1"), api, { diagnose: true, now: NOW });
+    assert.deepEqual([numbers(a), a.checks, asked], [[1], [], ["-1001:2001"]]);
+
+    clearMembershipCache();
+    const other = telegram({ "-1002:2001": "member" });
+    assert.deepEqual(numbers(await resolveAccess(as(MIA, "g1"), other.api, { only: 2, now: NOW })), [2]); // the link names g1; only g2 is asked
+    assert.deepEqual(other.asked, ["-1002:2001"]);
+    assert.deepEqual(numbers(await resolveAccess(as(MIA), other.api, { only: 3, now: NOW })), []); // no connected chat: nothing to ask
+    assert.deepEqual(other.asked, ["-1002:2001"]);
   });
 
   it("a role without tracker access is a member like anyone else, and answers are reused for a minute", async () => {
