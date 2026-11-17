@@ -8,6 +8,7 @@ import {
   formatGroups,
   formatMeetingReminder,
   formatMilestone,
+  formatTaskDeadlines,
   formatTasks,
   formatTimeline,
   noonSgt,
@@ -415,7 +416,7 @@ export const COMMANDS: BotCommand[] = [
     name: "reminders",
     admin: true,
     usage: "[g3] on|off",
-    description: "Turn meeting reminders on or off",
+    description: "Turn reminders on or off (meetings and task deadlines)",
     async run(c, args) {
       const flow = await begin(c, "rm", args);
       if (flow) return flow;
@@ -424,7 +425,7 @@ export const COMMANDS: BotCommand[] = [
       ensure(m, `Usage: ${usageOf("reminders")}`);
       const group = await groupFor(c, m[1] ? Number(m[1]) : undefined);
       const g = await tracker.setMeetingReminders(actor, group.id, m[2].toLowerCase() === "on");
-      return `Meeting reminders for Group ${g.number} are ${g.meetingRemindersOn ? "on" : "off"}.`;
+      return `Reminders for Group ${g.number} are ${g.meetingRemindersOn ? "on" : "off"}.`;
     },
   },
 ];
@@ -707,6 +708,35 @@ export async function sendMeetingReminders(api: Api = telegramApi(), now = new D
     }
   }
   return sent;
+}
+
+// ── Task deadline alerts (called by the daily cron) ──────────────────────
+
+/**
+ * Posts each connected group's task deadline alert: tasks due within a week, and tasks whose deadline has
+ * passed, each task once per due date. Returns how many tasks were alerted. A failed send is released so
+ * tomorrow's run retries, and one group failing never stops the others.
+ */
+export async function sendTaskDeadlineAlerts(api: Api = telegramApi(), now = new Date()) {
+  const today = sgtDay(now);
+  let alerted = 0;
+  for (const { group, soon, overdue } of await tracker.dueTaskAlerts(today)) {
+    const gotSoon = new Set(await tracker.claimTaskAlerts("soon", soon.map((a) => a.task.id), now));
+    const gotOverdue = new Set(await tracker.claimTaskAlerts("overdue", overdue.map((a) => a.task.id), now));
+    const nowSoon = soon.filter((a) => gotSoon.has(a.task.id));
+    const nowOverdue = overdue.filter((a) => gotOverdue.has(a.task.id));
+    if (!nowSoon.length && !nowOverdue.length) continue;
+    try {
+      const members = await tracker.listMembers(tracker.memberWho(group.id, "Reminder"), group.id);
+      await api.sendRichMessage(group.telegramChatId!, { html: formatTaskDeadlines(group, nowSoon, nowOverdue, members, today) });
+      alerted += nowSoon.length + nowOverdue.length;
+    } catch (error) {
+      await tracker.releaseTaskAlerts("soon", nowSoon.map((a) => a.task.id));
+      await tracker.releaseTaskAlerts("overdue", nowOverdue.map((a) => a.task.id));
+      console.warn(`[bot] task alerts for group ${group.number} failed:`, error instanceof Error ? error.message : error);
+    }
+  }
+  return alerted;
 }
 
 // ── Command menus ────────────────────────────────────────────────────────

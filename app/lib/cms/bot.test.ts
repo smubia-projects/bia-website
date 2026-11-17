@@ -12,7 +12,8 @@ import { getDb } from "@/app/lib/db";
 import { cohorts, people, projectGroups } from "@/app/lib/db/schema";
 import type { Api } from "grammy";
 import type { Update } from "grammy/types";
-import { botMenus, ensureBotCommands, sendMeetingReminders, syncBotCommands } from "./bot";
+import { sgtDay } from "./bot-text";
+import { botMenus, ensureBotCommands, sendMeetingReminders, sendTaskDeadlineAlerts, syncBotCommands } from "./bot";
 import { telegramApi } from "./telegram";
 import { createBot, offlineBotInfo } from "./telegram-bot";
 import { createAccountLink, createChatLink } from "./telegram-link";
@@ -122,7 +123,10 @@ describe("working in Group 1's chat", () => {
     assert.match(await say(CHAT, MIA, "/taskstatus T1 todo"), /Task <b>T1<\/b> Draft deck is now todo/); // T1 works as well as 1
     assert.match(await say(CHAT, MIA, "/addtask 1 Review by 31 Nov"), /Couldn't read the date "31 Nov"/); // a typo is refused, not kept in the title
     assert.match(await say(CHAT, MIA, "/edittask 1 by 31 Nov"), /Couldn't read the date "31 Nov"/);
-    assert.match(await say(CHAT, MIA, "/edittask 1 by 25 Dec"), /Updated task <b>T1<\/b>: Draft deck\./); // only the date changes
+    // A task can't be due after its milestone (M1 is due 15 Dec), by command or by edit.
+    assert.match(await say(CHAT, MIA, "/edittask 1 by 25 Dec"), /A task can't be due after its milestone: M1 is due 15 Dec 2026\./);
+    assert.match(await say(CHAT, MIA, "/addtask 1 Too late by 16 Dec"), /A task can't be due after its milestone: M1 is due 15 Dec 2026\./);
+    assert.match(await say(CHAT, MIA, "/edittask 1 by 15 Dec"), /Updated task <b>T1<\/b>: Draft deck\./); // the milestone's own deadline is fine; only the date changes
     assert.match(await say(CHAT, MIA, `/assign 1 nobody-here`), /assigned to "nobody-here" \(not on the member list\)/);
     assert.match(await say(CHAT, MIA, `/assign 1 me`), /assigned to Mia Lim\./); // her Telegram name, "Mia", matches the list
     assert.match(await say(CHAT, MIA, `/assign 1 mia`), /assigned to Mia Lim\./); // a whole word of a name on the list
@@ -353,6 +357,17 @@ describe("button flows: commands without everything they need list the options",
     assert.equal((await milestone(2)).subtasks[0].dueOn, `${new Date().getFullYear()}-12-20`);
   });
 
+  it("a task deadline after the milestone's is caught before Confirm", async () => {
+    await say(FLOW_CHAT, MIA, "/addtask 1"); // M1 Scope is due 1 Feb 2030
+    const prompt = lastCall();
+    assert.match(await answer(MIA, prompt, "Too late by 5 Mar 2030"), /A task can't be due after its milestone: M1 is due 1 Feb 2030\./);
+    assert.ok(!calls.some((c) => buttonsOf(c as Call).length)); // no Confirm button was offered
+    await answer(MIA, prompt, "On time by 1 Feb 2030");
+    assert.match(textOf(lastCall()), /Add task “On time”, due 1 Feb 2030 to M1 “Scope”\?/);
+    // The reply above only reached Confirm; nothing was added, so later tests count the same tasks.
+    assert.equal((await milestone(1)).subtasks.length, 0);
+  });
+
   it("a partly typed command skips the steps already answered", async () => {
     await say(FLOW_CHAT, MIA, "/addtask 1"); // milestone given: asks for the title at once
     assert.match(textOf(lastCall()), /reply with the task title[\s\S]*M1 Scope[\s\S]*ref f:at:g3:1:/);
@@ -489,9 +504,9 @@ describe("button flows: commands without everything they need list the options",
     await say(FLOW_CHAT, MINGDA, "/reminders");
     assert.deepEqual(buttonsOf(lastCall()).map((b) => b.text), ["On", "Off", "Cancel"]);
     await tap(MINGDA, dataOf(lastCall(), /Off/));
-    assert.match(textOf(lastCall()), /Turn meeting reminders off for Group 3\?/);
+    assert.match(textOf(lastCall()), /Turn reminders off for Group 3\?/);
     await tap(MINGDA, dataOf(lastCall(), /Confirm/));
-    assert.match(textOf(lastCall()), /Meeting reminders for Group 3 are off/);
+    assert.match(textOf(lastCall()), /Reminders for Group 3 are off/);
 
     await say(FLOW_CHAT, MINGDA, "/status");
     await tap(MINGDA, dataOf(lastCall(), /M2/));
@@ -558,5 +573,91 @@ describe("/listtask and the renamed commands", () => {
     assert.match(help, /<td>\/listtask \[g3\] \[milestone#\]<\/td><td>List tasks<\/td>/);
     assert.doesNotMatch(help, /<td>\/task /);
     assert.match(help, /Send a command on its own, such as \/addtask/);
+  });
+});
+
+// ── Task deadline alerts ─────────────────────────────────────────────────
+
+describe("task deadline alerts", () => {
+  const ALERT_CHAT = -8880004;
+  const day = 86_400_000;
+  const now0 = new Date();
+  const today = sgtDay(now0);
+  const plus = (n: number) => new Date(Date.parse(`${today}T00:00:00Z`) + n * day).toISOString().slice(0, 10);
+  const at = (n: number) => new Date(now0.getTime() + n * day); // the same moment, n days later
+  let g4: t.ProjectGroup;
+  const ids: Record<string, number> = {};
+  const who = () => t.adminWho(mingda);
+  const alertCalls = () => calls.filter((c) => c.method === "sendRichMessage");
+
+  before(async () => {
+    g4 = await t.saveProjectGroup(mingda, { cohortId: "dap-test", number: 4, name: "Delta" });
+    await t.connectChat(g4.id, ALERT_CHAT);
+    await t.saveMember(mingda, { groupId: g4.id, name: "Mia Lim" });
+    const m = await t.saveMilestone(mingda, { groupId: g4.id, title: "Launch", dueOn: plus(60) });
+    const add = async (key: string, due: string | null, status?: "done") => {
+      ids[key] = (await t.addSubtask(who(), { milestoneId: m.id, title: key, dueOn: due, ...(status ? { status } : {}), assigneeName: key === "soon" ? "Mia" : undefined })).id;
+    };
+    await add("soon", plus(3));
+    await add("week", plus(7));
+    await add("later", plus(8));
+    await add("late", plus(-2));
+    await add("done", plus(2), "done");
+    await add("undated", null);
+  });
+
+  it("alerts a task due within a week and one already overdue, once each, in one message", async () => {
+    calls = [];
+    assert.equal(await sendTaskDeadlineAlerts(bot.api, now0), 3); // soon, week, late
+    const [call] = alertCalls();
+    assert.equal(alertCalls().length, 1);
+    assert.equal(call.body.chat_id, ALERT_CHAT);
+    const html = sent(call);
+    assert.match(html, /<h3>Task Deadlines: Group 4 \(Delta\)<\/h3>/);
+    assert.match(html, /<h4>Overdue<\/h4>[\s\S]*<td>late<\/td>[\s\S]*2 days ago/);
+    assert.match(html, /<h4>Due Within a Week<\/h4>[\s\S]*<td>soon<\/td>[\s\S]*in 3 days[\s\S]*<td>week<\/td>[\s\S]*in 7 days/);
+    assert.ok(html.indexOf("Overdue") < html.indexOf("Due Within a Week")); // the urgent part first
+    assert.match(html, /<td>Launch<\/td>|M1: Launch/);
+    assert.doesNotMatch(html, /<td>later<\/td>|<td>done<\/td>|<td>undated<\/td>/);
+    calls = [];
+    assert.equal(await sendTaskDeadlineAlerts(bot.api, now0), 0); // nothing is repeated
+    assert.equal(alertCalls().length, 0);
+  });
+
+  it("alerts again, once, when a task's deadline passes, and when the next one comes within a week", async () => {
+    calls = [];
+    // 4 days later: "later" (due in 8 days) is now within a week; "soon" (due in 3 days) has passed.
+    assert.equal(await sendTaskDeadlineAlerts(bot.api, at(4)), 2);
+    const html = sent(alertCalls()[0]);
+    assert.match(html, /<h4>Overdue<\/h4>[\s\S]*<td>soon<\/td>[\s\S]*Mia/); // overdue: the one that was due in 3 days
+    assert.match(html, /<h4>Due Within a Week<\/h4>[\s\S]*<td>later<\/td>[\s\S]*in 4 days/);
+    calls = [];
+    assert.equal(await sendTaskDeadlineAlerts(bot.api, at(4)), 0);
+    // 9 days later "week" and "later" have passed too: one overdue alert each, never a second.
+    assert.equal(await sendTaskDeadlineAlerts(bot.api, at(9)), 2);
+    assert.doesNotMatch(sent(alertCalls()[0]), /Due Within a Week/);
+    assert.equal(await sendTaskDeadlineAlerts(bot.api, at(30)), 0);
+  });
+
+  it("a failed send is retried next run, and a new deadline gets fresh alerts", async () => {
+    const fresh = (await t.addSubtask(who(), { milestoneId: (await t.getTimeline(who(), g4.id))[0].id, title: "fresh", dueOn: plus(2) })).id;
+    const failing = { sendRichMessage: async () => { throw new Error("bot was kicked"); } } as unknown as Api;
+    assert.equal(await sendTaskDeadlineAlerts(failing, now0), 0);
+    assert.deepEqual((await t.dueTaskAlerts(today)).flatMap((x) => x.soon.map((a) => a.task.id)), [fresh]); // released
+    calls = [];
+    assert.equal(await sendTaskDeadlineAlerts(bot.api, now0), 1);
+    // Moving the deadline starts its alerts again; marking it done ends them.
+    await t.updateSubtask(who(), fresh, { dueOn: plus(5) });
+    assert.equal((await t.dueTaskAlerts(today)).length, 1);
+    await t.updateSubtask(who(), fresh, { status: "done" });
+    assert.equal((await t.dueTaskAlerts(today)).length, 0);
+  });
+
+  it("stays quiet for groups with reminders off", async () => {
+    const id = (await t.addSubtask(who(), { milestoneId: (await t.getTimeline(who(), g4.id))[0].id, title: "quiet", dueOn: plus(1) })).id;
+    await t.setMeetingReminders(mingda, g4.id, false);
+    assert.equal(await sendTaskDeadlineAlerts(bot.api, now0), 0);
+    await t.setMeetingReminders(mingda, g4.id, true);
+    assert.deepEqual((await t.dueTaskAlerts(today)).flatMap((x) => x.soon.map((a) => a.task.id)), [id]);
   });
 });

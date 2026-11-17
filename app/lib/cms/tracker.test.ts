@@ -201,3 +201,104 @@ describe("meetings and reminders", () => {
     assert.deepEqual(await t.dueMeetingReminders(), []);
   });
 });
+
+describe("task deadlines", () => {
+  const who = () => t.adminWho(dapExco);
+  const today = new Date(Date.now() + 8 * 3_600_000).toISOString().slice(0, 10);
+  const plus = (n: number) => new Date(Date.parse(`${today}T00:00:00Z`) + n * DAY).toISOString().slice(0, 10);
+  let g: t.ProjectGroup;
+  let ms: Awaited<ReturnType<typeof t.saveMilestone>>; // due in 30 days
+
+  before(async () => {
+    // An earlier test archives the shared cohort; alerts skip archived ones, so start from a live one.
+    await (await getDb()).update(cohorts).set({ visibility: "live" }).where(eq(cohorts.id, cohortId));
+    g = await t.saveProjectGroup(dapExco, { cohortId, number: 7, name: "Deadlines" });
+    await t.connectChat(g.id, -7007);
+    ms = await t.saveMilestone(dapExco, { groupId: g.id, title: "Ship", dueOn: plus(30) });
+  });
+
+  it("a task can't be due after its milestone, whether it is added or edited", async () => {
+    const onTheDay = await t.addSubtask(who(), { milestoneId: ms.id, title: "On the day", dueOn: plus(30) });
+    await rejects(t.addSubtask(who(), { milestoneId: ms.id, title: "Late", dueOn: plus(31) }), /A task can't be due after its milestone: M\d+ is due \d+ \w+ \d{4}\./);
+    await rejects(t.updateSubtask(who(), onTheDay.id, { dueOn: plus(31) }), /can't be due after its milestone/);
+    assert.equal((await t.updateSubtask(who(), onTheDay.id, { dueOn: plus(29) })).dueOn, plus(29));
+    assert.equal((await t.updateSubtask(who(), onTheDay.id, { dueOn: null })).dueOn, null); // no deadline is fine
+    // A member is held to the same rule.
+    await rejects(t.addSubtask(t.memberWho(g.id, "Mia"), { milestoneId: ms.id, title: "Late", dueOn: plus(45) }), /can't be due after/);
+    await t.deleteSubtask(who(), onTheDay.id);
+  });
+
+  it("an older task already past its milestone only fails when its due date is being set", async () => {
+    const task = await t.addSubtask(who(), { milestoneId: ms.id, title: "Older" });
+    await (await getDb()).update((await import("@/app/lib/db/schema")).subtasks).set({ dueOn: plus(40) }).where(eq((await import("@/app/lib/db/schema")).subtasks.id, task.id));
+    assert.equal((await t.updateSubtask(who(), task.id, { title: "Older, renamed", status: "in_progress" })).title, "Older, renamed");
+    await rejects(t.updateSubtask(who(), task.id, { dueOn: plus(40) }), /can't be due after/);
+    await t.deleteSubtask(who(), task.id);
+  });
+
+  it("a milestone's deadline can't move before a task's", async () => {
+    const early = await t.addSubtask(who(), { milestoneId: ms.id, title: "Early", dueOn: plus(20) });
+    const mid = await t.addSubtask(who(), { milestoneId: ms.id, title: "Mid", dueOn: plus(25) });
+    await rejects(t.saveMilestone(dapExco, { id: ms.id, groupId: g.id, title: "Ship", dueOn: plus(22) }), /T\d+ \(\d+ \w+ \d{4}\) is due after \d+ \w+ \d{4}\. Change its due date first\./);
+    await rejects(t.saveMilestone(dapExco, { id: ms.id, groupId: g.id, title: "Ship", dueOn: plus(10) }), /T\d+ \([^)]+\), T\d+ \([^)]+\) are due after[\s\S]*Change their due date first/);
+    assert.equal((await t.saveMilestone(dapExco, { id: ms.id, groupId: g.id, title: "Ship", dueOn: plus(25) })).dueOn, plus(25)); // equal is fine
+    assert.equal((await t.saveMilestone(dapExco, { id: ms.id, groupId: g.id, title: "Ship it", dueOn: plus(25) })).title, "Ship it");
+    assert.equal((await t.saveMilestone(dapExco, { id: ms.id, groupId: g.id, title: "Ship it", dueOn: plus(30) })).dueOn, plus(30)); // later is fine
+    await t.deleteSubtask(who(), early.id);
+    await t.deleteSubtask(who(), mid.id);
+  });
+
+  it("finds the tasks to alert about: due within a week or overdue, not done, once each", async () => {
+    const add = (title: string, due: string | null, status?: "done") => t.addSubtask(who(), { milestoneId: ms.id, title, dueOn: due, ...(status ? { status } : {}) });
+    const [soon, week, later, late] = [await add("soon", plus(3)), await add("week", plus(7)), await add("later", plus(8)), await add("late", plus(-1))];
+    await add("done", plus(2), "done"); // finished tasks are never alerted
+    await add("undated", null);
+    const mine = async (day: string) => (await t.dueTaskAlerts(day)).find((x) => x.group.id === g.id);
+    const nums = (list?: t.TaskAlert[]) => (list ?? []).map((a) => a.task.number);
+
+    let a = await mine(today);
+    assert.deepEqual([nums(a?.soon), nums(a?.overdue)], [[soon.number, week.number], [late.number]]);
+    assert.equal(a?.soon[0].milestone.number, ms.number);
+
+    // Claiming is once: a second claim of the same tasks gets nothing.
+    assert.deepEqual((await t.claimTaskAlerts("soon", [soon.id, week.id])).sort(), [soon.id, week.id].sort());
+    assert.deepEqual(await t.claimTaskAlerts("soon", [soon.id, week.id]), []);
+    assert.deepEqual(await t.claimTaskAlerts("overdue", [late.id]), [late.id]);
+    assert.deepEqual(await t.claimTaskAlerts("overdue", [late.id]), []);
+    assert.equal(await mine(today), undefined);
+
+    // Later days bring the next ones: "later" comes within a week, then "soon" passes.
+    a = await mine(plus(2));
+    assert.deepEqual([nums(a?.soon), nums(a?.overdue)], [[later.number], []]);
+    a = await mine(plus(5));
+    assert.deepEqual([nums(a?.soon), nums(a?.overdue)], [[later.number], [soon.number]]); // overdue even though only the week alert went out
+    // An overdue alert also covers the "within a week" one, so it is never sent after the deadline.
+    await t.claimTaskAlerts("overdue", [later.id]);
+    assert.deepEqual(nums((await mine(plus(20)))?.overdue), [soon.number, week.number]);
+
+    // A failed send is released; a new deadline starts over; done ends it.
+    await t.releaseTaskAlerts("overdue", [later.id]);
+    assert.ok(nums((await mine(plus(20)))?.overdue).includes(later.number));
+    await t.updateSubtask(who(), soon.id, { dueOn: plus(4) });
+    assert.deepEqual(nums((await mine(today))?.soon), [soon.number]);
+    await t.updateSubtask(who(), soon.id, { status: "done" });
+    assert.equal((await mine(today))?.soon.length ?? 0, 0);
+  });
+
+  it("skips groups with reminders off, no connected chat, or an archived cohort", async () => {
+    const quiet = await t.saveProjectGroup(dapExco, { cohortId, number: 8, name: "No chat" });
+    const m2 = await t.saveMilestone(dapExco, { groupId: quiet.id, title: "M", dueOn: plus(30) });
+    await t.addSubtask(who(), { milestoneId: m2.id, title: "Never alerted", dueOn: plus(-3) });
+    const has = async (id: number) => (await t.dueTaskAlerts(today)).some((x) => x.group.id === id);
+    assert.equal(await has(quiet.id), false); // not connected
+    await t.connectChat(quiet.id, -8008);
+    assert.equal(await has(quiet.id), true);
+    await t.setMeetingReminders(dapExco, quiet.id, false);
+    assert.equal(await has(quiet.id), false);
+    await t.setMeetingReminders(dapExco, quiet.id, true);
+    const db = await getDb();
+    await db.update(cohorts).set({ visibility: "archived" }).where(eq(cohorts.id, cohortId));
+    assert.equal(await has(quiet.id), false);
+    await db.update(cohorts).set({ visibility: "live" }).where(eq(cohorts.id, cohortId));
+  });
+});

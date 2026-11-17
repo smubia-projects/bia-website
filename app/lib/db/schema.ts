@@ -425,6 +425,10 @@ export const subtasks = pgTable(
     assigneeId: integer("assignee_id").references(() => projectMembers.id, { onDelete: "set null" }),
     /** An assignee who isn't on the member list, as typed. At most one of assigneeId and assigneeName is set. */
     assigneeName: text("assignee_name").notNull().default(""),
+    /** When the "due within a week" alert went out for the current due date (cleared when the due date changes) */
+    remindedWeekAt: timestamp("reminded_week_at", { withTimezone: true, mode: "string" }),
+    /** When the "overdue" alert went out for the current due date */
+    remindedOverdueAt: timestamp("reminded_overdue_at", { withTimezone: true, mode: "string" }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
     updatedBy: text("updated_by").notNull().default(""),

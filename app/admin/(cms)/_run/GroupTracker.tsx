@@ -285,7 +285,7 @@ export default function GroupTracker({ cohortId, cohortSlug, today, group, membe
                     <span className={t.aWho}>
                       <AssigneePicker task={s} members={members} disabled={busy} onChange={(patch) => call(updateSubtaskAction(s.id, patch))} />
                     </span>
-                    <input className={`${styles.inp} ${styles.inpSmall} ${t.ctl} ${t.aDue}`} type="date" aria-label={`Due date of task T${s.number}`} value={s.dueOn ?? ""} disabled={busy} onChange={(e) => call(updateSubtaskAction(s.id, { dueOn: e.target.value || null }))} />
+                    <input className={`${styles.inp} ${styles.inpSmall} ${t.ctl} ${t.aDue}`} type="date" aria-label={`Due date of task T${s.number}`} max={m.dueOn} value={s.dueOn ?? ""} disabled={busy} onChange={(e) => call(updateSubtaskAction(s.id, { dueOn: e.target.value || null }))} />
                     <select className={`${styles.inp} ${styles.inpSmall} ${t.ctl} ${t.aState}`} aria-label={`Status of task T${s.number}`} value={s.status} disabled={busy} onChange={(e) => call(updateSubtaskAction(s.id, { status: e.target.value as MilestoneStatus }))}>
                       {MILESTONE_STATUSES.map((o) => (
                         <option key={o} value={o}>
@@ -385,13 +385,13 @@ export default function GroupTracker({ cohortId, cohortSlug, today, group, membe
             </div>
           </div>
           <div className={t.fact}>
-            <span className={t.factTitle}>Meeting Reminders</span>
+            <span className={t.factTitle}>Reminders</span>
             <label className={t.toggle}>
               <input type="checkbox" role="switch" checked={group.remindersOn} disabled={busy} onChange={(e) => call(setMeetingRemindersAction(group.id, e.target.checked), e.target.checked ? "Reminders on" : "Reminders off")} />
               <span className={t.toggleTrack} aria-hidden="true" />
               {group.remindersOn ? "On" : "Off"}
             </label>
-            <span className={styles.hint}>Posted in the chat 3 weeks after the last meeting.</span>
+            <span className={styles.hint}>Posted in the chat: the mentor meeting after 3 weeks, and a task a week before its deadline and once it is overdue.</span>
           </div>
         </div>
       </section>

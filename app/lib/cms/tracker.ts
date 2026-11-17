@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNotNull, isNull, lte, ne, or, sql } from "drizzle-orm";
 import { getDb } from "@/app/lib/db";
 import {
   blockers,
@@ -337,6 +337,14 @@ async function scopedMilestoneGroup(who: TrackerWho, milestoneId: number, what =
   return m.groupId;
 }
 
+/** "15 Dec 2026", for messages that name a date. */
+const niceDate = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+
+/** A task can't be due after the milestone it belongs to. Throws the message the editor sees. */
+export function checkTaskDue(milestone: { number: number; dueOn: string }, dueOn: string | null | undefined) {
+  ensure(!dueOn || dueOn <= milestone.dueOn, `A task can't be due after its milestone: ${LABEL.milestone}${milestone.number} is due ${niceDate(milestone.dueOn)}.`);
+}
+
 export interface MilestoneInput {
   id?: number;
   groupId: number;
@@ -359,6 +367,16 @@ export async function saveMilestone(actor: Actor, input: MilestoneInput): Promis
   // On edit a start date left out keeps the stored one, so check the dates as they will be saved.
   const effectiveStart = input.startsOn !== undefined ? startsOn : (current?.startsOn ?? null);
   ensure(!effectiveStart || effectiveStart <= dueOn, "Start date must not be after the due date");
+  if (current && dueOn < current.dueOn) {
+    // Moving the deadline earlier must not leave a task due after it.
+    const late = await db
+      .select({ number: subtasks.number, dueOn: subtasks.dueOn })
+      .from(subtasks)
+      .where(and(eq(subtasks.milestoneId, current.id), gt(subtasks.dueOn, dueOn)))
+      .orderBy(asc(subtasks.number));
+    const list = late.slice(0, 3).map((x) => `${LABEL.task}${x.number} (${niceDate(x.dueOn!)})`).join(", ") + (late.length > 3 ? ` and ${late.length - 3} more` : "");
+    ensure(!late.length, `${list} ${late.length === 1 ? "is" : "are"} due after ${niceDate(dueOn)}. Change ${late.length === 1 ? "its" : "their"} due date first.`);
+  }
   const values = {
     title: clean(input.title, "Title", 200),
     // On edit, fields left out stay as they are.
@@ -429,13 +447,18 @@ export async function addSubtask(who: TrackerWho, input: { milestoneId: number }
   const groupId = await scopedMilestoneGroup(who, input.milestoneId);
   await checkAssignee(groupId, input.assigneeId);
   const db = await getDb();
+  const dueOn = cleanDate(input.dueOn, "Due date");
+  if (dueOn) {
+    const [milestone] = await db.select({ number: milestones.number, dueOn: milestones.dueOn }).from(milestones).where(eq(milestones.id, input.milestoneId));
+    checkTaskDue(milestone, dueOn);
+  }
   const [row] = await db
     .insert(subtasks)
     .values({
       milestoneId: input.milestoneId,
       title: clean(input.title, "Title", 200),
       status: input.status ? oneOf(SUBTASK_STATUSES, input.status, "Status") : "todo",
-      dueOn: cleanDate(input.dueOn, "Due date"),
+      dueOn,
       assigneeId: null,
       ...assigneeColumns(input),
       updatedBy: who.name,
@@ -452,12 +475,19 @@ export async function updateSubtask(who: TrackerWho, id: number, patch: SubtaskP
   ensure(cur, "Subtask not found");
   const groupId = await scopedMilestoneGroup(who, cur.milestoneId, "Subtask");
   await checkAssignee(groupId, patch.assigneeId);
+  const dueOn = patch.dueOn !== undefined ? cleanDate(patch.dueOn, "Due date") : undefined;
+  if (dueOn) {
+    // Only a due date being set is checked: editing something else on an older task never fails on its date.
+    const [milestone] = await db.select({ number: milestones.number, dueOn: milestones.dueOn }).from(milestones).where(eq(milestones.id, cur.milestoneId));
+    checkTaskDue(milestone, dueOn);
+  }
   const [row] = await db
     .update(subtasks)
     .set({
       ...(patch.title !== undefined ? { title: clean(patch.title, "Title", 200) } : {}),
       ...(patch.status !== undefined ? { status: oneOf(SUBTASK_STATUSES, patch.status, "Status") } : {}),
-      ...(patch.dueOn !== undefined ? { dueOn: cleanDate(patch.dueOn, "Due date") } : {}),
+      // A new due date gets its own "within a week" and "overdue" alerts.
+      ...(dueOn !== undefined ? { dueOn, ...(dueOn !== cur.dueOn ? { remindedWeekAt: null, remindedOverdueAt: null } : {}) } : {}),
       ...assigneeColumns(patch),
       updatedAt: new Date().toISOString(),
       updatedBy: who.name,
@@ -625,4 +655,87 @@ export async function claimMeetingReminder(groupId: number, now: Date = new Date
 export async function releaseMeetingReminder(groupId: number) {
   const db = await getDb();
   await db.update(projectGroups).set({ meetingRemindedAt: null }).where(eq(projectGroups.id, groupId));
+}
+
+// ── Task deadline alerts ─────────────────────────────────────────────────
+
+/** A task is alerted once when its deadline is this many days away or less. */
+export const TASK_ALERT_DAYS = 7;
+
+export interface TaskAlert {
+  task: SubtaskRow;
+  milestone: { number: number; title: string };
+}
+
+export interface GroupTaskAlerts {
+  group: ProjectGroup;
+  /** Due within a week (today included), not alerted yet */
+  soon: TaskAlert[];
+  /** Due date has passed, not alerted yet */
+  overdue: TaskAlert[];
+}
+
+const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * DAY).toISOString().slice(0, 10);
+
+/**
+ * The tasks to alert about today (a Singapore date, YYYY-MM-DD), grouped by project group: tasks not done,
+ * in a connected group with reminders on and a cohort that isn't archived. A task never alerted that is
+ * already overdue gets only the overdue alert.
+ */
+export async function dueTaskAlerts(today: string): Promise<GroupTaskAlerts[]> {
+  const db = await getDb();
+  const rows = await db
+    .select({ task: subtasks, milestone: { number: milestones.number, title: milestones.title }, group: projectGroups })
+    .from(subtasks)
+    .innerJoin(milestones, eq(milestones.id, subtasks.milestoneId))
+    .innerJoin(projectGroups, eq(projectGroups.id, milestones.groupId))
+    .innerJoin(cohorts, eq(cohorts.id, projectGroups.cohortId))
+    .where(
+      and(
+        ne(cohorts.visibility, "archived"),
+        eq(projectGroups.meetingRemindersOn, true),
+        isNotNull(projectGroups.telegramChatId),
+        ne(subtasks.status, "done"),
+        isNotNull(subtasks.dueOn),
+        lte(subtasks.dueOn, addDays(today, TASK_ALERT_DAYS)),
+        or(isNull(subtasks.remindedWeekAt), isNull(subtasks.remindedOverdueAt))
+      )
+    )
+    .orderBy(asc(projectGroups.number), asc(subtasks.dueOn), asc(subtasks.number));
+  const byGroup = new Map<number, GroupTaskAlerts>();
+  for (const r of rows) {
+    const due = r.task.dueOn!;
+    const kind = due < today ? (r.task.remindedOverdueAt == null ? "overdue" : null) : r.task.remindedWeekAt == null ? "soon" : null;
+    if (!kind) continue;
+    const entry = byGroup.get(r.group.id) ?? { group: r.group, soon: [], overdue: [] };
+    entry[kind].push({ task: r.task, milestone: r.milestone });
+    byGroup.set(r.group.id, entry);
+  }
+  return [...byGroup.values()];
+}
+
+/**
+ * Marks tasks as alerted and returns the ones this run got, so an alert is never sent twice even if two runs
+ * overlap. An overdue alert also covers the "within a week" one, which no longer applies.
+ */
+export async function claimTaskAlerts(kind: "soon" | "overdue", ids: number[], now: Date = new Date()): Promise<number[]> {
+  if (!ids.length) return [];
+  const db = await getDb();
+  const at = now.toISOString();
+  const rows =
+    kind === "soon"
+      ? await db.update(subtasks).set({ remindedWeekAt: at }).where(and(inArray(subtasks.id, ids), isNull(subtasks.remindedWeekAt))).returning({ id: subtasks.id })
+      : await db
+          .update(subtasks)
+          .set({ remindedOverdueAt: at, remindedWeekAt: sql`coalesce(${subtasks.remindedWeekAt}, ${at}::timestamptz)` })
+          .where(and(inArray(subtasks.id, ids), isNull(subtasks.remindedOverdueAt)))
+          .returning({ id: subtasks.id });
+  return rows.map((r) => r.id);
+}
+
+/** Undo a claim when the send failed, so the next run tries again. */
+export async function releaseTaskAlerts(kind: "soon" | "overdue", ids: number[]) {
+  if (!ids.length) return;
+  const db = await getDb();
+  await db.update(subtasks).set(kind === "soon" ? { remindedWeekAt: null } : { remindedOverdueAt: null }).where(inArray(subtasks.id, ids));
 }

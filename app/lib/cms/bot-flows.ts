@@ -54,7 +54,7 @@ export const FLOWS: Record<FlowId, FlowDef> = {
   dn: { cmd: "done", title: "Mark milestone done", admin: true, pick: ["m"], only: "active" },
   sm: { cmd: "status", title: "Set milestone status", admin: true, pick: ["m", "s"] },
   dm: { cmd: "delmilestone", title: "Delete milestone", admin: true, pick: ["m"], own: true },
-  rm: { cmd: "reminders", title: "Meeting reminders", admin: true, pick: ["o"] },
+  rm: { cmd: "reminders", title: "Reminders", admin: true, pick: ["o"] },
 };
 
 // ── State carried in the buttons ─────────────────────────────────────────
@@ -215,7 +215,7 @@ async function choose(c: Ctx, s: FlowState, kind: Kind, group: ProjectGroup, tim
     return buttons(c, s, "Choose the new status.", (["t", "i", "d"] as const).map((k): [string, FlowState] => [STATUS_LABEL[k], next(k)]), true);
   }
   if (kind === "o") {
-    return buttons(c, s, `Turn meeting reminders for Group ${group.number} on or off?`, [["On", next("on")], ["Off", next("off")]], true);
+    return buttons(c, s, `Turn reminders for Group ${group.number} on or off?`, [["On", next("on")], ["Off", next("off")]], true);
   }
   // Assignee: the member list, the person asking, or nobody.
   const roster = await tracker.listMembers(c.scope, group.id);
@@ -268,10 +268,15 @@ async function summary(c: Ctx, s: FlowState, group: ProjectGroup, timeline: Mile
   const due = (iso: string | null | undefined) => (iso ? `, due ${shortDate(iso, c.today)}` : "");
   const q = (x: string) => `“${esc(x)}”`;
   switch (s.flow) {
-    case "at":
-      return `Add task ${q(p!.title)}${due(p!.dueOn)} to ${tag("milestone", n)} ${q(find(timeline, "milestone", n).m.title)}?`;
+    case "at": {
+      const m = find(timeline, "milestone", n).m;
+      tracker.checkTaskDue(m, p!.dueOn); // caught here, before Confirm, not after
+      return `Add task ${q(p!.title)}${due(p!.dueOn)} to ${tag("milestone", n)} ${q(m.title)}?`;
+    }
     case "et": {
-      const t = find(timeline, "task", n).t!;
+      const found = find(timeline, "task", n);
+      const t = found.t!;
+      tracker.checkTaskDue(found.m, p!.dueOn);
       return `Update ${tag("task", n)} ${q(t.title)}: ${[p!.title && `rename to ${q(p!.title)}`, p!.dueOn && `due ${shortDate(p!.dueOn, c.today)}`].filter(Boolean).join(", ")}?`;
     }
     case "ts":
@@ -305,7 +310,7 @@ async function summary(c: Ctx, s: FlowState, group: ProjectGroup, timeline: Mile
     case "dn":
       return `Mark ${tag("milestone", n)} ${q(find(timeline, "milestone", n).m.title)} as done?`;
     case "rm":
-      return `Turn meeting reminders ${s.picks[0] === "on" ? "on" : "off"} for Group ${group.number}?`;
+      return `Turn reminders ${s.picks[0] === "on" ? "on" : "off"} for Group ${group.number}?`;
     default:
       throw new CmsError(`${def.title} needs no confirmation here`);
   }

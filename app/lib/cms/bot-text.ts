@@ -1,5 +1,5 @@
 import type { BlockerRow, ProjectGroupRow, ProjectMemberRow } from "@/app/lib/db/schema";
-import { LABEL, meetingDeadline, type MilestoneDetail } from "./tracker";
+import { LABEL, meetingDeadline, type MilestoneDetail, type TaskAlert } from "./tracker";
 import { escapeHtml as esc } from "./telegram";
 
 /** Parsing and formatting for the tracker bot's messages. Pure: no database, no network. */
@@ -237,6 +237,30 @@ export function formatGroups(groups: ProjectGroupRow[], today: string) {
       ])
     )}${more(groups.length)}`
   );
+}
+
+/** "20 Nov, in 3 days" / "20 Nov, yesterday": a due date and how far it is from today. */
+function dueIn(iso: string, today: string) {
+  const d = Math.round((Date.parse(`${iso}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000);
+  const date = shortDate(iso, today);
+  if (d === 0) return `${date}, today`;
+  if (d === 1) return `${date}, tomorrow`;
+  if (d === -1) return `${date}, yesterday`;
+  return d > 0 ? `${date}, in ${d} days` : `${date}, ${-d} days ago`;
+}
+
+/** The task deadline alert sent to a group's chat: overdue tasks first, then those due within a week. */
+export function formatTaskDeadlines(group: ProjectGroupRow, soon: TaskAlert[], overdue: TaskAlert[], members: ProjectMemberRow[], today: string) {
+  const rows = (list: TaskAlert[]) =>
+    table(
+      ["#", "Task", "Milestone", "Due", "Assignee"],
+      list.slice(0, ROWS).map(({ task, milestone }) => [`${LABEL.task}${task.number}`, esc(task.title), `${LABEL.milestone}${milestone.number}: ${esc(milestone.title)}`, dueIn(task.dueOn!, today), assigneeOf(task, members)])
+    ) + more(list.length);
+  const parts = [`<h3>Task Deadlines: ${groupTitle(group)}</h3>`];
+  if (overdue.length) parts.push("<h4>Overdue</h4>", rows(overdue));
+  if (soon.length) parts.push("<h4>Due Within a Week</h4>", rows(soon));
+  parts.push("<footer>Mark a task done with /taskdone, or change its deadline with /edittask.</footer>");
+  return parts.join("");
 }
 
 /** The 3-week nudge sent to a group's chat. */

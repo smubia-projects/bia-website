@@ -832,8 +832,8 @@ const handler = createMcpHandler(
     server.registerTool(
       "set_meeting_reminders",
       {
-        title: "Turn a project group's meeting reminders on or off",
-        description: "Whether the bot reminds a DAP project group's Telegram chat to meet its mentors, 3 weeks after the last meeting.",
+        title: "Turn a project group's reminders on or off",
+        description: "Whether the bot posts reminders in a DAP project group's Telegram chat: to meet its mentors 3 weeks after the last meeting, and about tasks due within a week or past their deadline.",
         inputSchema: z.object({ projectGroupId, on: z.boolean() }),
       },
       ({ projectGroupId: id, on }) => tool(() => trackerMcp.setMeetingReminders(actor(), id, on))

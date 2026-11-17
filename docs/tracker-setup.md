@@ -137,17 +137,35 @@ DAP exco and exco admins only (`can.tracker`); AI Lodge roles and lodge heads ge
 - **Settings › Telegram** (`/admin/telegram`): Your Account (link, see which account is linked, unlink); for exco
   admins also the DAP channel, the webhook panel and every linked account with Unlink.
 
-## Meeting reminders
+## Task deadlines
 
-A project group's last meeting date is the only meeting data kept. Three weeks after it, the daily cron (01:00 UTC,
-±1 h on Hobby) posts a reminder in the group's chat, once per cycle, asking them to meet their mentors within the
-next week. Logging `/meeting` starts a new cycle. Admins turn it off per group with `/reminders 3 off`. A group with no
-meeting logged yet counts from the day it was added. Groups of archived cohorts are skipped.
+A task gets a deadline with `by 20 Nov`: `/addtask 3 Draft deck by 20 Nov`, `/edittask T5 by 20 Nov` (changes only the
+date), or in the typed answer of the button flows. On the dashboard it is the date field on the task. **A task can't be
+due after its milestone**: the service refuses it, so the bot, the dashboard and the MCP tools all follow the rule, and
+the button flows catch it before Confirm. The other way round, moving a milestone's deadline earlier than one of its
+tasks' is refused with the tasks to change first. Only a due date being set is checked, so editing the title or status
+of an older task that already breaks the rule still works.
+
+## Reminders
+
+One switch per project group (`/reminders 3 off`, or the dashboard toggle) covers every reminder the bot posts in the
+group's chat. Groups of archived cohorts, and groups without a connected chat, are skipped. The daily cron (01:00 UTC,
+±1 h on Hobby) sends them.
+
+- **Mentor meeting.** A project group's last meeting date is the only meeting data kept. Three weeks after it the bot
+  asks them to meet their mentors within the next week, once per cycle. Logging `/meeting` starts a new cycle. A group
+  with no meeting logged yet counts from the day it was added.
+- **Task deadlines.** For each task that isn't done and has a deadline: one alert once the deadline is **a week away or
+  less** (a task given a nearer deadline is alerted at the next run), and one more once the **deadline has passed**.
+  One message per group lists overdue tasks first, then those due within a week, with the milestone, due date and
+  assignee. A task is alerted once per due date: giving it a new deadline starts its alerts again, marking it done
+  ends them, and one that is already overdue the first time it is seen gets only the overdue alert. A failed send is
+  retried on the next run.
 
 ## Daily cron
 
-`/api/cron/daily` runs `app/lib/cms/jobs.ts` one job at a time: publish due newsletter issues, meeting reminders,
-forget old update IDs, delete expired link codes. One failing never stops the others; the answer lists each
+`/api/cron/daily` runs `app/lib/cms/jobs.ts` one job at a time: publish due newsletter issues, meeting reminders, task deadline alerts,
+check the bot's "/" menus, forget old update IDs, delete expired link codes. One failing never stops the others; the answer lists each
 result and is 500 when any failed.
 
 ## Local development
