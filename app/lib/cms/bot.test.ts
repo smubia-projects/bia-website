@@ -3,6 +3,11 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { before, describe, it } from "node:test";
+import { shiftClock } from "@/tests/helpers/clock";
+
+// The dates typed in these tests ("by 20 Nov", "M1 is due 15 Dec 2026") are read relative to today,
+// so the clock starts on a day in November 2026; otherwise the file starts failing as the year moves on.
+shiftClock("2026-11-10T04:00:00Z");
 
 process.env.PGLITE_DIR = path.join(mkdtempSync(path.join(tmpdir(), "bot-")), "db");
 process.env.TELEGRAM_BOT_TOKEN = "123:test";
