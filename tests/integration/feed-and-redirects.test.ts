@@ -1,5 +1,5 @@
-import "../helpers/db";
-import "../helpers/next-cache";
+import "@tests/helpers/db";
+import "@tests/helpers/next-cache";
 import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 import { NextRequest } from "next/server";
@@ -9,7 +9,7 @@ import { canonicalPath } from "@/shared/canonical-path";
 import { FEED_VERSION, getAILodgeFeed } from "@/server/ailodge/feed";
 import * as lodges from "@/server/ailodge/lodges";
 import { proxy } from "@/proxy";
-import { actorFor } from "../helpers/actors";
+import { actorFor } from "@tests/helpers/actors";
 
 /** Every key path in a value ("semesters[].lodges[].name"), so a renamed or removed field shows up. */
 function shape(value: unknown, prefix = ""): string[] {
@@ -120,7 +120,7 @@ const FEED_KEYS = [
 
 describe("public AI Lodge feed contract", () => {
   it(`is version ${FEED_VERSION}, with every field the AI Lodge site reads`, async () => {
-    assert.equal(FEED_VERSION, 2, "bump FEED_VERSION and update docs/ailodge-site-handoff.md before renaming or removing a field");
+    assert.equal(FEED_VERSION, 2, "bump FEED_VERSION and update docs/handoffs/ailodge-site-handoff.md before renaming or removing a field");
     const feed = await getAILodgeFeed();
     // The whole contract, as the AI Lodge site reads it. Adding a field means adding it here;
     // removing or renaming one needs a FEED_VERSION bump first.

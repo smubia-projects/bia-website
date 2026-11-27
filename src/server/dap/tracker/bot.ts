@@ -1,34 +1,21 @@
+import "server-only";
 import { Composer, type Api, type Context } from "grammy";
 import type { BotCommand as TgBotCommand, Chat, User } from "grammy/types";
 import { runHref } from "@/app/admin/_components/runs";
-import { CmsError, ensure } from "../../core/actor";
+import { CmsError, ensure } from "@/server/core/actor";
 import { groupFor, requireActor, type Ctx, type Reply } from "./bot-core";
 import { FLOWS, flowCommand, flowScreen, parseFlowData, parseRef, typedText, type FlowId } from "./bot-flows";
-import {
-  formatGroups,
-  formatMeetingReminder,
-  formatMilestone,
-  formatTaskDeadlines,
-  formatTasks,
-  formatTimeline,
-  noonSgt,
-  parseDate,
-  parseStatus,
-  shortDate,
-  sgtDay,
-  splitTitleAndDates,
-  table,
-} from "./bot-text";
-import { todaySgt } from "../../people/people";
-import { escapeHtml as esc, SITE_URL, telegramApi, telegramToken } from "../../integrations/telegram/client";
-import { claimAccountLink, claimChatLink } from "../../people/telegram-link";
+import { formatGroups, formatMeetingReminder, formatMilestone, formatTaskDeadlines, formatTasks, formatTimeline, parseDate, parseStatus, splitTitleAndDates, table } from "./bot-text";
+import { noonSgt, shortDate, sgtDay, todaySgt } from "@/shared/time";
+import { escapeHtml as esc, SITE_URL, telegramApi, telegramToken } from "@/server/integrations/telegram/client";
+import { claimAccountLink, claimChatLink } from "@/server/people/telegram-link";
 import * as tracker from "./service";
 
 /*
- * The DAP tracker bot's handlers, as a grammY Composer that telegram-bot.ts puts on the
+ * The DAP tracker bot's handlers, as a grammY Composer that src/server/bot.ts puts on the
  * site's one Bot. Telegram posts updates to /api/telegram/webhook. The bot only listens
  * in a connected group chat (or in a private chat with a linked admin). Permissions are
- * decided by tracker.ts; this file only reads commands and writes replies.
+ * decided by service.ts; this file only reads commands and writes replies.
  *
  * Inside a group chat everything is scoped to that chat's group, admins
  * included, so one group's data never reaches another group's chat. Admins
@@ -137,7 +124,7 @@ const usageOf = (name: string) => {
 };
 
 /** Every tracker command. /help and the command menus (1.6) are built from this list. */
-export const COMMANDS: BotCommand[] = [
+const COMMANDS: BotCommand[] = [
   // ── Members ──
   {
     name: "milestones",
@@ -572,7 +559,7 @@ async function runCommand(ctx: Context, name: string, args: string) {
   };
 
   try {
-    // /start <code>: a one-time link from the CMS (telegram-link.ts).
+    // /start <code>: a one-time link from the CMS (src/server/people/telegram-link.ts).
     if (name === "start" && args && isPrivate) {
       const actor = await claimAccountLink(args, { id: m.from.id, name: displayName(m.from), username: m.from.username ?? "" });
       return say(`Linked. I know you as DAP exco now (<b>${esc(actor.name)}</b>). To use me in a project group's chat, press Connect Telegram Chat on that group's page in the CMS.`);

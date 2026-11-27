@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPublicCohorts } from "@/server/cohorts/cohorts";
-import { getPublicProjects } from "@/app/lib/projects";
-import LodgeYearbook from "../LodgeYearbook";
+import { getPublicProjects } from "@/server/projects/projects";
+import LodgeYearbook from "@/app/projects/ailodge/LodgeYearbook";
 
 export const revalidate = 3600;
 export const dynamicParams = true;

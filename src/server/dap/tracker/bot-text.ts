@@ -1,6 +1,8 @@
+import "server-only";
 import type { BlockerRow, ProjectGroupRow, ProjectMemberRow } from "@/server/db/schema";
+import { sgtDay, shortDate } from "@/shared/time";
 import { LABEL, meetingDeadline, type MilestoneDetail, type TaskAlert } from "./service";
-import { escapeHtml as esc } from "../../integrations/telegram/client";
+import { escapeHtml as esc } from "@/server/integrations/telegram/client";
 
 /** Parsing and formatting for the tracker bot's messages. Pure: no database, no network. */
 
@@ -85,18 +87,6 @@ export function splitTitleAndDates(args: string, today: string, withStart = fals
   }
   return { title, startsOn, dueOn, badDue };
 }
-
-/** A calendar day as a moment: noon Singapore time, so date-only meeting logs land on that day everywhere. */
-export const noonSgt = (iso: string) => new Date(`${iso}T12:00:00+08:00`);
-
-/** "20 Nov", with the year when it is not the current one. */
-export function shortDate(iso: string, today: string) {
-  const [y, m, d] = iso.split("-").map(Number);
-  return `${d} ${MONTHS[m - 1][0].toUpperCase()}${MONTHS[m - 1].slice(1)}${String(y) !== today.slice(0, 4) ? ` ${y}` : ""}`;
-}
-
-/** A timestamp as a Singapore calendar date. */
-export const sgtDay = (when: string | Date) => new Date(new Date(when).getTime() + 8 * 3_600_000).toISOString().slice(0, 10);
 
 const STATUS_LABEL = { todo: "To do", in_progress: "In progress", done: "Done" } as const;
 

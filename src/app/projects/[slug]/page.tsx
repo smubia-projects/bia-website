@@ -1,7 +1,7 @@
 import Link from "next/link";
 import ui from "@/components/content/public.module.css";
 import { projectPath } from "@/shared/paths";
-import { getPublicProjects } from "@/app/lib/projects";
+import { getPublicProjects } from "@/server/projects/projects";
 
 export const revalidate = 3600;
 export const dynamicParams = true;

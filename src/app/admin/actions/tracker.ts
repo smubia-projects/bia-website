@@ -1,11 +1,19 @@
 "use server";
 
-import * as people from "@/server/people/people";
 import * as tracker from "@/server/dap/tracker/service";
-import { noonSgt } from "@/server/dap/tracker/bot-text";
+import { noonSgt, todaySgt } from "@/shared/time";
 import { createChatLink } from "@/server/people/telegram-link";
 import type { BlockerStatus, MilestoneStatus } from "@/shared/taxonomy";
-import { run, track } from "./run";
+import type { Actor } from "@/server/core/actor";
+import { refreshAdmin, run } from "./run";
+
+/** Runs a tracker change as an admin and refreshes the dashboard. */
+const track = <T,>(fn: (actor: Actor, who: tracker.TrackerWho) => Promise<T>, message?: string) =>
+  run(async (actor) => {
+    const data = await fn(actor, tracker.adminWho(actor));
+    refreshAdmin();
+    return data;
+  }, message);
 
 export async function saveProjectGroupAction(input: tracker.ProjectGroupInput) {
   return track(async (actor) => (await tracker.saveProjectGroup(actor, input)).id);
@@ -31,7 +39,7 @@ export async function createChatLinkAction(groupId: number) {
 /** Logs a meeting on a date (YYYY-MM-DD, Singapore); today or no date means now. */
 export async function logMeetingAction(groupId: number, date: string) {
   return track(async (_actor, who) => {
-    const today = people.todaySgt();
+    const today = todaySgt();
     await tracker.logMeeting(who, groupId, !date || date === today ? new Date() : noonSgt(date));
     return null;
   });

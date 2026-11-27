@@ -1,16 +1,16 @@
 import React from "react";
 import Image from "next/image";
 import styles from "./DAP.module.css";
-import ScrollReveal from "../../components/ui/ScrollReveal";
-import Button from "../../components/ui/Button";
+import ScrollReveal from "@/components/ui/ScrollReveal";
+import Button from "@/components/ui/Button";
 import { getSiteLinks } from "@/server/site/links";
 import { getSitePhotos } from "@/server/site/photos";
 import { pickPhoto } from "@/shared/photos";
 import { getPublicCohorts, pickCurrentCohort } from "@/server/cohorts/cohorts";
 import { joinLink } from "@/shared/links";
-import { MotionAnchor } from "../../components/ui/MotionElements";
+import { MotionAnchor } from "@/components/ui/MotionElements";
 import { dapRunPath, yearbookPath } from "@/shared/paths";
-import RotatingHeadline from "../../components/ui/RotatingHeadline";
+import RotatingHeadline from "@/components/ui/RotatingHeadline";
 import {
   CURRICULUM,
   COHORT_PHOTO,

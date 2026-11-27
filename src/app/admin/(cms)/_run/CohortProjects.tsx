@@ -3,17 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Plus, X } from "lucide-react";
-import type { Cohort, Lodge, Track } from "@/server/cohorts/cohorts";
+import type { Cohort } from "@/server/cohorts/cohorts";
+import type { Lodge } from "@/server/ailodge/lodges";
+import type { Track } from "@/server/ailodge/tracks";
 import type { Project } from "@/shared/types/project";
 import ProjectCover from "@/components/content/ProjectCover";
 import Medal from "@/components/content/Medal";
 import { trackAccent } from "@/components/content/visuals";
 import { PROJECT_STATUS_LABEL } from "@/shared/taxonomy";
-import { placeProjectAction, placeProjectsAction } from "../../actions/cohorts";
-import { setProjectLodgeAction } from "../../actions/ailodge";
-import { setWinnerAction } from "../../actions/projects";
-import { AddButton, ExternalAction, PageHead, PickerDialog, StatusChip, useActionToast, useConfirm, type PickerGroup } from "../../_components/ui";
-import styles from "../../cms.module.css";
+import { placeProjectAction, placeProjectsAction } from "@/app/admin/actions/cohorts";
+import { setProjectLodgeAction } from "@/app/admin/actions/ailodge";
+import { setWinnerAction } from "@/app/admin/actions/projects";
+import { AddButton, ExternalAction, PageHead, PickerDialog, StatusChip, useActionToast, useConfirm, type PickerGroup } from "@/app/admin/_components/ui";
+import styles from "@/app/admin/cms.module.css";
 
 interface Props {
   cohort: Cohort;

@@ -8,7 +8,7 @@ import { Linkedin, Instagram, Send, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 import { mailto } from "@/shared/links";
 import { useSiteLinks } from "./SiteLinksProvider";
-import { motionTransition } from "../ui/motion";
+import { motionTransition } from "@/components/ui/motion";
 
 const MotionLink = motion.create(Link);
 

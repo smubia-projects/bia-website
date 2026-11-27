@@ -1,7 +1,8 @@
+import "server-only";
 import { promises as fs } from "fs";
 import path from "path";
 import { put } from "@vercel/blob";
-import { CmsError } from "../../core/actor";
+import { CmsError } from "@/server/core/actor";
 
 export const UPLOAD_FOLDERS = ["projects", "newsletter", "team", "lodges", "site"] as const;
 export type UploadFolder = (typeof UPLOAD_FOLDERS)[number];

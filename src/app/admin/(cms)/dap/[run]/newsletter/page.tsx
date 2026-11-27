@@ -1,6 +1,6 @@
 import { formatIssueDate, listIssues, listSessions } from "@/server/dap/newsletter";
-import IssueList from "../../../_run/IssueList";
-import { loadRun } from "../../../_run/load";
+import IssueList from "@/app/admin/(cms)/_run/IssueList";
+import { loadRun } from "@/app/admin/(cms)/_run/load";
 
 export default async function NewsletterAdminPage(props: { params: Promise<{ run: string }> }) {
   const params = await props.params;

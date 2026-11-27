@@ -3,7 +3,7 @@ import { can } from "@/server/core/permissions";
 import { listCohorts, pickCurrentCohort } from "@/server/cohorts/cohorts";
 import { requireActorPage } from "@/server/auth/session";
 import type { Programme } from "@/shared/taxonomy";
-import { newRunHref, runHref } from "../../_components/runs";
+import { newRunHref, runHref } from "@/app/admin/_components/runs";
 
 const canSee = (actor: Awaited<ReturnType<typeof requireActorPage>>, programme: Programme) =>
   programme === "AI Lodge" ? can.seeLodge(actor) : can.seeDap(actor);

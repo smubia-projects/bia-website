@@ -1,9 +1,10 @@
 import { can } from "@/server/core/permissions";
-import { listLodges, listTracks } from "@/server/cohorts/cohorts";
+import { listLodges } from "@/server/ailodge/lodges";
+import { listTracks } from "@/server/ailodge/tracks";
 import { listProjects } from "@/server/projects/projects";
 import { cohortPath } from "@/shared/paths";
-import CohortProjects from "../../../_run/CohortProjects";
-import { loadRun } from "../../../_run/load";
+import CohortProjects from "@/app/admin/(cms)/_run/CohortProjects";
+import { loadRun } from "@/app/admin/(cms)/_run/load";
 
 export default async function SemesterProjectsPage(props: { params: Promise<{ run: string }> }) {
   const params = await props.params;

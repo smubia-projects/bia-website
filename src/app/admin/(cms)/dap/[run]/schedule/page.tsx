@@ -1,7 +1,7 @@
-import { listGroups } from "@/server/cohorts/cohorts";
+import { listGroups } from "@/server/dap/colearning-groups";
 import { listIssues, listSessions } from "@/server/dap/newsletter";
-import SessionsEditor from "../../../_run/SessionsEditor";
-import { loadRun } from "../../../_run/load";
+import SessionsEditor from "@/app/admin/(cms)/_run/SessionsEditor";
+import { loadRun } from "@/app/admin/(cms)/_run/load";
 
 export default async function SchedulePage(props: { params: Promise<{ run: string }> }) {
   const params = await props.params;

@@ -6,7 +6,7 @@ import { linkedTelegram } from "@/server/people/telegram-link";
 import { dapChannelView, listLinkedAccounts } from "@/server/core/settings";
 import { expectedWebhookUrl } from "@/server/integrations/telegram/webhook";
 import { isPolling } from "@/server/integrations/telegram/polling";
-import WebhookPanel from "../_run/WebhookPanel";
+import WebhookPanel from "@/app/admin/(cms)/_run/WebhookPanel";
 import BotSettings from "./BotSettings";
 import TelegramLink from "./TelegramLink";
 

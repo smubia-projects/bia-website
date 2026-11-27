@@ -146,5 +146,3 @@ export async function closeDb() {
   globalForDb.__cmsDb = undefined;
   if (client) await client.close();
 }
-
-export { schema };

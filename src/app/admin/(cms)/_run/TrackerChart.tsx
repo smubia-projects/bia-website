@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { shortDate } from "@/server/dap/tracker/bot-text";
+import { shortDate } from "@/shared/time";
 import type { Chart, ChartBar } from "@/server/dap/tracker/view";
-import { runHref } from "../../_components/runs";
+import { runHref } from "@/app/admin/_components/runs";
 import ScrollToToday from "./ScrollToToday";
-import t from "../../tracker.module.css";
+import t from "@/app/admin/tracker.module.css";
 
 const STATUS = { todo: "To do", in_progress: "In progress", done: "Done" } as const;
 const ROW = 30;

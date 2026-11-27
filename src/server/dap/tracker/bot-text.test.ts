@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { noonSgt, parseDate, parseStatus, shortDate, sgtDay, splitTitleAndDates } from "./bot-text";
+import { parseDate, parseStatus, splitTitleAndDates } from "./bot-text";
+import { noonSgt, shortDate, sgtDay } from "@/shared/time";
 
 const today = "2026-11-13";
 

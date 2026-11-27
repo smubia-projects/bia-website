@@ -1,4 +1,4 @@
-import styles from "../cms.module.css";
+import styles from "@/app/admin/cms.module.css";
 
 /** Shown while a CMS page loads from the database. */
 export default function CmsLoading() {

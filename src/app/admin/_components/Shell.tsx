@@ -6,11 +6,11 @@ import { usePathname } from "next/navigation";
 import { ExternalLink, Menu, Send, X } from "lucide-react";
 import type { Programme } from "@/shared/taxonomy";
 import { cohortPath, dapRunPath } from "@/shared/paths";
-import { signOutAction } from "../actions/people";
+import { signOutAction } from "@/app/admin/actions/people";
 import RunSwitcher from "./RunSwitcher";
 import { RUN_COOKIE, RUN_SECTIONS, RUN_SEGMENT, parseRunPath, runHref, type RunOption } from "./runs";
 import { ConfirmProvider } from "./ui";
-import styles from "../cms.module.css";
+import styles from "@/app/admin/cms.module.css";
 
 interface Props {
   email: string;

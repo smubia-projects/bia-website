@@ -17,7 +17,7 @@ import { canonicalPath } from "@/shared/canonical-path";
  * - /projects?badge=AI Lodge  -> /projects/ailodge   (old programme filter links)
  * - /projects?badge=DAP       -> /projects/dap
  *
- * Old project pages (/projects/<slug>) are not redirected: app/projects/[slug]
+ * Old project pages (/projects/<slug>) are not redirected: src/app/projects/[slug]
  * shows a "projects have moved" page that links to the new address.
  */
 export function proxy(request: NextRequest) {

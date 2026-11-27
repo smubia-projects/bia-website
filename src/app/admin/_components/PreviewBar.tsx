@@ -1,4 +1,4 @@
-import styles from "../cms.module.css";
+import styles from "@/app/admin/cms.module.css";
 
 /** Sticky banner on CMS preview pages, which render content that may not be public yet. */
 export default function PreviewBar({ note, backHref, backLabel }: { note: string; backHref: string; backLabel: string }) {

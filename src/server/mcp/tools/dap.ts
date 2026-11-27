@@ -1,9 +1,10 @@
+import "server-only";
 import { z } from "zod";
 import { CmsError } from "@/server/core/actor";
 import * as cohorts from "@/server/cohorts/cohorts";
 import * as newsletter from "@/server/dap/newsletter";
-import { type McpServer, actor, tool } from "../context";
-import { issueFields } from "../schemas";
+import { type McpServer, actor, tool } from "@/server/mcp/context";
+import { issueFields } from "@/server/mcp/schemas";
 
 export function registerDapTools(server: McpServer) {
   // ── DAP newsletter ──

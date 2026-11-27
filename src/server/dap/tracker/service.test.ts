@@ -1,16 +1,11 @@
+import "@tests/helpers/db";
 import assert from "node:assert/strict";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { after, before, describe, it } from "node:test";
-
-// Throwaway embedded database: never touch .data/pglite. Set before the first getDb().
-process.env.PGLITE_DIR = path.join(mkdtempSync(path.join(tmpdir(), "tracker-")), "db");
 
 import { eq } from "drizzle-orm";
 import { getDb } from "@/server/db";
 import { cohorts, people, projectGroups } from "@/server/db/schema";
-import { CmsError, type Actor } from "../../core/actor";
+import { CmsError, type Actor } from "@/server/core/actor";
 import * as t from "./service";
 
 const rejects = (p: Promise<unknown>, re?: RegExp) => assert.rejects(p, (e) => e instanceof CmsError && (!re || re.test(e.message)));

@@ -4,10 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ISSUE_STATUS_LABEL, type IssueStatus } from "@/shared/taxonomy";
-import { createIssueAction } from "../../actions/dap";
-import { PageHead, StatusChip, useActionToast } from "../../_components/ui";
-import { runHref } from "../../_components/runs";
-import styles from "../../cms.module.css";
+import { createIssueAction } from "@/app/admin/actions/dap";
+import { PageHead, StatusChip, useActionToast } from "@/app/admin/_components/ui";
+import { runHref } from "@/app/admin/_components/runs";
+import styles from "@/app/admin/cms.module.css";
 
 export interface IssueRowView {
   id: number;

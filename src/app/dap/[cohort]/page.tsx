@@ -9,7 +9,7 @@ import { getPublicCohorts } from "@/server/cohorts/cohorts";
 import { getSiteLinks } from "@/server/site/links";
 import { formatIssueDate, getPublicRun } from "@/server/dap/newsletter";
 import { cohortPath, dapRunPath } from "@/shared/paths";
-import { getPublicProjects } from "@/app/lib/projects";
+import { getPublicProjects } from "@/server/projects/projects";
 
 export const revalidate = 3600;
 export const dynamicParams = true;

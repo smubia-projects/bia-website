@@ -1,6 +1,6 @@
 import { requireActorPage } from "@/server/auth/session";
-import ProjectEditor from "../ProjectEditor";
-import { editorOptions } from "../editorData";
+import ProjectEditor from "@/app/admin/(cms)/projects/ProjectEditor";
+import { editorOptions } from "@/app/admin/(cms)/projects/editorData";
 
 export default async function NewProjectPage(props: { searchParams: Promise<{ cohort?: string; track?: string }> }) {
   const searchParams = await props.searchParams;

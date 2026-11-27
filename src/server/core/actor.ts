@@ -1,4 +1,5 @@
-import type { Role } from "../../shared/taxonomy";
+import "server-only";
+import type { Role } from "@/shared/taxonomy";
 
 /** Whoever is making a CMS change: a signed-in person or the MCP agent. */
 export interface Actor {

@@ -1,9 +1,11 @@
+import "server-only";
 import { asc, eq, inArray } from "drizzle-orm";
+import { todaySgt } from "@/shared/time";
 import { getDb } from "@/server/db";
 import { cohorts, lodges, people, type PersonRow } from "@/server/db/schema";
-import { ensure, type Actor } from "../core/actor";
-import { can } from "../core/permissions";
-import { ROLES, suggestedAccessEnd, type Role } from "../../shared/taxonomy";
+import { ensure, type Actor } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
+import { ROLES, suggestedAccessEnd, type Role } from "@/shared/taxonomy";
 
 export type Person = PersonRow;
 
@@ -24,10 +26,6 @@ function isSuperadmin(email: string) {
 }
 
 /** Today in Singapore, as YYYY-MM-DD. */
-export function todaySgt() {
-  return new Date(Date.now() + 8 * 3_600_000).toISOString().slice(0, 10);
-}
-
 export const accessExpired = (p: { accessEnds: string | null }) => Boolean(p.accessEnds && p.accessEnds < todaySgt());
 
 export async function listPeople(): Promise<Person[]> {
@@ -72,7 +70,7 @@ export async function lodgeOptions(ids?: number[]) {
 }
 
 /** A lodge head's default last day: 20 weeks from the latest of their semesters' week 1. */
-export async function defaultAccessEnd(lodgeIds: number[]): Promise<string | null> {
+async function defaultAccessEnd(lodgeIds: number[]): Promise<string | null> {
   return suggestedAccessEnd((await lodgeOptions(lodgeIds)).map((l) => l.startsOn));
 }
 

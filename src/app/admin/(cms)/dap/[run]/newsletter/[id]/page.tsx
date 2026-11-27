@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import { can } from "@/server/core/permissions";
 import { getIssue, listIssues, listSessions } from "@/server/dap/newsletter";
 import { getBotUsername } from "@/server/integrations/telegram/client";
-import IssueEditor from "../../../../_run/IssueEditor";
-import { loadRun } from "../../../../_run/load";
+import IssueEditor from "@/app/admin/(cms)/_run/IssueEditor";
+import { loadRun } from "@/app/admin/(cms)/_run/load";
 
 export default async function IssueEditorPage(props: { params: Promise<{ run: string; id: string }> }) {
   const params = await props.params;

@@ -5,7 +5,7 @@ import { getAILodgeFeed } from "@/server/ailodge/feed";
  * GET /api/public/ailodge[?semester=<slug>]
  * Public, read-only data for the AI Lodge site: the current semester's lodges,
  * past semesters, the applications switch and links. No auth; nothing private
- * is in it. Contract: docs/ailodge-site-handoff.md.
+ * is in it. Contract: docs/handoffs/ailodge-site-handoff.md.
  */
 export const dynamic = "force-dynamic";
 

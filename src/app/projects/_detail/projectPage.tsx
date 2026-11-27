@@ -6,7 +6,7 @@ import ProjectTile from "@/components/content/ProjectTile";
 import { usingLocalDb } from "@/server/db";
 import { cohortPath, projectPath } from "@/shared/paths";
 import type { Programme } from "@/shared/taxonomy";
-import { getPublicProjects } from "@/app/lib/projects";
+import { getPublicProjects } from "@/server/projects/projects";
 import type { Project } from "@/shared/types/project";
 import ProjectDetailContent from "./ProjectDetailContent";
 import styles from "./ProjectDetail.module.css";

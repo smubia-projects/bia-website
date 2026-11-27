@@ -1,15 +1,12 @@
+import "@tests/helpers/db";
 import assert from "node:assert/strict";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { before, describe, it } from "node:test";
-import { shiftClock } from "../../../../tests/helpers/clock";
+import { shiftClock } from "@tests/helpers/clock";
 
 // The dates typed in these tests ("by 20 Nov", "M1 is due 15 Dec 2026") are read relative to today,
 // so the clock starts on a day in November 2026; otherwise the file starts failing as the year moves on.
 shiftClock("2026-11-10T04:00:00Z");
 
-process.env.PGLITE_DIR = path.join(mkdtempSync(path.join(tmpdir(), "bot-")), "db");
 process.env.TELEGRAM_BOT_TOKEN = "123:test";
 
 import { eq } from "drizzle-orm";
@@ -17,11 +14,11 @@ import { getDb } from "@/server/db";
 import { cohorts, people, projectGroups } from "@/server/db/schema";
 import type { Api } from "grammy";
 import type { Update } from "grammy/types";
-import { sgtDay } from "./bot-text";
+import { sgtDay } from "@/shared/time";
 import { botMenus, ensureBotCommands, sendMeetingReminders, sendTaskDeadlineAlerts, syncBotCommands } from "./bot";
-import { telegramApi } from "../../integrations/telegram/client";
-import { createBot, offlineBotInfo } from "../../bot";
-import { createAccountLink, createChatLink } from "../../people/telegram-link";
+import { telegramApi } from "@/server/integrations/telegram/client";
+import { createBot, offlineBotInfo } from "@/server/bot";
+import { createAccountLink, createChatLink } from "@/server/people/telegram-link";
 import * as t from "./service";
 
 // Real IDs for the first live test: the team's group chat and Mingda's Telegram account.

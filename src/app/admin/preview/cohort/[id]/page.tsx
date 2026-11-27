@@ -1,13 +1,16 @@
 import { notFound } from "next/navigation";
 import { can } from "@/server/core/permissions";
-import { getCohort, listCohorts, listGroups, listLodges, listTracks } from "@/server/cohorts/cohorts";
+import { getCohort, listCohorts } from "@/server/cohorts/cohorts";
+import { listGroups } from "@/server/dap/colearning-groups";
+import { listLodges } from "@/server/ailodge/lodges";
+import { listTracks } from "@/server/ailodge/tracks";
 import { lodgePaths } from "@/server/ailodge/lodges";
 import { listProjects } from "@/server/projects/projects";
 import { requireActorPage } from "@/server/auth/session";
 import DapYearbookPage from "@/app/projects/dap/DapYearbookPage";
 import LodgeYearbook from "@/app/projects/ailodge/LodgeYearbook";
-import PreviewBar from "../../../_components/PreviewBar";
-import { runHref } from "../../../_components/runs";
+import PreviewBar from "@/app/admin/_components/PreviewBar";
+import { runHref } from "@/app/admin/_components/runs";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Preview | SMUBIA CMS", robots: { index: false, follow: false } };

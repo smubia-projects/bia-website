@@ -1,11 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { usePhoto } from "../site/SitePhotosProvider";
+import { usePhoto } from "@/components/site/SitePhotosProvider";
 import { motion } from "framer-motion";
 import styles from "./carousel.module.css";
-import SectionHeading from "../ui/SectionHeading";
-import { motionTransition } from "../ui/motion";
+import SectionHeading from "@/components/ui/SectionHeading";
+import { motionTransition } from "@/components/ui/motion";
 
 const AlumniTestimonials = () => {
   const testimonials = [

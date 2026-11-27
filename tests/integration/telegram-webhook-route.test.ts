@@ -1,12 +1,12 @@
-import "../helpers/db";
+import "@tests/helpers/db";
 import assert from "node:assert/strict";
 import { before, beforeEach, describe, it } from "node:test";
 import { getDb } from "@/server/db";
 import { cohorts, people } from "@/server/db/schema";
 import { getBot } from "@/server/bot";
 import * as tracker from "@/server/dap/tracker/service";
-import { actorFor } from "../helpers/actors";
-import { fakeTelegram, type TelegramCall } from "../helpers/telegram";
+import { actorFor } from "@tests/helpers/actors";
+import { fakeTelegram, type TelegramCall } from "@tests/helpers/telegram";
 
 /*
  * The webhook route end to end: Telegram's request → grammY's webhookCallback → the bot.

@@ -1,3 +1,4 @@
+import "server-only";
 import { z } from "zod";
 import { CmsError } from "@/server/core/actor";
 import { can } from "@/server/core/permissions";
@@ -5,8 +6,8 @@ import * as projects from "@/server/projects/projects";
 import { projectPath } from "@/shared/paths";
 import { PROGRAMMES, PROJECT_STATUSES } from "@/shared/taxonomy";
 import { uploadImageFromBase64, uploadImageFromUrl } from "@/server/integrations/blob/uploads";
-import { type McpServer, actor, tool } from "../context";
-import { projectFields } from "../schemas";
+import { type McpServer, actor, tool } from "@/server/mcp/context";
+import { projectFields } from "@/server/mcp/schemas";
 
 export function registerProjectsTools(server: McpServer) {
   // ── Projects ──

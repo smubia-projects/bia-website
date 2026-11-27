@@ -1,5 +1,6 @@
+import "server-only";
 import type { InlineKeyboardButton } from "grammy/types";
-import { ensure, type Actor } from "../../core/actor";
+import { ensure, type Actor } from "@/server/core/actor";
 import * as tracker from "./service";
 import type { ProjectGroup, TrackerWho } from "./service";
 

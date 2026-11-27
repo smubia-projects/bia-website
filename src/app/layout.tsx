@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Inter, Roboto_Mono } from "next/font/google";
-import Navbar from "../components/site/nav";
-import FooterBar from "../components/site/footer";
-import LoadingScreen from "../components/site/loadingscreen";
+import Navbar from "@/components/site/nav";
+import FooterBar from "@/components/site/footer";
+import LoadingScreen from "@/components/site/loadingscreen";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import MotionProvider from "../components/ui/MotionProvider";
-import SiteChrome from "../components/site/SiteChrome";
-import { SiteLinksProvider } from "../components/site/SiteLinksProvider";
-import { getSiteLinks } from "../server/site/links";
-import { getSitePhotos } from "../server/site/photos";
-import { SitePhotosProvider } from "../components/site/SitePhotosProvider";
+import MotionProvider from "@/components/ui/MotionProvider";
+import SiteChrome from "@/components/site/SiteChrome";
+import { SiteLinksProvider } from "@/components/site/SiteLinksProvider";
+import { getSiteLinks } from "@/server/site/links";
+import { getSitePhotos } from "@/server/site/photos";
+import { SitePhotosProvider } from "@/components/site/SitePhotosProvider";
 
 const display = Bricolage_Grotesque({
   subsets: ["latin"],

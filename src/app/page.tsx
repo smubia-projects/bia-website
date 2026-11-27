@@ -1,14 +1,14 @@
-import { MotionNextLink } from "../components/ui/MotionElements";
+import { MotionNextLink } from "@/components/ui/MotionElements";
 import styles from "./page.module.css";
-import ScrollReveal from "../components/ui/ScrollReveal";
-import RotatingWord from "../components/ui/RotatingWord";
-import Button from "../components/ui/Button";
-import SectionHeading from "../components/ui/SectionHeading";
-import AlumniTestimonials from "../components/home/carousel";
-import PathwaysScroll from "../components/home/PathwaysScroll";
-import ProjectsMarquee from "../components/home/ProjectsMarquee";
-import { getPublicProjects } from "./lib/projects";
-import HomeHeroCluster from "../components/home/HomeHeroCluster";
+import ScrollReveal from "@/components/ui/ScrollReveal";
+import RotatingWord from "@/components/ui/RotatingWord";
+import Button from "@/components/ui/Button";
+import SectionHeading from "@/components/ui/SectionHeading";
+import AlumniTestimonials from "@/components/home/carousel";
+import PathwaysScroll from "@/components/home/PathwaysScroll";
+import ProjectsMarquee from "@/components/home/ProjectsMarquee";
+import { getPublicProjects } from "@/server/projects/projects";
+import HomeHeroCluster from "@/components/home/HomeHeroCluster";
 import { getSiteLinks } from "@/server/site/links";
 
 // Keep the live projects rail fresh via ISR (matches the /projects page).

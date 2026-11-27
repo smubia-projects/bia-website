@@ -1,9 +1,10 @@
+import "server-only";
 import { and, asc, desc, eq, ne } from "drizzle-orm";
 import { getDb } from "@/server/db";
 import { cohorts, lodges, type Captain, type LodgeBelt, type LodgeHero, type LodgeRow, type LodgeWeek } from "@/server/db/schema";
-import { ensure, type Actor } from "../core/actor";
-import { can } from "../core/permissions";
-import { revalidateCms } from "../core/revalidate";
+import { ensure, type Actor } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
+import { revalidateCms } from "@/server/core/revalidate";
 import {
   LODGE_AMBIENTS,
   LODGE_BELT_MODES,
@@ -21,7 +22,7 @@ import {
   type LodgeLogoStyle,
   type LodgeNeonSign,
   type LodgeStatus,
-} from "../../shared/taxonomy";
+} from "@/shared/taxonomy";
 
 /*
  * AI Lodge lodges. Each semester has its own lodges (copy one forward to reuse it);
@@ -112,7 +113,7 @@ export interface LodgeInput {
   belt?: Partial<LodgeBelt>;
 }
 
-export const lodgeSlug = (name: string) =>
+const lodgeSlug = (name: string) =>
   name
     .toLowerCase()
     .replace(/\blodge\b/g, "")

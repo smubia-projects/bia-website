@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
-import { shortDate, sgtDay } from "@/server/dap/tracker/bot-text";
-import { todaySgt } from "@/server/people/people";
+import { shortDate, sgtDay, todaySgt } from "@/shared/time";
 import { adminWho, getTimeline, listMembers, listProjectGroups } from "@/server/dap/tracker/service";
 import { nextMeetingBy } from "@/server/dap/tracker/view";
-import GroupTracker from "../../../../_run/GroupTracker";
-import { loadRun } from "../../../../_run/load";
+import GroupTracker from "@/app/admin/(cms)/_run/GroupTracker";
+import { loadRun } from "@/app/admin/(cms)/_run/load";
 
 export default async function TrackerGroupPage(props: { params: Promise<{ run: string; group: string }> }) {
   const params = await props.params;

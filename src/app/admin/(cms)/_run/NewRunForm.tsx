@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Programme } from "@/shared/taxonomy";
 import { yearbookPath } from "@/shared/paths";
-import { createCohortAction } from "../../actions/cohorts";
-import { PageHead, useActionToast } from "../../_components/ui";
-import { RUN_NOUN, runHref } from "../../_components/runs";
-import styles from "../../cms.module.css";
+import { createCohortAction } from "@/app/admin/actions/cohorts";
+import { PageHead, useActionToast } from "@/app/admin/_components/ui";
+import { RUN_NOUN, runHref } from "@/app/admin/_components/runs";
+import styles from "@/app/admin/cms.module.css";
 
 /** "AY26/27 Semester 2" → "ay2627-s2", "AY26/27 cohort" → "ay2627" */
 function suggestSlug(name: string, isLodge: boolean) {

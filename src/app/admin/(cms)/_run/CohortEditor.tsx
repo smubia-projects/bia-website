@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import type { Cohort, Track } from "@/server/cohorts/cohorts";
+import type { Cohort } from "@/server/cohorts/cohorts";
+import type { Track } from "@/server/ailodge/tracks";
 import type { TimelineStep } from "@/server/db/schema";
 import { trackAccent } from "@/components/content/visuals";
 import { LODGE_HEAD_ACCESS_WEEKS, type CohortVisibility } from "@/shared/taxonomy";
-import { deleteTrackAction, moveTrackAction, saveTrackAction } from "../../actions/ailodge";
-import { saveCohortAction } from "../../actions/cohorts";
-import { AddButton, ExternalAction, MarkdownHint, OrderButtons, PageHead, UnsavedNote, useActionToast, useConfirm, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
-import styles from "../../cms.module.css";
+import { deleteTrackAction, moveTrackAction, saveTrackAction } from "@/app/admin/actions/ailodge";
+import { saveCohortAction } from "@/app/admin/actions/cohorts";
+import { AddButton, ExternalAction, MarkdownHint, OrderButtons, PageHead, UnsavedNote, useActionToast, useConfirm, useSaveShortcut, useUnsavedChanges } from "@/app/admin/_components/ui";
+import styles from "@/app/admin/cms.module.css";
 
 interface Props {
   cohort: Cohort;

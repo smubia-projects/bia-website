@@ -12,9 +12,9 @@ import {
 } from "framer-motion";
 import styles from "./PathwaysScroll.module.css";
 import { DEFAULT_LINKS } from "@/shared/links";
-import { useSiteLinks } from "../site/SiteLinksProvider";
-import { usePhoto } from "../site/SitePhotosProvider";
-import { MOTION_EASE, motionTransition } from "../ui/motion";
+import { useSiteLinks } from "@/components/site/SiteLinksProvider";
+import { usePhoto } from "@/components/site/SitePhotosProvider";
+import { MOTION_EASE, motionTransition } from "@/components/ui/motion";
 
 const MotionLink = motion.create(Link);
 

@@ -1,5 +1,6 @@
-import { CmsError, ensure, type Actor } from "../../core/actor";
-import { can } from "../../core/permissions";
+import "server-only";
+import { CmsError, ensure, type Actor } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import type { Api } from "grammy";
 import { SITE_URL, telegramApi, telegramError, telegramToken } from "./client";
 
@@ -11,7 +12,7 @@ import { SITE_URL, telegramApi, telegramError, telegramToken } from "./client";
  * TELEGRAM_WEBHOOK_SECRET, redeploying, then setting the webhook again.
  */
 
-export const WEBHOOK_PATH = "/api/telegram/webhook";
+const WEBHOOK_PATH = "/api/telegram/webhook";
 /** The one place Telegram is told to post to: the public site, not whichever host the dashboard is opened on. */
 export const expectedWebhookUrl = () => `${SITE_URL}${WEBHOOK_PATH}`;
 

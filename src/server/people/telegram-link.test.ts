@@ -1,20 +1,17 @@
+import "@tests/helpers/db";
 import assert from "node:assert/strict";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { before, describe, it } from "node:test";
 
-process.env.PGLITE_DIR = path.join(mkdtempSync(path.join(tmpdir(), "link-")), "db");
 process.env.TELEGRAM_BOT_TOKEN = "123:test";
 process.env.CMS_BOOTSTRAP_ADMINS = "boot@smu.edu.sg";
 
 import { eq } from "drizzle-orm";
 import { getDb } from "@/server/db";
 import { cohorts, people, projectGroups, telegramLinkCodes } from "@/server/db/schema";
-import { CmsError, type Actor } from "../core/actor";
+import { CmsError, type Actor } from "@/server/core/actor";
 import { claimAccountLink, claimChatLink, createAccountLink, createChatLink, forgetExpiredCodes, linkedTelegram, unlinkTelegram } from "./telegram-link";
-import { telegramApi } from "../integrations/telegram/client";
-import * as t from "../dap/tracker/service";
+import { telegramApi } from "@/server/integrations/telegram/client";
+import * as t from "@/server/dap/tracker/service";
 
 // The bot's username comes from getMe: the shared client answers every call with this bot.
 telegramApi().config.use(async () => ({ ok: true, result: { id: 123, is_bot: true, first_name: "Test", username: "TestBot" } as never }));

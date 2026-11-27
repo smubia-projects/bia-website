@@ -3,7 +3,7 @@ import { AuthError } from "next-auth";
 import { devLoginEnabled, googleConfigured, signIn } from "@/server/auth/auth";
 import { getCurrentActor } from "@/server/auth/session";
 import { ROLE_LABEL, ROLES, SUPERADMIN_LABEL } from "@/shared/taxonomy";
-import styles from "../cms.module.css";
+import styles from "@/app/admin/cms.module.css";
 
 export const dynamic = "force-dynamic";
 

@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LinkedAccount } from "@/server/core/settings";
-import { setDapChannelAction, unlinkTelegramAction } from "../../actions/telegram";
-import { UnsavedNote, useActionToast, useConfirm } from "../../_components/ui";
-import styles from "../../cms.module.css";
-import t from "../../tracker.module.css";
+import { setDapChannelAction, unlinkTelegramAction } from "@/app/admin/actions/telegram";
+import { UnsavedNote, useActionToast, useConfirm } from "@/app/admin/_components/ui";
+import styles from "@/app/admin/cms.module.css";
+import t from "@/app/admin/tracker.module.css";
 
 /** Settings › Telegram › Bot (exco admins): the DAP channel and every linked Telegram account. */
 export default function BotSettings({ channelId, channelFromEnv, accounts, children }: {

@@ -1,12 +1,13 @@
+import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { and, eq, lt } from "drizzle-orm";
 import { getDb } from "@/server/db";
 import { people, projectGroups, telegramLinkCodes, type TelegramLinkKind } from "@/server/db/schema";
-import { CmsError, ensure, type Actor } from "../core/actor";
-import { can } from "../core/permissions";
+import { CmsError, ensure, type Actor } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { findAccess } from "./people";
-import { getBotUsername } from "../integrations/telegram/client";
-import { connectChat, type ProjectGroup } from "../dap/tracker/service";
+import { getBotUsername } from "@/server/integrations/telegram/client";
+import { connectChat, type ProjectGroup } from "@/server/dap/tracker/service";
 
 /*
  * One-time Telegram links made in the CMS.

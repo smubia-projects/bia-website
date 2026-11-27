@@ -1,7 +1,8 @@
+import "server-only";
 import { z } from "zod";
 import * as trackerMcp from "@/server/dap/tracker/mcp";
 import { MILESTONE_STATUSES } from "@/shared/taxonomy";
-import { type McpServer, actor, tool } from "../context";
+import { type McpServer, actor, tool } from "@/server/mcp/context";
 
 export function registerTrackerTools(server: McpServer) {
   // ── DAP timeline tracker (project groups) ──

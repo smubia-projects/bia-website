@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPublicCohorts } from "@/server/cohorts/cohorts";
-import { getPublicProjects } from "@/app/lib/projects";
-import DapYearbookPage from "../DapYearbookPage";
+import { getPublicProjects } from "@/server/projects/projects";
+import DapYearbookPage from "@/app/projects/dap/DapYearbookPage";
 
 export const revalidate = 3600;
 export const dynamicParams = true;

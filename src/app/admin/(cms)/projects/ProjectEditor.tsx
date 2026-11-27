@@ -19,10 +19,10 @@ import {
   type Role,
 } from "@/shared/taxonomy";
 import { projectPath } from "@/shared/paths";
-import { deleteProjectAction, saveProjectAction, setWinnerAction, type SaveIntent } from "../../actions/projects";
-import { AddButton, ExternalAction, MarkdownHint, MiniField, OrderButtons, PageHead, StatusChip, UnsavedNote, moveItem, useActionToast, useConfirm, useImageUpload, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
-import { runHref } from "../../_components/runs";
-import styles from "../../cms.module.css";
+import { deleteProjectAction, saveProjectAction, setWinnerAction, type SaveIntent } from "@/app/admin/actions/projects";
+import { AddButton, ExternalAction, MarkdownHint, MiniField, OrderButtons, PageHead, StatusChip, UnsavedNote, moveItem, useActionToast, useConfirm, useImageUpload, useSaveShortcut, useUnsavedChanges } from "@/app/admin/_components/ui";
+import { runHref } from "@/app/admin/_components/runs";
+import styles from "@/app/admin/cms.module.css";
 
 export interface CohortOption {
   id: string;

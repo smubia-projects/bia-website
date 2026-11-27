@@ -1,7 +1,8 @@
+import "server-only";
 import { z } from "zod";
 import { BLOCK_TYPES, BUILT_WITH, MADE_FOR, PROGRAMMES } from "@/shared/taxonomy";
 
-export const teamMember = z.object({
+const teamMember = z.object({
   name: z.string(),
   role: z.string().default(""),
   avatar: z.string().default(""),
@@ -9,7 +10,7 @@ export const teamMember = z.object({
   github: z.string().optional(),
   website: z.string().optional(),
 });
-export const card = z.object({ icon: z.string().default("lightbulb"), title: z.string(), body: z.string() });
+const card = z.object({ icon: z.string().default("lightbulb"), title: z.string(), body: z.string() });
 
 export const projectFields = {
   title: z.string().optional(),
@@ -30,7 +31,7 @@ export const projectFields = {
   sourceUrl: z.string().optional().describe("GitHub URL"),
 };
 
-export const block = z.object({
+const block = z.object({
   id: z.string().default(""),
   type: z.enum(BLOCK_TYPES),
   heading: z.string().default(""),

@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ISSUE_STATUS_LABEL, type IssueStatus } from "@/shared/taxonomy";
-import { saveSessionsAction } from "../../actions/dap";
-import { PageHead, StatusChip, UnsavedNote, useActionToast, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
-import { runHref } from "../../_components/runs";
-import styles from "../../cms.module.css";
+import { saveSessionsAction } from "@/app/admin/actions/dap";
+import { PageHead, StatusChip, UnsavedNote, useActionToast, useSaveShortcut, useUnsavedChanges } from "@/app/admin/_components/ui";
+import { runHref } from "@/app/admin/_components/runs";
+import styles from "@/app/admin/cms.module.css";
 
 interface Row {
   week: number;

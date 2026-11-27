@@ -1,11 +1,11 @@
 import React from "react";
 import Image from "next/image";
 import styles from "./WorkWithUs.module.css";
-import ScrollReveal from "../../components/ui/ScrollReveal";
-import SectionHeading from "../../components/ui/SectionHeading";
-import Button from "../../components/ui/Button";
-import CountUp from "../../components/ui/CountUp";
-import { MotionImage, MotionSurface } from "../../components/ui/MotionElements";
+import ScrollReveal from "@/components/ui/ScrollReveal";
+import SectionHeading from "@/components/ui/SectionHeading";
+import Button from "@/components/ui/Button";
+import CountUp from "@/components/ui/CountUp";
+import { MotionImage, MotionSurface } from "@/components/ui/MotionElements";
 import { partnershipMailto } from "@/shared/links";
 import { getSiteLinks } from "@/server/site/links";
 import { getSitePhotos } from "@/server/site/photos";

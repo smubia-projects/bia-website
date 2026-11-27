@@ -1,11 +1,12 @@
+import "server-only";
 import { eq } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/server/db";
 import { sitePhotos } from "@/server/db/schema";
 import { DEFAULT_SITE_PHOTOS, photoSite, photoSlot, type Photo, type SitePhotos } from "@/shared/photos";
-import { ensure, type Actor } from "../core/actor";
-import { can } from "../core/permissions";
-import { revalidateCms, TAGS } from "../core/revalidate";
+import { ensure, type Actor } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
+import { revalidateCms, TAGS } from "@/server/core/revalidate";
 
 /** The slot registry's defaults with every photo replaced in the CMS on top. */
 export async function listSitePhotos(): Promise<SitePhotos> {

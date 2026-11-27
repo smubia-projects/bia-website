@@ -1,3 +1,4 @@
+import "server-only";
 import { ensureBotCommands, sendMeetingReminders, sendTaskDeadlineAlerts } from "./dap/tracker/bot";
 import { publishDueIssues } from "./dap/newsletter";
 import { forgetExpiredCodes } from "./people/telegram-link";

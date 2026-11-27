@@ -1,12 +1,13 @@
+import "server-only";
 import { and, asc, count, eq, ne, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/server/db";
 import { cohorts, lodges, projects, tracks, type ProjectRow } from "@/server/db/schema";
 import type { HighlightCard, Project, TeamMember } from "@/shared/types/project";
-import { CmsError, ensure, type Actor } from "../core/actor";
-import { can } from "../core/permissions";
-import { lodgePaths } from "../ailodge/lodges";
-import { revalidateCms, TAGS } from "../core/revalidate";
+import { CmsError, ensure, type Actor } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
+import { lodgePaths } from "@/server/ailodge/lodges";
+import { revalidateCms, TAGS } from "@/server/core/revalidate";
 import {
   BUILT_WITH,
   MADE_FOR,
@@ -16,7 +17,7 @@ import {
   ROLE_PROGRAMME,
   type Programme,
   type ProjectStatus,
-} from "../../shared/taxonomy";
+} from "@/shared/taxonomy";
 
 export interface ProjectInput {
   title?: string;
@@ -40,7 +41,7 @@ export interface ProjectInput {
   demoUrl?: string;
 }
 
-export function slugify(text: string): string {
+function slugify(text: string): string {
   return text
     .toLowerCase()
     .trim()
@@ -159,11 +160,6 @@ export async function getPublicProjects(): Promise<Project[]> {
     console.error("[cms] public project list read failed", error);
     return [];
   }
-}
-
-export async function getPublicProject(slug: string): Promise<Project | null> {
-  const all = await getPublicProjects();
-  return all.find((p) => p.slug === slug) ?? null;
 }
 
 // ── Validation helpers ───────────────────────────────────────────────────

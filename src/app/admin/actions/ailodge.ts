@@ -1,13 +1,13 @@
 "use server";
 
 import * as projects from "@/server/projects/projects";
-import * as cohorts from "@/server/cohorts/cohorts";
+import * as tracksCms from "@/server/ailodge/tracks";
 import * as lodgesCms from "@/server/ailodge/lodges";
 import { run, refreshAdmin } from "./run";
 
-export async function saveTrackAction(input: cohorts.TrackInput) {
+export async function saveTrackAction(input: tracksCms.TrackInput) {
   return run(async (actor) => {
-    const t = await cohorts.saveTrack(actor, input);
+    const t = await tracksCms.saveTrack(actor, input);
     refreshAdmin();
     return t.id;
   });
@@ -15,7 +15,7 @@ export async function saveTrackAction(input: cohorts.TrackInput) {
 
 export async function moveTrackAction(id: number, direction: "up" | "down") {
   return run(async (actor) => {
-    await cohorts.moveTrack(actor, id, direction);
+    await tracksCms.moveTrack(actor, id, direction);
     refreshAdmin();
     return null;
   });
@@ -63,7 +63,7 @@ export async function setProjectLodgeAction(slug: string, lodgeId: number | null
 
 export async function deleteTrackAction(id: number) {
   return run(async (actor) => {
-    await cohorts.deleteTrack(actor, id);
+    await tracksCms.deleteTrack(actor, id);
     refreshAdmin();
     return null;
   });

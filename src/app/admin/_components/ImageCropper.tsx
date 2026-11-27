@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
-import styles from "../cms.module.css";
+import styles from "@/app/admin/cms.module.css";
 
 interface Props {
   imageSrc: string;

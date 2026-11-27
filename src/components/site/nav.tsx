@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSiteLinks } from "./SiteLinksProvider";
-import { MOTION_EASE, motionTransition } from "../ui/motion";
+import { MOTION_EASE, motionTransition } from "@/components/ui/motion";
 
 const MotionLink = motion.create(Link);
 

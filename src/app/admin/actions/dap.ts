@@ -1,12 +1,12 @@
 "use server";
 
-import * as cohorts from "@/server/cohorts/cohorts";
+import * as colearningGroups from "@/server/dap/colearning-groups";
 import * as newsletter from "@/server/dap/newsletter";
 import { run, refreshAdmin } from "./run";
 
-export async function saveGroupAction(input: cohorts.GroupInput) {
+export async function saveGroupAction(input: colearningGroups.GroupInput) {
   return run(async (actor) => {
-    const g = await cohorts.saveGroup(actor, input);
+    const g = await colearningGroups.saveGroup(actor, input);
     refreshAdmin();
     return g.id;
   });
@@ -14,7 +14,7 @@ export async function saveGroupAction(input: cohorts.GroupInput) {
 
 export async function deleteGroupAction(id: number) {
   return run(async (actor) => {
-    await cohorts.deleteGroup(actor, id);
+    await colearningGroups.deleteGroup(actor, id);
     refreshAdmin();
     return null;
   });

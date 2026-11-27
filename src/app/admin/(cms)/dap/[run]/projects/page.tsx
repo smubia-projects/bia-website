@@ -1,8 +1,8 @@
 import { can } from "@/server/core/permissions";
 import { listProjects } from "@/server/projects/projects";
 import { cohortPath } from "@/shared/paths";
-import CohortProjects from "../../../_run/CohortProjects";
-import { loadRun } from "../../../_run/load";
+import CohortProjects from "@/app/admin/(cms)/_run/CohortProjects";
+import { loadRun } from "@/app/admin/(cms)/_run/load";
 
 export default async function CohortProjectsPage(props: { params: Promise<{ run: string }> }) {
   const params = await props.params;

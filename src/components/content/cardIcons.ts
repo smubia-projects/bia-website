@@ -48,7 +48,6 @@ export const CARD_ICONS: { key: string; label: string; Icon: LucideIcon }[] = [
   { key: "puzzle", label: "Puzzle", Icon: Puzzle },
 ];
 
-export const DEFAULT_CARD_ICON = "circle-check";
 
 const CARD_ICON_MAP: Record<string, LucideIcon> = Object.fromEntries(
   CARD_ICONS.map((i) => [i.key, i.Icon])

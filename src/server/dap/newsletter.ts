@@ -1,15 +1,16 @@
+import "server-only";
 import { and, asc, desc, eq, lte, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/server/db";
 import { cohorts, dapGroups, issues, sessions, type DapGroupRow, type IssueBlock, type IssueRow, type SessionRow } from "@/server/db/schema";
-import { SCHEDULER_ACTOR, CmsError, ensure, type Actor } from "../core/actor";
-import { can } from "../core/permissions";
-import { getCohort, type Cohort } from "../cohorts/cohorts";
-import { issuePath } from "../../shared/paths";
-import { revalidateCms, TAGS } from "../core/revalidate";
-import { sendIssueToTelegram, SITE_URL } from "../integrations/telegram/client";
-import { getDapChannelId } from "../core/settings";
-import { BLOCK_DEFAULT_HEADING, BLOCK_TYPES, type BlockType } from "../../shared/taxonomy";
+import { SCHEDULER_ACTOR, CmsError, ensure, type Actor } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
+import { getCohort, type Cohort } from "@/server/cohorts/cohorts";
+import { issuePath } from "@/shared/paths";
+import { revalidateCms, TAGS } from "@/server/core/revalidate";
+import { sendIssueToTelegram, SITE_URL } from "@/server/integrations/telegram/client";
+import { getDapChannelId } from "@/server/core/settings";
+import { BLOCK_DEFAULT_HEADING, BLOCK_TYPES, type BlockType } from "@/shared/taxonomy";
 
 /** A schedule row with the DAP group teaching it (members and mentors included). */
 export type Session = SessionRow & { group: DapGroupRow | null };
@@ -17,7 +18,7 @@ export type Session = SessionRow & { group: DapGroupRow | null };
 export type Issue = IssueRow & { cohortSlug: string; path: string };
 
 /** Scheduled issues go out at 09:00 SGT (01:00 UTC) on their date. */
-export const PUBLISH_HOUR_UTC = 1;
+const PUBLISH_HOUR_UTC = 1;
 
 /** "week-3" → 3, the issue segment of /dap/<cohort>/week-<n>. */
 export function parseIssueWeek(segment: string) {

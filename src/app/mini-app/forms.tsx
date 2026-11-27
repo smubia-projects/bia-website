@@ -8,7 +8,7 @@ import styles from "./mini-app.module.css";
 /** Sends one change; resolves to an error message, or null when it went through. */
 export type Act = (action: string, fields: object) => Promise<string | null>;
 
-export const STATUS_OPTIONS: { value: Status; label: string }[] = [
+const STATUS_OPTIONS: { value: Status; label: string }[] = [
   { value: "todo", label: "To Do" },
   { value: "in_progress", label: "In Progress" },
   { value: "done", label: "Done" },

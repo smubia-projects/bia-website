@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import { can } from "@/server/core/permissions";
 import { getSiteLinks } from "@/server/site/links";
 import { getLodge, lodgePaths } from "@/server/ailodge/lodges";
-import LodgeEditor from "../../../../_run/LodgeEditor";
-import { loadRun } from "../../../../_run/load";
+import LodgeEditor from "@/app/admin/(cms)/_run/LodgeEditor";
+import { loadRun } from "@/app/admin/(cms)/_run/load";
 
 export default async function LodgeEditorPage(props: { params: Promise<{ run: string; id: string }> }) {
   const params = await props.params;

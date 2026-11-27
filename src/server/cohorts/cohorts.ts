@@ -1,29 +1,17 @@
-import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
+import "server-only";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/server/db";
-import {
-  cohorts,
-  dapGroups,
-  projects,
-  sessions,
-  tracks,
-  type CohortRow,
-  type DapGroupRow,
-  type Profile,
-  type TimelineStep,
-  type TrackRow,
-} from "@/server/db/schema";
-import { ensure, type Actor } from "../core/actor";
-import { can } from "../core/permissions";
-import { listLodges, lodgePaths } from "../ailodge/lodges";
-import { revalidateCms, TAGS } from "../core/revalidate";
-import { COHORT_VISIBILITY, DAP_WEEKS, PROGRAMMES, type CohortVisibility, type Programme } from "../../shared/taxonomy";
+import { cohorts, sessions, type CohortRow, type TimelineStep } from "@/server/db/schema";
+import { ensure, type Actor } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
+import { listLodges, lodgePaths, type Lodge } from "@/server/ailodge/lodges";
+import { listTracks, type Track } from "@/server/ailodge/tracks";
+import { listGroups, type DapGroup } from "@/server/dap/colearning-groups";
+import { revalidateCms, TAGS } from "@/server/core/revalidate";
+import { COHORT_VISIBILITY, DAP_WEEKS, PROGRAMMES, type CohortVisibility, type Programme } from "@/shared/taxonomy";
 
 export type Cohort = CohortRow;
-export type Track = TrackRow & { projectCount: number };
-import type { Lodge } from "../ailodge/lodges";
-export type { Lodge };
-export type DapGroup = DapGroupRow;
 
 export const cohortIdFor = (programme: Programme, slug: string) =>
   `${programme === "AI Lodge" ? "ai-lodge" : "dap"}-${slug}`;
@@ -39,29 +27,6 @@ export async function getCohort(id: string): Promise<Cohort | null> {
   const db = await getDb();
   const [row] = await db.select().from(cohorts).where(eq(cohorts.id, id));
   return row ?? null;
-}
-
-export async function listTracks(cohortId: string): Promise<Track[]> {
-  const db = await getDb();
-  const rows = await db
-    .select({
-      t: tracks,
-      projectCount: sql<number>`(select count(*) from ${projects} where ${projects.trackId} = ${tracks.id})`,
-    })
-    .from(tracks)
-    .where(eq(tracks.cohortId, cohortId))
-    .orderBy(asc(tracks.position), asc(tracks.id));
-  return rows.map((r) => ({ ...r.t, projectCount: Number(r.projectCount) }));
-}
-
-export async function listAllTracks(): Promise<(TrackRow & { cohortName: string })[]> {
-  const db = await getDb();
-  const rows = await db
-    .select({ t: tracks, cohortName: cohorts.name })
-    .from(tracks)
-    .innerJoin(cohorts, eq(tracks.cohortId, cohorts.id))
-    .orderBy(desc(cohorts.slug), asc(tracks.position));
-  return rows.map((r) => ({ ...r.t, cohortName: r.cohortName }));
 }
 
 // ── Public (cached) ──────────────────────────────────────────────────────
@@ -194,141 +159,4 @@ export async function updateCohort(actor: Actor, id: string, input: CohortInput)
   await db.update(cohorts).set(values).where(eq(cohorts.id, id));
   revalidateCms("cohorts", "newsletter");
   return (await getCohort(id))!;
-}
-
-export interface TrackInput {
-  id?: number;
-  cohortId: string;
-  letter?: string;
-  name: string;
-}
-
-export async function saveTrack(actor: Actor, input: TrackInput): Promise<TrackRow> {
-  const cohort = await getCohort(input.cohortId);
-  ensure(cohort, "Cohort not found");
-  ensure(cohort.programme === "AI Lodge", "Only AI Lodge semesters have tracks");
-  ensure(can.editCohort(actor, cohort.programme), "This role cannot edit tracks");
-  const name = input.name.trim();
-  ensure(name, "Track name is required");
-  const db = await getDb();
-  if (input.id) {
-    const [row] = await db
-      .update(tracks)
-      .set({ name, letter: (input.letter ?? "").trim() })
-      .where(and(eq(tracks.id, input.id), eq(tracks.cohortId, input.cohortId)))
-      .returning();
-    ensure(row, "Track not found");
-    revalidateCms("cohorts", "projects");
-    return row;
-  }
-  const existing = await listTracks(input.cohortId);
-  const letter = (input.letter ?? "").trim() || String.fromCharCode(65 + existing.length);
-  const [row] = await db
-    .insert(tracks)
-    .values({ cohortId: input.cohortId, name, letter, position: existing.length })
-    .returning();
-  revalidateCms("cohorts", "projects");
-  return row;
-}
-
-/** Moves a track one place up or down; positions are renumbered 0..n-1 as it goes. */
-export async function moveTrack(actor: Actor, id: number, direction: "up" | "down") {
-  ensure(can.editCohort(actor, "AI Lodge"), "This role cannot reorder tracks");
-  const db = await getDb();
-  const [row] = await db.select().from(tracks).where(eq(tracks.id, id));
-  ensure(row, "Track not found");
-  const list = await listTracks(row.cohortId);
-  const from = list.findIndex((t) => t.id === id);
-  const to = direction === "up" ? from - 1 : from + 1;
-  if (to < 0 || to >= list.length) return;
-  [list[from], list[to]] = [list[to], list[from]];
-  await Promise.all(
-    list.flatMap((t, position) => (t.position === position ? [] : [db.update(tracks).set({ position }).where(eq(tracks.id, t.id))]))
-  );
-  revalidateCms("cohorts", "projects");
-}
-
-export async function deleteTrack(actor: Actor, id: number) {
-  ensure(can.editCohort(actor, "AI Lodge"), "This role cannot remove tracks");
-  const db = await getDb();
-  const [row] = await db.select().from(tracks).where(eq(tracks.id, id));
-  ensure(row, "Track not found");
-  ensure(Number((await listTracks(row.cohortId)).find((t) => t.id === id)?.projectCount ?? 0) === 0, "Track has projects. Move them to another track first.");
-  await db.delete(tracks).where(eq(tracks.id, id));
-  revalidateCms("cohorts", "projects");
-}
-
-// ── Lodges (AI Lodge): see ./lodges ─────────────────────────────────────
-
-export { listAllLodges, listLodges } from "../ailodge/lodges";
-
-// ── DAP groups ───────────────────────────────────────────────────────────
-
-export async function listGroups(cohortId: string): Promise<DapGroup[]> {
-  const db = await getDb();
-  return db.select().from(dapGroups).where(eq(dapGroups.cohortId, cohortId)).orderBy(asc(dapGroups.position), asc(dapGroups.id));
-}
-
-export interface GroupInput {
-  id?: number;
-  cohortId: string;
-  name: string;
-  members?: Profile[];
-  mentors?: Profile[];
-}
-
-function cleanProfiles(list: Profile[] | undefined, label: string): Profile[] {
-  return (list ?? [])
-    .map((p) => ({
-      name: (p.name ?? "").trim(),
-      image: (p.image ?? "").trim() || undefined,
-      linkedin: (p.linkedin ?? "").trim() || undefined,
-      email: (p.email ?? "").trim() || undefined,
-      telegram: (p.telegram ?? "").trim() || undefined,
-    }))
-    .filter((p) => p.name || p.image || p.linkedin || p.email || p.telegram)
-    .map((p) => {
-      ensure(p.name, `Every ${label} needs a name`);
-      ensure(!p.linkedin || /^https:\/\/\S+$/i.test(p.linkedin), `${p.name}'s LinkedIn must be a full https:// link`);
-      ensure(!p.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email), `${p.name}: invalid email address`);
-      return p;
-    });
-}
-
-export async function saveGroup(actor: Actor, input: GroupInput): Promise<DapGroup> {
-  const cohort = await getCohort(input.cohortId);
-  ensure(cohort, "Cohort not found");
-  ensure(cohort.programme === "DAP", "Only DAP cohorts have groups");
-  ensure(can.editCohort(actor, "DAP"), "This role cannot edit DAP groups");
-  const name = input.name.trim();
-  ensure(name, "Group name is required");
-  const values = {
-    name,
-    ...(input.members !== undefined ? { members: cleanProfiles(input.members, "member") } : {}),
-    ...(input.mentors !== undefined ? { mentors: cleanProfiles(input.mentors, "mentor") } : {}),
-  };
-  const db = await getDb();
-  let row: DapGroup | undefined;
-  if (input.id) {
-    [row] = await db
-      .update(dapGroups)
-      .set(values)
-      .where(and(eq(dapGroups.id, input.id), eq(dapGroups.cohortId, input.cohortId)))
-      .returning();
-    ensure(row, "Group not found");
-  } else {
-    const existing = await listGroups(input.cohortId);
-    ensure(!existing.some((g) => g.name.toLowerCase() === name.toLowerCase()), `A group named ${name} already exists`);
-    [row] = await db.insert(dapGroups).values({ cohortId: input.cohortId, position: existing.length, ...values }).returning();
-  }
-  revalidateCms("cohorts", "newsletter");
-  return row!;
-}
-
-/** Sessions taught by a removed group just lose the link. */
-export async function deleteGroup(actor: Actor, id: number) {
-  ensure(can.editCohort(actor, "DAP"), "This role cannot edit DAP groups");
-  const db = await getDb();
-  await db.delete(dapGroups).where(eq(dapGroups.id, id));
-  revalidateCms("cohorts", "newsletter");
 }

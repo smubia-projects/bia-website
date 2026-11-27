@@ -1,5 +1,6 @@
+import "server-only";
 import { HttpError, type Bot } from "grammy";
-import { createBot } from "../../bot";
+import { createBot } from "@/server/bot";
 import { telegramToken } from "./client";
 
 /*

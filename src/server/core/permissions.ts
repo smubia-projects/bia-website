@@ -1,3 +1,4 @@
+import "server-only";
 import type { Actor } from "./actor";
 import type { PhotoSite } from "@/shared/photos";
 import type { Programme, ProjectStatus, Role } from "@/shared/taxonomy";
@@ -41,13 +42,13 @@ export const CAPABILITIES = [
 export type Capability = (typeof CAPABILITIES)[number];
 
 /** A superadmin is an exco admin whose email is in CMS_BOOTSTRAP_ADMINS. */
-export type PermissionRole = Role | "superadmin";
+type PermissionRole = Role | "superadmin";
 
 const AI_LODGE_EXCO: Capability[] = ["editAILodge", "seeLodge", "setWinner", "setAILodgeApplications", "seePhotos", "editAILodgePhotos"];
 const DAP_EXCO: Capability[] = ["editDap", "seeDap", "editNewsletter", "tracker"];
 const EXCO: Capability[] = CAPABILITIES.filter((c) => c !== "managePeople");
 
-export const ROLE_CAPS: Record<PermissionRole, readonly Capability[]> = {
+const ROLE_CAPS: Record<PermissionRole, readonly Capability[]> = {
   superadmin: CAPABILITIES,
   exco: EXCO,
   dap_exco: DAP_EXCO,
@@ -59,7 +60,7 @@ export const ROLE_CAPS: Record<PermissionRole, readonly Capability[]> = {
 const roleOf = (a: Actor): PermissionRole => (a.role === "exco" && a.superadmin ? "superadmin" : a.role);
 
 /** Whether the actor's role has a capability. */
-export const has = (a: Actor, cap: Capability) => ROLE_CAPS[roleOf(a)].includes(cap);
+const has = (a: Actor, cap: Capability) => ROLE_CAPS[roleOf(a)].includes(cap);
 
 /** Whether the actor's role has any of the capabilities. */
 export const hasAny = (a: Actor, caps: readonly Capability[]) => caps.some((c) => has(a, c));

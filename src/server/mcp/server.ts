@@ -1,3 +1,4 @@
+import "server-only";
 import { createMcpHandler } from "mcp-handler";
 import { devLoginEnabled } from "@/server/auth/auth";
 import { DEV_MCP_ACTOR, type Actor } from "@/server/core/actor";
@@ -5,6 +6,7 @@ import { hasAny, type Capability } from "@/server/core/permissions";
 import { actorForToken } from "@/server/people/tokens";
 import { actor, requestActor } from "./context";
 import { registerCohortsTools } from "./tools/cohorts";
+import { registerAILodgeTools } from "./tools/ailodge";
 import { registerProjectsTools } from "./tools/projects";
 import { registerSiteTools } from "./tools/site";
 import { registerPeopleTools } from "./tools/people";
@@ -77,6 +79,7 @@ const handler = createMcpHandler(
         : (register as (...args: unknown[]) => unknown)(name, ...rest)) as typeof server.registerTool;
 
     registerCohortsTools(server);
+    registerAILodgeTools(server);
     registerProjectsTools(server);
     registerSiteTools(server);
     registerPeopleTools(server);

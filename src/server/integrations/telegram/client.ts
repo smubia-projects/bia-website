@@ -1,10 +1,11 @@
+import "server-only";
 import { Api, GrammyError, HttpError, type Transformer } from "grammy";
-import { CmsError } from "../../core/actor";
+import { CmsError } from "@/server/core/actor";
 
 /*
  * Telegram plumbing shared by the newsletter, the webhook panel and the DAP tracker bot,
  * all through grammY. This file knows nothing about features: the bot's handlers are put
- * together in telegram-bot.ts.
+ * together in src/server/bot.ts.
  *
  * A bot can only message a person who has sent it /start, which is why test sends ask
  * for a user ID and say so. Without TELEGRAM_BOT_TOKEN (localhost) every call is logged
@@ -73,7 +74,7 @@ export interface TelegramIssue {
   sessionGroup?: string;
 }
 
-export function formatIssueMessage(issue: TelegramIssue) {
+function formatIssueMessage(issue: TelegramIssue) {
   const lines = [
     `<b>This week in DAP · Week ${issue.week}</b>`,
     `<b>${escapeHtml(issue.title)}</b>`,

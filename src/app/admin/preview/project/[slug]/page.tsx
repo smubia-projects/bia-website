@@ -6,7 +6,7 @@ import { requireActorPage } from "@/server/auth/session";
 import { PROJECT_STATUS_LABEL } from "@/shared/taxonomy";
 import ProjectDetailContent from "@/app/projects/_detail/ProjectDetailContent";
 import styles from "@/app/projects/_detail/ProjectDetail.module.css";
-import PreviewBar from "../../../_components/PreviewBar";
+import PreviewBar from "@/app/admin/_components/PreviewBar";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Preview | SMUBIA CMS", robots: { index: false, follow: false } };

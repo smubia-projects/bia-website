@@ -30,10 +30,10 @@ import {
   type LodgeLogoStyle,
   type LodgeNeonSign,
 } from "@/shared/taxonomy";
-import { deleteLodgeAction, saveLodgeAction } from "../../actions/ailodge";
-import { AddButton, ExternalAction, MiniField, OrderButtons, PageHead, UnsavedNote, moveItem, useActionToast, useConfirm, useImageUpload, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
-import { runHref } from "../../_components/runs";
-import styles from "../../cms.module.css";
+import { deleteLodgeAction, saveLodgeAction } from "@/app/admin/actions/ailodge";
+import { AddButton, ExternalAction, MiniField, OrderButtons, PageHead, UnsavedNote, moveItem, useActionToast, useConfirm, useImageUpload, useSaveShortcut, useUnsavedChanges } from "@/app/admin/_components/ui";
+import { runHref } from "@/app/admin/_components/runs";
+import styles from "@/app/admin/cms.module.css";
 
 type Draft = Omit<Lodge, "id" | "cohortId" | "position" | "updatedAt" | "topics" | "cardTags" | "goals" | "oldSlugs"> & {
   topics: string;

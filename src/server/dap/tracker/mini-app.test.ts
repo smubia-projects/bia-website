@@ -1,11 +1,7 @@
+import "@tests/helpers/db";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { before, beforeEach, describe, it } from "node:test";
-
-process.env.PGLITE_DIR = path.join(mkdtempSync(path.join(tmpdir(), "miniapp-")), "db");
 
 import type { Api } from "grammy";
 import { getDb } from "@/server/db";

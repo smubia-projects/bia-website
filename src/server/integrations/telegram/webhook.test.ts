@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
 import { HttpError } from "grammy";
-import { CmsError, type Actor } from "../../core/actor";
+import { CmsError, type Actor } from "@/server/core/actor";
 import { telegramApi } from "./client";
 import { deleteWebhook, expectedWebhookUrl, getWebhookInfo, setWebhook } from "./webhook";
 

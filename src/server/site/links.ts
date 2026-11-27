@@ -1,3 +1,4 @@
+import "server-only";
 import { eq, inArray } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { getDb } from "@/server/db";
@@ -11,10 +12,10 @@ import {
   type LinkKey,
   type SiteLinks,
 } from "@/shared/links";
-import { ensure, type Actor } from "../core/actor";
-import { can } from "../core/permissions";
-import { revalidateCms, TAGS } from "../core/revalidate";
-import type { Programme } from "../../shared/taxonomy";
+import { ensure, type Actor } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
+import { revalidateCms, TAGS } from "@/server/core/revalidate";
+import type { Programme } from "@/shared/taxonomy";
 
 const KEYS = EDITABLE_LINKS.map((l) => l.key) as string[];
 

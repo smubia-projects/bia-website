@@ -1,10 +1,12 @@
-import "../helpers/db";
+import "@tests/helpers/db";
 import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 import { getDb } from "@/server/db";
 import { cohorts } from "@/server/db/schema";
 import { CmsError, type Actor } from "@/server/core/actor";
 import * as cohortsCms from "@/server/cohorts/cohorts";
+import * as tracksCms from "@/server/ailodge/tracks";
+import * as colearningGroups from "@/server/dap/colearning-groups";
 import * as links from "@/server/site/links";
 import * as lodges from "@/server/ailodge/lodges";
 import * as newsletter from "@/server/dap/newsletter";
@@ -16,8 +18,8 @@ import * as telegramSettings from "@/server/core/settings";
 import * as tokens from "@/server/people/tokens";
 import * as tracker from "@/server/dap/tracker/service";
 import * as trackerMcp from "@/server/dap/tracker/mcp";
-import { actorFor, ROLE_KEYS, type RoleKey } from "../helpers/actors";
-import { fakeTelegram } from "../helpers/telegram";
+import { actorFor, ROLE_KEYS, type RoleKey } from "@tests/helpers/actors";
+import { fakeTelegram } from "@tests/helpers/telegram";
 
 /*
  * Every service write × every role. The expected access is written out here by hand, NOT read
@@ -50,8 +52,8 @@ const ROWS: Row[] = [
   ["createCohort DAP", [Y, Y, Y, N, N], (a, k) => cohortsCms.createCohort(a, { programme: "DAP", slug: uniq(k), name: "C" })],
   ["updateCohort AI Lodge", [Y, Y, N, Y, N], (a) => cohortsCms.updateCohort(a, AI, { headline: "h" })],
   ["updateCohort DAP", [Y, Y, Y, N, N], (a) => cohortsCms.updateCohort(a, DAP, { headline: "h" })],
-  ["saveTrack", [Y, Y, N, Y, N], (a, k) => cohortsCms.saveTrack(a, { cohortId: AI, name: uniq(k) })],
-  ["saveGroup (co-learning)", [Y, Y, Y, N, N], (a, k) => cohortsCms.saveGroup(a, { cohortId: DAP, name: uniq(k) })],
+  ["saveTrack", [Y, Y, N, Y, N], (a, k) => tracksCms.saveTrack(a, { cohortId: AI, name: uniq(k) })],
+  ["saveGroup (co-learning)", [Y, Y, Y, N, N], (a, k) => colearningGroups.saveGroup(a, { cohortId: DAP, name: uniq(k) })],
   ["saveLodge", [Y, Y, N, Y, N], (a, k) => lodges.saveLodge(a, { cohortId: AI, name: `Lodge ${uniq(k)}` })],
   // Site
   ["setApplicationsOpen AI Lodge", [Y, Y, N, Y, N], (a) => links.setApplicationsOpen(a, "AI Lodge", true)],
@@ -111,7 +113,7 @@ before(async () => {
   ]);
   lodgeA = (await lodges.saveLodge(admin, { cohortId: AI, name: "Alpha" })).id;
   lodgeB = (await lodges.saveLodge(admin, { cohortId: AI, name: "Beta" })).id;
-  trackId = (await cohortsCms.saveTrack(admin, { cohortId: AI, name: "Track" })).id;
+  trackId = (await tracksCms.saveTrack(admin, { cohortId: AI, name: "Track" })).id;
   projectGroupId = (await tracker.saveProjectGroup(admin, { cohortId: DAP, number: 1, name: "One" })).id;
 });
 

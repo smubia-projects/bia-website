@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { usePhoto } from "../site/SitePhotosProvider";
+import { usePhoto } from "@/components/site/SitePhotosProvider";
 import { motion } from "framer-motion";
-import styles from "../../app/page.module.css";
-import { MOTION_EASE } from "../ui/motion";
+import styles from "@/app/page.module.css";
+import { MOTION_EASE } from "@/components/ui/motion";
 
 const photoTransition = { duration: 0.35, ease: MOTION_EASE } as const;
 

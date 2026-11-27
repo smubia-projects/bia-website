@@ -1,7 +1,7 @@
 import { can } from "@/server/core/permissions";
 import { dapRunPath } from "@/shared/paths";
-import CohortEditor from "../../_run/CohortEditor";
-import { loadRun } from "../../_run/load";
+import CohortEditor from "@/app/admin/(cms)/_run/CohortEditor";
+import { loadRun } from "@/app/admin/(cms)/_run/load";
 
 export default async function CohortOverviewPage(props: { params: Promise<{ run: string }> }) {
   const params = await props.params;

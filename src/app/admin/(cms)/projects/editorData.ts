@@ -1,5 +1,7 @@
 import type { Actor } from "@/server/core/actor";
-import { listAllLodges, listAllTracks, listCohorts } from "@/server/cohorts/cohorts";
+import { listAllLodges } from "@/server/ailodge/lodges";
+import { listAllTracks } from "@/server/ailodge/tracks";
+import { listCohorts } from "@/server/cohorts/cohorts";
 import type { CohortOption, LodgeOption, TrackOption } from "./ProjectEditor";
 
 /** Cohort, track and lodge options for the project editor's selects (a lodge head's own lodges and their semesters only). */

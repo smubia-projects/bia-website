@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import type { WebhookInfo } from "@/server/integrations/telegram/webhook";
-import { deleteWebhookAction, getWebhookInfoAction, setWebhookAction } from "../../actions/telegram";
-import { useActionToast, useConfirm } from "../../_components/ui";
-import styles from "../../cms.module.css";
-import t from "../../tracker.module.css";
+import { deleteWebhookAction, getWebhookInfoAction, setWebhookAction } from "@/app/admin/actions/telegram";
+import { useActionToast, useConfirm } from "@/app/admin/_components/ui";
+import styles from "@/app/admin/cms.module.css";
+import t from "@/app/admin/tracker.module.css";
 
 const when = (iso: string) => new Date(iso).toLocaleString("en-SG", { timeZone: "Asia/Singapore", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 

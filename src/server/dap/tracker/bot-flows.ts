@@ -1,8 +1,10 @@
+import "server-only";
 import type { InlineKeyboardButton } from "grammy/types";
-import { CmsError, ensure } from "../../core/actor";
+import { CmsError, ensure } from "@/server/core/actor";
 import { groupFor, requireActor, type Ctx, type Reply } from "./bot-core";
-import { shortDate, splitTitleAndDates } from "./bot-text";
-import { escapeHtml as esc } from "../../integrations/telegram/client";
+import { splitTitleAndDates } from "./bot-text";
+import { shortDate } from "@/shared/time";
+import { escapeHtml as esc } from "@/server/integrations/telegram/client";
 import * as tracker from "./service";
 import type { MilestoneDetail, ProjectGroup } from "./service";
 
@@ -74,7 +76,7 @@ export interface FlowState {
 const tokens = (s: FlowState) => [...(s.g !== undefined ? [`g${s.g}`] : []), ...(s.nav !== undefined ? [`m${s.nav}`] : []), ...s.picks, ...(s.typed ? ["x"] : [])];
 
 /** Callback data: "f:ts:g1:5:d:<asker>" for a step, "ok:…" for Confirm. Well under Telegram's 64 bytes. */
-export const flowData = (prefix: "f" | "ok", s: FlowState, from: number) => [prefix, s.flow, ...tokens(s), from].join(":");
+const flowData = (prefix: "f" | "ok", s: FlowState, from: number) => [prefix, s.flow, ...tokens(s), from].join(":");
 
 export function parseFlowData(data: string): { prefix: "f" | "ok"; state: FlowState; from: number } | null {
   const [prefix, flow, ...rest] = data.split(":");

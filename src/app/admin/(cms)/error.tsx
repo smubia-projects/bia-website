@@ -1,6 +1,6 @@
 "use client";
 
-import styles from "../cms.module.css";
+import styles from "@/app/admin/cms.module.css";
 
 /** A page that failed to load keeps the sidebar and offers a retry. */
 export default function CmsError({ reset }: { error: Error; reset: () => void }) {

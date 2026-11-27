@@ -1,17 +1,11 @@
+import "@tests/helpers/db";
 import assert from "node:assert/strict";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { before, describe, it } from "node:test";
-
-// Throwaway embedded database: never touch .data/pglite. Set before the first getDb().
-process.env.PGLITE_DIR = path.join(mkdtempSync(path.join(tmpdir(), "tracker-mcp-")), "db");
 
 import { getDb } from "@/server/db";
 import { cohorts } from "@/server/db/schema";
-import { CmsError, type Actor } from "../../core/actor";
-import { sgtDay } from "./bot-text";
-import { todaySgt } from "../../people/people";
+import { CmsError, type Actor } from "@/server/core/actor";
+import { sgtDay, todaySgt } from "@/shared/time";
 import * as t from "./service";
 import * as mcp from "./mcp";
 

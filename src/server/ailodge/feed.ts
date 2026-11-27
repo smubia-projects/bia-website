@@ -1,12 +1,13 @@
+import "server-only";
 import { unstable_cache } from "next/cache";
 import { joinLink } from "@/shared/links";
-import { listCohorts, type Cohort } from "../cohorts/cohorts";
-import { getSiteLinks } from "../site/links";
-import { getSitePhotos } from "../site/photos";
+import { listCohorts, type Cohort } from "@/server/cohorts/cohorts";
+import { getSiteLinks } from "@/server/site/links";
+import { getSitePhotos } from "@/server/site/photos";
 import { listLodges, lodgePaths, type Lodge } from "./lodges";
-import { cohortPath, yearbookPath } from "../../shared/paths";
-import { TAGS } from "../core/revalidate";
-import { SITE_URL } from "../integrations/telegram/client";
+import { cohortPath, yearbookPath } from "@/shared/paths";
+import { TAGS } from "@/server/core/revalidate";
+import { SITE_URL } from "@/server/integrations/telegram/client";
 import type {
   LodgeAmbient,
   LodgeBeltMode,
@@ -18,13 +19,13 @@ import type {
   LodgeNeonSign,
   LodgeParticles,
   LodgeShowpiece,
-} from "../../shared/taxonomy";
+} from "@/shared/taxonomy";
 
 /*
  * The public, read-only feed the AI Lodge site (ailodge.smubia.com) builds its
  * pages from: GET /api/public/ailodge. Field names are a contract with that site;
  * add fields freely, but bump FEED_VERSION before renaming or removing one.
- * docs/ailodge-site-handoff.md documents it for the AI Lodge site.
+ * docs/handoffs/ailodge-site-handoff.md documents it for the AI Lodge site.
  */
 
 /** 2: lodge art became hero + belt (art.animatedArt removed), placeholders and short names added */

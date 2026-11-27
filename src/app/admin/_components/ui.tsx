@@ -3,9 +3,9 @@
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronRight, ChevronUp, ExternalLink, Plus, Search, X } from "lucide-react";
-import { uploadImageAction } from "../actions/site";
-import { type ActionResult } from "../actions/run";
-import styles from "../cms.module.css";
+import { uploadImageAction } from "@/app/admin/actions/site";
+import { type ActionResult } from "@/app/admin/actions/run";
+import styles from "@/app/admin/cms.module.css";
 import ImageCropper from "./ImageCropper";
 
 /**
@@ -341,7 +341,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
 }
 
 /** Bottom toast, as in the approved CMS flows. */
-export function useToast() {
+function useToast() {
   const [toast, setToast] = useState<{ text: string; error: boolean } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const show = useCallback((text: string, error = false) => {

@@ -1,4 +1,5 @@
-import { sgtDay } from "./bot-text";
+import "server-only";
+import { sgtDay } from "@/shared/time";
 import { meetingDeadline, type MilestoneDetail, type ProjectGroup } from "./service";
 
 /** Geometry and totals for the dashboard's timeline. Pure: the page only draws what this returns. */

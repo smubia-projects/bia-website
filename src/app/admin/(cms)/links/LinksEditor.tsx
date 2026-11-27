@@ -10,9 +10,9 @@ import {
   type LinkKey,
   type SiteLinks,
 } from "@/shared/links";
-import { saveSiteLinksAction } from "../../actions/site";
-import { PageHead, UnsavedNote, useActionToast, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
-import styles from "../../cms.module.css";
+import { saveSiteLinksAction } from "@/app/admin/actions/site";
+import { PageHead, UnsavedNote, useActionToast, useSaveShortcut, useUnsavedChanges } from "@/app/admin/_components/ui";
+import styles from "@/app/admin/cms.module.css";
 
 const GROUPS: { group: LinkGroup; intro: string }[] = [
   { group: "Recruitment", intro: "Targets of each programme's join buttons." },

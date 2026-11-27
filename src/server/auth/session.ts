@@ -1,7 +1,8 @@
+import "server-only";
 import { redirect } from "next/navigation";
 import { auth } from "@/server/auth/auth";
-import { CmsError, type Actor } from "../core/actor";
-import { findAccess } from "../people/people";
+import { CmsError, type Actor } from "@/server/core/actor";
+import { findAccess } from "@/server/people/people";
 
 /** The signed-in CMS user, with their current role from the database. */
 export async function getCurrentActor(): Promise<Actor | null> {

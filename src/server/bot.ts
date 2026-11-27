@@ -1,3 +1,4 @@
+import "server-only";
 import { Bot, type Context, type NextFunction } from "grammy";
 import type { UserFromGetMe } from "grammy/types";
 import { trackerBot } from "./dap/tracker/bot";
@@ -6,7 +7,7 @@ import { claimUpdate } from "./integrations/telegram/updates";
 
 /*
  * The site's one Telegram bot: the grammY Bot with every feature's handlers on it. This is
- * the only file that knows both the plumbing (telegram.ts) and the features (bot.ts), so the
+ * the only file that knows both the plumbing (integrations/telegram/client.ts) and the features (dap/tracker/bot.ts), so the
  * plumbing never imports a feature. The webhook route (and later dev polling) use getBot().
  *
  * Order: the error boundary wraps everything, so after the webhook's secret check every

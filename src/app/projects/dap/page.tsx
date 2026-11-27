@@ -1,5 +1,5 @@
 import { getPublicCohorts } from "@/server/cohorts/cohorts";
-import { getPublicProjects } from "@/app/lib/projects";
+import { getPublicProjects } from "@/server/projects/projects";
 import DapYearbookPage, { defaultDapCohort } from "./DapYearbookPage";
 
 export const revalidate = 3600;

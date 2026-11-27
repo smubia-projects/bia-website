@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { PROGRAMMES, type Programme } from "@/shared/taxonomy";
 import { RUN_NOUN, RUN_SECTIONS, newRunHref, runHref, type RunOption } from "./runs";
-import styles from "../cms.module.css";
+import styles from "@/app/admin/cms.module.css";
 
 /**
  * The run picker at the top of the sidebar, like Vercel's project switcher:

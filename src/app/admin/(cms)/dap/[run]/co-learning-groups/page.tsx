@@ -1,7 +1,7 @@
 import { can } from "@/server/core/permissions";
-import { listGroups } from "@/server/cohorts/cohorts";
-import GroupsEditor from "../../../_run/GroupsEditor";
-import { loadRun } from "../../../_run/load";
+import { listGroups } from "@/server/dap/colearning-groups";
+import GroupsEditor from "@/app/admin/(cms)/_run/GroupsEditor";
+import { loadRun } from "@/app/admin/(cms)/_run/load";
 
 export default async function GroupsPage(props: { params: Promise<{ run: string }> }) {
   const params = await props.params;

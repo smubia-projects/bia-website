@@ -1,10 +1,6 @@
+import "@tests/helpers/db";
 import assert from "node:assert/strict";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { describe, it } from "node:test";
-
-process.env.PGLITE_DIR = path.join(mkdtempSync(path.join(tmpdir(), "updates-")), "db");
 
 import { getDb } from "@/server/db";
 import { telegramUpdates } from "@/server/db/schema";

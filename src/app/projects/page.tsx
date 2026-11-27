@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import ui from "@/components/content/public.module.css";
 import JoinCta from "@/components/content/JoinCta";
-import { getPublicProjects } from "@/app/lib/projects";
+import { getPublicProjects } from "@/server/projects/projects";
 import ProjectsExplorer from "./ProjectsExplorer";
 
 export const revalidate = 3600;

@@ -4,8 +4,8 @@ import { listCohorts, pickCurrentCohort } from "@/server/cohorts/cohorts";
 import { countProjectsInReview } from "@/server/projects/projects";
 import { requireActorPage } from "@/server/auth/session";
 import { ROLE_LABEL, SUPERADMIN_LABEL } from "@/shared/taxonomy";
-import { RUN_COOKIE, RUN_SEGMENT, type RunOption } from "../_components/runs";
-import Shell from "../_components/Shell";
+import { RUN_COOKIE, RUN_SEGMENT, type RunOption } from "@/app/admin/_components/runs";
+import Shell from "@/app/admin/_components/Shell";
 
 export const dynamic = "force-dynamic";
 

@@ -1,10 +1,7 @@
+import "@tests/helpers/db";
 import assert from "node:assert/strict";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { describe, it } from "node:test";
 
-process.env.PGLITE_DIR = path.join(mkdtempSync(path.join(tmpdir(), "tgset-")), "db");
 process.env.TELEGRAM_DAP_CHANNEL_ID = "@old_env_channel";
 
 import { CmsError, type Actor } from "./actor";

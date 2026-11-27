@@ -1,10 +1,10 @@
+import "server-only";
 import { z } from "zod";
 import { CmsError } from "@/server/core/actor";
-import * as cohorts from "@/server/cohorts/cohorts";
+import * as colearningGroups from "@/server/dap/colearning-groups";
 import * as people from "@/server/people/people";
-import { lodgeOptions } from "@/server/people/people";
 import { LODGE_HEAD_ACCESS_WEEKS, ROLES } from "@/shared/taxonomy";
-import { type McpServer, actor, tool } from "../context";
+import { type McpServer, actor, tool } from "@/server/mcp/context";
 
 export function registerPeopleTools(server: McpServer) {
   // ── People (superadmins) ──
@@ -17,7 +17,7 @@ export function registerPeopleTools(server: McpServer) {
     },
     () =>
       tool(async () => {
-        const [list, lodges] = await Promise.all([people.listPeople(), lodgeOptions()]);
+        const [list, lodges] = await Promise.all([people.listPeople(), people.lodgeOptions()]);
         return list
           .filter((p) => !p.email.endsWith("@localhost"))
           .map((p) => ({
@@ -81,7 +81,7 @@ export function registerPeopleTools(server: McpServer) {
     "get_dap_group",
     { title: "Get DAP group", description: "A DAP co-learning group with its members and mentors.", inputSchema: z.object({ cohortId: z.string(), id: z.number().int() }) },
     ({ cohortId, id }) =>
-      tool(async () => (await cohorts.listGroups(cohortId)).find((g) => g.id === id) ?? Promise.reject(new CmsError("Group not found")))
+      tool(async () => (await colearningGroups.listGroups(cohortId)).find((g) => g.id === id) ?? Promise.reject(new CmsError("Group not found")))
   );
 
   server.registerTool(
@@ -98,6 +98,6 @@ export function registerPeopleTools(server: McpServer) {
         mentors: z.array(profile).optional(),
       }),
     },
-    (input) => tool(() => cohorts.saveGroup(actor(), input))
+    (input) => tool(() => colearningGroups.saveGroup(actor(), input))
   );
 }

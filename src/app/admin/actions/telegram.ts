@@ -6,7 +6,8 @@ import * as webhook from "@/server/integrations/telegram/webhook";
 import { syncBotCommands } from "@/server/dap/tracker/bot";
 import { telegramError } from "@/server/integrations/telegram/client";
 import { setDapChannelId } from "@/server/core/settings";
-import { run, track } from "./run";
+import { adminWho } from "@/server/dap/tracker/service";
+import { refreshAdmin, run } from "./run";
 
 export async function getWebhookInfoAction() {
   return run((actor) => webhook.getWebhookInfo(actor));
@@ -36,9 +37,19 @@ export async function createTelegramLinkAction() {
 
 /** Unlinks the signed-in person's Telegram account, or (exco admins) someone else's. */
 export async function unlinkTelegramAction(email?: string) {
-  return track((actor) => unlinkTelegram(actor, email).then(() => null), "Telegram unlinked");
+  return run(async (actor) => {
+    adminWho(actor);
+    await unlinkTelegram(actor, email);
+    refreshAdmin();
+    return null;
+  }, "Telegram unlinked");
 }
 
 export async function setDapChannelAction(channelId: string) {
-  return track((actor) => setDapChannelId(actor, channelId).then(() => null), "DAP channel saved");
+  return run(async (actor) => {
+    adminWho(actor);
+    await setDapChannelId(actor, channelId);
+    refreshAdmin();
+    return null;
+  }, "DAP channel saved");
 }

@@ -1,3 +1,4 @@
+import "server-only";
 import { lt } from "drizzle-orm";
 import { getDb } from "@/server/db";
 import { telegramUpdates } from "@/server/db/schema";

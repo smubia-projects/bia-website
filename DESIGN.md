@@ -3,7 +3,7 @@
 The design language for www.smubia.com (SMU Business Intelligence & Analytics Club).
 Established in the June 2026 redesign. Any new page, component or styling change
 must follow this document. All values below exist as CSS variables in
-`app/globals.css` and are mapped into Tailwind in the `@theme` block there.
+`src/app/globals.css` and are mapped into Tailwind in the `@theme` block there.
 
 ## 1. Visual Theme & Atmosphere
 
@@ -107,7 +107,7 @@ temperatures.**
 | Inter | `--font-inter` | 400/500/600 | Body, UI, buttons (600 for button labels) |
 | Roboto Mono | `--font-roboto-mono` | 400/500 | Eyebrows, stat labels, meta rows ONLY |
 
-Loaded via `next/font/google` in `app/layout.tsx`. Scale conventions:
+Loaded via `next/font/google` in `src/app/layout.tsx`. Scale conventions:
 - Hero H1: `clamp(2.25rem, …, 4.75rem)`, weight 800, `letter-spacing: -0.02em`, `line-height ~1.06`
 - Section H2: `clamp(1.75rem, …, 2.75rem)`, weight 700 (use the `SectionHeading` component)
 - Card titles: 1.125–1.375rem, weight 700, display font
@@ -116,7 +116,7 @@ Loaded via `next/font/google` in `app/layout.tsx`. Scale conventions:
 
 ## 4. Component Styling
 
-Shared primitives live in `app/components/ui/` — use them before writing new ones:
+Shared primitives live in `src/components/ui/` — use them before writing new ones:
 - **`Button`** — variants: `primary` (emerald bg/white text, light sections), `onDark`
   (mint bg/pine text, dark sections), `outline` / `outlineOnDark` (hairline).
   Pill radius, 600 weight, hover = `translateY(-2px)` + `--shadow-md`, 200–250ms ease.
@@ -183,7 +183,7 @@ Breakpoints: 640 / 768 / 1024px (nav switches to hamburger below 1024).
 ## 9. Do's and Don'ts
 
 **Do**
-- Route every join/apply/contact CTA through `app/lib/links.ts`
+- Route every join/apply/contact CTA through `src/shared/links.ts`
 - Open dark anchor sections for flagship/premium content (DAP, sponsorships)
 - Use the white logo as-is on dark; on light, tint it via the nav's CSS filter
 - Keep `/admin` on the same light system (crop canvas stays `--pine-deep` for contrast)

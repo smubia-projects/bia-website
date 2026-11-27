@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { Photo, PhotoSlot, SitePhotos } from "@/shared/photos";
-import { saveSitePhotoAction } from "../../actions/site";
-import { AddButton, PageHead, useActionToast, useConfirm, useImageUpload, useUnsavedChanges } from "../../_components/ui";
-import styles from "../../cms.module.css";
+import { saveSitePhotoAction } from "@/app/admin/actions/site";
+import { AddButton, PageHead, useActionToast, useConfirm, useImageUpload, useUnsavedChanges } from "@/app/admin/_components/ui";
+import styles from "@/app/admin/cms.module.css";
 
 type Value = Photo | Photo[];
 

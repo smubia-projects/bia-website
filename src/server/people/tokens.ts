@@ -1,9 +1,10 @@
+import "server-only";
 import { createHash, randomBytes } from "crypto";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { getDb } from "@/server/db";
 import { accessTokens, type AccessTokenRow } from "@/server/db/schema";
-import { ensure, type Actor } from "../core/actor";
-import { can } from "../core/permissions";
+import { ensure, type Actor } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { findAccess } from "./people";
 
 /*
@@ -13,7 +14,7 @@ import { findAccess } from "./people";
  */
 
 const PREFIX = "smubia_pat_";
-export const TOKEN_LIFETIMES = [30, 90, 365, 0] as const; // days; 0 = no expiry
+const TOKEN_LIFETIMES = [30, 90, 365, 0] as const; // days; 0 = no expiry
 
 const hash = (token: string) => createHash("sha256").update(token).digest("hex");
 

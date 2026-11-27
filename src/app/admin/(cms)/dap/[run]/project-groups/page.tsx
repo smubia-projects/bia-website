@@ -1,15 +1,14 @@
 import Link from "next/link";
-import { shortDate, sgtDay } from "@/server/dap/tracker/bot-text";
-import { todaySgt } from "@/server/people/people";
+import { shortDate, sgtDay, todaySgt } from "@/shared/time";
 import { getAllTimelines } from "@/server/dap/tracker/service";
 import { buildChart, nextMeetingBy, summarise } from "@/server/dap/tracker/view";
-import AddGroupButton from "../../../_run/AddGroupButton";
-import TrackerChart from "../../../_run/TrackerChart";
-import { loadRun } from "../../../_run/load";
-import { PageHead } from "../../../../_components/ui";
-import { runHref } from "../../../../_components/runs";
-import styles from "../../../../cms.module.css";
-import t from "../../../../tracker.module.css";
+import AddGroupButton from "@/app/admin/(cms)/_run/AddGroupButton";
+import TrackerChart from "@/app/admin/(cms)/_run/TrackerChart";
+import { loadRun } from "@/app/admin/(cms)/_run/load";
+import { PageHead } from "@/app/admin/_components/ui";
+import { runHref } from "@/app/admin/_components/runs";
+import styles from "@/app/admin/cms.module.css";
+import t from "@/app/admin/tracker.module.css";
 
 export default async function TrackerPage(props: { params: Promise<{ run: string }> }) {
   const params = await props.params;

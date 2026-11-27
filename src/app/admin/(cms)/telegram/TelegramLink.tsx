@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Send } from "lucide-react";
-import { createTelegramLinkAction, unlinkTelegramAction } from "../../actions/telegram";
-import { PageHead, useActionToast, useConfirm } from "../../_components/ui";
-import styles from "../../cms.module.css";
-import t from "../../tracker.module.css";
+import { createTelegramLinkAction, unlinkTelegramAction } from "@/app/admin/actions/telegram";
+import { PageHead, useActionToast, useConfirm } from "@/app/admin/_components/ui";
+import styles from "@/app/admin/cms.module.css";
+import t from "@/app/admin/tracker.module.css";
 import type { TelegramAccount } from "@/server/people/telegram-link";
 
 /**

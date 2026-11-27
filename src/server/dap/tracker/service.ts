@@ -1,3 +1,4 @@
+import "server-only";
 import { and, asc, eq, gt, inArray, isNotNull, isNull, lte, ne, or, sql } from "drizzle-orm";
 import { getDb } from "@/server/db";
 import {
@@ -14,9 +15,9 @@ import {
   type ProjectMemberRow,
   type SubtaskRow,
 } from "@/server/db/schema";
-import { ensure, type Actor } from "../../core/actor";
-import { can } from "../../core/permissions";
-import { findAccess } from "../../people/people";
+import { ensure, type Actor } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
+import { findAccess } from "@/server/people/people";
 import {
   BLOCKER_STATUSES,
   MEETING_DEADLINE_DAYS,
@@ -26,7 +27,7 @@ import {
   type BlockerStatus,
   type MilestoneStatus,
   type SubtaskStatus,
-} from "../../../shared/taxonomy";
+} from "@/shared/taxonomy";
 
 /*
  * DAP timeline tracker: project groups, their milestones, subtasks and blockers,
@@ -148,7 +149,7 @@ export async function setMeetingReminders(actor: Actor, groupId: number, on: boo
 
 /**
  * Connects a group chat to a project group. Only called with a used one-time chat link
- * (telegram-link.ts), which is what authorises it. The bot listens only in connected chats,
+ * (src/server/people/telegram-link.ts), which is what authorises it. The bot listens only in connected chats,
  * and everyone in one has member rights for that project group. Connecting again replaces
  * the group's chat, and a chat moved to another project group leaves the old one.
  */
@@ -623,7 +624,7 @@ export async function logMeeting(who: TrackerWho, groupId: number, at: Date = ne
 const DAY = 86_400_000;
 
 /** The meeting clock starts at the last logged meeting, or when the group was created. */
-export const meetingBaseline = (g: Pick<ProjectGroup, "lastMeetingAt" | "createdAt">) => new Date(g.lastMeetingAt ?? g.createdAt);
+const meetingBaseline = (g: Pick<ProjectGroup, "lastMeetingAt" | "createdAt">) => new Date(g.lastMeetingAt ?? g.createdAt);
 
 /** The date the next meeting must happen by. */
 export const meetingDeadline = (g: Pick<ProjectGroup, "lastMeetingAt" | "createdAt">) =>
@@ -680,7 +681,7 @@ export async function releaseMeetingReminder(groupId: number) {
 // ── Task deadline alerts ─────────────────────────────────────────────────
 
 /** A task is alerted once when its deadline is this many days away or less. */
-export const TASK_ALERT_DAYS = 7;
+const TASK_ALERT_DAYS = 7;
 
 export interface TaskAlert {
   task: SubtaskRow;

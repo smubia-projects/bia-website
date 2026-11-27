@@ -7,7 +7,6 @@
 import { revalidatePath } from "next/cache";
 import { CmsError, type Actor } from "@/server/core/actor";
 import { requireActor } from "@/server/auth/session";
-import * as tracker from "@/server/dap/tracker/service";
 
 export type ActionResult<T = null> = { ok: true; data: T; message?: string } | { ok: false; error: string };
 
@@ -25,11 +24,3 @@ export async function run<T>(fn: (actor: Actor) => Promise<T>, message?: string)
 }
 
 export const refreshAdmin = () => revalidatePath("/admin", "layout");
-
-/** Runs a tracker change as an admin and refreshes the dashboard. */
-export const track = <T,>(fn: (actor: Actor, who: tracker.TrackerWho) => Promise<T>, message?: string) =>
-  run(async (actor) => {
-    const data = await fn(actor, tracker.adminWho(actor));
-    refreshAdmin();
-    return data;
-  }, message);

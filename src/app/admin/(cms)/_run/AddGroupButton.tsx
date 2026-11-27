@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { saveProjectGroupAction } from "../../actions/tracker";
-import { Modal, useActionToast } from "../../_components/ui";
-import { runHref } from "../../_components/runs";
-import styles from "../../cms.module.css";
+import { saveProjectGroupAction } from "@/app/admin/actions/tracker";
+import { Modal, useActionToast } from "@/app/admin/_components/ui";
+import { runHref } from "@/app/admin/_components/runs";
+import styles from "@/app/admin/cms.module.css";
 
 /** Creates a project group, then opens its page. */
 export default function AddGroupButton({ cohortId, cohortSlug, nextNumber }: { cohortId: string; cohortSlug: string; nextNumber: number }) {

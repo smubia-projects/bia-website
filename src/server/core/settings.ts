@@ -1,3 +1,4 @@
+import "server-only";
 import { asc, eq, isNotNull } from "drizzle-orm";
 import { getDb } from "@/server/db";
 import { people, siteSettings } from "@/server/db/schema";

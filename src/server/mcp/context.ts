@@ -1,3 +1,4 @@
+import "server-only";
 import { AsyncLocalStorage } from "async_hooks";
 import { CmsError, type Actor } from "@/server/core/actor";
 import type { createMcpHandler } from "mcp-handler";
@@ -13,7 +14,7 @@ export const actor = () => {
   return a;
 };
 
-export const json = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] });
+const json = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] });
 
 export async function tool<T>(fn: () => Promise<T>) {
   try {

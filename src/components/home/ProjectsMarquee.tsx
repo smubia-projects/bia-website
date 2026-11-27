@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useReducedMotion } from "framer-motion";
 import { Pause, Play } from "lucide-react";
 import styles from "./ProjectsMarquee.module.css";
-import { useHydrated } from "../ui/useClient";
+import { useHydrated } from "@/components/ui/useClient";
 import { Project } from "@/shared/types/project";
 import { projectPath } from "@/shared/paths";
 

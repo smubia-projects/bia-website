@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import { can } from "@/server/core/permissions";
 import { getProject } from "@/server/projects/projects";
 import { requireActorPage } from "@/server/auth/session";
-import ProjectEditor from "../ProjectEditor";
-import { editorOptions } from "../editorData";
+import ProjectEditor from "@/app/admin/(cms)/projects/ProjectEditor";
+import { editorOptions } from "@/app/admin/(cms)/projects/editorData";
 
 export default async function EditProjectPage(props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;

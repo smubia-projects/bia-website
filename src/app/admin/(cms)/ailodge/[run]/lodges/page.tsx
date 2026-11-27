@@ -1,8 +1,8 @@
 import { can } from "@/server/core/permissions";
 import { getSiteLinks } from "@/server/site/links";
 import { listAllLodges, listLodges, lodgePaths } from "@/server/ailodge/lodges";
-import LodgeList from "../../../_run/LodgeList";
-import { loadRun } from "../../../_run/load";
+import LodgeList from "@/app/admin/(cms)/_run/LodgeList";
+import { loadRun } from "@/app/admin/(cms)/_run/load";
 
 export default async function LodgesPage(props: { params: Promise<{ run: string }> }) {
   const params = await props.params;

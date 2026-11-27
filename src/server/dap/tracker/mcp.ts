@@ -1,20 +1,20 @@
-import { ensure, type Actor } from "../../core/actor";
-import { noonSgt, sgtDay } from "./bot-text";
-import { listCohorts, pickCurrentCohort } from "../../cohorts/cohorts";
-import { todaySgt } from "../../people/people";
-import type { MilestoneStatus } from "../../../shared/taxonomy";
+import "server-only";
+import { ensure, type Actor } from "@/server/core/actor";
+import { noonSgt, sgtDay, todaySgt } from "@/shared/time";
+import { listCohorts, pickCurrentCohort } from "@/server/cohorts/cohorts";
+import type { MilestoneStatus } from "@/shared/taxonomy";
 import * as tracker from "./service";
 import { nextMeetingBy } from "./view";
 
 /*
- * The DAP timeline tracker as MCP tools (app/api/mcp/route.ts): read-mostly views of project
- * groups and a few admin writes. Every write goes through tracker.ts, so its permissions and
+ * The DAP timeline tracker as MCP tools (src/server/mcp/tools/tracker.ts): read-mostly views of project
+ * groups and a few admin writes. Every write goes through service.ts, so its permissions and
  * validation apply; this file only shapes inputs and results. "Project group" everywhere: the
  * co-learning groups (get_dap_group / save_dap_group) are a different thing.
  */
 
 /** The cohort a tool works on: the one given, else the current DAP cohort (the live one, else the newest). */
-export async function dapCohortId(actor: Actor, cohortId?: string): Promise<string> {
+async function dapCohortId(actor: Actor, cohortId?: string): Promise<string> {
   tracker.adminWho(actor); // DAP exco and exco admins only
   const dap = await listCohorts("DAP");
   if (cohortId) {

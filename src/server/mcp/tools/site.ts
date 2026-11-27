@@ -1,3 +1,4 @@
+import "server-only";
 import { z } from "zod";
 import { CmsError } from "@/server/core/actor";
 import { can } from "@/server/core/permissions";
@@ -7,7 +8,7 @@ import { listSitePhotos, saveSitePhoto } from "@/server/site/photos";
 import { PHOTO_SLOTS, photoSite } from "@/shared/photos";
 import { EDITABLE_LINKS } from "@/shared/links";
 import { ROLE_LABEL, SUPERADMIN_LABEL } from "@/shared/taxonomy";
-import { type McpServer, actor, tool } from "../context";
+import { type McpServer, actor, tool } from "@/server/mcp/context";
 
 export function registerSiteTools(server: McpServer) {
   // ── Site links ──

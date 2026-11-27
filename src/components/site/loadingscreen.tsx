@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { MOTION_EASE } from "../ui/motion";
+import { MOTION_EASE } from "@/components/ui/motion";
 
 // Longest the splash may cover an already-hydrated page. Waiting for the full
 // `load` event alone kept slow mobile connections behind the spinner until

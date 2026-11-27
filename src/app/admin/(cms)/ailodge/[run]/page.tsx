@@ -1,8 +1,8 @@
 import { can } from "@/server/core/permissions";
-import { listTracks } from "@/server/cohorts/cohorts";
+import { listTracks } from "@/server/ailodge/tracks";
 import { cohortPath } from "@/shared/paths";
-import CohortEditor from "../../_run/CohortEditor";
-import { loadRun } from "../../_run/load";
+import CohortEditor from "@/app/admin/(cms)/_run/CohortEditor";
+import { loadRun } from "@/app/admin/(cms)/_run/load";
 
 export default async function SemesterOverviewPage(props: { params: Promise<{ run: string }> }) {
   const params = await props.params;

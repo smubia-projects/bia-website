@@ -1,5 +1,5 @@
 import { getPublicCohorts, pickCurrentCohort } from "@/server/cohorts/cohorts";
-import { getPublicProjects } from "@/app/lib/projects";
+import { getPublicProjects } from "@/server/projects/projects";
 import LodgeYearbook from "./LodgeYearbook";
 
 export const revalidate = 3600;

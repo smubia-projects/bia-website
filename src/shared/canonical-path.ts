@@ -1,4 +1,4 @@
-/** The canonical (lower-case, kebab-case) form of a public path. Used by middleware.ts. */
+/** The canonical (lower-case, kebab-case) form of a public path. Used by src/proxy.ts. */
 const RENAMED_TOP: Record<string, string> = {
   workwithus: "work-with-us",
   contactus: "contact-us",

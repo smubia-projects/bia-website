@@ -5,7 +5,7 @@ const config = [
   ...nextVitals,
   ...nextTs,
   {
-    ignores: [".next/**", "node_modules/**", "ailodge-infosite/**", "_curriculum/**", "_intake/**", "new_pages_to_add/**", "next-env.d.ts"],
+    ignores: [".next/**", "node_modules/**", "ailodge-infosite/**", "_curriculum/**", "_intake/**", "next-env.d.ts"],
   },
 ];
 

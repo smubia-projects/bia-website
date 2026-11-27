@@ -1,5 +1,7 @@
 import { can } from "@/server/core/permissions";
-import { listAllLodges, listAllTracks, listCohorts } from "@/server/cohorts/cohorts";
+import { listAllLodges } from "@/server/ailodge/lodges";
+import { listAllTracks } from "@/server/ailodge/tracks";
+import { listCohorts } from "@/server/cohorts/cohorts";
 import { listProjects } from "@/server/projects/projects";
 import { requireActorPage } from "@/server/auth/session";
 import { ROLE_PROGRAMME } from "@/shared/taxonomy";

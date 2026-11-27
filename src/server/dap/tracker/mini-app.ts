@@ -1,9 +1,10 @@
+import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Api } from "grammy";
 import type { ChatMember } from "grammy/types";
-import { CmsError, ensure, type Actor } from "../../core/actor";
-import { noonSgt, sgtDay } from "./bot-text";
-import { telegramToken } from "../../integrations/telegram/client";
+import { CmsError, ensure, type Actor } from "@/server/core/actor";
+import { noonSgt, sgtDay } from "@/shared/time";
+import { telegramToken } from "@/server/integrations/telegram/client";
 import * as tracker from "./service";
 import type { ProjectGroup, TrackerWho } from "./service";
 
@@ -35,7 +36,7 @@ export interface Launch {
 }
 
 /** Thrown for a launch we won't trust; the message is safe to show. */
-export class LaunchError extends CmsError {}
+class LaunchError extends CmsError {}
 
 const secretKey = (token: string) => createHmac("sha256", "WebAppData").update(token).digest();
 
@@ -90,13 +91,13 @@ export interface Membership {
 }
 
 /** In the chat: a member or admin, or restricted but still there. */
-export const isInChat = (m: ChatMember) => m.status === "creator" || m.status === "administrator" || m.status === "member" || (m.status === "restricted" && m.is_member);
+const isInChat = (m: ChatMember) => m.status === "creator" || m.status === "administrator" || m.status === "member" || (m.status === "restricted" && m.is_member);
 
 const cache = new Map<string, { at: number; result: Membership }>();
 export const clearMembershipCache = () => cache.clear();
 
 /** Asks Telegram whether a user is in a chat. A failure counts as "not a member" and says why. */
-export async function membership(api: Api, chatId: number, userId: number, now = Date.now()): Promise<Membership> {
+async function membership(api: Api, chatId: number, userId: number, now = Date.now()): Promise<Membership> {
   const key = `${chatId}:${userId}`;
   const hit = cache.get(key);
   if (hit && now - hit.at < CACHE_MS) return hit.result;
