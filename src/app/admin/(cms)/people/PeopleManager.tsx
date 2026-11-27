@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LODGE_HEAD_ACCESS_WEEKS, ROLE_LABEL, ROLE_PROGRAMME, ROLES, SUPERADMIN_LABEL, suggestedAccessEnd, type Role } from "@/app/lib/cms/taxonomy";
+import { LODGE_HEAD_ACCESS_WEEKS, ROLE_LABEL, ROLE_PROGRAMME, ROLES, SUPERADMIN_LABEL, suggestedAccessEnd, type Role } from "@/shared/taxonomy";
 import { removePersonAction, savePersonAction } from "../../actions";
 import { Modal, PageHead, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";

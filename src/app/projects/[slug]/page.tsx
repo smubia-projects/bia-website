@@ -1,6 +1,6 @@
 import Link from "next/link";
-import ui from "@/app/components/cms/public.module.css";
-import { projectPath } from "@/app/lib/cms/paths";
+import ui from "@/components/content/public.module.css";
+import { projectPath } from "@/shared/paths";
 import { getPublicProjects } from "@/app/lib/projects";
 
 export const revalidate = 3600;

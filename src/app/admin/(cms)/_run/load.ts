@@ -1,8 +1,8 @@
 import { notFound, redirect } from "next/navigation";
-import { can } from "@/app/lib/cms/actor";
-import { listCohorts, pickCurrentCohort } from "@/app/lib/cms/cohorts";
-import { requireActorPage } from "@/app/lib/cms/session";
-import type { Programme } from "@/app/lib/cms/taxonomy";
+import { can } from "@/server/core/actor";
+import { listCohorts, pickCurrentCohort } from "@/server/cohorts/cohorts";
+import { requireActorPage } from "@/server/auth/session";
+import type { Programme } from "@/shared/taxonomy";
 import { newRunHref, runHref } from "../../_components/runs";
 
 const canSee = (actor: Awaited<ReturnType<typeof requireActorPage>>, programme: Programme) =>

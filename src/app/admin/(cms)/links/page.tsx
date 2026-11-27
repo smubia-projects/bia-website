@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { can } from "@/app/lib/cms/actor";
-import { listSiteLinks } from "@/app/lib/cms/links";
-import { requireActorPage } from "@/app/lib/cms/session";
+import { can } from "@/server/core/actor";
+import { listSiteLinks } from "@/server/site/links";
+import { requireActorPage } from "@/server/auth/session";
 import LinksEditor from "./LinksEditor";
 
 export default async function SiteLinksPage() {

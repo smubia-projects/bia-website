@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
-import { requireActorPage } from "@/app/lib/cms/session";
-import { listTokens } from "@/app/lib/cms/tokens";
+import { requireActorPage } from "@/server/auth/session";
+import { listTokens } from "@/server/people/tokens";
 import TokensManager from "./TokensManager";
 
 export default async function TokensPage() {

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getPublicCohorts } from "@/app/lib/cms/cohorts";
+import { getPublicCohorts } from "@/server/cohorts/cohorts";
 import { getPublicProjects } from "@/app/lib/projects";
 import LodgeYearbook from "../LodgeYearbook";
 

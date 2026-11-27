@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import ui from "@/app/components/cms/public.module.css";
-import JoinCta from "@/app/components/cms/JoinCta";
+import ui from "@/components/content/public.module.css";
+import JoinCta from "@/components/content/JoinCta";
 import { getPublicProjects } from "@/app/lib/projects";
 import ProjectsExplorer from "./ProjectsExplorer";
 

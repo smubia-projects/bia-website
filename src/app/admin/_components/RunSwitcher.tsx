@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
-import { PROGRAMMES, type Programme } from "@/app/lib/cms/taxonomy";
+import { PROGRAMMES, type Programme } from "@/shared/taxonomy";
 import { RUN_NOUN, RUN_SECTIONS, newRunHref, runHref, type RunOption } from "./runs";
 import styles from "../cms.module.css";
 

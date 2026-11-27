@@ -1,9 +1,9 @@
 import { cookies } from "next/headers";
-import { can } from "@/app/lib/cms/actor";
-import { listCohorts, pickCurrentCohort } from "@/app/lib/cms/cohorts";
-import { countProjectsInReview } from "@/app/lib/cms/projects";
-import { requireActorPage } from "@/app/lib/cms/session";
-import { ROLE_LABEL, SUPERADMIN_LABEL } from "@/app/lib/cms/taxonomy";
+import { can } from "@/server/core/actor";
+import { listCohorts, pickCurrentCohort } from "@/server/cohorts/cohorts";
+import { countProjectsInReview } from "@/server/projects/projects";
+import { requireActorPage } from "@/server/auth/session";
+import { ROLE_LABEL, SUPERADMIN_LABEL } from "@/shared/taxonomy";
 import { RUN_COOKIE, RUN_SEGMENT, type RunOption } from "../_components/runs";
 import Shell from "../_components/Shell";
 

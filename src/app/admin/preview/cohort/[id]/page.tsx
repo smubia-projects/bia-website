@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { can } from "@/app/lib/cms/actor";
-import { getCohort, listCohorts, listGroups, listLodges, listTracks } from "@/app/lib/cms/cohorts";
-import { lodgePaths } from "@/app/lib/cms/lodges";
-import { listProjects } from "@/app/lib/cms/projects";
-import { requireActorPage } from "@/app/lib/cms/session";
+import { can } from "@/server/core/actor";
+import { getCohort, listCohorts, listGroups, listLodges, listTracks } from "@/server/cohorts/cohorts";
+import { lodgePaths } from "@/server/ailodge/lodges";
+import { listProjects } from "@/server/projects/projects";
+import { requireActorPage } from "@/server/auth/session";
 import DapYearbookPage from "@/app/projects/dap/DapYearbookPage";
 import LodgeYearbook from "@/app/projects/ailodge/LodgeYearbook";
 import PreviewBar from "../../../_components/PreviewBar";

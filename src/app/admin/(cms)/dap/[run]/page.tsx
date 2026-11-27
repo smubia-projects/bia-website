@@ -1,5 +1,5 @@
-import { can } from "@/app/lib/cms/actor";
-import { dapRunPath } from "@/app/lib/cms/paths";
+import { can } from "@/server/core/actor";
+import { dapRunPath } from "@/shared/paths";
 import CohortEditor from "../../_run/CohortEditor";
 import { loadRun } from "../../_run/load";
 

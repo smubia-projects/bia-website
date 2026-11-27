@@ -5,10 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
-import type { HighlightCard, Project, TeamMember } from "@/app/projects/data/types";
-import { CARD_ICONS } from "@/app/projects/data/cardIcons";
-import ProjectCover from "@/app/components/cms/ProjectCover";
-import Medal from "@/app/components/cms/Medal";
+import type { HighlightCard, Project, TeamMember } from "@/shared/types/project";
+import { CARD_ICONS } from "@/components/content/cardIcons";
+import ProjectCover from "@/components/content/ProjectCover";
+import Medal from "@/components/content/Medal";
 import {
   BUILT_WITH,
   MADE_FOR,
@@ -17,8 +17,8 @@ import {
   ROLE_PROGRAMME,
   type Programme,
   type Role,
-} from "@/app/lib/cms/taxonomy";
-import { projectPath } from "@/app/lib/cms/paths";
+} from "@/shared/taxonomy";
+import { projectPath } from "@/shared/paths";
 import { deleteProjectAction, saveProjectAction, setWinnerAction, type SaveIntent } from "../../actions";
 import { AddButton, ExternalAction, MarkdownHint, MiniField, OrderButtons, PageHead, StatusChip, UnsavedNote, moveItem, useActionToast, useConfirm, useImageUpload, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import { runHref } from "../../_components/runs";

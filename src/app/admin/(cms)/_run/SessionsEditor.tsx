@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ISSUE_STATUS_LABEL, type IssueStatus } from "@/app/lib/cms/taxonomy";
+import { ISSUE_STATUS_LABEL, type IssueStatus } from "@/shared/taxonomy";
 import { saveSessionsAction } from "../../actions";
 import { PageHead, StatusChip, UnsavedNote, useActionToast, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import { runHref } from "../../_components/runs";

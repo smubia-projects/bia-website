@@ -1,8 +1,8 @@
-import { can } from "@/app/lib/cms/actor";
-import { listAllLodges, listAllTracks, listCohorts } from "@/app/lib/cms/cohorts";
-import { listProjects } from "@/app/lib/cms/projects";
-import { requireActorPage } from "@/app/lib/cms/session";
-import { ROLE_PROGRAMME } from "@/app/lib/cms/taxonomy";
+import { can } from "@/server/core/actor";
+import { listAllLodges, listAllTracks, listCohorts } from "@/server/cohorts/cohorts";
+import { listProjects } from "@/server/projects/projects";
+import { requireActorPage } from "@/server/auth/session";
+import { ROLE_PROGRAMME } from "@/shared/taxonomy";
 import ProjectsTable from "./ProjectsTable";
 
 export default async function AdminProjectsPage(props: {

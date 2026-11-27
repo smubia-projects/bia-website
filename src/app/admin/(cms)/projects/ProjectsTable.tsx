@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import type { Project } from "@/app/projects/data/types";
-import ProjectCover from "@/app/components/cms/ProjectCover";
-import Medal from "@/app/components/cms/Medal";
-import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/app/lib/cms/taxonomy";
+import type { Project } from "@/shared/types/project";
+import ProjectCover from "@/components/content/ProjectCover";
+import Medal from "@/components/content/Medal";
+import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/shared/taxonomy";
 import { approveProjectAction } from "../../actions";
 import { PageHead, StatusChip, formatEdited, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";

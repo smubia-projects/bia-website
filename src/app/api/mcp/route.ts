@@ -1,22 +1,22 @@
 import { AsyncLocalStorage } from "async_hooks";
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
-import { devLoginEnabled } from "@/auth";
-import { can, CmsError, DEV_MCP_ACTOR, type Actor } from "@/app/lib/cms/actor";
-import { getAILodgeFeed } from "@/app/lib/cms/ailodge-feed";
-import * as cohorts from "@/app/lib/cms/cohorts";
-import * as lodgesCms from "@/app/lib/cms/lodges";
-import * as newsletter from "@/app/lib/cms/newsletter";
-import * as people from "@/app/lib/cms/people";
-import { lodgeOptions } from "@/app/lib/cms/people";
-import * as projects from "@/app/lib/cms/projects";
-import * as trackerMcp from "@/app/lib/cms/tracker-mcp";
-import { listSiteLinks, saveSiteLinks, setApplicationsOpen } from "@/app/lib/cms/links";
-import { listSitePhotos, saveSitePhoto } from "@/app/lib/cms/photos";
-import { actorForToken } from "@/app/lib/cms/tokens";
-import { PHOTO_SLOTS, photoSite } from "@/app/lib/photos";
-import { projectPath } from "@/app/lib/cms/paths";
-import { EDITABLE_LINKS } from "@/app/lib/links";
+import { devLoginEnabled } from "@/server/auth/auth";
+import { can, CmsError, DEV_MCP_ACTOR, type Actor } from "@/server/core/actor";
+import { getAILodgeFeed } from "@/server/ailodge/feed";
+import * as cohorts from "@/server/cohorts/cohorts";
+import * as lodgesCms from "@/server/ailodge/lodges";
+import * as newsletter from "@/server/dap/newsletter";
+import * as people from "@/server/people/people";
+import { lodgeOptions } from "@/server/people/people";
+import * as projects from "@/server/projects/projects";
+import * as trackerMcp from "@/server/dap/tracker/mcp";
+import { listSiteLinks, saveSiteLinks, setApplicationsOpen } from "@/server/site/links";
+import { listSitePhotos, saveSitePhoto } from "@/server/site/photos";
+import { actorForToken } from "@/server/people/tokens";
+import { PHOTO_SLOTS, photoSite } from "@/shared/photos";
+import { projectPath } from "@/shared/paths";
+import { EDITABLE_LINKS } from "@/shared/links";
 import {
   BLOCK_TYPES,
   BUILT_WITH,
@@ -38,8 +38,8 @@ import {
   ROLE_LABEL,
   ROLES,
   SUPERADMIN_LABEL,
-} from "@/app/lib/cms/taxonomy";
-import { uploadImageFromBase64, uploadImageFromUrl } from "@/app/lib/cms/uploads";
+} from "@/shared/taxonomy";
+import { uploadImageFromBase64, uploadImageFromUrl } from "@/server/integrations/blob/uploads";
 
 /*
  * MCP server for the CMS, so Claude can manage site content from chat. Each

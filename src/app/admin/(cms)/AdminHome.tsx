@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import type { Project } from "@/app/projects/data/types";
-import type { Issue } from "@/app/lib/cms/newsletter";
-import ProjectCover from "@/app/components/cms/ProjectCover";
-import { PROJECT_STATUS_LABEL } from "@/app/lib/cms/taxonomy";
+import type { Project } from "@/shared/types/project";
+import type { Issue } from "@/server/dap/newsletter";
+import ProjectCover from "@/components/content/ProjectCover";
+import { PROJECT_STATUS_LABEL } from "@/shared/taxonomy";
 import { approveProjectAction } from "../actions";
 import { PageHead, StatusChip, formatEdited, useActionToast, useConfirm } from "../_components/ui";
 import { runHref } from "../_components/runs";

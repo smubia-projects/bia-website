@@ -5,9 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, Eye, Link2, PenLine, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Markdown from "@/app/components/ui/Markdown";
-import { useClientValue } from "@/app/components/ui/useClient";
-import type { IssueBlock } from "@/app/lib/db/schema";
+import Markdown from "@/components/ui/Markdown";
+import { useClientValue } from "@/components/ui/useClient";
+import type { IssueBlock } from "@/server/db/schema";
 import {
   BLOCK_DEFAULT_HEADING,
   BLOCK_HINTS,
@@ -15,7 +15,7 @@ import {
   ISSUE_STATUS_LABEL,
   type BlockType,
   type IssueStatus,
-} from "@/app/lib/cms/taxonomy";
+} from "@/shared/taxonomy";
 import {
   deleteIssueAction,
   publishIssueAction,

@@ -1,4 +1,4 @@
-import { getPublicCohorts, pickCurrentCohort } from "@/app/lib/cms/cohorts";
+import { getPublicCohorts, pickCurrentCohort } from "@/server/cohorts/cohorts";
 import { getPublicProjects } from "@/app/lib/projects";
 import LodgeYearbook from "./LodgeYearbook";
 

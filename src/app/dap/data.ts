@@ -57,7 +57,7 @@ export const CURRICULUM: CurriculumTopic[] = [
 
 /* ── Cohort photo — the wide moment ─────────────────────────────────── */
 
-/** Photo slot (app/lib/photos.ts); its alt text is also the caption. */
+/** Photo slot (src/shared/photos.ts); its alt text is also the caption. */
 export const COHORT_PHOTO = "dap.cohort";
 
 /* ── Programme structure — two movements ────────────────────────────── */
@@ -66,7 +66,7 @@ export interface Movement {
   label: string;
   title: string;
   blurb: string;
-  /** Photo slots (app/lib/photos.ts) */
+  /** Photo slots (src/shared/photos.ts) */
   photos: string[];
 }
 

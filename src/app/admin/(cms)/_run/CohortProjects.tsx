@@ -3,12 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Plus, X } from "lucide-react";
-import type { Cohort, Lodge, Track } from "@/app/lib/cms/cohorts";
-import type { Project } from "@/app/projects/data/types";
-import ProjectCover from "@/app/components/cms/ProjectCover";
-import Medal from "@/app/components/cms/Medal";
-import { trackAccent } from "@/app/components/cms/visuals";
-import { PROJECT_STATUS_LABEL } from "@/app/lib/cms/taxonomy";
+import type { Cohort, Lodge, Track } from "@/server/cohorts/cohorts";
+import type { Project } from "@/shared/types/project";
+import ProjectCover from "@/components/content/ProjectCover";
+import Medal from "@/components/content/Medal";
+import { trackAccent } from "@/components/content/visuals";
+import { PROJECT_STATUS_LABEL } from "@/shared/taxonomy";
 import { placeProjectAction, placeProjectsAction, setProjectLodgeAction, setWinnerAction } from "../../actions";
 import { AddButton, ExternalAction, PageHead, PickerDialog, StatusChip, useActionToast, useConfirm, type PickerGroup } from "../../_components/ui";
 import styles from "../../cms.module.css";

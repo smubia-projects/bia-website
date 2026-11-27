@@ -1,8 +1,8 @@
-import { can } from "@/app/lib/cms/actor";
-import { listCohorts, pickCurrentCohort } from "@/app/lib/cms/cohorts";
-import { listIssues } from "@/app/lib/cms/newsletter";
-import { listProjects } from "@/app/lib/cms/projects";
-import { requireActorPage } from "@/app/lib/cms/session";
+import { can } from "@/server/core/actor";
+import { listCohorts, pickCurrentCohort } from "@/server/cohorts/cohorts";
+import { listIssues } from "@/server/dap/newsletter";
+import { listProjects } from "@/server/projects/projects";
+import { requireActorPage } from "@/server/auth/session";
 import AdminHome from "./AdminHome";
 
 export default async function AdminHomePage() {

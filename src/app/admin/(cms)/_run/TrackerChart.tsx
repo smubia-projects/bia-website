@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { shortDate } from "@/app/lib/cms/bot-text";
-import type { Chart, ChartBar } from "@/app/lib/cms/tracker-view";
+import { shortDate } from "@/server/dap/tracker/bot-text";
+import type { Chart, ChartBar } from "@/server/dap/tracker/view";
 import { runHref } from "../../_components/runs";
 import ScrollToToday from "./ScrollToToday";
 import t from "../../tracker.module.css";

@@ -1,11 +1,11 @@
 import React from "react";
 import styles from "./page.module.css";
-import SectionHeading from "../components/ui/SectionHeading";
-import Button from "../components/ui/Button";
-import ScrollReveal from "../components/ui/ScrollReveal";
-import { joinLink, mailto, partnershipMailto } from "@/app/lib/links";
-import { getSiteLinks } from "@/app/lib/cms/links";
-import { MotionAnchor, MotionSurface } from "../components/ui/MotionElements";
+import SectionHeading from "../../components/ui/SectionHeading";
+import Button from "../../components/ui/Button";
+import ScrollReveal from "../../components/ui/ScrollReveal";
+import { joinLink, mailto, partnershipMailto } from "@/shared/links";
+import { getSiteLinks } from "@/server/site/links";
+import { MotionAnchor, MotionSurface } from "../../components/ui/MotionElements";
 
 export const metadata = {
   title: "Contact — SMUBIA",

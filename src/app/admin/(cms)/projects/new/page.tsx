@@ -1,4 +1,4 @@
-import { requireActorPage } from "@/app/lib/cms/session";
+import { requireActorPage } from "@/server/auth/session";
 import ProjectEditor from "../ProjectEditor";
 import { editorOptions } from "../editorData";
 

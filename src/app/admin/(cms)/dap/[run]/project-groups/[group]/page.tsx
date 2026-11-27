@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { shortDate, sgtDay } from "@/app/lib/cms/bot-text";
-import { todaySgt } from "@/app/lib/cms/people";
-import { adminWho, getTimeline, listMembers, listProjectGroups } from "@/app/lib/cms/tracker";
-import { nextMeetingBy } from "@/app/lib/cms/tracker-view";
+import { shortDate, sgtDay } from "@/server/dap/tracker/bot-text";
+import { todaySgt } from "@/server/people/people";
+import { adminWho, getTimeline, listMembers, listProjectGroups } from "@/server/dap/tracker/service";
+import { nextMeetingBy } from "@/server/dap/tracker/view";
 import GroupTracker from "../../../../_run/GroupTracker";
 import { loadRun } from "../../../../_run/load";
 

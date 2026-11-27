@@ -1,4 +1,4 @@
-import type { Actor } from "@/app/lib/cms/actor";
+import type { Actor } from "@/server/core/actor";
 
 /** The five ways into the CMS, in the order the permission tables list them. */
 export const ROLE_KEYS = ["exco", "superadmin", "dap_exco", "lodge_exco", "lodge_head"] as const;

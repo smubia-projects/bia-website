@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAILodgeFeed } from "@/app/lib/cms/ailodge-feed";
+import { getAILodgeFeed } from "@/server/ailodge/feed";
 
 /**
  * GET /api/public/ailodge[?semester=<slug>]

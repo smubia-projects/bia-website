@@ -2,11 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import Markdown from "@/app/components/ui/Markdown";
-import ui from "@/app/components/cms/public.module.css";
-import PeopleList from "@/app/components/cms/PeopleList";
-import { formatIssueDate, getPublicRun, parseIssueWeek } from "@/app/lib/cms/newsletter";
-import { dapRunPath } from "@/app/lib/cms/paths";
+import Markdown from "@/components/ui/Markdown";
+import ui from "@/components/content/public.module.css";
+import PeopleList from "@/components/content/PeopleList";
+import { formatIssueDate, getPublicRun, parseIssueWeek } from "@/server/dap/newsletter";
+import { dapRunPath } from "@/shared/paths";
 
 export const revalidate = 3600;
 export const dynamicParams = true;

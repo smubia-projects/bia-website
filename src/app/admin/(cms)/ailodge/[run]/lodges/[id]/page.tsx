@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { can } from "@/app/lib/cms/actor";
-import { getSiteLinks } from "@/app/lib/cms/links";
-import { getLodge, lodgePaths } from "@/app/lib/cms/lodges";
+import { can } from "@/server/core/actor";
+import { getSiteLinks } from "@/server/site/links";
+import { getLodge, lodgePaths } from "@/server/ailodge/lodges";
 import LodgeEditor from "../../../../_run/LodgeEditor";
 import { loadRun } from "../../../../_run/load";
 

@@ -1,4 +1,4 @@
-import { telegramApi } from "@/app/lib/cms/telegram";
+import { telegramApi } from "@/server/integrations/telegram/client";
 
 export interface TelegramCall {
   method: string;

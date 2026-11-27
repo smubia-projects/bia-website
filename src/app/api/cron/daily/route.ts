@@ -1,10 +1,10 @@
-import { runDailyJobs } from "@/app/lib/cms/jobs";
+import { runDailyJobs } from "@/server/jobs";
 
 /*
  * Daily Vercel Cron (vercel.json, 01:00 UTC = 09:00 SGT). Hobby-plan crons may fire any time
  * within that hour, which is why the newsletter editor says "±1 hour". Vercel sends
  * `Authorization: Bearer $CRON_SECRET` when CRON_SECRET is set. The jobs are listed in
- * app/lib/cms/jobs.ts; the answer is 500 when any of them failed, so it shows in the logs.
+ * src/server/jobs.ts; the answer is 500 when any of them failed, so it shows in the logs.
  */
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;

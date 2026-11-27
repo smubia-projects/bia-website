@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { LinkedAccount } from "@/app/lib/cms/telegram-settings";
+import type { LinkedAccount } from "@/server/core/settings";
 import { setDapChannelAction, unlinkTelegramAction } from "../../actions";
 import { UnsavedNote, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";

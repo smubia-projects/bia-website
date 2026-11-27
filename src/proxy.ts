@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { canonicalPath } from "@/app/lib/canonical-path";
+import { canonicalPath } from "@/shared/canonical-path";
 
 /**
  * Canonical URLs are lower-case and kebab-case (/projects, /dap, /work-with-us).

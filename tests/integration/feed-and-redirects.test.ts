@@ -3,11 +3,11 @@ import "../helpers/next-cache";
 import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 import { NextRequest } from "next/server";
-import { getDb } from "@/app/lib/db";
-import { cohorts } from "@/app/lib/db/schema";
-import { canonicalPath } from "@/app/lib/canonical-path";
-import { FEED_VERSION, getAILodgeFeed } from "@/app/lib/cms/ailodge-feed";
-import * as lodges from "@/app/lib/cms/lodges";
+import { getDb } from "@/server/db";
+import { cohorts } from "@/server/db/schema";
+import { canonicalPath } from "@/shared/canonical-path";
+import { FEED_VERSION, getAILodgeFeed } from "@/server/ailodge/feed";
+import * as lodges from "@/server/ailodge/lodges";
 import { proxy } from "@/proxy";
 import { actorFor } from "../helpers/actors";
 

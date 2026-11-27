@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { can } from "@/app/lib/cms/actor";
-import { listSitePhotos } from "@/app/lib/cms/photos";
-import { requireActorPage } from "@/app/lib/cms/session";
-import { PHOTO_SLOTS, photoSite } from "@/app/lib/photos";
+import { can } from "@/server/core/actor";
+import { listSitePhotos } from "@/server/site/photos";
+import { requireActorPage } from "@/server/auth/session";
+import { PHOTO_SLOTS, photoSite } from "@/shared/photos";
 import PhotosManager from "./PhotosManager";
 
 export default async function PhotosPage() {

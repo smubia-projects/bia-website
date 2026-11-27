@@ -10,13 +10,13 @@ import {
   Trophy,
   ArrowRight,
 } from "lucide-react";
-import ScrollReveal from "@/app/components/ui/ScrollReveal";
-import CountUp from "@/app/components/ui/CountUp";
-import { getSiteLinks } from "@/app/lib/cms/links";
-import { joinLink } from "@/app/lib/links";
+import ScrollReveal from "@/components/ui/ScrollReveal";
+import CountUp from "@/components/ui/CountUp";
+import { getSiteLinks } from "@/server/site/links";
+import { joinLink } from "@/shared/links";
 import styles from "./page.module.css";
 import AILodgeReel from "./AILodgeReel";
-import { MotionNextLink, MotionSurface } from "@/app/components/ui/MotionElements";
+import { MotionNextLink, MotionSurface } from "@/components/ui/MotionElements";
 
 export const metadata = {
   title: "AI Lodge | SMUBIA",

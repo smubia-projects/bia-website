@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { can } from "@/app/lib/cms/actor";
-import { listCohorts } from "@/app/lib/cms/cohorts";
-import { requireActorPage } from "@/app/lib/cms/session";
+import { can } from "@/server/core/actor";
+import { listCohorts } from "@/server/cohorts/cohorts";
+import { requireActorPage } from "@/server/auth/session";
 import NewRunForm from "../../_run/NewRunForm";
 
 export default async function NewRunPage() {

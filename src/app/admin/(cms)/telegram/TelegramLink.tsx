@@ -7,7 +7,7 @@ import { createTelegramLinkAction, unlinkTelegramAction } from "../../actions";
 import { PageHead, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";
 import t from "../../tracker.module.css";
-import type { TelegramAccount } from "@/app/lib/cms/telegram-link";
+import type { TelegramAccount } from "@/server/people/telegram-link";
 
 /**
  * Links the signed-in admin's Telegram account, so the tracker bot recognises them in group chats.

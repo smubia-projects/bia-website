@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { can } from "@/app/lib/cms/actor";
-import { accessExpired, bootstrapAdmins, listPeople, lodgeOptions } from "@/app/lib/cms/people";
-import { requireActorPage } from "@/app/lib/cms/session";
+import { can } from "@/server/core/actor";
+import { accessExpired, bootstrapAdmins, listPeople, lodgeOptions } from "@/server/people/people";
+import { requireActorPage } from "@/server/auth/session";
 import PeopleManager from "./PeopleManager";
 
 export default async function PeoplePage() {

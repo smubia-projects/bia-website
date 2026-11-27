@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import Markdown from "@/app/components/ui/Markdown";
-import JoinCta from "@/app/components/cms/JoinCta";
-import YearbookShelves, { type Shelf } from "@/app/components/cms/YearbookShelves";
-import { trackAccent } from "@/app/components/cms/visuals";
-import ui from "@/app/components/cms/public.module.css";
-import type { PublicCohort } from "@/app/lib/cms/cohorts";
-import { cohortPath, dapRunPath } from "@/app/lib/cms/paths";
-import { BUILT_WITH } from "@/app/lib/cms/taxonomy";
-import type { Project } from "@/app/projects/data/types";
+import Markdown from "@/components/ui/Markdown";
+import JoinCta from "@/components/content/JoinCta";
+import YearbookShelves, { type Shelf } from "@/components/content/YearbookShelves";
+import { trackAccent } from "@/components/content/visuals";
+import ui from "@/components/content/public.module.css";
+import type { PublicCohort } from "@/server/cohorts/cohorts";
+import { cohortPath, dapRunPath } from "@/shared/paths";
+import { BUILT_WITH } from "@/shared/taxonomy";
+import type { Project } from "@/shared/types/project";
 
 /** The cohort /projects/dap shows: the live one if it has projects, else the newest that does. */
 export function defaultDapCohort(cohorts: PublicCohort[], projects: Project[]) {

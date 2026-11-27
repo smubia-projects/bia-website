@@ -1,27 +1,27 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { signOut } from "@/auth";
-import { CmsError, type Actor } from "@/app/lib/cms/actor";
-import { requireActor } from "@/app/lib/cms/session";
-import * as projects from "@/app/lib/cms/projects";
-import * as cohorts from "@/app/lib/cms/cohorts";
-import * as lodgesCms from "@/app/lib/cms/lodges";
-import * as newsletter from "@/app/lib/cms/newsletter";
-import * as people from "@/app/lib/cms/people";
-import { saveSiteLinks, setApplicationsOpen, type SiteLinksInput } from "@/app/lib/cms/links";
-import { saveSitePhoto } from "@/app/lib/cms/photos";
-import { createToken, revokeToken } from "@/app/lib/cms/tokens";
-import * as tracker from "@/app/lib/cms/tracker";
-import { noonSgt } from "@/app/lib/cms/bot-text";
-import { createAccountLink, createChatLink, unlinkTelegram } from "@/app/lib/cms/telegram-link";
-import * as webhook from "@/app/lib/cms/telegram-webhook";
-import { syncBotCommands } from "@/app/lib/cms/bot";
-import { telegramError } from "@/app/lib/cms/telegram";
-import { setDapChannelId } from "@/app/lib/cms/telegram-settings";
-import type { Photo } from "@/app/lib/photos";
-import { UPLOAD_FOLDERS, uploadImage, type UploadFolder } from "@/app/lib/cms/uploads";
-import type { BlockerStatus, MilestoneStatus, Programme, ProjectStatus } from "@/app/lib/cms/taxonomy";
+import { signOut } from "@/server/auth/auth";
+import { CmsError, type Actor } from "@/server/core/actor";
+import { requireActor } from "@/server/auth/session";
+import * as projects from "@/server/projects/projects";
+import * as cohorts from "@/server/cohorts/cohorts";
+import * as lodgesCms from "@/server/ailodge/lodges";
+import * as newsletter from "@/server/dap/newsletter";
+import * as people from "@/server/people/people";
+import { saveSiteLinks, setApplicationsOpen, type SiteLinksInput } from "@/server/site/links";
+import { saveSitePhoto } from "@/server/site/photos";
+import { createToken, revokeToken } from "@/server/people/tokens";
+import * as tracker from "@/server/dap/tracker/service";
+import { noonSgt } from "@/server/dap/tracker/bot-text";
+import { createAccountLink, createChatLink, unlinkTelegram } from "@/server/people/telegram-link";
+import * as webhook from "@/server/integrations/telegram/webhook";
+import { syncBotCommands } from "@/server/dap/tracker/bot";
+import { telegramError } from "@/server/integrations/telegram/client";
+import { setDapChannelId } from "@/server/core/settings";
+import type { Photo } from "@/shared/photos";
+import { UPLOAD_FOLDERS, uploadImage, type UploadFolder } from "@/server/integrations/blob/uploads";
+import type { BlockerStatus, MilestoneStatus, Programme, ProjectStatus } from "@/shared/taxonomy";
 
 export type ActionResult<T = null> = { ok: true; data: T; message?: string } | { ok: false; error: string };
 

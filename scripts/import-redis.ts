@@ -98,9 +98,9 @@ async function main() {
 
   const { Redis } = await import("@upstash/redis");
   const { eq } = await import("drizzle-orm");
-  const { getDb, usingLocalDb } = await import("../src/app/lib/db");
-  const { cohorts, projects } = await import("../src/app/lib/db/schema");
-  const { cohortIdFor } = await import("../src/app/lib/cms/cohorts");
+  const { getDb, usingLocalDb } = await import("../src/server/db");
+  const { cohorts, projects } = await import("../src/server/db/schema");
+  const { cohortIdFor } = await import("../src/server/cohorts/cohorts");
 
   const redis = Redis.fromEnv();
   const slugs = (await redis.lrange<string>("projects:index", 0, -1)) ?? [];
@@ -188,7 +188,7 @@ async function main() {
 // PGlite keeps the event loop alive, so exit explicitly.
 main()
   .then(async () => {
-    const { closeDb } = await import("../src/app/lib/db");
+    const { closeDb } = await import("../src/server/db");
     await closeDb();
     process.exit(0);
   })

@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { can } from "@/app/lib/cms/actor";
-import { cohortPath, yearbookPath } from "@/app/lib/cms/paths";
-import { getProject } from "@/app/lib/cms/projects";
-import { requireActorPage } from "@/app/lib/cms/session";
-import { PROJECT_STATUS_LABEL } from "@/app/lib/cms/taxonomy";
+import { can } from "@/server/core/actor";
+import { cohortPath, yearbookPath } from "@/shared/paths";
+import { getProject } from "@/server/projects/projects";
+import { requireActorPage } from "@/server/auth/session";
+import { PROJECT_STATUS_LABEL } from "@/shared/taxonomy";
 import ProjectDetailContent from "@/app/projects/_detail/ProjectDetailContent";
 import styles from "@/app/projects/_detail/ProjectDetail.module.css";
 import PreviewBar from "../../../_components/PreviewBar";

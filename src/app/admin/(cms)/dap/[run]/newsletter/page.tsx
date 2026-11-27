@@ -1,4 +1,4 @@
-import { formatIssueDate, listIssues, listSessions } from "@/app/lib/cms/newsletter";
+import { formatIssueDate, listIssues, listSessions } from "@/server/dap/newsletter";
 import IssueList from "../../../_run/IssueList";
 import { loadRun } from "../../../_run/load";
 

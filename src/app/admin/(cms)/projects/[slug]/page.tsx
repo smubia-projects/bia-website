@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { can } from "@/app/lib/cms/actor";
-import { getProject } from "@/app/lib/cms/projects";
-import { requireActorPage } from "@/app/lib/cms/session";
+import { can } from "@/server/core/actor";
+import { getProject } from "@/server/projects/projects";
+import { requireActorPage } from "@/server/auth/session";
 import ProjectEditor from "../ProjectEditor";
 import { editorOptions } from "../editorData";
 

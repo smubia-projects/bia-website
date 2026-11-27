@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Send, X } from "lucide-react";
-import { MILESTONE_STATUSES, type BlockerStatus, type MilestoneStatus } from "@/app/lib/cms/taxonomy";
+import { MILESTONE_STATUSES, type BlockerStatus, type MilestoneStatus } from "@/shared/taxonomy";
 import {
   addBlockerAction,
   addSubtaskAction,

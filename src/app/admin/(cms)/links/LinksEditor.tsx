@@ -9,7 +9,7 @@ import {
   type LinkGroup,
   type LinkKey,
   type SiteLinks,
-} from "@/app/lib/links";
+} from "@/shared/links";
 import { saveSiteLinksAction } from "../../actions";
 import { PageHead, UnsavedNote, useActionToast, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";

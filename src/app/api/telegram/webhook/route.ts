@@ -1,7 +1,7 @@
 import { webhookCallback } from "grammy";
 import { after } from "next/server";
-import { ensureBotCommands } from "@/app/lib/cms/bot";
-import { getBot } from "@/app/lib/cms/telegram-bot";
+import { ensureBotCommands } from "@/server/dap/tracker/bot";
+import { getBot } from "@/server/bot";
 
 /*
  * Telegram bot webhook for the DAP timeline tracker. Set it from the dashboard

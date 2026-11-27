@@ -1,17 +1,17 @@
 import "../helpers/db";
 import assert from "node:assert/strict";
 import { before, beforeEach, describe, it } from "node:test";
-import { getDb } from "@/app/lib/db";
-import { cohorts, people } from "@/app/lib/db/schema";
-import { getBot } from "@/app/lib/cms/telegram-bot";
-import * as tracker from "@/app/lib/cms/tracker";
+import { getDb } from "@/server/db";
+import { cohorts, people } from "@/server/db/schema";
+import { getBot } from "@/server/bot";
+import * as tracker from "@/server/dap/tracker/service";
 import { actorFor } from "../helpers/actors";
 import { fakeTelegram, type TelegramCall } from "../helpers/telegram";
 
 /*
  * The webhook route end to end: Telegram's request → grammY's webhookCallback → the bot.
  * The bot's own rules (commands, buttons, supergroup migration) are covered in
- * app/lib/cms/bot.test.ts; this file checks what the route adds around them.
+ * src/server/dap/tracker/bot.test.ts; this file checks what the route adds around them.
  */
 process.env.TELEGRAM_BOT_TOKEN = "123:test";
 process.env.TELEGRAM_WEBHOOK_SECRET = "hook-secret";

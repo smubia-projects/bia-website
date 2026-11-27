@@ -1,5 +1,5 @@
-import { listGroups } from "@/app/lib/cms/cohorts";
-import { listIssues, listSessions } from "@/app/lib/cms/newsletter";
+import { listGroups } from "@/server/cohorts/cohorts";
+import { listIssues, listSessions } from "@/server/dap/newsletter";
 import SessionsEditor from "../../../_run/SessionsEditor";
 import { loadRun } from "../../../_run/load";
 

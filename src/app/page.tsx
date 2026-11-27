@@ -1,15 +1,15 @@
-import { MotionNextLink } from "./components/ui/MotionElements";
+import { MotionNextLink } from "../components/ui/MotionElements";
 import styles from "./page.module.css";
-import ScrollReveal from "./components/ui/ScrollReveal";
-import RotatingWord from "./components/ui/RotatingWord";
-import Button from "./components/ui/Button";
-import SectionHeading from "./components/ui/SectionHeading";
-import AlumniTestimonials from "./components/carousel";
-import PathwaysScroll from "./components/PathwaysScroll";
-import ProjectsMarquee from "./components/ProjectsMarquee";
+import ScrollReveal from "../components/ui/ScrollReveal";
+import RotatingWord from "../components/ui/RotatingWord";
+import Button from "../components/ui/Button";
+import SectionHeading from "../components/ui/SectionHeading";
+import AlumniTestimonials from "../components/home/carousel";
+import PathwaysScroll from "../components/home/PathwaysScroll";
+import ProjectsMarquee from "../components/home/ProjectsMarquee";
 import { getPublicProjects } from "./lib/projects";
-import HomeHeroCluster from "./components/HomeHeroCluster";
-import { getSiteLinks } from "@/app/lib/cms/links";
+import HomeHeroCluster from "../components/home/HomeHeroCluster";
+import { getSiteLinks } from "@/server/site/links";
 
 // Keep the live projects rail fresh via ISR (matches the /projects page).
 export const revalidate = 3600;

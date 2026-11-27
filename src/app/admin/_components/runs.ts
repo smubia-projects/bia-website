@@ -1,4 +1,4 @@
-import type { CohortVisibility, Programme } from "@/app/lib/cms/taxonomy";
+import type { CohortVisibility, Programme } from "@/shared/taxonomy";
 
 /*
  * CMS addresses for a programme run (an AI Lodge semester or a DAP cohort).

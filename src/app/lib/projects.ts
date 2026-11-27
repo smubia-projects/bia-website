@@ -7,4 +7,4 @@ export {
   getPublicProject,
   listProjects as getProjects,
   getProject,
-} from "@/app/lib/cms/projects";
+} from "@/server/projects/projects";

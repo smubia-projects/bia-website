@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import type { Cohort, Track } from "@/app/lib/cms/cohorts";
-import type { TimelineStep } from "@/app/lib/db/schema";
-import { trackAccent } from "@/app/components/cms/visuals";
-import { LODGE_HEAD_ACCESS_WEEKS, type CohortVisibility } from "@/app/lib/cms/taxonomy";
+import type { Cohort, Track } from "@/server/cohorts/cohorts";
+import type { TimelineStep } from "@/server/db/schema";
+import { trackAccent } from "@/components/content/visuals";
+import { LODGE_HEAD_ACCESS_WEEKS, type CohortVisibility } from "@/shared/taxonomy";
 import { deleteTrackAction, moveTrackAction, saveCohortAction, saveTrackAction } from "../../actions";
 import { AddButton, ExternalAction, MarkdownHint, OrderButtons, PageHead, UnsavedNote, useActionToast, useConfirm, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";

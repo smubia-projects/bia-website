@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { shortDate, sgtDay } from "@/app/lib/cms/bot-text";
-import { todaySgt } from "@/app/lib/cms/people";
-import { getAllTimelines } from "@/app/lib/cms/tracker";
-import { buildChart, nextMeetingBy, summarise } from "@/app/lib/cms/tracker-view";
+import { shortDate, sgtDay } from "@/server/dap/tracker/bot-text";
+import { todaySgt } from "@/server/people/people";
+import { getAllTimelines } from "@/server/dap/tracker/service";
+import { buildChart, nextMeetingBy, summarise } from "@/server/dap/tracker/view";
 import AddGroupButton from "../../../_run/AddGroupButton";
 import TrackerChart from "../../../_run/TrackerChart";
 import { loadRun } from "../../../_run/load";

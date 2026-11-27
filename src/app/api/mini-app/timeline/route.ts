@@ -1,5 +1,5 @@
-import { handleTimeline } from "@/app/lib/cms/mini-app";
-import { telegramApi } from "@/app/lib/cms/telegram";
+import { handleTimeline } from "@/server/dap/tracker/mini-app";
+import { telegramApi } from "@/server/integrations/telegram/client";
 
 /* One project group's milestones and tasks for the Mini App, only for someone who may open that group (mini-app.ts). */
 export const dynamic = "force-dynamic";

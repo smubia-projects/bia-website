@@ -2,12 +2,12 @@ import "../helpers/db";
 import assert from "node:assert/strict";
 import { before, beforeEach, describe, it } from "node:test";
 import { eq } from "drizzle-orm";
-import { getDb } from "@/app/lib/db";
-import { cohorts, issues } from "@/app/lib/db/schema";
+import { getDb } from "@/server/db";
+import { cohorts, issues } from "@/server/db/schema";
 import { GET as cron } from "@/app/api/cron/daily/route";
-import { DAILY_JOBS, runDailyJobs } from "@/app/lib/cms/jobs";
-import * as newsletter from "@/app/lib/cms/newsletter";
-import { setDapChannelId } from "@/app/lib/cms/telegram-settings";
+import { DAILY_JOBS, runDailyJobs } from "@/server/jobs";
+import * as newsletter from "@/server/dap/newsletter";
+import { setDapChannelId } from "@/server/core/settings";
 import { actorFor } from "../helpers/actors";
 import { fakeTelegram } from "../helpers/telegram";
 

@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
-import { can } from "@/app/lib/cms/actor";
-import { requireActorPage } from "@/app/lib/cms/session";
-import { getBotUsername } from "@/app/lib/cms/telegram";
-import { linkedTelegram } from "@/app/lib/cms/telegram-link";
-import { dapChannelView, listLinkedAccounts } from "@/app/lib/cms/telegram-settings";
-import { expectedWebhookUrl } from "@/app/lib/cms/telegram-webhook";
-import { isPolling } from "@/app/lib/cms/telegram-polling";
+import { can } from "@/server/core/actor";
+import { requireActorPage } from "@/server/auth/session";
+import { getBotUsername } from "@/server/integrations/telegram/client";
+import { linkedTelegram } from "@/server/people/telegram-link";
+import { dapChannelView, listLinkedAccounts } from "@/server/core/settings";
+import { expectedWebhookUrl } from "@/server/integrations/telegram/webhook";
+import { isPolling } from "@/server/integrations/telegram/polling";
 import WebhookPanel from "../_run/WebhookPanel";
 import BotSettings from "./BotSettings";
 import TelegramLink from "./TelegramLink";

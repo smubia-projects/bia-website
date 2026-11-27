@@ -4,8 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import { Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { Captain, LodgeBelt, LodgeHero, LodgeWeek } from "@/app/lib/db/schema";
-import type { Lodge } from "@/app/lib/cms/lodges";
+import type { Captain, LodgeBelt, LodgeHero, LodgeWeek } from "@/server/db/schema";
+import type { Lodge } from "@/server/ailodge/lodges";
 import {
   LODGE_AMBIENTS,
   LODGE_AMBIENT_LABEL,
@@ -29,7 +29,7 @@ import {
   type LodgeEmblem,
   type LodgeLogoStyle,
   type LodgeNeonSign,
-} from "@/app/lib/cms/taxonomy";
+} from "@/shared/taxonomy";
 import { deleteLodgeAction, saveLodgeAction } from "../../actions";
 import { AddButton, ExternalAction, MiniField, OrderButtons, PageHead, UnsavedNote, moveItem, useActionToast, useConfirm, useImageUpload, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import { runHref } from "../../_components/runs";

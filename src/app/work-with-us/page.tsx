@@ -1,15 +1,15 @@
 import React from "react";
 import Image from "next/image";
 import styles from "./WorkWithUs.module.css";
-import ScrollReveal from "../components/ui/ScrollReveal";
-import SectionHeading from "../components/ui/SectionHeading";
-import Button from "../components/ui/Button";
-import CountUp from "../components/ui/CountUp";
-import { MotionImage, MotionSurface } from "../components/ui/MotionElements";
-import { partnershipMailto } from "@/app/lib/links";
-import { getSiteLinks } from "@/app/lib/cms/links";
-import { getSitePhotos } from "@/app/lib/cms/photos";
-import { pickPhoto } from "@/app/lib/photos";
+import ScrollReveal from "../../components/ui/ScrollReveal";
+import SectionHeading from "../../components/ui/SectionHeading";
+import Button from "../../components/ui/Button";
+import CountUp from "../../components/ui/CountUp";
+import { MotionImage, MotionSurface } from "../../components/ui/MotionElements";
+import { partnershipMailto } from "@/shared/links";
+import { getSiteLinks } from "@/server/site/links";
+import { getSitePhotos } from "@/server/site/photos";
+import { pickPhoto } from "@/shared/photos";
 import { STAT_FOCAL, INVOLVEMENT, SHOW_PARTNERS, PARTNERS } from "./data";
 
 export const metadata = {

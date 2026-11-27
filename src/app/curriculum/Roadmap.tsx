@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MOTION_EASE } from "@/app/components/ui/motion";
+import { MOTION_EASE } from "@/components/ui/motion";
 import styles from "./roadmap.module.css";
 
 const cards = {

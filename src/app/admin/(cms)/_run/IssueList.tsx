@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ISSUE_STATUS_LABEL, type IssueStatus } from "@/app/lib/cms/taxonomy";
+import { ISSUE_STATUS_LABEL, type IssueStatus } from "@/shared/taxonomy";
 import { createIssueAction } from "../../actions";
 import { PageHead, StatusChip, useActionToast } from "../../_components/ui";
 import { runHref } from "../../_components/runs";

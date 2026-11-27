@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { AccessToken } from "@/app/lib/cms/tokens";
+import type { AccessToken } from "@/server/people/tokens";
 import { createTokenAction, revokeTokenAction } from "../../actions";
 import { Modal, PageHead, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";

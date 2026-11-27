@@ -1,6 +1,6 @@
-import { can } from "@/app/lib/cms/actor";
-import { listTracks } from "@/app/lib/cms/cohorts";
-import { cohortPath } from "@/app/lib/cms/paths";
+import { can } from "@/server/core/actor";
+import { listTracks } from "@/server/cohorts/cohorts";
+import { cohortPath } from "@/shared/paths";
 import CohortEditor from "../../_run/CohortEditor";
 import { loadRun } from "../../_run/load";
 

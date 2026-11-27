@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { WebhookInfo } from "@/app/lib/cms/telegram-webhook";
+import type { WebhookInfo } from "@/server/integrations/telegram/webhook";
 import { deleteWebhookAction, getWebhookInfoAction, setWebhookAction } from "../../actions";
 import { useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";

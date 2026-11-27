@@ -2,9 +2,9 @@ import "../helpers/db";
 import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 import { eq } from "drizzle-orm";
-import { getDb } from "@/app/lib/db";
-import { accessTokens, cohorts } from "@/app/lib/db/schema";
-import { revokeToken } from "@/app/lib/cms/tokens";
+import { getDb } from "@/server/db";
+import { accessTokens, cohorts } from "@/server/db/schema";
+import { revokeToken } from "@/server/people/tokens";
 import { POST } from "@/app/api/mcp/route";
 import { personWithToken } from "../helpers/tokens";
 

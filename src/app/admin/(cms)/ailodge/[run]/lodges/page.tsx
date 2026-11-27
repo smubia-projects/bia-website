@@ -1,6 +1,6 @@
-import { can } from "@/app/lib/cms/actor";
-import { getSiteLinks } from "@/app/lib/cms/links";
-import { listAllLodges, listLodges, lodgePaths } from "@/app/lib/cms/lodges";
+import { can } from "@/server/core/actor";
+import { getSiteLinks } from "@/server/site/links";
+import { listAllLodges, listLodges, lodgePaths } from "@/server/ailodge/lodges";
 import LodgeList from "../../../_run/LodgeList";
 import { loadRun } from "../../../_run/load";
 

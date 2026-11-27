@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { ChevronRight, ExternalLink } from "lucide-react";
-import Markdown from "@/app/components/ui/Markdown";
-import JoinCta from "@/app/components/cms/JoinCta";
-import YearbookShelves, { type Shelf } from "@/app/components/cms/YearbookShelves";
-import { trackAccent } from "@/app/components/cms/visuals";
-import ui from "@/app/components/cms/public.module.css";
-import type { PublicCohort } from "@/app/lib/cms/cohorts";
-import { getSiteLinks } from "@/app/lib/cms/links";
-import { cohortPath } from "@/app/lib/cms/paths";
-import type { Project } from "@/app/projects/data/types";
+import Markdown from "@/components/ui/Markdown";
+import JoinCta from "@/components/content/JoinCta";
+import YearbookShelves, { type Shelf } from "@/components/content/YearbookShelves";
+import { trackAccent } from "@/components/content/visuals";
+import ui from "@/components/content/public.module.css";
+import type { PublicCohort } from "@/server/cohorts/cohorts";
+import { getSiteLinks } from "@/server/site/links";
+import { cohortPath } from "@/shared/paths";
+import type { Project } from "@/shared/types/project";
 
 /** AI Lodge yearbook for one semester: header, write-up, filterable projects, then the lodges. */
 export default async function LodgeYearbook({

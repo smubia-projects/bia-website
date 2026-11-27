@@ -6,12 +6,12 @@ import Image from "next/image";
 import { animate, motion } from "framer-motion";
 import styles from "./ProjectDetail.module.css";
 import { Linkedin, Github, Globe } from "lucide-react";
-import { Project, TeamMember, HighlightCard } from "@/app/projects/data/types";
-import { getCardIcon } from "@/app/projects/data/cardIcons";
-import Markdown from "@/app/components/ui/Markdown";
-import { MOTION_EASE, motionTransition } from "@/app/components/ui/motion";
-import { yearbookPath } from "@/app/lib/cms/paths";
-import { useSiteLinks } from "@/app/components/SiteLinksProvider";
+import { Project, TeamMember, HighlightCard } from "@/shared/types/project";
+import { getCardIcon } from "@/components/content/cardIcons";
+import Markdown from "@/components/ui/Markdown";
+import { MOTION_EASE, motionTransition } from "@/components/ui/motion";
+import { yearbookPath } from "@/shared/paths";
+import { useSiteLinks } from "@/components/site/SiteLinksProvider";
 
 const MotionLink = motion.create(Link);
 

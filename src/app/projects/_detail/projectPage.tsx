@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import JoinCta from "@/app/components/cms/JoinCta";
-import ProjectTile from "@/app/components/cms/ProjectTile";
-import { usingLocalDb } from "@/app/lib/db";
-import { cohortPath, projectPath } from "@/app/lib/cms/paths";
-import type { Programme } from "@/app/lib/cms/taxonomy";
+import JoinCta from "@/components/content/JoinCta";
+import ProjectTile from "@/components/content/ProjectTile";
+import { usingLocalDb } from "@/server/db";
+import { cohortPath, projectPath } from "@/shared/paths";
+import type { Programme } from "@/shared/taxonomy";
 import { getPublicProjects } from "@/app/lib/projects";
-import type { Project } from "@/app/projects/data/types";
+import type { Project } from "@/shared/types/project";
 import ProjectDetailContent from "./ProjectDetailContent";
 import styles from "./ProjectDetail.module.css";
 
