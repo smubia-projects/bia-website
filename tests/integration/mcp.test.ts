@@ -1,4 +1,4 @@
-import "@/tests/helpers/db";
+import "../helpers/db";
 import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 import { eq } from "drizzle-orm";
@@ -6,7 +6,7 @@ import { getDb } from "@/app/lib/db";
 import { accessTokens, cohorts } from "@/app/lib/db/schema";
 import { revokeToken } from "@/app/lib/cms/tokens";
 import { POST } from "@/app/api/mcp/route";
-import { personWithToken } from "@/tests/helpers/tokens";
+import { personWithToken } from "../helpers/tokens";
 
 /*
  * The MCP endpoint, called as Claude would: JSON-RPC over HTTP with a personal access token.

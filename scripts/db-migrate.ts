@@ -13,7 +13,7 @@ import { loadEnvConfig } from "@next/env";
 loadEnvConfig(process.cwd());
 
 async function main() {
-  const { MIGRATIONS_DIR, getDb } = await import("../app/lib/db");
+  const { MIGRATIONS_DIR, getDb } = await import("../src/app/lib/db");
   const url = process.env.DATABASE_URL;
   if (!url) {
     if (process.env.VERCEL) throw new Error("DATABASE_URL is not set for this Vercel deployment");
@@ -31,7 +31,7 @@ async function main() {
 // PGlite keeps the event loop alive, so exit explicitly.
 main()
   .then(async () => {
-    const { closeDb } = await import("../app/lib/db");
+    const { closeDb } = await import("../src/app/lib/db");
     await closeDb();
     process.exit(0);
   })

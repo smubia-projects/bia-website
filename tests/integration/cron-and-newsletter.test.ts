@@ -1,4 +1,4 @@
-import "@/tests/helpers/db";
+import "../helpers/db";
 import assert from "node:assert/strict";
 import { before, beforeEach, describe, it } from "node:test";
 import { eq } from "drizzle-orm";
@@ -8,8 +8,8 @@ import { GET as cron } from "@/app/api/cron/daily/route";
 import { DAILY_JOBS, runDailyJobs } from "@/app/lib/cms/jobs";
 import * as newsletter from "@/app/lib/cms/newsletter";
 import { setDapChannelId } from "@/app/lib/cms/telegram-settings";
-import { actorFor } from "@/tests/helpers/actors";
-import { fakeTelegram } from "@/tests/helpers/telegram";
+import { actorFor } from "../helpers/actors";
+import { fakeTelegram } from "../helpers/telegram";
 
 process.env.TELEGRAM_BOT_TOKEN = "123:test";
 const telegram = fakeTelegram(({ method }) => (method === "getMyCommands" ? [] : method === "sendMessage" ? { message_id: 1, date: 0, chat: { id: -100, type: "channel" } } : true));

@@ -1,5 +1,5 @@
-import "@/tests/helpers/db";
-import "@/tests/helpers/next-cache";
+import "../helpers/db";
+import "../helpers/next-cache";
 import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 import { NextRequest } from "next/server";
@@ -9,7 +9,7 @@ import { canonicalPath } from "@/app/lib/canonical-path";
 import { FEED_VERSION, getAILodgeFeed } from "@/app/lib/cms/ailodge-feed";
 import * as lodges from "@/app/lib/cms/lodges";
 import { proxy } from "@/proxy";
-import { actorFor } from "@/tests/helpers/actors";
+import { actorFor } from "../helpers/actors";
 
 /** Every key path in a value ("semesters[].lodges[].name"), so a renamed or removed field shows up. */
 function shape(value: unknown, prefix = ""): string[] {

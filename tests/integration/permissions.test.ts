@@ -1,4 +1,4 @@
-import "@/tests/helpers/db";
+import "../helpers/db";
 import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 import { getDb } from "@/app/lib/db";
@@ -16,8 +16,8 @@ import * as telegramSettings from "@/app/lib/cms/telegram-settings";
 import * as tokens from "@/app/lib/cms/tokens";
 import * as tracker from "@/app/lib/cms/tracker";
 import * as trackerMcp from "@/app/lib/cms/tracker-mcp";
-import { actorFor, ROLE_KEYS, type RoleKey } from "@/tests/helpers/actors";
-import { fakeTelegram } from "@/tests/helpers/telegram";
+import { actorFor, ROLE_KEYS, type RoleKey } from "../helpers/actors";
+import { fakeTelegram } from "../helpers/telegram";
 
 /*
  * Every service write × every role. The expected access is written out here by hand, NOT read
