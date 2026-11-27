@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "tsx --import ./scripts/server-only.mjs --test \"src/**/*.test.ts\" \"tests/**/*.test.ts\"",
+    "test": "tsx --import ./scripts/server-only.mjs --experimental-test-module-mocks --test \"src/**/*.test.ts\" \"tests/**/*.test.ts\"",
     "vercel-build": "tsx scripts/db-migrate.ts && next build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db-migrate.ts",
