@@ -1,4 +1,4 @@
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { listCohorts, pickCurrentCohort } from "@/server/cohorts/cohorts";
 import { listIssues } from "@/server/dap/newsletter";
 import { listProjects } from "@/server/projects/projects";

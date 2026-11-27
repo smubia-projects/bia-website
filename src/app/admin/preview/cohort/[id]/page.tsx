@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { getCohort, listCohorts, listGroups, listLodges, listTracks } from "@/server/cohorts/cohorts";
 import { lodgePaths } from "@/server/ailodge/lodges";
 import { listProjects } from "@/server/projects/projects";

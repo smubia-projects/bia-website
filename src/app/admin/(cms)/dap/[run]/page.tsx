@@ -1,4 +1,4 @@
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { dapRunPath } from "@/shared/paths";
 import CohortEditor from "../../_run/CohortEditor";
 import { loadRun } from "../../_run/load";

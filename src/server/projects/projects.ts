@@ -3,7 +3,8 @@ import { unstable_cache } from "next/cache";
 import { getDb } from "@/server/db";
 import { cohorts, lodges, projects, tracks, type ProjectRow } from "@/server/db/schema";
 import type { HighlightCard, Project, TeamMember } from "@/shared/types/project";
-import { can, CmsError, ensure, type Actor } from "../core/actor";
+import { CmsError, ensure, type Actor } from "../core/actor";
+import { can } from "../core/permissions";
 import { lodgePaths } from "../ailodge/lodges";
 import { revalidateCms, TAGS } from "../core/revalidate";
 import {

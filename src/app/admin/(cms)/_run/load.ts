@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { listCohorts, pickCurrentCohort } from "@/server/cohorts/cohorts";
 import { requireActorPage } from "@/server/auth/session";
 import type { Programme } from "@/shared/taxonomy";

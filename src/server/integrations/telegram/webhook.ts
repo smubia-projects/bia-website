@@ -1,4 +1,5 @@
-import { can, CmsError, ensure, type Actor } from "../../core/actor";
+import { CmsError, ensure, type Actor } from "../../core/actor";
+import { can } from "../../core/permissions";
 import type { Api } from "grammy";
 import { SITE_URL, telegramApi, telegramError, telegramToken } from "./client";
 

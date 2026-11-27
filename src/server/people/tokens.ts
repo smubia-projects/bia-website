@@ -2,7 +2,8 @@ import { createHash, randomBytes } from "crypto";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { getDb } from "@/server/db";
 import { accessTokens, type AccessTokenRow } from "@/server/db/schema";
-import { can, ensure, type Actor } from "../core/actor";
+import { ensure, type Actor } from "../core/actor";
+import { can } from "../core/permissions";
 import { findAccess } from "./people";
 
 /*

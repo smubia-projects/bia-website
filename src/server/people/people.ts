@@ -1,7 +1,8 @@
 import { asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/server/db";
 import { cohorts, lodges, people, type PersonRow } from "@/server/db/schema";
-import { can, ensure, type Actor } from "../core/actor";
+import { ensure, type Actor } from "../core/actor";
+import { can } from "../core/permissions";
 import { ROLES, suggestedAccessEnd, type Role } from "../../shared/taxonomy";
 
 export type Person = PersonRow;

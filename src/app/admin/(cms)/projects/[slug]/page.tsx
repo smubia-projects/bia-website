@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { getProject } from "@/server/projects/projects";
 import { requireActorPage } from "@/server/auth/session";
 import ProjectEditor from "../ProjectEditor";

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { listCohorts } from "@/server/cohorts/cohorts";
 import { requireActorPage } from "@/server/auth/session";
 import NewRunForm from "../../_run/NewRunForm";

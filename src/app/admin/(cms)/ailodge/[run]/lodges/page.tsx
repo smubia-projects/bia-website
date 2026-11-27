@@ -1,4 +1,4 @@
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { getSiteLinks } from "@/server/site/links";
 import { listAllLodges, listLodges, lodgePaths } from "@/server/ailodge/lodges";
 import LodgeList from "../../../_run/LodgeList";

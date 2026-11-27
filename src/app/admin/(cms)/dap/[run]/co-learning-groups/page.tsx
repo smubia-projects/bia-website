@@ -1,4 +1,4 @@
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { listGroups } from "@/server/cohorts/cohorts";
 import GroupsEditor from "../../../_run/GroupsEditor";
 import { loadRun } from "../../../_run/load";

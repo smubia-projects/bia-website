@@ -1,6 +1,7 @@
 import { createMcpHandler } from "mcp-handler";
 import { devLoginEnabled } from "@/server/auth/auth";
-import { can, DEV_MCP_ACTOR, type Actor } from "@/server/core/actor";
+import { DEV_MCP_ACTOR, type Actor } from "@/server/core/actor";
+import { hasAny, type Capability } from "@/server/core/permissions";
 import { actorForToken } from "@/server/people/tokens";
 import { actor, requestActor } from "./context";
 import { registerCohortsTools } from "./tools/cohorts";
@@ -26,43 +27,44 @@ import { registerTrackerTools } from "./tools/tracker";
  * Progressive disclosure: each token only lists the tools its owner's role can
  * use, so a lodge head's Claude never sees (or spends tokens on) exco tools.
  * The service layer still checks every call. Tools not listed here are open to
- * every role.
+ * every role. Each entry names the capabilities (any of them) from ROLE_CAPS in
+ * src/server/core/permissions.ts, the table the service layer checks too.
  */
-const TOOL_ACCESS: Record<string, (a: Actor) => boolean> = {
-  set_track_winner: (a) => can.setWinner(a),
-  create_cohort: (a) => a.role !== "lodge_head",
-  update_cohort: (a) => a.role !== "lodge_head",
-  save_track: (a) => can.seeLodge(a),
-  get_lodge: (a) => can.seeLodge(a),
-  save_lodge: (a) => can.seeLodge(a),
-  copy_lodge: (a) => can.seeLodge(a),
-  set_lodge_applications: (a) => can.seeLodge(a),
-  get_ailodge_feed: (a) => can.seeLodge(a),
-  set_applications_open: (a) => can.setApplications(a, "AI Lodge") || can.setApplications(a, "DAP"),
-  list_site_links: (a) => can.editLinks(a),
-  update_site_links: (a) => can.editLinks(a),
-  list_photos: (a) => can.seePhotos(a),
-  set_photo: (a) => can.seePhotos(a),
-  get_dap_group: (a) => can.seeDap(a),
-  save_dap_group: (a) => can.seeDap(a),
-  list_issues: (a) => can.editNewsletter(a),
-  get_issue: (a) => can.editNewsletter(a),
-  create_issue: (a) => can.editNewsletter(a),
-  update_issue: (a) => can.editNewsletter(a),
-  publish_issue: (a) => can.editNewsletter(a),
-  schedule_issue: (a) => can.editNewsletter(a),
-  send_issue_test: (a) => can.editNewsletter(a),
-  update_sessions: (a) => can.editNewsletter(a),
-  list_people: (a) => can.managePeople(a),
-  set_person: (a) => can.managePeople(a),
-  remove_person: (a) => can.managePeople(a),
-  set_lodge_heads: (a) => can.managePeople(a),
-  list_project_groups: (a) => can.tracker(a),
-  get_project_group_timeline: (a) => can.tracker(a),
-  add_milestones: (a) => can.tracker(a),
-  set_milestone_status: (a) => can.tracker(a),
-  log_project_group_meeting: (a) => can.tracker(a),
-  set_meeting_reminders: (a) => can.tracker(a),
+const TOOL_ACCESS: Record<string, Capability | Capability[]> = {
+  set_track_winner: "setWinner",
+  create_cohort: ["editAILodge", "editDap"],
+  update_cohort: ["editAILodge", "editDap"],
+  save_track: "seeLodge",
+  get_lodge: "seeLodge",
+  save_lodge: "seeLodge",
+  copy_lodge: "seeLodge",
+  set_lodge_applications: "seeLodge",
+  get_ailodge_feed: "seeLodge",
+  set_applications_open: ["setAILodgeApplications", "setDapApplications"],
+  list_site_links: "editLinks",
+  update_site_links: "editLinks",
+  list_photos: "seePhotos",
+  set_photo: "seePhotos",
+  get_dap_group: "seeDap",
+  save_dap_group: "seeDap",
+  list_issues: "editNewsletter",
+  get_issue: "editNewsletter",
+  create_issue: "editNewsletter",
+  update_issue: "editNewsletter",
+  publish_issue: "editNewsletter",
+  schedule_issue: "editNewsletter",
+  send_issue_test: "editNewsletter",
+  update_sessions: "editNewsletter",
+  list_people: "managePeople",
+  set_person: "managePeople",
+  remove_person: "managePeople",
+  set_lodge_heads: "managePeople",
+  list_project_groups: "tracker",
+  get_project_group_timeline: "tracker",
+  add_milestones: "tracker",
+  set_milestone_status: "tracker",
+  log_project_group_meeting: "tracker",
+  set_meeting_reminders: "tracker",
 };
 
 const handler = createMcpHandler(
@@ -70,7 +72,7 @@ const handler = createMcpHandler(
     // The server is built per request (stateless), inside guarded(), so actor() is known here.
     const register = server.registerTool.bind(server);
     server.registerTool = ((name: string, ...rest: unknown[]) =>
-      TOOL_ACCESS[name] && !TOOL_ACCESS[name](actor())
+      TOOL_ACCESS[name] && !hasAny(actor(), [TOOL_ACCESS[name]].flat())
         ? undefined
         : (register as (...args: unknown[]) => unknown)(name, ...rest)) as typeof server.registerTool;
 

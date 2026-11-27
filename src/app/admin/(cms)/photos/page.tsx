@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { listSitePhotos } from "@/server/site/photos";
 import { requireActorPage } from "@/server/auth/session";
 import { PHOTO_SLOTS, photoSite } from "@/shared/photos";

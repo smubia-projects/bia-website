@@ -11,7 +11,8 @@ import {
   type LinkKey,
   type SiteLinks,
 } from "@/shared/links";
-import { can, ensure, type Actor } from "../core/actor";
+import { ensure, type Actor } from "../core/actor";
+import { can } from "../core/permissions";
 import { revalidateCms, TAGS } from "../core/revalidate";
 import type { Programme } from "../../shared/taxonomy";
 

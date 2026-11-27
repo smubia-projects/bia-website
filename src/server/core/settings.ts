@@ -1,7 +1,8 @@
 import { asc, eq, isNotNull } from "drizzle-orm";
 import { getDb } from "@/server/db";
 import { people, siteSettings } from "@/server/db/schema";
-import { can, ensure, type Actor } from "./actor";
+import { ensure, type Actor } from "./actor";
+import { can } from "./permissions";
 
 /*
  * The Telegram bot's settings that live in the CMS (Settings › Telegram › Bot, exco admins).

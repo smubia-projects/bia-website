@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { getIssue, listIssues, listSessions } from "@/server/dap/newsletter";
 import { getBotUsername } from "@/server/integrations/telegram/client";
 import IssueEditor from "../../../../_run/IssueEditor";

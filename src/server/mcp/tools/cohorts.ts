@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { can, CmsError } from "@/server/core/actor";
+import { CmsError } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { getAILodgeFeed } from "@/server/ailodge/feed";
 import * as cohorts from "@/server/cohorts/cohorts";
 import * as lodgesCms from "@/server/ailodge/lodges";

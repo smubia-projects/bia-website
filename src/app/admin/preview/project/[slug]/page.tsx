@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { cohortPath, yearbookPath } from "@/shared/paths";
 import { getProject } from "@/server/projects/projects";
 import { requireActorPage } from "@/server/auth/session";

@@ -13,7 +13,8 @@ import {
   type TimelineStep,
   type TrackRow,
 } from "@/server/db/schema";
-import { can, ensure, type Actor } from "../core/actor";
+import { ensure, type Actor } from "../core/actor";
+import { can } from "../core/permissions";
 import { listLodges, lodgePaths } from "../ailodge/lodges";
 import { revalidateCms, TAGS } from "../core/revalidate";
 import { COHORT_VISIBILITY, DAP_WEEKS, PROGRAMMES, type CohortVisibility, type Programme } from "../../shared/taxonomy";

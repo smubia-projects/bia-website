@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { can, CmsError } from "@/server/core/actor";
+import { CmsError } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { lodgeOptions } from "@/server/people/people";
 import { listSiteLinks, saveSiteLinks } from "@/server/site/links";
 import { listSitePhotos, saveSitePhoto } from "@/server/site/photos";

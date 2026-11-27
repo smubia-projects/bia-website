@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { can, CmsError } from "@/server/core/actor";
+import { CmsError } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import * as projects from "@/server/projects/projects";
 import { projectPath } from "@/shared/paths";
 import { PROGRAMMES, PROJECT_STATUSES } from "@/shared/taxonomy";

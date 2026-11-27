@@ -14,7 +14,8 @@ import {
   type ProjectMemberRow,
   type SubtaskRow,
 } from "@/server/db/schema";
-import { can, ensure, type Actor } from "../../core/actor";
+import { ensure, type Actor } from "../../core/actor";
+import { can } from "../../core/permissions";
 import { findAccess } from "../../people/people";
 import {
   BLOCKER_STATUSES,

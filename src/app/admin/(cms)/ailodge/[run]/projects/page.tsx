@@ -1,4 +1,4 @@
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { listLodges, listTracks } from "@/server/cohorts/cohorts";
 import { listProjects } from "@/server/projects/projects";
 import { cohortPath } from "@/shared/paths";

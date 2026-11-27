@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { accessExpired, bootstrapAdmins, listPeople, lodgeOptions } from "@/server/people/people";
 import { requireActorPage } from "@/server/auth/session";
 import PeopleManager from "./PeopleManager";

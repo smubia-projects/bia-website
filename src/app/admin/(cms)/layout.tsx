@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { can } from "@/server/core/actor";
+import { can } from "@/server/core/permissions";
 import { listCohorts, pickCurrentCohort } from "@/server/cohorts/cohorts";
 import { countProjectsInReview } from "@/server/projects/projects";
 import { requireActorPage } from "@/server/auth/session";
