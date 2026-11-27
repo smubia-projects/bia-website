@@ -30,7 +30,7 @@ import {
   type LodgeLogoStyle,
   type LodgeNeonSign,
 } from "@/shared/taxonomy";
-import { deleteLodgeAction, saveLodgeAction } from "../../actions";
+import { deleteLodgeAction, saveLodgeAction } from "../../actions/ailodge";
 import { AddButton, ExternalAction, MiniField, OrderButtons, PageHead, UnsavedNote, moveItem, useActionToast, useConfirm, useImageUpload, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import { runHref } from "../../_components/runs";
 import styles from "../../cms.module.css";

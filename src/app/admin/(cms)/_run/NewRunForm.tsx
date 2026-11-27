@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Programme } from "@/shared/taxonomy";
 import { yearbookPath } from "@/shared/paths";
-import { createCohortAction } from "../../actions";
+import { createCohortAction } from "../../actions/cohorts";
 import { PageHead, useActionToast } from "../../_components/ui";
 import { RUN_NOUN, runHref } from "../../_components/runs";
 import styles from "../../cms.module.css";

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LinkedAccount } from "@/server/core/settings";
-import { setDapChannelAction, unlinkTelegramAction } from "../../actions";
+import { setDapChannelAction, unlinkTelegramAction } from "../../actions/telegram";
 import { UnsavedNote, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";
 import t from "../../tracker.module.css";

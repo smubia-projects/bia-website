@@ -6,7 +6,8 @@ import type { Cohort, Track } from "@/server/cohorts/cohorts";
 import type { TimelineStep } from "@/server/db/schema";
 import { trackAccent } from "@/components/content/visuals";
 import { LODGE_HEAD_ACCESS_WEEKS, type CohortVisibility } from "@/shared/taxonomy";
-import { deleteTrackAction, moveTrackAction, saveCohortAction, saveTrackAction } from "../../actions";
+import { deleteTrackAction, moveTrackAction, saveTrackAction } from "../../actions/ailodge";
+import { saveCohortAction } from "../../actions/cohorts";
 import { AddButton, ExternalAction, MarkdownHint, OrderButtons, PageHead, UnsavedNote, useActionToast, useConfirm, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
 

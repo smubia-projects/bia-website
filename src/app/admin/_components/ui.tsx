@@ -3,7 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronRight, ChevronUp, ExternalLink, Plus, Search, X } from "lucide-react";
-import { uploadImageAction, type ActionResult } from "../actions";
+import { uploadImageAction } from "../actions/site";
+import { type ActionResult } from "../actions/run";
 import styles from "../cms.module.css";
 import ImageCropper from "./ImageCropper";
 

@@ -6,7 +6,7 @@ import type { Project } from "@/shared/types/project";
 import type { Issue } from "@/server/dap/newsletter";
 import ProjectCover from "@/components/content/ProjectCover";
 import { PROJECT_STATUS_LABEL } from "@/shared/taxonomy";
-import { approveProjectAction } from "../actions";
+import { approveProjectAction } from "../actions/projects";
 import { PageHead, StatusChip, formatEdited, useActionToast, useConfirm } from "../_components/ui";
 import { runHref } from "../_components/runs";
 import styles from "../cms.module.css";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { WebhookInfo } from "@/server/integrations/telegram/webhook";
-import { deleteWebhookAction, getWebhookInfoAction, setWebhookAction } from "../../actions";
+import { deleteWebhookAction, getWebhookInfoAction, setWebhookAction } from "../../actions/telegram";
 import { useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";
 import t from "../../tracker.module.css";

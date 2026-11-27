@@ -9,7 +9,9 @@ import ProjectCover from "@/components/content/ProjectCover";
 import Medal from "@/components/content/Medal";
 import { trackAccent } from "@/components/content/visuals";
 import { PROJECT_STATUS_LABEL } from "@/shared/taxonomy";
-import { placeProjectAction, placeProjectsAction, setProjectLodgeAction, setWinnerAction } from "../../actions";
+import { placeProjectAction, placeProjectsAction } from "../../actions/cohorts";
+import { setProjectLodgeAction } from "../../actions/ailodge";
+import { setWinnerAction } from "../../actions/projects";
 import { AddButton, ExternalAction, PageHead, PickerDialog, StatusChip, useActionToast, useConfirm, type PickerGroup } from "../../_components/ui";
 import styles from "../../cms.module.css";
 

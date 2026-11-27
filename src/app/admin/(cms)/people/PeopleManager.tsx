@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { LODGE_HEAD_ACCESS_WEEKS, ROLE_LABEL, ROLE_PROGRAMME, ROLES, SUPERADMIN_LABEL, suggestedAccessEnd, type Role } from "@/shared/taxonomy";
-import { removePersonAction, savePersonAction } from "../../actions";
+import { removePersonAction, savePersonAction } from "../../actions/people";
 import { Modal, PageHead, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";
 

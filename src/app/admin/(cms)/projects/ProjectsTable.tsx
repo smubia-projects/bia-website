@@ -7,7 +7,7 @@ import type { Project } from "@/shared/types/project";
 import ProjectCover from "@/components/content/ProjectCover";
 import Medal from "@/components/content/Medal";
 import { PROJECT_STATUS_LABEL, type ProjectStatus } from "@/shared/taxonomy";
-import { approveProjectAction } from "../../actions";
+import { approveProjectAction } from "../../actions/projects";
 import { PageHead, StatusChip, formatEdited, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";
 

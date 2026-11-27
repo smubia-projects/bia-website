@@ -10,7 +10,7 @@ import {
   type LinkKey,
   type SiteLinks,
 } from "@/shared/links";
-import { saveSiteLinksAction } from "../../actions";
+import { saveSiteLinksAction } from "../../actions/site";
 import { PageHead, UnsavedNote, useActionToast, useSaveShortcut, useUnsavedChanges } from "../../_components/ui";
 import styles from "../../cms.module.css";
 

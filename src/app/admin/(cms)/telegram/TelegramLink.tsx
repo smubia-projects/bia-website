@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Send } from "lucide-react";
-import { createTelegramLinkAction, unlinkTelegramAction } from "../../actions";
+import { createTelegramLinkAction, unlinkTelegramAction } from "../../actions/telegram";
 import { PageHead, useActionToast, useConfirm } from "../../_components/ui";
 import styles from "../../cms.module.css";
 import t from "../../tracker.module.css";

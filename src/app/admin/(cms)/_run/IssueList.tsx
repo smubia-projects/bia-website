@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ISSUE_STATUS_LABEL, type IssueStatus } from "@/shared/taxonomy";
-import { createIssueAction } from "../../actions";
+import { createIssueAction } from "../../actions/dap";
 import { PageHead, StatusChip, useActionToast } from "../../_components/ui";
 import { runHref } from "../../_components/runs";
 import styles from "../../cms.module.css";
