@@ -5,6 +5,6 @@ import { defineConfig } from "drizzle-kit";
 // for the local PGlite database.
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./app/lib/db/schema.ts",
+  schema: "./src/server/db/schema.ts",
   out: "./drizzle",
 });

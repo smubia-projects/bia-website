@@ -1,0 +1,259 @@
+/* ============ Hero (dark pine) ============ */
+
+.hero {
+  position: relative;
+  background: var(--pine-deep);
+  color: var(--pine-text);
+  padding: 9.5rem 1.25rem 4rem;
+  overflow: hidden;
+}
+
+.heroGlow {
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 70%;
+  height: 80%;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(125, 215, 194, 0.16),
+    transparent 65%
+  );
+}
+
+.heroInner {
+  position: relative;
+  max-width: 76rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.heroEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.heroEyebrowLine {
+  display: inline-block;
+  width: 2rem;
+  height: 1px;
+  background: var(--mint);
+  opacity: 0.6;
+}
+
+.heroTitle {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.5rem, 1.6rem + 4.5vw, 4.75rem);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  color: var(--pine-text);
+  margin: 0;
+}
+
+.heroSub {
+  max-width: 34rem;
+  font-size: clamp(1rem, 0.95rem + 0.35vw, 1.1875rem);
+  line-height: 1.65;
+  color: var(--pine-text-soft);
+  margin: 0;
+}
+
+.heroCtas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+/* ---- Candid photo cluster ---- */
+
+.heroCluster {
+  position: relative;
+  width: 100%;
+  max-width: 30rem;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+}
+
+.clusterPhoto {
+  position: absolute;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  border: 4px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+}
+
+.clusterImg {
+  object-fit: cover;
+}
+
+.clusterA {
+  width: 62%;
+  aspect-ratio: 4 / 3;
+  top: 4%;
+  left: 0;
+  z-index: 2;
+}
+
+.clusterB {
+  width: 44%;
+  aspect-ratio: 3 / 4;
+  top: 0;
+  right: 2%;
+  z-index: 3;
+}
+
+.clusterC {
+  width: 56%;
+  aspect-ratio: 4 / 3;
+  bottom: 2%;
+  left: 14%;
+  z-index: 1;
+}
+
+.clusterMascot {
+  position: absolute;
+  z-index: 4;
+  width: 30%;
+  height: auto;
+  bottom: -6%;
+  right: -6%;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.4));
+  pointer-events: none;
+  animation: float 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.clusterMascot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (min-width: 1024px) {
+  .heroInner {
+    grid-template-columns: 1.4fr 1fr;
+  }
+
+  .hero {
+    padding-top: 10.5rem;
+  }
+
+  .heroCluster {
+    margin: 0;
+  }
+}
+
+/* ============ Shared section shells ============ */
+
+.section {
+  padding: 5.5rem 1.25rem;
+}
+
+.sectionMuted {
+  padding: 5.5rem 1.25rem;
+  background: var(--surface-muted);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.sectionInner {
+  max-width: 76rem;
+  margin: 0 auto;
+}
+
+/* Three ways in — the scroll-linked accordion lives in
+   src/components/home/PathwaysScroll.module.css. */
+
+/* ============ Featured projects strip ============ */
+
+.projectsHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.seeAll {
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--emerald);
+  text-decoration: none;
+  padding-bottom: 0.25rem;
+}
+
+/* Full-bleed rail: negative margins cancel the .section horizontal padding so
+   the marquee runs edge to edge, like the /Projects hero. */
+.marqueeWrap {
+  margin: 2.5rem -1.25rem 0;
+}
+
+/* ============ Join CTA band (dark pine) ============ */
+
+.joinBand {
+  position: relative;
+  background: var(--pine-deep);
+  padding: 6rem 1.25rem;
+  overflow: hidden;
+  text-align: center;
+}
+
+.joinGlow {
+  position: absolute;
+  bottom: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 100%;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(125, 215, 194, 0.16),
+    transparent 65%
+  );
+}
+
+.joinInner {
+  position: relative;
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.joinHeading {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.875rem, 1.4rem + 2.2vw, 2.75rem);
+  letter-spacing: -0.01em;
+  color: var(--pine-text);
+  margin: 0 0 1rem;
+}
+
+.joinText {
+  max-width: 32rem;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--pine-text-soft);
+  margin: 0 auto 2rem;
+}
+
+.joinCtas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.875rem;
+}

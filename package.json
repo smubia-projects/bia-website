@@ -2,16 +2,19 @@
   "name": "bia-website",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "tsx --test \"app/**/*.test.ts\"",
+    "test": "tsx --import ./scripts/server-only.mjs --experimental-test-module-mocks --test \"src/**/*.test.ts\" \"tests/**/*.test.ts\"",
     "vercel-build": "tsx scripts/db-migrate.ts && next build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db-migrate.ts",
-    "db:import-redis": "tsx scripts/import-redis.ts"
+    "db:import-redis": "tsx --import ./scripts/server-only.mjs scripts/import-redis.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.13",
@@ -34,6 +37,7 @@
     "react-markdown": "^10.1.0",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
+    "server-only": "^0.0.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {

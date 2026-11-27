@@ -1,0 +1,23 @@
+import { notFound } from "next/navigation";
+import { can } from "@/server/core/permissions";
+import { getSiteLinks } from "@/server/site/links";
+import { getLodge, lodgePaths } from "@/server/ailodge/lodges";
+import LodgeEditor from "@/app/admin/(cms)/_run/LodgeEditor";
+import { loadRun } from "@/app/admin/(cms)/_run/load";
+
+export default async function LodgeEditorPage(props: { params: Promise<{ run: string; id: string }> }) {
+  const params = await props.params;
+  const { actor, cohort } = await loadRun("AI Lodge", params.run);
+  const lodge = await getLodge(Number(params.id));
+  if (!lodge || lodge.cohortId !== cohort.id) notFound();
+  const [paths, links] = await Promise.all([lodgePaths(), getSiteLinks()]);
+  return (
+    <LodgeEditor
+      key={lodge.updatedAt}
+      lodge={lodge}
+      cohortSlug={cohort.slug}
+      siteHref={`${links.aiLodgeInfosite.replace(/\/$/, "")}${paths.get(lodge.id) ?? `/lodges/${lodge.slug}`}`}
+      canEdit={can.editCohort(actor, "AI Lodge")}
+    />
+  );
+}

@@ -1,0 +1,42 @@
+name: CI
+
+# Lint, type-check, test and build every pull request and every push to staging and main.
+# Needs no secrets: the database is an embedded PGlite per test file (no DATABASE_URL),
+# Telegram is faked in the tests (and only logged without TELEGRAM_BOT_TOKEN), and uploads
+# fall back to public/uploads without BLOB_READ_WRITE_TOKEN.
+on:
+  pull_request:
+  push:
+    branches: [staging, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # package.json "engines" (24.x), which Vercel also builds with.
+          node-version-file: package.json
+          cache: npm
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'next.config.mjs') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm test
+      - run: npx next build
